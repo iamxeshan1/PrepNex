@@ -21,6 +21,7 @@ import AdminSettings from './pages/Admin/Settings';
 import AdminNotices from './pages/Admin/Notices';
 import AdminThoughts from './pages/Admin/Thoughts';
 import AdminSubjects from './pages/Admin/Subjects';
+import AdminPremiumPlan from './pages/Admin/PremiumPlan';
 import AdminUsers from './pages/Admin/Users';
 import AdminCoupons from './pages/Admin/Coupons';
 import AdminSubscriptions from './pages/Admin/Subscriptions';
@@ -39,6 +40,7 @@ import LiveTestDetail from './pages/LiveTestDetail';
 import Helpdesk from './pages/Helpdesk';
 
 import About from './pages/About';
+import ScrollToTop from './components/ScrollToTop';
 
 const DataSeeder = () => {
   const { user, loading } = useAuth();
@@ -116,6 +118,7 @@ export default function App() {
     <AuthProvider>
       <DataSeeder />
       <Router>
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -155,6 +158,11 @@ export default function App() {
           <Route path="/admin" element={
             <ProtectedRoute adminOnly>
               <AdminDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/premium" element={
+            <ProtectedRoute adminOnly>
+              <AdminPremiumPlan />
             </ProtectedRoute>
           } />
           <Route path="/admin/settings" element={

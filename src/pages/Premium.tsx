@@ -27,7 +27,13 @@ export default function Premium() {
   const [searchParams] = useSearchParams();
   const examId = searchParams.get('examId');
   const [targetExam, setTargetExam] = useState<any>(null);
-  const [premiumPrice, setPremiumPrice] = useState('999');
+  const [premiumPrice, setPremiumPrice] = useState('599');
+  const [premiumOriginalPrice, setPremiumOriginalPrice] = useState('1499');
+  const [premiumTitle, setPremiumTitle] = useState('Unlimited 1-Year Pass');
+  const [premiumSubtitle, setPremiumSubtitle] = useState('Special Launch Offer • 60% OFF');
+  const [premiumValidity, setPremiumValidity] = useState('365 Days');
+  const [premiumFeatures, setPremiumFeatures] = useState<string[]>([]);
+  const [razorpayKeyId, setRazorpayKeyId] = useState('');
   const [loading, setLoading] = useState(false);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   
@@ -42,16 +48,37 @@ export default function Premium() {
 
   useEffect(() => {
     fetchPremiumPrice();
+    fetchRazorpayConfig();
     if (examId) {
       fetchTargetExam();
     }
   }, [examId]);
 
+  const fetchRazorpayConfig = async () => {
+    try {
+      const res = await fetch('/api/payment-status');
+      const data = await res.json();
+      if (data.configured && data.keyId) {
+        setRazorpayKeyId(data.keyId);
+      }
+    } catch (err) {
+      console.error("Error fetching payment config:", err);
+    }
+  };
+
   const fetchPremiumPrice = async () => {
     try {
       const snap = await getDoc(doc(db, 'settings', 'general'));
-      if (snap.exists() && snap.data().premiumPrice) {
-        setPremiumPrice(snap.data().premiumPrice);
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.premiumPrice) setPremiumPrice(data.premiumPrice);
+        if (data.premiumOriginalPrice) setPremiumOriginalPrice(data.premiumOriginalPrice);
+        if (data.premiumTitle) setPremiumTitle(data.premiumTitle);
+        if (data.premiumSubtitle) setPremiumSubtitle(data.premiumSubtitle);
+        if (data.premiumValidity) setPremiumValidity(data.premiumValidity);
+        if (data.premiumFeatures) {
+          setPremiumFeatures(data.premiumFeatures.split('\n'));
+        }
       }
     } catch (err) {
       console.error("Error fetching premium settings:", err);
@@ -197,7 +224,7 @@ export default function Premium() {
 
       // 2. Open Razorpay Checkout
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || '',
+        key: razorpayKeyId || import.meta.env.VITE_RAZORPAY_KEY_ID || '',
         amount: order.amount || (amount * 100),
         currency: order.currency || 'INR',
         name: "PrepNex",
@@ -432,14 +459,21 @@ export default function Premium() {
                     {couponError && <p className="text-xs font-bold text-red-500">{couponError}</p>}
                   </div>
 
-                  <button
-                    disabled={purchaseLoading}
-                    onClick={handlePurchase}
-                    className="inline-flex items-center justify-center gap-3 px-12 py-6 bg-secondary text-white rounded-[2rem] font-black text-lg shadow-2xl shadow-secondary/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-                  >
-                    {purchaseLoading ? 'Processing...' : `Get Premium Pass for ₹${getFinalPrice()}`} <Crown className="w-6 h-6" />
-                  </button>
-                  {appliedCoupon && <p className="text-xs font-bold text-slate-400 line-through">Original Price: ₹{getBasePrice()}</p>}
+              <button
+                disabled={purchaseLoading}
+                onClick={handlePurchase}
+                className="inline-flex items-center justify-center gap-3 px-12 py-6 bg-secondary text-white rounded-[2rem] font-black text-lg shadow-2xl shadow-secondary/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+              >
+                {purchaseLoading ? 'Processing...' : `Get ${premiumTitle} for ₹${getFinalPrice()}`} <Crown className="w-6 h-6" />
+              </button>
+              {appliedCoupon ? (
+                <p className="text-xs font-bold text-slate-400 line-through">Original Price: ₹{getBasePrice()}</p>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-400 line-through">₹{premiumOriginalPrice}</span>
+                  <span className="text-xs font-bold text-green-600">{premiumSubtitle}</span>
+                </div>
+              )}
                 </div>
               )}
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-6">
@@ -458,22 +492,27 @@ export default function Premium() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {benefits.map((benefit, idx) => (
-                <motion.div 
-                  key={idx}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="p-10 rounded-[2.5rem] bg-slate-50 border border-slate-100 group hover:bg-white hover:shadow-xl hover:-translate-y-2 transition-all"
-                >
-                  <div className={`w-16 h-16 ${benefit.color} rounded-2xl flex items-center justify-center text-white mb-8 shadow-lg shadow-${benefit.color.split('-')[1]}/20 group-hover:scale-110 transition-all`}>
-                    <benefit.icon className="w-8 h-8" />
-                  </div>
-                  <h3 className="text-xl font-black text-primary mb-4 leading-tight">{benefit.title}</h3>
-                  <p className="text-sm font-medium text-slate-500 leading-relaxed">{benefit.description}</p>
-                </motion.div>
-              ))}
+              {(premiumFeatures.length > 0 ? premiumFeatures : benefits.map(b => b.title)).map((featureTitle, idx) => {
+                const benefit = benefits[idx % benefits.length];
+                return (
+                  <motion.div 
+                    key={idx}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.1 }}
+                    className="p-10 rounded-[2.5rem] bg-slate-50 border border-slate-100 group hover:bg-white hover:shadow-xl hover:-translate-y-2 transition-all"
+                  >
+                    <div className={`w-16 h-16 ${benefit.color} rounded-2xl flex items-center justify-center text-white mb-8 shadow-lg shadow-${benefit.color.split('-')[1]}/20 group-hover:scale-110 transition-all`}>
+                      <benefit.icon className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-xl font-black text-primary mb-4 leading-tight">{featureTitle}</h3>
+                    <p className="text-sm font-medium text-slate-500 leading-relaxed">
+                      {premiumFeatures.length > 0 ? "Premium feature included in your all-access pass." : benefit.description}
+                    </p>
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
         </section>

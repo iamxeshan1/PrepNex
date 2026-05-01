@@ -10,6 +10,7 @@ export default function AdminHelpdesk() {
   
   const [replyText, setReplyText] = useState<{ [key: string]: string }>({});
   const [submitting, setSubmitting] = useState<string | null>(null);
+  const [closing, setClosing] = useState<string | null>(null);
 
   const fetchTickets = async () => {
     setLoading(true);
@@ -34,10 +35,23 @@ export default function AdminHelpdesk() {
     
     setSubmitting(ticketId);
     try {
+      const ticket = tickets.find(t => t.id === ticketId);
+      const updatedMessages = [
+        ...(ticket.messages || []),
+        {
+          sender: 'admin',
+          text,
+          createdAt: new Date().toISOString()
+        }
+      ];
+
       await updateDoc(doc(db, 'tickets', ticketId), {
-        reply: text,
-        status: 'closed'
+        messages: updatedMessages,
+        status: 'replied',
+        updatedAt: new Date().toISOString()
       });
+      
+      setReplyText({ ...replyText, [ticketId]: '' });
       alert('Reply sent successfully!');
       fetchTickets();
     } catch (err) {
@@ -47,12 +61,29 @@ export default function AdminHelpdesk() {
     }
   };
 
+  const handleClose = async (ticketId: string) => {
+    if (!window.confirm('Are you sure you want to close this ticket?')) return;
+    
+    setClosing(ticketId);
+    try {
+      await updateDoc(doc(db, 'tickets', ticketId), {
+        status: 'closed'
+      });
+      alert('Ticket closed successfully');
+      fetchTickets();
+    } catch (err) {
+      alert('Failed to close ticket');
+    } finally {
+      setClosing(null);
+    }
+  };
+
   return (
     <AdminLayout title="Helpdesk">
       <div className="mb-8 flex justify-between items-center bg-white p-6 rounded-3xl border border-slate-100 shadow-sm animate-in">
         <div>
           <h2 className="text-xl font-black text-secondary tracking-tight">Support Tickets</h2>
-          <p className="text-sm font-bold text-slate-400 mt-1 uppercase tracking-widest">Manage user queries</p>
+          <p className="text-sm font-bold text-slate-400 mt-1 uppercase tracking-widest">Manage user queries (Multi-message enabled)</p>
         </div>
         <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
           <MessageCircle className="w-6 h-6" />
@@ -72,49 +103,117 @@ export default function AdminHelpdesk() {
       ) : (
         <div className="space-y-6">
           {tickets.map((ticket) => (
-            <div key={ticket.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden">
-              <div className="flex flex-col md:flex-row justify-between items-start mb-4 gap-4 pb-4 border-b border-slate-100">
+            <div key={ticket.id} className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden">
+              <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4 pb-4 border-b border-slate-100">
                 <div>
                   <h3 className="text-lg font-black text-slate-800 tracking-tight mb-1">{ticket.subject}</h3>
                   <p className="text-xs font-bold text-slate-500 flex items-center gap-2">
-                    <span className="text-primary">{ticket.userName}</span> ({ticket.userEmail})
+                    <span className="text-primary font-black uppercase tracking-widest">{ticket.userName}</span> 
+                    <span className="text-slate-300">|</span>
+                    {ticket.userEmail}
                   </p>
                 </div>
-                <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest ${
-                  ticket.status === 'open' ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'
-                }`}>
-                  {ticket.status === 'open' ? <Clock className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                  {ticket.status}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                    ticket.status === 'open' ? 'bg-orange-50 text-orange-600' : 
+                    ticket.status === 'replied' ? 'bg-blue-50 text-blue-600' :
+                    'bg-green-50 text-green-600'
+                  }`}>
+                    {ticket.status === 'open' ? <Clock className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                    {ticket.status}
+                  </span>
+                  {ticket.status !== 'closed' && (
+                    <button 
+                      onClick={() => handleClose(ticket.id)}
+                      disabled={closing === ticket.id}
+                      className="text-[10px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors flex items-center gap-1"
+                    >
+                      {closing === ticket.id ? 'Closing...' : 'Close Ticket'}
+                    </button>
+                  )}
+                </div>
               </div>
 
-              <div className="mb-6">
-                <p className="text-sm font-bold text-slate-700 bg-slate-50 p-4 rounded-xl">{ticket.message}</p>
+              {/* Chat Window */}
+              <div className="space-y-4 mb-6 bg-slate-50/50 p-4 rounded-2xl border border-slate-100 max-h-[400px] overflow-y-auto">
+                {/* Legacy message */}
+                {ticket.message && (
+                  <div className="flex justify-start">
+                    <div className="max-w-[85%] bg-white p-4 rounded-2xl rounded-tl-none border border-slate-200">
+                      <p className="text-sm font-bold text-slate-700">{ticket.message}</p>
+                      <p className="text-[10px] text-slate-400 mt-2 uppercase font-black">Initial Issue</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Thread messages */}
+                {(ticket.messages || []).map((msg: any, idx: number) => (
+                  <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-start' : 'justify-end'}`}>
+                    <div className={`max-w-[85%] p-4 rounded-2xl border ${
+                      msg.sender === 'user' 
+                        ? 'bg-white border-slate-200 rounded-tl-none' 
+                        : 'bg-primary text-white border-primary rounded-tr-none'
+                    }`}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-[10px] font-black uppercase tracking-widest ${msg.sender === 'user' ? 'text-slate-400' : 'text-white/70'}`}>
+                          {msg.sender === 'user' ? 'User' : 'You (Admin)'}
+                        </span>
+                      </div>
+                      <p className={`text-sm font-bold ${msg.sender === 'user' ? 'text-slate-800' : 'text-white'}`}>{msg.text}</p>
+                      <p className={`text-[10px] mt-2 ${msg.sender === 'user' ? 'text-slate-400' : 'text-white/50'}`}>
+                        {new Date(msg.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Legacy reply */}
+                {ticket.reply && !(ticket.messages || []).some((m: any) => m.sender === 'admin' && m.text === ticket.reply) && (
+                  <div className="flex justify-end">
+                    <div className="max-w-[85%] bg-primary text-white p-4 rounded-2xl rounded-tr-none border border-primary">
+                      <p className="text-sm font-bold">{ticket.reply}</p>
+                      <p className="text-[10px] text-white/50 mt-2 uppercase font-black">Legacy Reply</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {ticket.reply ? (
-                 <div className="bg-primary/5 p-4 rounded-xl border border-primary/10">
-                   <div className="flex items-center gap-2 mb-2 text-primary text-xs font-black uppercase tracking-widest">
-                     <CheckCircle2 className="w-4 h-4" /> Your Reply
-                   </div>
-                   <p className="text-sm font-bold text-slate-800">{ticket.reply}</p>
-                 </div>
-              ) : (
-                <div className="mt-4">
-                  <textarea 
-                    rows={3}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary font-bold text-sm resize-y mb-3"
-                    placeholder="Write your response here..."
-                    value={replyText[ticket.id] || ''}
-                    onChange={(e) => setReplyText({ ...replyText, [ticket.id]: e.target.value })}
-                  />
-                  <button 
-                    onClick={() => handleReply(ticket.id)}
-                    disabled={submitting === ticket.id || !replyText[ticket.id]}
-                    className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all font-logo flex items-center gap-2 disabled:opacity-50 text-sm"
-                  >
-                    {submitting === ticket.id ? 'Sending...' : <><Send className="w-4 h-4" /> Send Reply & Close Ticket</>}
-                  </button>
+              {ticket.status !== 'closed' && (
+                <div className="mt-4 space-y-4">
+                  <div className="flex gap-2">
+                    <textarea 
+                      className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary font-bold text-sm resize-none"
+                      placeholder="Type your response..."
+                      rows={2}
+                      value={replyText[ticket.id] || ''}
+                      onChange={(e) => setReplyText({ ...replyText, [ticket.id]: e.target.value })}
+                    />
+                    <button 
+                      onClick={() => handleReply(ticket.id)}
+                      disabled={submitting === ticket.id || !replyText[ticket.id]}
+                      className="bg-primary text-white p-4 rounded-xl hover:bg-primary/90 transition-all disabled:opacity-50 self-end"
+                    >
+                      {submitting === ticket.id ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : <Send className="w-5 h-5" />}
+                    </button>
+                  </div>
+                  
+                  {ticket.status === 'replied' && (
+                    <div className="flex justify-end">
+                      <button 
+                        onClick={() => handleClose(ticket.id)}
+                        disabled={closing === ticket.id}
+                        className="text-xs font-black text-slate-400 hover:text-red-500 uppercase tracking-widest flex items-center gap-1.5 transition-colors"
+                      >
+                        <CheckCircle2 className="w-4 h-4" /> Force Close Ticket
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {ticket.status === 'closed' && (
+                <div className="text-center p-4 bg-slate-50 rounded-xl border border-slate-100">
+                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Ticket Closed & Resolved</p>
                 </div>
               )}
             </div>

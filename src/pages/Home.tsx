@@ -31,7 +31,8 @@ import {
   Search, 
   BookOpen, 
   Layers, 
-  ChevronRight 
+  ChevronRight,
+  Crown
 } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { collection, query, orderBy, limit, getDocs, where, doc, getDoc } from 'firebase/firestore';
@@ -591,6 +592,75 @@ export default function Home() {
                 No popular exams featured yet.
               </div>
             )}
+          </div>
+        </div>
+      </section>
+
+      {/* Premium Plan Section */}
+      <section className="py-24 bg-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-slate-50 skew-x-12 translate-x-1/2 z-0" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-purple-50 text-purple-600 px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-[0.2em] mb-6">
+                <Crown className="w-4 h-4 fill-purple-600" /> Best Value Selection
+              </div>
+              <h2 className="text-4xl md:text-6xl font-black text-primary tracking-tight leading-tight mb-6">
+                {settings?.premiumTitle?.split(' ').slice(0, 1).join('') || 'All-Access'} <br />
+                <span className="text-purple-600">{settings?.premiumTitle?.split(' ').slice(1).join(' ') || 'Premium Pass'}</span>
+              </h2>
+              <p className="text-slate-500 font-medium text-lg mb-10 leading-relaxed max-w-lg">
+                Unlock every single mock test across all exam categories for an entire year. The ultimate package for serious aspirants.
+              </p>
+              
+              <div className="space-y-4">
+                {(settings?.premiumFeatures ? settings.premiumFeatures.split('\n') : [
+                  "Unlimited access to 500+ Mock Tests",
+                  "All Exam Categories (JKSSB, UPSC, SSC, etc.)",
+                  "Advanced Performance Analytics",
+                  "Premium 24/7 Priority Helpdesk",
+                  "Ad-free focused exam environment"
+                ]).map((feature, i) => (
+                  <div key={i} className="flex items-center gap-3 text-slate-700 font-bold">
+                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                      <CheckCircle className="w-3.5 h-3.5" />
+                    </div>
+                    <span>{feature}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative group">
+              <div className="absolute -inset-4 bg-gradient-to-br from-purple-600 to-primary rounded-[3rem] blur-2xl opacity-10 group-hover:opacity-20 transition-opacity" />
+              <div className="relative bg-white border-2 border-primary/10 rounded-[3rem] p-10 md:p-12 shadow-2xl shadow-primary/5">
+                <div className="flex justify-between items-start mb-8">
+                  <div>
+                    <h3 className="text-2xl font-black text-primary tracking-tight">{settings?.premiumTitle || 'Unlimited 1-Year Pass'}</h3>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Validity: {settings?.premiumValidity || '365 Days'}</p>
+                  </div>
+                  <div className="bg-primary text-white p-3 rounded-2xl shadow-lg shadow-primary/20">
+                    <Zap className="w-6 h-6 fill-white" />
+                  </div>
+                </div>
+
+                <div className="mb-10">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-5xl font-black text-primary">₹{settings?.premiumPrice || '599'}</span>
+                    <span className="text-slate-400 line-through font-bold text-lg">₹{settings?.premiumOriginalPrice || '1499'}</span>
+                  </div>
+                  <p className="text-sm font-black text-green-600 uppercase tracking-widest mt-2">{settings?.premiumSubtitle || 'Special Launch Offer • 60% OFF'}</p>
+                </div>
+
+                <Link to="/premium" className="block w-full py-5 bg-primary text-white text-center rounded-2xl font-black text-lg uppercase tracking-widest shadow-xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all">
+                  Get Premium Now
+                </Link>
+
+                <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-6">
+                  Trusted by {settings?.aspirantCount || '10,000+'} Aspirants
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>

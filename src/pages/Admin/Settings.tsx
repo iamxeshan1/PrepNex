@@ -19,7 +19,6 @@ export default function AdminSettings() {
   const [contactPhone, setContactPhone] = useState('');
   const [contactAddress, setContactAddress] = useState('');
   const [contactMapUrl, setContactMapUrl] = useState('');
-  const [premiumPrice, setPremiumPrice] = useState('999');
   const [heroTagline, setHeroTagline] = useState('Crack exams with smart practice');
   const [aspirantCount, setAspirantCount] = useState('10,000+');
   const [totalTests, setTotalTests] = useState('500+');
@@ -58,7 +57,6 @@ export default function AdminSettings() {
         setContactPhone(data.contactPhone || '');
         setContactAddress(data.contactAddress || '');
         setContactMapUrl(data.contactMapUrl || '');
-        setPremiumPrice(data.premiumPrice || '999');
         setHeroTagline(data.heroTagline || 'Crack exams with smart practice');
         setAspirantCount(data.aspirantCount || '10,000+');
         setTotalTests(data.totalTests || '500+');
@@ -98,7 +96,6 @@ export default function AdminSettings() {
           contactPhone,
           contactAddress,
           contactMapUrl,
-          premiumPrice,
           heroTagline,
           aspirantCount,
           totalTests,
@@ -135,7 +132,7 @@ export default function AdminSettings() {
             </div>
             <div>
               <h3 className="text-xl font-extrabold text-primary tracking-tight">Payment Configuration</h3>
-              <p className="text-slate-500 text-sm">Manage your Razorpay API credentials safely.</p>
+              <p className="text-slate-500 text-sm">Manage your Razorpay API credentials. Recommended: Also set these in the <b>Settings &gt; Secrets</b> panel in AI Studio for maximum reliability.</p>
             </div>
           </div>
 
@@ -295,14 +292,6 @@ export default function AdminSettings() {
                 type="email"
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
                 value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} 
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Premium Price (₹)</label>
-              <input 
-                type="number"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
-                value={premiumPrice} onChange={(e) => setPremiumPrice(e.target.value)} 
               />
             </div>
           </div>

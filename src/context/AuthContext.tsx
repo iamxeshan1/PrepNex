@@ -36,11 +36,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         } else {
           // New user profile creation
+          const isAdminEmail = user.email === 'iamxeshan1@gmail.com' || user.email === 'prepnexedtech@gmail.com';
           const newProfile = {
             userId: user.uid,
             name: user.displayName || user.email?.split('@')[0] || 'User',
             email: user.email,
-            role: 'student',
+            role: isAdminEmail ? 'admin' : 'student',
             isPremium: false,
             premiumExpiry: null,
             purchasedExams: [],

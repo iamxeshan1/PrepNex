@@ -135,29 +135,9 @@ export const Navbar = () => {
               </div>
 
               <div className="absolute bottom-8 left-8 right-8">
-                {profile?.isPremium ? (
-                  <div className="p-6 bg-purple-50 rounded-[2rem] border border-purple-100">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Trophy className="w-4 h-4 text-purple-600" />
-                      <span className="text-[10px] font-black text-purple-900 uppercase tracking-widest">Premium Active</span>
-                    </div>
-                    <p className="text-[10px] text-purple-600 font-bold leading-relaxed mb-4">You have unlimited access to all tests.</p>
-                    <Link to="/exams" onClick={() => setIsSidebarOpen(false)} className="block w-full py-3 bg-white border border-purple-200 rounded-xl text-center text-[10px] font-black text-purple-900 uppercase tracking-widest hover:border-purple-300 transition-colors">
-                      Library Max
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Zap className="w-4 h-4 text-secondary fill-secondary" />
-                      <span className="text-[10px] font-black text-primary uppercase tracking-widest">Premium Status</span>
-                    </div>
-                    <p className="text-[10px] text-slate-500 font-bold leading-relaxed mb-4">Unlock 500+ mock tests with PrepNex Pro.</p>
-                    <Link to="/premium" onClick={() => setIsSidebarOpen(false)} className="block w-full py-3 bg-white border border-slate-200 rounded-xl text-center text-[10px] font-black text-primary uppercase tracking-widest hover:border-primary transition-colors">
-                      Upgrade Now
-                    </Link>
-                  </div>
-                )}
+                <div className="flex items-center justify-center gap-6 opacity-30">
+                  <Logo className="h-6 grayscale opacity-50" />
+                </div>
               </div>
             </motion.aside>
           </>

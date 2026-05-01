@@ -69,7 +69,7 @@ export default function Login() {
           userId: user.uid,
           name: user.displayName || 'Aspirant',
           email: user.email,
-          role: user.email === 'iamxeshan1@gmail.com' ? 'admin' : 'student',
+          role: user.email === 'iamxeshan1@gmail.com' || user.email === 'prepnexedtech@gmail.com' ? 'admin' : 'student',
           purchasedExams: [],
           testsAttempted: 0,
           averageScore: 0,

@@ -25,27 +25,37 @@ function getDb() {
       config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
     }
 
-    // Initialize app if not already
-    const app = getApps().length === 0 
-      ? initializeApp({ projectId: config.projectId || process.env.GOOGLE_CLOUD_PROJECT }) 
-      : getApp();
-
+    // Try to initialize without explicit config if GOOGLE_APPLICATION_CREDENTIALS might be present
+    // or if we are in a GCP environment that handles it.
+    if (getApps().length === 0) {
+      if (config.projectId) {
+        initializeApp({ 
+          projectId: config.projectId,
+          // credential: admin.credential.applicationDefault() // Removed for better compatibility
+        });
+        console.log("Firestore initialized with config projectId:", config.projectId);
+      } else {
+        initializeApp();
+        console.log("Firestore initialized with default environment config");
+      }
+    }
+    
+    const app = getApp();
     const dbId = config.firestoreDatabaseId && config.firestoreDatabaseId !== "(default)" 
       ? config.firestoreDatabaseId 
       : undefined;
 
     if (dbId) {
       _db = getFirestore(app, dbId);
-      console.log("Firestore initialized with named database:", dbId);
+      console.log("Firestore using named database:", dbId);
     } else {
       _db = getFirestore(app);
-      console.log("Firestore initialized with default database");
+      console.log("Firestore using default database");
     }
     
     return _db;
   } catch (err) {
     console.error("Firestore initialization failed:", err);
-    // Fallback to default
     if (getApps().length === 0) initializeApp();
     _db = getFirestore();
     return _db;
@@ -99,20 +109,30 @@ let razorpayInstance: Razorpay | null = null;
 async function getRazorpay() {
   if (razorpayInstance) return razorpayInstance;
   
+  // Try Environment Variables FIRST as they are most reliable in this environment
+  const envKeyId = process.env.VITE_RAZORPAY_KEY_ID || "";
+  const envKeySecret = process.env.RAZORPAY_KEY_SECRET || "";
+
+  if (envKeyId && envKeySecret) {
+    console.log("Initializing Razorpay using environment variables.");
+    razorpayInstance = new Razorpay({
+      key_id: envKeyId,
+      key_secret: envKeySecret,
+    });
+    return razorpayInstance;
+  }
+  
   try {
     console.log("Fetching Razorpay settings from Firestore...");
-    // Use a promise with timeout for the Firestore read to prevent hanging
-    const settingsPromise = db.collection("settings").doc("razorpay").get();
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore timeout")), 5000));
-    
-    const settingsDoc = await Promise.race([settingsPromise, timeoutPromise]) as admin.firestore.DocumentSnapshot;
+    const database = getDb();
+    const settingsDoc = await database.collection("settings").doc("razorpay").get();
     const settings = settingsDoc.exists ? settingsDoc.data() : null;
     
-    const keyId = settings?.razorpayKeyId || process.env.VITE_RAZORPAY_KEY_ID || "";
-    const keySecret = settings?.razorpayKeySecret || process.env.RAZORPAY_KEY_SECRET || "";
+    const keyId = settings?.razorpayKeyId || "";
+    const keySecret = settings?.razorpayKeySecret || "";
 
     if (!keyId || !keySecret) {
-      console.warn("Razorpay keys missing in both Firestore and Environment.");
+      console.warn("Razorpay keys missing in both Environment and Firestore.");
       throw new Error("Razorpay configuration missing");
     }
 
@@ -121,16 +141,15 @@ async function getRazorpay() {
       key_secret: keySecret,
     });
     return razorpayInstance;
-  } catch (error) {
-    console.error("Error fetching Razorpay settings:", error);
-    // Fallback to env without caching the instance if it failed
-    const keyId = process.env.VITE_RAZORPAY_KEY_ID || "";
-    const keySecret = process.env.RAZORPAY_KEY_SECRET || "";
+  } catch (error: any) {
+    console.error("Error fetching Razorpay settings from Firestore:", error.message || error);
     
-    if (keyId && keySecret) {
-      return new Razorpay({ key_id: keyId, key_secret: keySecret });
+    // If it was a permission error, explain likely cause
+    if (error.message?.includes("PERMISSION_DENIED") || (error.code === 7)) {
+      console.error("CRITICAL: Server lacks permission to read Firestore 'settings/razorpay'. Please ensure the Razorpay ID and Secret are set in the AI Studio Settings (Secrets) panel as VITE_RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.");
     }
-    throw new Error("Razorpay not configured on server");
+
+    throw new Error("Razorpay not configured on server. Please add VITE_RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to Settings > Secrets.");
   }
 }
 

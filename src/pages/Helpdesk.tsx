@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../lib/firebase';
-import { collection, addDoc, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, orderBy, doc, updateDoc } from 'firebase/firestore';
 import { MessageCircle, Send, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -15,6 +15,8 @@ export default function Helpdesk() {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [replyText, setReplyText] = useState<{ [key: string]: string }>({});
+  const [replying, setReplying] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -45,9 +47,15 @@ export default function Helpdesk() {
         userEmail: user?.email,
         userName: profile?.name || 'Aspirant',
         subject,
-        message,
         status: 'open',
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        messages: [
+          {
+            sender: 'user',
+            text: message,
+            createdAt: new Date().toISOString()
+          }
+        ]
       });
       setSubject('');
       setMessage('');
@@ -57,6 +65,50 @@ export default function Helpdesk() {
       alert("Failed to submit ticket.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleUserReply = async (ticketId: string) => {
+    const text = replyText[ticketId];
+    if (!text) return;
+    
+    setReplying(ticketId);
+    try {
+      const ticket = tickets.find(t => t.id === ticketId);
+      const updatedMessages = [
+        ...(ticket.messages || []),
+        {
+          sender: 'user',
+          text,
+          createdAt: new Date().toISOString()
+        }
+      ];
+
+      await updateDoc(doc(db, 'tickets', ticketId), {
+        messages: updatedMessages,
+        status: 'open', // Reset to open when user replies
+        updatedAt: new Date().toISOString()
+      });
+      
+      setReplyText({ ...replyText, [ticketId]: '' });
+      fetchTickets();
+    } catch (err) {
+      alert('Failed to send reply');
+    } finally {
+      setReplying(null);
+    }
+  };
+
+  const handleResolve = async (ticketId: string) => {
+    if (!window.confirm('Are you satisfied and want to close this ticket?')) return;
+    
+    try {
+      await updateDoc(doc(db, 'tickets', ticketId), {
+        status: 'closed'
+      });
+      fetchTickets();
+    } catch (err) {
+      alert('Failed to close ticket');
     }
   };
 
@@ -125,36 +177,101 @@ export default function Helpdesk() {
                <p className="text-slate-500 font-bold mt-1 text-sm">You haven't opened any support tickets yet.</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {tickets.map(ticket => (
-                <div key={ticket.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm transition-all hover:shadow-md">
-                  <div className="flex justify-between items-start mb-4 gap-4">
-                    <h3 className="font-black text-lg text-slate-800 tracking-tight">{ticket.subject}</h3>
-                    <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest ${
-                      ticket.status === 'open' ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'
+                <div key={ticket.id} className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm transition-all hover:shadow-md">
+                  <div className="flex justify-between items-start mb-6 gap-4 border-b border-slate-50 pb-4">
+                    <div>
+                      <h3 className="font-black text-xl text-slate-800 tracking-tight">{ticket.subject}</h3>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Ticket ID: {ticket.id}</p>
+                    </div>
+                    <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                      ticket.status === 'open' ? 'bg-orange-50 text-orange-600' : 
+                      ticket.status === 'replied' ? 'bg-blue-50 text-blue-600' :
+                      'bg-green-50 text-green-600'
                     }`}>
                       {ticket.status === 'open' ? <Clock className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                       {ticket.status}
                     </span>
                   </div>
-                  <p className="text-slate-600 font-bold text-sm bg-slate-50 p-4 rounded-2xl mb-4">{ticket.message}</p>
-                  
-                  {ticket.reply && (
-                    <div className="ml-4 pl-4 border-l-2 border-primary/20 mt-4">
-                      <div className="flex items-center gap-2 mb-2">
-                         <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-primary">
-                           <AlertCircle className="w-3 h-3" />
-                         </div>
-                         <span className="font-black text-xs uppercase tracking-widest text-primary">Admin Reply</span>
+
+                  <div className="space-y-4 mb-6">
+                    {/* Render legacy message if it exists */}
+                    {ticket.message && (
+                      <div className="flex justify-start">
+                        <div className="max-w-[85%] bg-slate-50 p-4 rounded-2xl rounded-tl-none border border-slate-100">
+                          <p className="text-sm font-bold text-slate-700">{ticket.message}</p>
+                          <p className="text-[10px] text-slate-400 mt-2">Original Message</p>
+                        </div>
                       </div>
-                      <p className="text-sm font-bold text-slate-800">{ticket.reply}</p>
+                    )}
+
+                    {/* Render modern messages */}
+                    {(ticket.messages || []).map((msg: any, idx: number) => (
+                      <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-start' : 'justify-end'}`}>
+                        <div className={`max-w-[85%] p-4 rounded-2xl border ${
+                          msg.sender === 'user' 
+                            ? 'bg-slate-50 border-slate-100 rounded-tl-none' 
+                            : 'bg-primary/5 border-primary/10 rounded-tr-none'
+                        }`}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`text-[10px] font-black uppercase tracking-widest ${msg.sender === 'user' ? 'text-slate-400' : 'text-primary'}`}>
+                              {msg.sender === 'user' ? 'You' : 'Admin'}
+                            </span>
+                          </div>
+                          <p className="text-sm font-bold text-slate-800">{msg.text}</p>
+                          <p className="text-[10px] text-slate-400 mt-2">{new Date(msg.createdAt).toLocaleString()}</p>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Render legacy reply if it exists */}
+                    {ticket.reply && !(ticket.messages || []).some((m: any) => m.sender === 'admin' && m.text === ticket.reply) && (
+                      <div className="flex justify-end">
+                        <div className="max-w-[85%] bg-primary/5 p-4 rounded-2xl rounded-tr-none border border-primary/10">
+                          <p className="text-sm font-bold text-slate-800">{ticket.reply}</p>
+                          <p className="text-[10px] text-primary mt-2 uppercase font-black">Admin Reply (Legacy)</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {ticket.status !== 'closed' && (
+                    <div className="border-t border-slate-50 pt-6 space-y-4">
+                      <div className="flex gap-2">
+                        <textarea 
+                          className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary font-bold text-sm resize-none"
+                          placeholder="Type your message..."
+                          rows={2}
+                          value={replyText[ticket.id] || ''}
+                          onChange={(e) => setReplyText({ ...replyText, [ticket.id]: e.target.value })}
+                        />
+                        <button 
+                          onClick={() => handleUserReply(ticket.id)}
+                          disabled={replying === ticket.id || !replyText[ticket.id]}
+                          className="bg-primary text-white p-4 rounded-xl hover:bg-primary/90 transition-all disabled:opacity-50 self-end"
+                        >
+                          {replying === ticket.id ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : <Send className="w-5 h-5" />}
+                        </button>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <p className="text-[10px] font-bold text-slate-400">Resolved your issue? Close the ticket below</p>
+                        <button 
+                          onClick={() => handleResolve(ticket.id)}
+                          className="text-xs font-black text-green-600 hover:text-green-700 uppercase tracking-widest flex items-center gap-1.5 transition-colors"
+                        >
+                          <CheckCircle2 className="w-4 h-4" /> Mark as Resolved
+                        </button>
+                      </div>
                     </div>
                   )}
-                  
-                  <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center text-xs font-bold text-slate-400">
-                    <span>Ticket ID: {ticket.id}</span>
-                    <span>{new Date(ticket.createdAt).toLocaleDateString()}</span>
-                  </div>
+
+                  {ticket.status === 'closed' && (
+                    <div className="border-t border-slate-50 pt-4 text-center">
+                      <p className="text-xs font-black text-slate-400 uppercase tracking-widest">This ticket is closed</p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

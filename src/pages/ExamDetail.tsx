@@ -16,6 +16,7 @@ export default function ExamDetail() {
   const [loading, setLoading] = useState(true);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [testResults, setTestResults] = useState<Record<string, any[]>>({});
+  const [razorpayKeyId, setRazorpayKeyId] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,6 +36,17 @@ export default function ExamDetail() {
           resultsMap[test.id] = results || [];
         }
         setTestResults(resultsMap);
+      }
+      
+      // Fetch Razorpay config
+      try {
+        const res = await fetch('/api/payment-status');
+        const data = await res.json();
+        if (data.configured && data.keyId) {
+          setRazorpayKeyId(data.keyId);
+        }
+      } catch (err) {
+        console.error("Error fetching payment config:", err);
       }
       
       setLoading(false);
@@ -101,7 +113,7 @@ export default function ExamDetail() {
 
       // 2. Open Razorpay Checkout
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || '',
+        key: razorpayKeyId || import.meta.env.VITE_RAZORPAY_KEY_ID || '',
         amount: order.amount || (exam.price * 100),
         currency: order.currency || 'INR',
         name: "PrepNex",

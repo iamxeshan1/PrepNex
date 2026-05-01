@@ -199,6 +199,32 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["code", "discountType", "discountValue", "isActive"]
+    },
+    "Ticket": {
+      "title": "Ticket",
+      "description": "Support ticket with message thread.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "subject": { "type": "string" },
+        "status": { "type": "string", "enum": ["open", "replied", "closed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sender": { "type": "string", "enum": ["user", "admin"] },
+              "text": { "type": "string" },
+              "createdAt": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      },
+      "required": ["userId", "subject", "status", "createdAt", "messages"]
     }
   },
   "firestore": {
@@ -213,6 +239,7 @@
     "results": { "schema": "Result", "description": "Test results" },
     "subscriptions": { "schema": "Subscription", "description": "User subscriptions" },
     "liveTests": { "schema": "LiveTest", "description": "Scheduled live tests" },
-    "coupons": { "schema": "Coupon", "description": "Discount coupons" }
+    "coupons": { "schema": "Coupon", "description": "Discount coupons" },
+    "tickets": { "schema": "Ticket", "description": "Support tickets" }
   }
 }
