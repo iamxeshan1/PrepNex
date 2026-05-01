@@ -1,0 +1,235 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Layout } from '../components/Layout';
+import { db } from '../lib/firebase';
+import { doc, getDoc, collection, query, where, getDocs, limit, updateDoc, arrayUnion } from 'firebase/firestore';
+import { Calendar, Clock, ArrowLeft, ShieldCheck, Zap, Tag, X } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+
+export default function LiveTestDetail() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [test, setTest] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [couponError, setCouponError] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [purchaseLoading, setPurchaseLoading] = useState(false);
+
+  const { user } = useAuth();
+  
+  const getBasePrice = () => test?.price || 0;
+  
+  const getFinalPrice = () => {
+    const base = getBasePrice();
+    if (!appliedCoupon) return base;
+    if (appliedCoupon.discountType === 'fixed') {
+      return Math.max(0, base - appliedCoupon.discountValue);
+    } else {
+      const discountAmount = (base * appliedCoupon.discountValue) / 100;
+      return Math.max(0, base - discountAmount);
+    }
+  };
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    setCouponLoading(true);
+    setCouponError('');
+    try {
+      const codeUpper = couponCode.toUpperCase();
+      const q = query(collection(db, 'coupons'), where('code', '==', codeUpper), where('isActive', '==', true), limit(1));
+      const snap = await getDocs(q);
+      
+      if (snap.empty) {
+        setCouponError('Invalid or expired coupon code.');
+        setAppliedCoupon(null);
+      } else {
+        const couponData = snap.docs[0].data();
+        setAppliedCoupon({ id: snap.docs[0].id, ...couponData });
+      }
+    } catch (err) {
+      setCouponError('Error applying coupon. Please try again.');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    setCouponError('');
+  };
+
+  const handlePurchase = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    const finalPrice = getFinalPrice();
+    if (finalPrice === 0) {
+      try {
+        setPurchaseLoading(true);
+        await updateDoc(doc(db, 'liveTests', id!), {
+          enrolledUsers: arrayUnion(user.uid)
+        });
+        alert('Enrolled successfully!');
+        navigate('/');
+      } catch (e) {
+        alert('Enrollment failed');
+      } finally {
+        setPurchaseLoading(false);
+      }
+    } else {
+      alert(`Payment gateway integration required to process ₹${finalPrice}`);
+    }
+  };
+
+  useEffect(() => {
+    const fetchTest = async () => {
+      if (!id) return;
+      try {
+        const snap = await getDoc(doc(db, 'liveTests', id));
+        if (snap.exists()) {
+          setTest({ id: snap.id, ...snap.data() });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+      setLoading(false);
+    };
+    fetchTest();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex h-screen items-center justify-center font-bold text-primary animate-pulse">
+          Loading Live Test Detals...
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!test) {
+    return (
+      <Layout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh]">
+          <h1 className="text-2xl font-black text-secondary mb-4">Live Test Not Found</h1>
+          <button onClick={() => navigate('/')} className="text-primary font-bold hover:underline">
+            Go back home
+          </button>
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
+      <div className="bg-slate-50 min-h-screen py-16">
+        <div className="max-w-4xl mx-auto px-4">
+          <button 
+            onClick={() => navigate(-1)} 
+            className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-primary transition-colors mb-8"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+
+          <div className="bg-white rounded-3xl p-8 md:p-12 border border-slate-100 shadow-sm">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
+                <Zap className="w-6 h-6" />
+              </div>
+              <h1 className="text-3xl md:text-4xl font-black text-secondary tracking-tight">
+                {test.title}
+              </h1>
+            </div>
+
+            <p className="text-lg text-slate-600 mb-8 leading-relaxed">
+              {test.description}
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+              <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="flex items-center gap-3 text-sm font-bold text-slate-500 uppercase tracking-widest mb-2">
+                  <Calendar className="w-4 h-4" /> Start Time
+                </div>
+                <div className="text-lg font-bold text-secondary">
+                  {new Date(test.startTime).toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' })}
+                </div>
+              </div>
+              <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="flex items-center gap-3 text-sm font-bold text-slate-500 uppercase tracking-widest mb-2">
+                  <Clock className="w-4 h-4" /> Duration
+                </div>
+                <div className="text-lg font-bold text-secondary">
+                  {test.duration} Minutes ({test.totalMarks} Marks)
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-50/50 rounded-3xl p-8 border border-blue-100 text-center">
+              <ShieldCheck className="w-12 h-12 text-primary mx-auto mb-4 opacity-50" />
+              <h2 className="text-2xl font-black text-secondary mb-2">Enrollment Details</h2>
+              <p className="text-slate-600 mb-6 max-w-lg mx-auto">
+                This is a premium live mock test. Enrollment requires payment. Integrated payment gateways (such as Stripe or Razorpay) would process the transaction.
+              </p>
+              
+              <div className="flex flex-col items-center gap-2 w-full max-w-sm mx-auto mb-6">
+                {appliedCoupon ? (
+                  <div className="flex items-center justify-between w-full p-4 bg-green-50 border border-green-200 rounded-2xl">
+                    <div className="flex items-center gap-3">
+                      <Tag className="w-5 h-5 text-green-600" />
+                      <div className="text-left">
+                        <p className="text-sm font-bold text-green-700 uppercase tracking-wide">{appliedCoupon.code}</p>
+                        <p className="text-xs font-bold text-green-600">Saved ₹{getBasePrice() - getFinalPrice()}</p>
+                      </div>
+                    </div>
+                    <button onClick={handleRemoveCoupon} className="p-2 text-green-600 hover:bg-green-100 rounded-xl transition-all">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 w-full">
+                    <input 
+                      type="text" 
+                      placeholder="Have a coupon code?" 
+                      value={couponCode} 
+                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary font-bold tracking-widest text-sm"
+                    />
+                    <button 
+                      onClick={handleApplyCoupon}
+                      disabled={!couponCode || couponLoading}
+                      className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all disabled:opacity-50 text-sm"
+                    >
+                      {couponLoading ? '...' : 'Apply'}
+                    </button>
+                  </div>
+                )}
+                {couponError && <p className="text-xs font-bold text-red-500">{couponError}</p>}
+              </div>
+
+              <div className="text-3xl font-black text-primary mb-2">
+                ₹{getFinalPrice()}
+              </div>
+              {appliedCoupon && (
+                <p className="text-sm font-bold text-slate-400 line-through mb-6">₹{getBasePrice()}</p>
+              )}
+              {!appliedCoupon && <div className="h-4 mb-6"></div>}
+
+              <button 
+                onClick={handlePurchase}
+                disabled={purchaseLoading}
+                className="w-full md:w-auto px-12 py-4 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all font-logo disabled:opacity-50"
+              >
+                {purchaseLoading ? 'Processing...' : (getFinalPrice() === 0 ? 'Enroll Now (Free)' : 'Proceed to Payment')}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  );
+}

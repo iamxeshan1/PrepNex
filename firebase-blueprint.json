@@ -1,0 +1,218 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with academic stats and personal info.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "dob": { "type": "string", "format": "date" },
+        "role": { "type": "string", "enum": ["student", "admin"] },
+        "purchasedExams": { "type": "array", "items": { "type": "string" } },
+        "testsAttempted": { "type": "number" },
+        "averageScore": { "type": "number" },
+        "isBlocked": { "type": "boolean" },
+        "freeExams": { "type": "array", "items": { "type": "string" } },
+        "subscriptionExpiry": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name", "email", "role"]
+    },
+    "Notice": {
+      "title": "Notice",
+      "description": "Global announcement or notice.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string", "enum": ["info", "warning", "update"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "type"]
+    },
+    "Thought": {
+      "title": "Thought of the Day",
+      "description": "Daily motivational quote for aspirants.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "text": { "type": "string" },
+        "author": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["text", "author"]
+    },
+    "Exam": {
+      "title": "Exam",
+      "description": "A top-level category of competitive exams (e.g., SSC CGL, NEET).",
+      "type": "object",
+      "properties": {
+        "examId": { "type": "string" },
+        "name": { "type": "string" },
+        "organization": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "isPopular": { "type": "boolean" },
+        "isPaid": { "type": "boolean" },
+        "price": { "type": "number" },
+        "difficulty": { "type": "string", "enum": ["Easy", "Medium", "Hard"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["examId", "name", "organization", "category", "isPaid"]
+    },
+    "Test": {
+      "title": "Test",
+      "description": "A specific mock test belonging to an exam or subject.",
+      "type": "object",
+      "properties": {
+        "testId": { "type": "string" },
+        "examId": { "type": "string" },
+        "subjectId": { "type": "string" },
+        "title": { "type": "string" },
+        "duration": { "type": "number" },
+        "totalMarks": { "type": "number" },
+        "isFree": { "type": "boolean" },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "subjectId": { "type": "string" },
+              "subjectName": { "type": "string" },
+              "numQuestions": { "type": "number" },
+              "marksPerQuestion": { "type": "number" }
+            }
+          }
+        }
+      },
+      "required": ["testId", "title", "duration", "totalMarks", "isFree"]
+    },
+    "Question": {
+      "title": "Question",
+      "description": "A question within a mock test.",
+      "type": "object",
+      "properties": {
+        "questionId": { "type": "string" },
+        "testId": { "type": "string" },
+        "subjectId": { "type": "string" },
+        "question": { "type": "string" },
+        "options": { "type": "array", "items": { "type": "string" } },
+        "correctAnswer": { "type": "string" },
+        "explanation": { "type": "string" }
+      },
+      "required": ["questionId", "testId", "question", "options", "correctAnswer"]
+    },
+    "Result": {
+      "title": "Result",
+      "description": "A user's attempt at a mock test.",
+      "type": "object",
+      "properties": {
+        "resultId": { "type": "string" },
+        "userId": { "type": "string" },
+        "examId": { "type": "string" },
+        "testId": { "type": "string" },
+        "score": { "type": "number" },
+        "totalQuestions": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" }
+      },
+      "required": ["resultId", "userId", "examId", "testId", "score", "totalQuestions", "date"]
+    },
+    "Subscription": {
+      "title": "Subscription",
+      "description": "Record of an exam package purchase.",
+      "type": "object",
+      "properties": {
+        "subscriptionId": { "type": "string" },
+        "userId": { "type": "string" },
+        "examId": { "type": "string" },
+        "purchaseDate": { "type": "string", "format": "date-time" },
+        "expiryDate": { "type": "string", "format": "date-time" },
+        "paymentStatus": { "type": "string", "enum": ["pending", "completed", "failed"] }
+      },
+      "required": ["subscriptionId", "userId", "examId", "purchaseDate", "paymentStatus"]
+    },
+    "Setting": {
+      "title": "Setting",
+      "description": "Global application configuration.",
+      "type": "object",
+      "properties": {
+        "razorpayKeyId": { "type": "string" },
+        "razorpayKeySecret": { "type": "string" },
+        "socialInstagram": { "type": "string" },
+        "socialFacebook": { "type": "string" },
+        "socialYoutube": { "type": "string" },
+        "contactEmail": { "type": "string" },
+        "contactPhone": { "type": "string" },
+        "contactAddress": { "type": "string" },
+        "contactMapUrl": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "LiveTest": {
+      "title": "LiveTest",
+      "description": "A scheduled live mock test with enrollment.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "duration": { "type": "number" },
+        "totalMarks": { "type": "number" },
+        "enrollmentStartTime": { "type": "string", "format": "date-time" },
+        "enrollmentEndTime": { "type": "string", "format": "date-time" },
+        "startTime": { "type": "string", "format": "date-time" },
+        "endTime": { "type": "string", "format": "date-time" },
+        "isFree": { "type": "boolean" },
+        "price": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "enrolledUsers": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["title", "duration", "totalMarks", "startTime", "endTime"]
+    },
+    "Subject": {
+      "title": "Subject",
+      "description": "A specific learning topic (e.g., Reasoning, Maths).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "icon": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "icon"]
+    },
+    "Coupon": {
+      "title": "Coupon",
+      "description": "Discount coupon for test/exam purchases.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "code": { "type": "string" },
+        "discountType": { "type": "string", "enum": ["fixed", "percentage"] },
+        "discountValue": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["code", "discountType", "discountValue", "isActive"]
+    }
+  },
+  "firestore": {
+    "users": { "schema": "User", "description": "User profiles" },
+    "exams": { "schema": "Exam", "description": "Exam categories" },
+    "subjects": { "schema": "Subject", "description": "Subject categories" },
+    "notices": { "schema": "Notice", "description": "Global announcements" },
+    "thoughts": { "schema": "Thought", "description": "Daily motivational quotes" },
+    "settings": { "schema": "Setting", "description": "Global configuration" },
+    "tests": { "schema": "Test", "description": "Mock tests within exams" },
+    "questions": { "schema": "Question", "description": "Questions within tests" },
+    "results": { "schema": "Result", "description": "Test results" },
+    "subscriptions": { "schema": "Subscription", "description": "User subscriptions" },
+    "liveTests": { "schema": "LiveTest", "description": "Scheduled live tests" },
+    "coupons": { "schema": "Coupon", "description": "Discount coupons" }
+  }
+}

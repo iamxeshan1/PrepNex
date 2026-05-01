@@ -1,0 +1,11 @@
+{
+  "name": "PrepNex - Exam Mastery Platform",
+  "description": "India's most focused test series platform for JKSSB, UPSC, SSC and more. Featuring real exam simulations and performance analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "Firebase Authentication",
+    "Cloud Firestore",
+    "React Router",
+    "Tailwind CSS"
+  ]
+}
