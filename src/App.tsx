@@ -28,9 +28,12 @@ import AdminLiveTests from './pages/Admin/LiveTests';
 import AdminHelpdesk from './pages/Admin/Helpdesk';
 import AdminActivityLog from './pages/Admin/ActivityLog';
 import AdminMarketing from './pages/Admin/Marketing';
+import AdminReviews from './pages/Admin/Reviews';
+import AdminStudyMaterial from './pages/Admin/StudyMaterial';
 import Premium from './pages/Premium';
 import Subjects from './pages/Subjects';
 import Contact from './pages/Contact';
+import StudyMaterial from './pages/StudyMaterial';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import LiveTestDetail from './pages/LiveTestDetail';
 import Helpdesk from './pages/Helpdesk';
@@ -238,6 +241,20 @@ export default function App() {
               <AdminActivityLog />
             </ProtectedRoute>
           } />
+
+          <Route path="/admin/reviews" element={
+            <ProtectedRoute adminOnly>
+              <AdminReviews />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/study-material" element={
+            <ProtectedRoute adminOnly>
+              <AdminStudyMaterial />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/study-material" element={<StudyMaterial />} />
           
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

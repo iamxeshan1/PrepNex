@@ -88,7 +88,13 @@ export const saveResult = async (resultData: any) => {
   const path = 'results';
   try {
     const resRef = doc(collection(db, path));
-    await setDoc(resRef, { ...resultData, resultId: resRef.id, date: new Date().toISOString() });
+    const finalData = { 
+      ...resultData, 
+      resultId: resRef.id, 
+      date: new Date().toISOString(),
+      timestamp: Timestamp.now()
+    };
+    await setDoc(resRef, finalData);
     
     // Log activity
     await logActivity(resultData.userId, ActivityAction.TEST_ATTEMPT, `Attempted test with ID: ${resultData.testId}, Score: ${resultData.score}/${resultData.maxMarks || 100}`);
@@ -96,6 +102,22 @@ export const saveResult = async (resultData: any) => {
     return resRef.id;
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
+  }
+};
+
+export const getResultsByTestId = async (userId: string, testId: string) => {
+  const path = 'results';
+  try {
+    const q = query(
+      collection(db, path), 
+      where('userId', '==', userId), 
+      where('testId', '==', testId),
+      orderBy('date', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
   }
 };
 

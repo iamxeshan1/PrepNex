@@ -58,22 +58,50 @@ export default function AdminUsers() {
   };
 
   const handleExportUsers = () => {
+    const wb = XLSX.utils.book_new();
+
+    // 1. Executive Summary
+    const summaryData = [
+      ["PrepNex - Student Roster & Growth Metrics"],
+      ["Snapshot Date:", new Date().toLocaleString()],
+      [],
+      ["ACCOUNTS OVERVIEW"],
+      ["Total Registered Students", users.length],
+      ["Verified Accounts", users.filter(u => u.emailVerified).length],
+      ["Blocked Accounts", users.filter(u => u.isBlocked).length],
+      [],
+      ["MEMBERSHIP TIERS"],
+      ["Premium Plan Subscribers", users.filter(u => u.isPremium).length],
+      ["Basic Plan Students", users.filter(u => !u.isPremium).length],
+      [],
+      ["ENGAGEMENT SUMMARY"],
+      ["Total Mock Tests Taken", users.reduce((acc, curr) => acc + (curr.testsAttempted || 0), 0)],
+      ["Avg. Student Score (Overall)", `${Math.round(users.reduce((acc, curr) => acc + (curr.averageScore || 0), 0) / (users.length || 1))}%`],
+    ];
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+    wsSummary['!cols'] = [{wch: 30}, {wch: 25}];
+    XLSX.utils.book_append_sheet(wb, wsSummary, "Growth Summary");
+
+    // 2. Student Master List
     const data = users.map(u => ({
-      'Student Name': u.name,
-      'Email': u.email,
-      'Role': u.role,
-      'Status': u.isBlocked ? 'Blocked' : 'Active',
-      'Membership': u.subscriptionExpiry ? 'Premium' : 'Basic',
-      'Average Score': `${Math.round(u.averageScore || 0)}%`,
-      'Privileged Exams': u.freeExams?.length || 0,
-      'Tests Attempted': u.testsAttempted || 0,
-      'Registration Date': u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'
+      'Legal Name': u.name || 'N/A',
+      'Email Identity': u.email,
+      'System Role': u.role?.toUpperCase() || 'STUDENT',
+      'Account Health': u.isBlocked ? 'SUSPENDED' : 'OPERATIONAL',
+      'Access Type': u.subscriptionExpiry ? 'PREMIUM' : 'BASIC',
+      'Proficiency %': `${Math.round(u.averageScore || 0)}%`,
+      'Mock Tests Done': u.testsAttempted || 0,
+      'Account Created': u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A',
+      'Email Verified': u.emailVerified ? 'YES' : 'NO'
     }));
 
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Students");
-    XLSX.writeFile(wb, "prepnex_students_report.xlsx");
+    const wsUsers = XLSX.utils.json_to_sheet(data);
+    wsUsers['!cols'] = [
+      {wch: 25}, {wch: 30}, {wch: 15}, {wch: 18}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 20}, {wch: 15}
+    ];
+    XLSX.utils.book_append_sheet(wb, wsUsers, "Student Roster");
+
+    XLSX.writeFile(wb, `PrepNex_Student_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   const grantFreeAccess = async (userId: string, examId: string) => {

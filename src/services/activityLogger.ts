@@ -1,6 +1,5 @@
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { OperationType } from '../utils/firestoreErrorHandler'; // if applicable
 
 export enum ActivityAction {
   TEST_ATTEMPT = 'TEST_ATTEMPT',

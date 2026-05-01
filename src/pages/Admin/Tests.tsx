@@ -19,6 +19,8 @@ export default function AdminTests() {
   const [title, setTitle] = useState('');
   const [duration, setDuration] = useState('60');
   const [marks, setMarks] = useState('100');
+  const [positiveMarks, setPositiveMarks] = useState('1');
+  const [negativeMarks, setNegativeMarks] = useState('0.25');
   const [isFree, setIsFree] = useState(false);
   const [price, setPrice] = useState('0');
   
@@ -55,6 +57,8 @@ export default function AdminTests() {
       title,
       duration: Number(duration),
       totalMarks: Number(marks),
+      positiveMarks: Number(positiveMarks),
+      negativeMarks: Number(negativeMarks),
       isFree,
       price: isFree ? 0 : Number(price),
       sections: examId ? sections : [], // Sections only relevant for Exams
@@ -68,6 +72,8 @@ export default function AdminTests() {
     setTitle('');
     setDuration('60');
     setMarks('100');
+    setPositiveMarks('1');
+    setNegativeMarks('0.25');
     setIsFree(false);
     setPrice('0');
     setSections([]);
@@ -111,13 +117,38 @@ export default function AdminTests() {
   };
 
   const downloadSample = () => {
-    const ws = XLSX.utils.json_to_sheet([
-      { title: 'Full Mock Test 01', duration: 120, totalMarks: 100, isFree: 'No' },
-      { title: 'Full Mock Test 02', duration: 120, totalMarks: 100, isFree: 'Yes' }
-    ]);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Tests");
-    XLSX.writeFile(wb, "tests_sample.xlsx");
+    
+    // Instructions Sheet
+    const instData = [
+      ["PrepNex - Mock Test Batch Import Template"],
+      ["This tool allows you to import multiple tests at once."],
+      [],
+      ["FIELD DEFINITIONS:"],
+      ["title", "The name of the test as it will appear to students"],
+      ["duration", "Duration in minutes (e.g. 120)"],
+      ["totalMarks", "Maximum marks attainable in this test"],
+      ["isFree", "Set to 'Yes' for free access, or 'No' for paid/premium"],
+      ["price", "Price in INR (Required if isFree is 'No')"],
+      [],
+      ["PRO TIP:", "Ensure there are no blank rows between data entries."]
+    ];
+    const wsInst = XLSX.utils.aoa_to_sheet(instData);
+    wsInst['!cols'] = [{wch: 20}, {wch: 60}];
+    XLSX.utils.book_append_sheet(wb, wsInst, "Instructions");
+
+    // Sample Data Sheet
+    const sampleData = [
+      ["title", "duration", "totalMarks", "isFree", "price"],
+      ["General Awareness Full Mock 01", 120, 100, "No", 49],
+      ["Weekly Free Practice Quiz", 30, 25, "Yes", 0],
+      ["Advanced Performance Assessment", 90, 75, "No", 29]
+    ];
+    const wsSample = XLSX.utils.aoa_to_sheet(sampleData);
+    wsSample['!cols'] = [{wch: 35}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}];
+    XLSX.utils.book_append_sheet(wb, wsSample, "Data Input Template");
+
+    XLSX.writeFile(wb, "PrepNex_Tests_Import_Template.xlsx");
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -128,7 +159,9 @@ export default function AdminTests() {
     reader.onload = async (evt) => {
       const bstr = evt.target?.result;
       const wb = XLSX.read(bstr, { type: 'binary' });
-      const wsname = wb.SheetNames[0];
+      
+      // Look for a sheet named "Data Input Template" or the first sheet
+      const wsname = wb.SheetNames.find(n => n.includes("Template")) || wb.SheetNames[0];
       const ws = wb.Sheets[wsname];
       const data = XLSX.utils.sheet_to_json(ws);
       
@@ -219,6 +252,22 @@ export default function AdminTests() {
                 type="number" required 
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
                 value={marks} onChange={(e) => setMarks(e.target.value)} 
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">Positive Marks per Question</label>
+              <input 
+                type="number" step="0.01" required 
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
+                value={positiveMarks} onChange={(e) => setPositiveMarks(e.target.value)} 
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">Negative Marks per Question (e.g. 0.25)</label>
+              <input 
+                type="number" step="0.01" required 
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
+                value={negativeMarks} onChange={(e) => setNegativeMarks(e.target.value)} 
               />
             </div>
             <div className="md:col-span-2 flex items-center gap-3 bg-slate-50 p-4 rounded-xl shadow-sm border border-slate-100">

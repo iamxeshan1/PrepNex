@@ -47,6 +47,8 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
                   { label: 'Coupons', path: '/admin/coupons', icon: Ticket },
                   { label: 'Subscriptions', path: '/admin/subscriptions', icon: CreditCard },
                   { label: 'Activity Log', path: '/admin/activity', icon: Activity },
+                  { label: 'Reviews', path: '/admin/reviews', icon: MessageCircle },
+                  { label: 'Materials', path: '/admin/study-material', icon: BookOpen },
                   { label: 'Helpdesk', path: '/admin/helpdesk', icon: MessageCircle },
                   { label: 'Marketing', path: '/admin/marketing', icon: Mail },
                   { label: 'Settings', path: '/admin/settings', icon: Settings },

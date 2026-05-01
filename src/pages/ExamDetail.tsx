@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { useAuth } from '../context/AuthContext';
-import { getTestsByExamId, createSubscription } from '../services/db';
+import { getTestsByExamId, createSubscription, getResultsByTestId } from '../services/db';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { ChevronLeft, Lock, Play, Clock, FileText, CheckCircle2, ShoppingBag, Award } from 'lucide-react';
+import { ChevronLeft, Lock, Play, Clock, FileText, CheckCircle2, ShoppingBag, Award, History } from 'lucide-react';
 
 export default function ExamDetail() {
   const { examId } = useParams();
@@ -15,6 +15,7 @@ export default function ExamDetail() {
   const [tests, setTests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
+  const [testResults, setTestResults] = useState<Record<string, any[]>>({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -25,10 +26,21 @@ export default function ExamDetail() {
       }
       const testsData = await getTestsByExamId(examId);
       setTests(testsData || []);
+      
+      // Fetch results for these tests if user is logged in
+      if (user) {
+        const resultsMap: Record<string, any[]> = {};
+        for (const test of testsData || []) {
+          const results = await getResultsByTestId(user.uid, test.id);
+          resultsMap[test.id] = results || [];
+        }
+        setTestResults(resultsMap);
+      }
+      
       setLoading(false);
     };
     fetchData();
-  }, [examId]);
+  }, [examId, user]);
 
   const hasAccess = (test: any) => {
     if (test.isFree) return true;
@@ -58,6 +70,10 @@ export default function ExamDetail() {
 
     setPurchaseLoading(true);
     try {
+      // Create a controller to abort the fetch if it takes too long
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds timeout
+
       // 1. Create order on backend
       const response = await fetch('/api/create-order', {
         method: 'POST',
@@ -67,10 +83,14 @@ export default function ExamDetail() {
           currency: 'INR',
           receipt: `rcpt_${(examId || '').slice(0, 10)}`,
         }),
+        signal: controller.signal
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        throw new Error('Failed to create order on server.');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || errorData.error || 'Failed to create order on server.');
       }
 
       const order = await response.json();
@@ -87,30 +107,44 @@ export default function ExamDetail() {
         name: "PrepNex",
         description: `Purchase ${exam.name}`,
         order_id: order.id,
-        handler: async (response: any) => {
-          if (!response.razorpay_order_id || !response.razorpay_payment_id) {
-            alert('Payment was not completed correctly.');
-            return;
+        modal: {
+          ondismiss: function() {
+            setPurchaseLoading(false);
           }
-          // 3. Verify payment on backend
-          const verifyRes = await fetch('/api/verify-payment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            }),
-          });
+        },
+        handler: async (response: any) => {
+          setPurchaseLoading(true); // Keep loading during verification
+          try {
+            if (!response.razorpay_order_id || !response.razorpay_payment_id) {
+              alert('Payment was not completed correctly.');
+              setPurchaseLoading(false);
+              return;
+            }
+            // 3. Verify payment on backend
+            const verifyRes = await fetch('/api/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
 
-          const verifyData = await verifyRes.json();
-          if (verifyData.status === 'ok') {
-            // 4. Update subscription in Firestore
-            await createSubscription(user.uid, examId);
-            alert('Payment successful! Your course is now unlocked.');
-            window.location.reload();
-          } else {
-            alert('Payment verification failed. Please contact support if amount was deducted.');
+            const verifyData = await verifyRes.json();
+            if (verifyData.status === 'ok') {
+              // 4. Update subscription in Firestore
+              await createSubscription(user.uid, examId);
+              alert('Payment successful! Your course is now unlocked.');
+              window.location.reload();
+            } else {
+              alert('Payment verification failed. Please contact support if amount was deducted.');
+              setPurchaseLoading(false);
+            }
+          } catch (err: any) {
+             console.error("Verification error:", err);
+             alert("Error during payment verification: " + (err.message || String(err)));
+             setPurchaseLoading(false);
           }
         },
         prefill: {
@@ -130,10 +164,13 @@ export default function ExamDetail() {
       rzp.open();
     } catch (error: any) {
       console.error('Payment Error:', error);
-      alert(error.message || 'Failed to initiate payment. Please try again.');
-    } finally {
+      if (error.name === 'AbortError') {
+        alert('Payment request timed out. Please check your internet connection and try again.');
+      } else {
+        alert(error.message || 'Failed to initiate payment. Please try again.');
+      }
       setPurchaseLoading(false);
-    }
+    } 
   };
 
   if (loading) return <Layout><div className="flex h-96 items-center justify-center">Loading...</div></Layout>;
@@ -174,39 +211,63 @@ export default function ExamDetail() {
               <div className="space-y-4">
                 {tests.map((test) => {
                   const unlocked = hasAccess(test);
+                  const results = testResults[test.id] || [];
+                  const latestResult = results[0]; // Ordered by date desc
+                  const bestScore = results.length > 0 ? Math.max(...results.map(r => r.score)) : null;
+
                   return (
                     <div 
                       key={test.id}
                       className={`p-6 bg-white border rounded-[2rem] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-6 ${unlocked ? 'border-slate-100 hover:border-primary shadow-sm' : 'border-slate-50 bg-slate-50/50 grayscale'}`}
                     >
-                      <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${unlocked ? 'bg-primary/5 text-primary' : 'bg-slate-200 text-slate-400'}`}>
+                      <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-4">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${unlocked ? 'bg-primary/5 text-primary' : 'bg-slate-200 text-slate-400'}`}>
                           {unlocked ? <FileText className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
                         </div>
-                        <div>
-                          <h4 className="font-bold text-primary">{test.title}</h4>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                             <h4 className="font-bold text-primary">{test.title}</h4>
+                             {results.length > 0 && (
+                               <span className="text-[10px] font-black bg-primary/10 text-primary px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                                 {results.length} Attempt{results.length > 1 ? 's' : ''}
+                               </span>
+                             )}
+                          </div>
                           <div className="flex items-center gap-4 mt-1">
                             <span className="flex items-center gap-1 text-xs text-slate-400 font-medium"><Clock className="w-3 h-3" /> {test.duration} mins</span>
                             <span className="flex items-center gap-1 text-xs text-slate-400 font-medium"><Award className="w-3 h-3" /> {test.totalMarks} Marks</span>
+                            {bestScore !== null && (
+                              <span className="flex items-center gap-1 text-xs text-green-600 font-bold"><History className="w-3 h-3" /> Best: {bestScore}%</span>
+                            )}
                           </div>
                         </div>
                       </div>
 
-                      {unlocked ? (
-                        <Link 
-                          to={`/test/${test.id}`}
-                          className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary/90 transition-all active:scale-95 shadow-md"
-                        >
-                          <Play className="w-4 h-4 fill-white" /> Start Mock
-                        </Link>
-                      ) : (
-                        <Link 
-                          to={`/premium?examId=${examId}`}
-                          className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-200 text-slate-600 text-sm font-bold rounded-xl hover:bg-slate-300 transition-all"
-                        >
-                          Unlock Exam
-                        </Link>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {results.length > 0 && (
+                          <Link 
+                            to={`/result/${latestResult.id}`}
+                            className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 text-slate-600 text-sm font-bold rounded-xl hover:bg-slate-50 transition-all shadow-sm"
+                          >
+                            Last Result
+                          </Link>
+                        )}
+                        {unlocked ? (
+                          <Link 
+                            to={`/test/${test.id}`}
+                            className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary/90 transition-all active:scale-95 shadow-md whitespace-nowrap"
+                          >
+                            <Play className="w-4 h-4 fill-white" /> {results.length > 0 ? 'Retake Mock' : 'Start Mock'}
+                          </Link>
+                        ) : (
+                          <Link 
+                            to={`/premium?examId=${examId}`}
+                            className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-200 text-slate-600 text-sm font-bold rounded-xl hover:bg-slate-300 transition-all"
+                          >
+                            Unlock Exam
+                          </Link>
+                        )}
+                      </div>
                     </div>
                   );
                 })}

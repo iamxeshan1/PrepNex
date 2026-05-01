@@ -73,32 +73,40 @@ export default function AdminQuestions() {
   };
 
   const downloadSample = () => {
-    const data = [
-      { 
-        question: 'What is the capital of France?', 
-        subjectName: 'General Knowledge',
-        option1: 'London', 
-        option2: 'Paris', 
-        option3: 'Berlin', 
-        option4: 'Madrid', 
-        correctAnswer: 'Paris',
-        explanation: 'Paris is the capital and most populous city of France.'
-      },
-      { 
-        question: 'Which component is the brain of a computer?', 
-        subjectName: 'Computer Science',
-        option1: 'RAM', 
-        option2: 'Hard Disk', 
-        option3: 'CPU', 
-        option4: 'Monitor', 
-        correctAnswer: 'CPU',
-        explanation: 'The CPU performs most of the processing inside a computer.'
-      }
-    ];
-    const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Questions");
-    XLSX.writeFile(wb, "questions_sample.xlsx");
+    
+    // Instructions
+    const instData = [
+      ["PrepNex - Question Bank Batch Import"],
+      ["Guidelines for importing questions:"],
+      [],
+      ["FIELD", "DESCRIPTION"],
+      ["question", "The actual text of the question. You can use Markdown."],
+      ["subjectName", "Optional. If not provided, it uses the test's main subject."],
+      ["option1", "Text for the first option"],
+      ["option2", "Text for the second option"],
+      ["option3", "Text for the third option"],
+      ["option4", "Text for the fourth option"],
+      ["correctAnswer", "MUST match exactly one of the options text."],
+      ["explanation", "Optional. Displayed after the student submits."]
+    ];
+    const wsInst = XLSX.utils.aoa_to_sheet(instData);
+    wsInst['!cols'] = [{wch: 20}, {wch: 60}];
+    XLSX.utils.book_append_sheet(wb, wsInst, "Import Guidelines");
+
+    // Sample
+    const sampleData = [
+      ["question", "subjectName", "option1", "option2", "option3", "option4", "correctAnswer", "explanation"],
+      ["What is 10 + 5?", "Mathematics", "12", "15", "18", "20", "15", "Simple addition logic."],
+      ["Who wrote the Indian Constitution?", "Polity", "B.R. Ambedkar", "Nehru", "Gandhi", "Prasad", "B.R. Ambedkar", "Dr. B.R. Ambedkar was the chairman of the drafting committee."]
+    ];
+    const wsSample = XLSX.utils.aoa_to_sheet(sampleData);
+    wsSample['!cols'] = [
+      {wch: 40}, {wch: 20}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 20}, {wch: 40}
+    ];
+    XLSX.utils.book_append_sheet(wb, wsSample, "Question Entry Template");
+
+    XLSX.writeFile(wb, "PrepNex_Questions_Template.xlsx");
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,7 +117,7 @@ export default function AdminQuestions() {
     reader.onload = async (evt) => {
       const bstr = evt.target?.result;
       const wb = XLSX.read(bstr, { type: 'binary' });
-      const wsname = wb.SheetNames[0];
+      const wsname = wb.SheetNames.find(n => n.includes("Template")) || wb.SheetNames[0];
       const ws = wb.Sheets[wsname];
       const data = XLSX.utils.sheet_to_json(ws);
       

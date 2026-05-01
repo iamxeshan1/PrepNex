@@ -167,6 +167,9 @@ export default function Premium() {
   const initiatePayment = async (amount: number, description: string, onSuccess: () => Promise<void>, receipt: string) => {
     setPurchaseLoading(true);
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
       // 1. Create order on backend
       const response = await fetch('/api/create-order', {
         method: 'POST',
@@ -176,10 +179,14 @@ export default function Premium() {
           currency: 'INR',
           receipt: receipt,
         }),
+        signal: controller.signal
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        throw new Error('Failed to create order on server.');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || errorData.error || 'Failed to create order on server.');
       }
 
       const order = await response.json();
@@ -196,27 +203,41 @@ export default function Premium() {
         name: "PrepNex",
         description: description,
         order_id: order.id,
-        handler: async (response: any) => {
-          if (!response.razorpay_order_id || !response.razorpay_payment_id) {
-            alert('Payment was not completed correctly.');
-            return;
+        modal: {
+          ondismiss: function() {
+            setPurchaseLoading(false);
           }
-          // 3. Verify payment on backend
-          const verifyRes = await fetch('/api/verify-payment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            }),
-          });
+        },
+        handler: async (response: any) => {
+          setPurchaseLoading(true);
+          try {
+            if (!response.razorpay_order_id || !response.razorpay_payment_id) {
+              alert('Payment was not completed correctly.');
+              setPurchaseLoading(false);
+              return;
+            }
+            // 3. Verify payment on backend
+            const verifyRes = await fetch('/api/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
 
-          const verifyData = await verifyRes.json();
-          if (verifyData.status === 'ok') {
-            await onSuccess();
-          } else {
-            alert('Payment verification failed. Please contact support if amount was deducted.');
+            const verifyData = await verifyRes.json();
+            if (verifyData.status === 'ok') {
+              await onSuccess();
+            } else {
+              alert('Payment verification failed. Please contact support if amount was deducted.');
+              setPurchaseLoading(false);
+            }
+          } catch (err: any) {
+            console.error("Verification error:", err);
+            alert("Error during verification: " + (err.message || String(err)));
+            setPurchaseLoading(false);
           }
         },
         prefill: {
@@ -236,8 +257,11 @@ export default function Premium() {
       rzp.open();
     } catch (error: any) {
       console.error('Payment Error:', error);
-      alert(error.message || 'Failed to initiate payment. Please try again.');
-    } finally {
+      if (error.name === 'AbortError') {
+        alert('Payment request timed out. Please check your connection.');
+      } else {
+        alert(error.message || 'Failed to initiate payment. Please try again.');
+      }
       setPurchaseLoading(false);
     }
   };

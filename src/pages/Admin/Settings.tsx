@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Save, AlertCircle, CheckCircle2, ShieldCheck, Share2, Mail, Instagram, Facebook, Youtube, MapPin } from 'lucide-react';
+import { Save, AlertCircle, CheckCircle2, ShieldCheck, Share2, Mail, Instagram, Facebook, Youtube, MapPin, BarChart3 } from 'lucide-react';
 
 export default function AdminSettings() {
   const [razorpayKeyId, setRazorpayKeyId] = useState('');
@@ -20,6 +20,12 @@ export default function AdminSettings() {
   const [contactAddress, setContactAddress] = useState('');
   const [contactMapUrl, setContactMapUrl] = useState('');
   const [premiumPrice, setPremiumPrice] = useState('999');
+  const [heroTagline, setHeroTagline] = useState('Crack exams with smart practice');
+  const [aspirantCount, setAspirantCount] = useState('10,000+');
+  const [totalTests, setTotalTests] = useState('500+');
+  const [examsCovered, setExamsCovered] = useState('25+');
+  const [activeUsers, setActiveUsers] = useState('12k+');
+  const [successRate, setSuccessRate] = useState('88%');
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -53,6 +59,12 @@ export default function AdminSettings() {
         setContactAddress(data.contactAddress || '');
         setContactMapUrl(data.contactMapUrl || '');
         setPremiumPrice(data.premiumPrice || '999');
+        setHeroTagline(data.heroTagline || 'Crack exams with smart practice');
+        setAspirantCount(data.aspirantCount || '10,000+');
+        setTotalTests(data.totalTests || '500+');
+        setExamsCovered(data.examsCovered || '25+');
+        setActiveUsers(data.activeUsers || '12k+');
+        setSuccessRate(data.successRate || '88%');
       }
 
       if (smtpSnap.exists()) {
@@ -87,6 +99,12 @@ export default function AdminSettings() {
           contactAddress,
           contactMapUrl,
           premiumPrice,
+          heroTagline,
+          aspirantCount,
+          totalTests,
+          examsCovered,
+          activeUsers,
+          successRate,
           updatedAt: new Date().toISOString()
         }),
         setDoc(doc(db, 'settings', 'smtp'), {
@@ -182,61 +200,131 @@ export default function AdminSettings() {
           </div>
         </div>
 
-        {/* Contact Info */}
+        {/* Platform Statistics */}
+        <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm space-y-8">
+          <div className="flex items-center gap-4 pb-6 border-b border-slate-50">
+            <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-green-600">
+              <BarChart3 className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-xl font-extrabold text-primary tracking-tight">Platform Statistics</h3>
+              <p className="text-slate-500 text-sm">Manage numbers shown on the homepage.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="md:col-span-2 lg:col-span-3 space-y-2">
+              <label className="text-sm font-bold text-slate-700">Hero Tagline</label>
+              <input 
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
+                value={heroTagline} onChange={(e) => setHeroTagline(e.target.value)} 
+                placeholder="Crack exams with smart practice"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">Aspirant Count (Header)</label>
+              <input 
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
+                value={aspirantCount} onChange={(e) => setAspirantCount(e.target.value)} 
+                placeholder="10,000+"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">Total Tests</label>
+              <input 
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
+                value={totalTests} onChange={(e) => setTotalTests(e.target.value)} 
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">Exams Covered</label>
+              <input 
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
+                value={examsCovered} onChange={(e) => setExamsCovered(e.target.value)} 
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">Active Users</label>
+              <input 
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
+                value={activeUsers} onChange={(e) => setActiveUsers(e.target.value)} 
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">Success Rate</label>
+              <input 
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
+                value={successRate} onChange={(e) => setSuccessRate(e.target.value)} 
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Email & System Configuration */}
         <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm space-y-8">
           <div className="flex items-center gap-4 pb-6 border-b border-slate-50">
             <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600">
               <Mail className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-xl font-extrabold text-primary tracking-tight">Email & System Configuration</h3>
-              <p className="text-slate-500 text-sm">Configure SMTP details for sending emails and basic site info.</p>
+              <h3 className="text-xl font-extrabold text-primary tracking-tight">Email & System</h3>
+              <p className="text-slate-500 text-sm">SMTP details and pricing configuration.</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">SMTP Email (User)</label>
+              <label className="text-sm font-bold text-slate-700">SMTP Email</label>
               <input 
                 type="email"
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
                 value={smtpEmail} onChange={(e) => setSmtpEmail(e.target.value)} 
-                placeholder="prepnexedtech@gmail.com"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">SMTP App Password</label>
+              <label className="text-sm font-bold text-slate-700">SMTP Password</label>
               <input 
                 type="password"
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
                 value={smtpPassword} onChange={(e) => setSmtpPassword(e.target.value)} 
-                placeholder="••••••••••••••••"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Support Email (Contact Page)</label>
+              <label className="text-sm font-bold text-slate-700">Support Email</label>
               <input 
                 type="email"
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
                 value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} 
-                placeholder="support@prepnex.com"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Premium Pass Price (₹)</label>
+              <label className="text-sm font-bold text-slate-700">Premium Price (₹)</label>
               <input 
                 type="number"
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
                 value={premiumPrice} onChange={(e) => setPremiumPrice(e.target.value)} 
-                placeholder="999"
               />
             </div>
+          </div>
+        </div>
+
+        {/* Contact Info */}
+        <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm space-y-8">
+          <div className="flex items-center gap-4 pb-6 border-b border-slate-50">
+            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-600">
+              <MapPin className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-xl font-extrabold text-primary tracking-tight">Contact & Location</h3>
+              <p className="text-slate-500 text-sm">Update your office address and contact phone.</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700">Phone Number</label>
               <input 
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
                 value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} 
-                placeholder="+91 9876543210"
               />
             </div>
             <div className="md:col-span-2 space-y-2">
@@ -244,7 +332,6 @@ export default function AdminSettings() {
               <textarea 
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm min-h-[80px]"
                 value={contactAddress} onChange={(e) => setContactAddress(e.target.value)} 
-                placeholder="Plot No. 123, Sector 5..."
               />
             </div>
             <div className="md:col-span-2 space-y-2">
@@ -252,9 +339,7 @@ export default function AdminSettings() {
               <input 
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
                 value={contactMapUrl} onChange={(e) => setContactMapUrl(e.target.value)} 
-                placeholder="https://www.google.com/maps/embed?pb=..."
               />
-              <p className="text-[10px] text-slate-400 font-medium italic">Paste the 'src' value from the Google Maps iframe embed code.</p>
             </div>
           </div>
         </div>

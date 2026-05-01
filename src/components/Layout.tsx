@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { auth } from '../lib/firebase';
 import { Logo } from './Logo';
-import { User as UserIcon, LogOut, Menu, Shield, X, Home, BookOpen, Layers, BarChart, Bell, Zap, Instagram, Facebook, Youtube, Trophy, Users, MessageCircle } from 'lucide-react';
+import { User as UserIcon, LogOut, Menu, Shield, X, Home, BookOpen, Layers, BarChart, Bell, Zap, Instagram, Facebook, Youtube, Trophy, Users, MessageCircle, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -21,6 +21,7 @@ export const Navbar = () => {
   const menuItems = [
     { label: 'Home', path: '/', icon: Home },
     { label: 'Exams', path: '/exams', icon: Layers },
+    { label: 'Material', path: '/study-material', icon: BookOpen },
     { label: 'Subjects', path: '/subjects', icon: BookOpen },
     { label: 'About Us', path: '/about', icon: Users },
     { label: 'Contact Us', path: '/contact', icon: Bell },
@@ -48,6 +49,7 @@ export const Navbar = () => {
 
             <div className="hidden md:flex items-center gap-8">
               <Link to="/exams" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors uppercase tracking-widest text-[10px]">Exams</Link>
+              <Link to="/study-material" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors uppercase tracking-widest text-[10px]">Material</Link>
               <Link to="/about" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors uppercase tracking-widest text-[10px]">About</Link>
               <Link to="/contact" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors uppercase tracking-widest text-[10px]">Contact</Link>
               {user && (
@@ -196,7 +198,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               <div className="space-y-6">
                 <Logo className="text-4xl inline-block brightness-0 invert" />
                 <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-sm italic">
-                  "Your journey to excellence begins with a single step of practice."
+                  "Practice. Improve. Succeed."
                 </p>
               </div>
               
@@ -206,7 +208,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 </div>
                 <div>
                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Global Reach</p>
-                  <p className="text-sm font-bold text-white">Serving 10,000+ Aspirants</p>
+                  <p className="text-sm font-bold text-white">Serving {settings?.aspirantCount || '10,000+'} Aspirants</p>
                 </div>
               </div>
             </div>
@@ -217,6 +219,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 <Link to="/exams" className="text-sm font-bold text-slate-300 hover:text-white transition-all hover:translate-x-1 flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 rounded-full bg-secondary group-hover:scale-150 transition-all" />
                   Exam Library
+                </Link>
+                <Link to="/study-material" className="text-sm font-bold text-slate-300 hover:text-white transition-all hover:translate-x-1 flex items-center gap-2 group">
+                  <span className="w-1.5 h-1.5 rounded-full bg-secondary group-hover:scale-150 transition-all" />
+                  Study Material
                 </Link>
                 <Link to="/subjects" className="text-sm font-bold text-slate-300 hover:text-white transition-all hover:translate-x-1 flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 rounded-full bg-secondary group-hover:scale-150 transition-all" />

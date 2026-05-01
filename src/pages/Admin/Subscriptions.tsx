@@ -130,19 +130,47 @@ export default function AdminSubscriptions() {
   };
 
   const exportSubscriptions = () => {
-    const data = users.map(u => ({
-      Name: u.name,
-      Email: u.email,
-      Status: u.subscriptionExpiry ? 'Premium' : 'Basic',
-      ExpiryDate: u.subscriptionExpiry ? new Date(u.subscriptionExpiry).toLocaleDateString() : 'N/A',
-      TestsAttempted: u.testsAttempted || 0,
-      AverageScore: `${Math.round(u.averageScore || 0)}%`
+    const wb = XLSX.utils.book_new();
+    
+    // 1. Summary Sheet
+    const summaryData = [
+      ["PrepNex - Subscriptions & Revenue Audit"],
+      ["Date Generated:", new Date().toLocaleString()],
+      [],
+      ["MEMBERSHIP SUMMARY"],
+      ["Total Database Users", users.length],
+      ["Premium Subscribers", users.filter(u => !!u.subscriptionExpiry).length],
+      ["Basic/Free Users", users.filter(u => !u.subscriptionExpiry).length],
+      ["Total Lifecycle Revenue", `₹${totalRevenue.toLocaleString()}`],
+      [],
+      ["MONTHLY PERFORMANCE"],
+      ["Revenue (Current Month)", `₹${thisMonthRevenue.toLocaleString()}`],
+      [],
+      ["SYSTEM COMPLIANCE"],
+      ["All membership dates are validated against server time."]
+    ];
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+    wsSummary['!cols'] = [{wch: 30}, {wch: 25}];
+    XLSX.utils.book_append_sheet(wb, wsSummary, "Audit Summary");
+
+    // 2. Subscriber Detail Sheet
+    const detailData = users.map(u => ({
+      "Subscriber Name": u.name || 'Anonymous',
+      "Email Identifier": u.email,
+      "Membership Tier": u.subscriptionExpiry ? 'PREMIUM' : 'BASIC',
+      "Expiry Threshold": u.subscriptionExpiry ? new Date(u.subscriptionExpiry).toLocaleDateString() : 'N/A',
+      "Tests Completed": u.testsAttempted || 0,
+      "Avg Performance": `${Math.round(u.averageScore || 0)}%`,
+      "Verified Status": u.emailVerified ? 'YES' : 'NO'
     }));
 
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Subscriptions");
-    XLSX.writeFile(wb, "prepnex_subscriptions_report.xlsx");
+    const wsDetail = XLSX.utils.json_to_sheet(detailData);
+    wsDetail['!cols'] = [
+      {wch: 25}, {wch: 30}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}
+    ];
+    XLSX.utils.book_append_sheet(wb, wsDetail, "Full Subscriber List");
+
+    XLSX.writeFile(wb, `PrepNex_Subscriptions_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   const filteredUsers = users

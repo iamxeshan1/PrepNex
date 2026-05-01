@@ -113,7 +113,7 @@ export default function Exams() {
                   
                   <div className="w-full md:w-56 shrink-0 space-y-4 pt-6 md:pt-0 border-t md:border-t-0 md:border-l border-slate-100 md:pl-8 flex flex-col justify-center">
                     <div className="flex flex-row md:flex-col justify-between md:justify-center items-center md:items-start gap-1 mb-2">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Starting from</span>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{exam.isPaid ? 'Premium Access' : 'Free Access'}</span>
                       <div className="text-3xl font-black text-primary flex items-center gap-2">
                         {exam.isPaid ? `₹${exam.price}` : 'FREE'}
                         {exam.isPaid && <Lock className="w-4 h-4 text-slate-300 mb-1" />}
@@ -121,9 +121,13 @@ export default function Exams() {
                     </div>
                     <Link 
                       to={`/exam/${exam.id}`}
-                      className="flex items-center justify-center gap-2 w-full py-4 bg-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.25em] hover:scale-[1.03] transition-all shadow-xl shadow-primary/20 active:scale-95"
+                      className={`flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.25em] hover:scale-[1.03] transition-all shadow-xl active:scale-95 ${
+                        exam.isPaid 
+                          ? 'bg-secondary text-white shadow-secondary/20' 
+                          : 'bg-primary text-white shadow-primary/20'
+                      }`}
                     >
-                      View Details
+                      {exam.isPaid ? 'Enroll Now' : 'Get Started'}
                     </Link>
                   </div>
                 </div>

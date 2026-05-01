@@ -6,16 +6,56 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import dotenv from "dotenv";
 import admin from "firebase-admin";
+import { initializeApp, getApps, getApp } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
 import nodemailer from "nodemailer";
+import fs from "fs";
 
 dotenv.config();
 
-// Initialize Firebase Admin
-admin.initializeApp({
-  projectId: "gen-lang-client-0262811054", // From firebase-applet-config.json
-});
+let _db: any = null;
 
-const db = admin.firestore();
+function getDb() {
+  if (_db) return _db;
+  
+  try {
+    const configPath = path.join(process.cwd(), "firebase-applet-config.json");
+    let config: any = {};
+    if (fs.existsSync(configPath)) {
+      config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+    }
+
+    // Initialize app if not already
+    const app = getApps().length === 0 
+      ? initializeApp({ projectId: config.projectId || process.env.GOOGLE_CLOUD_PROJECT }) 
+      : getApp();
+
+    const dbId = config.firestoreDatabaseId && config.firestoreDatabaseId !== "(default)" 
+      ? config.firestoreDatabaseId 
+      : undefined;
+
+    if (dbId) {
+      _db = getFirestore(app, dbId);
+      console.log("Firestore initialized with named database:", dbId);
+    } else {
+      _db = getFirestore(app);
+      console.log("Firestore initialized with default database");
+    }
+    
+    return _db;
+  } catch (err) {
+    console.error("Firestore initialization failed:", err);
+    // Fallback to default
+    if (getApps().length === 0) initializeApp();
+    _db = getFirestore();
+    return _db;
+  }
+}
+
+// Helper to use db safely
+const db = {
+  collection: (name: string) => getDb().collection(name)
+};
 
 const sendEmail = async (to: string, subject: string, html: string, fromNameOverride?: string) => {
   let user = process.env.EMAIL_USER || "prepnexedtech@gmail.com";
@@ -31,7 +71,7 @@ const sendEmail = async (to: string, subject: string, html: string, fromNameOver
       }
     }
   } catch (err) {
-    console.error("Failed to read dynamic smtp settings, falling back to env vars");
+    console.error("Failed to read dynamic smtp settings, falling back to env vars:", err);
   }
 
   const dynamicTransporter = nodemailer.createTransport({
@@ -54,29 +94,43 @@ const sendEmail = async (to: string, subject: string, html: string, fromNameOver
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+let razorpayInstance: Razorpay | null = null;
+
 async function getRazorpay() {
+  if (razorpayInstance) return razorpayInstance;
+  
   try {
-    const settingsDoc = await db.collection("settings").doc("razorpay").get();
-    const settings = settingsDoc.data();
+    console.log("Fetching Razorpay settings from Firestore...");
+    // Use a promise with timeout for the Firestore read to prevent hanging
+    const settingsPromise = db.collection("settings").doc("razorpay").get();
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore timeout")), 5000));
+    
+    const settingsDoc = await Promise.race([settingsPromise, timeoutPromise]) as admin.firestore.DocumentSnapshot;
+    const settings = settingsDoc.exists ? settingsDoc.data() : null;
     
     const keyId = settings?.razorpayKeyId || process.env.VITE_RAZORPAY_KEY_ID || "";
     const keySecret = settings?.razorpayKeySecret || process.env.RAZORPAY_KEY_SECRET || "";
 
     if (!keyId || !keySecret) {
       console.warn("Razorpay keys missing in both Firestore and Environment.");
+      throw new Error("Razorpay configuration missing");
     }
 
-    return new Razorpay({
+    razorpayInstance = new Razorpay({
       key_id: keyId,
       key_secret: keySecret,
     });
+    return razorpayInstance;
   } catch (error) {
     console.error("Error fetching Razorpay settings:", error);
-    // Fallback to env
-    return new Razorpay({
-      key_id: process.env.VITE_RAZORPAY_KEY_ID || "",
-      key_secret: process.env.RAZORPAY_KEY_SECRET || "",
-    });
+    // Fallback to env without caching the instance if it failed
+    const keyId = process.env.VITE_RAZORPAY_KEY_ID || "";
+    const keySecret = process.env.RAZORPAY_KEY_SECRET || "";
+    
+    if (keyId && keySecret) {
+      return new Razorpay({ key_id: keyId, key_secret: keySecret });
+    }
+    throw new Error("Razorpay not configured on server");
   }
 }
 
@@ -149,15 +203,29 @@ async function startServer() {
   });
 
   // API Routes
+  app.get("/api/payment-status", async (req, res) => {
+    try {
+      const razorpay = await getRazorpay();
+      res.json({ configured: true, keyId: (razorpay as any).key_id });
+    } catch (error: any) {
+      res.status(500).json({ configured: false, error: error.message });
+    }
+  });
+
   app.post("/api/create-order", async (req, res) => {
+    console.log("Received create-order request:", req.body);
     try {
       const { amount, currency = "INR", receipt } = req.body;
       
       if (!amount) {
+        console.error("Amount missing in request");
         return res.status(400).json({ error: "Amount is required" });
       }
 
+      console.log("Initializing Razorpay...");
       const razorpay = await getRazorpay();
+      
+      console.log("Creating Razorpay order...");
       const options = {
         amount: Math.round(amount * 100), // Razorpay expects paise
         currency,
@@ -165,10 +233,15 @@ async function startServer() {
       };
 
       const order = await razorpay.orders.create(options);
+      console.log("Order created successfully:", order.id);
       res.json(order);
-    } catch (error) {
-      console.error("Order creation failed:", error);
-      res.status(500).json({ error: "Failed to create order" });
+    } catch (error: any) {
+      console.error("Order creation failed error detail:", error);
+      res.status(500).json({ 
+        error: "Failed to create order", 
+        message: error.message || "Internal Server Error",
+        detail: process.env.NODE_ENV !== 'production' ? error.toString() : undefined
+      });
     }
   });
 

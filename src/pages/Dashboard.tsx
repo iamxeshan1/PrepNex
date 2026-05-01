@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Layout } from '../components/Layout';
-import { collection, query, where, getDocs, orderBy, limit, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, limit, doc, updateDoc, addDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { logActivity, ActivityAction } from '../services/activityLogger';
-import { BarChart, Clock, Award, ChevronRight, BookOpen, User as UserIcon, Bell, Calendar, Phone, Mail, Save, AlertCircle, Crown, AlertTriangle } from 'lucide-react';
+import { BarChart, Clock, Award, ChevronRight, BookOpen, User as UserIcon, Bell, Calendar, Phone, Mail, Save, AlertCircle, Crown, AlertTriangle, Star, CheckCircle, Send, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function Dashboard() {
@@ -22,6 +22,12 @@ export default function Dashboard() {
   const [dob, setDob] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+  // Review state
+  const [reviewContent, setReviewContent] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewMessage, setReviewMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   useEffect(() => {
     if (profile) {
@@ -112,6 +118,44 @@ export default function Dashboard() {
       setSaveMessage({ type: 'error', text: 'Failed to update profile.' });
     } finally {
       setSavingProfile(false);
+    }
+  };
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profile?.userId || !reviewContent.trim()) return;
+    
+    // Check for 30 day limit
+    if (profile.lastReviewAt) {
+      const lastReview = new Date(profile.lastReviewAt).getTime();
+      const now = new Date().getTime();
+      const diff = now - lastReview;
+      const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+      
+      if (diff < thirtyDays) {
+        setReviewMessage({ type: 'error', text: 'You can only submit one review per month.' });
+        return;
+      }
+    }
+
+    setSubmittingReview(true);
+    setReviewMessage(null);
+    try {
+      await addDoc(collection(db, 'reviews'), {
+        userId: profile.userId,
+        userName: profile.name || 'Student',
+        content: reviewContent,
+        rating: reviewRating,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      });
+      await updateDoc(doc(db, 'users', profile.userId), { lastReviewAt: new Date().toISOString() });
+      setReviewMessage({ type: 'success', text: 'Thank you! Your review has been submitted for approval.' });
+      setReviewContent('');
+    } catch (err) {
+      setReviewMessage({ type: 'error', text: 'Failed to submit review.' });
+    } finally {
+      setSubmittingReview(false);
     }
   };
 
@@ -352,6 +396,58 @@ export default function Dashboard() {
                         <p className="text-xs text-slate-400 font-bold uppercase tracking-widest leading-loose">No active premium packages</p>
                         <Link to="/premium" className="text-[10px] font-black text-secondary hover:underline tracking-widest uppercase mt-4 inline-block">Explore Plans →</Link>
                       </div>
+                    )}
+                  </div>
+
+                  {/* Review Section */}
+                  <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="p-2 bg-yellow-50 text-yellow-600 rounded-lg">
+                        <MessageCircle className="w-4 h-4" />
+                      </div>
+                      <h3 className="text-lg font-black text-primary">Share Your Feedback</h3>
+                    </div>
+                    
+                    {reviewMessage?.type === 'success' ? (
+                      <div className="text-center py-4">
+                        <div className="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <CheckCircle className="w-6 h-6 border-white" />
+                        </div>
+                        <p className="text-xs font-bold text-slate-600">{reviewMessage.text}</p>
+                      </div>
+                    ) : (
+                      <form onSubmit={handleSubmitReview} className="space-y-4">
+                        <div className="flex justify-center gap-2 mb-2">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => setReviewRating(star)}
+                              className="focus:outline-none transition-transform active:scale-125"
+                            >
+                              <Star className={`w-6 h-6 ${star <= reviewRating ? 'fill-yellow-400 text-yellow-400' : 'text-slate-200'}`} />
+                            </button>
+                          ))}
+                        </div>
+                        <textarea 
+                          placeholder="Tell us what you love about PrepNex..."
+                          className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-primary/10 text-xs font-medium min-h-[100px] resize-none"
+                          value={reviewContent}
+                          onChange={(e) => setReviewContent(e.target.value)}
+                          required
+                        />
+                        {reviewMessage?.type === 'error' && (
+                          <p className="text-[10px] font-bold text-red-500 text-center">{reviewMessage.text}</p>
+                        )}
+                        <button 
+                          type="submit"
+                          disabled={submittingReview || !reviewContent.trim()}
+                          className="w-full py-3 bg-primary text-white rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-primary/90 transition-all disabled:opacity-50 shadow-lg shadow-primary/10"
+                        >
+                          {submittingReview ? 'Submitting...' : <><Send className="w-3 h-3" /> Submit Review</>}
+                        </button>
+                        <p className="text-[9px] text-slate-400 text-center font-bold uppercase tracking-widest pt-2">Once per month submission</p>
+                      </form>
                     )}
                   </div>
                 </div>

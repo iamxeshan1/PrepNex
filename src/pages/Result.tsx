@@ -12,43 +12,77 @@ export default function Result() {
   const [questions, setQuestions] = useState<any[]>([]);
   const [subjectMap, setSubjectMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!resultId) return;
-      const resSnap = await getDoc(doc(db, 'results', resultId));
-      if (resSnap.exists()) {
-        const resData = resSnap.data();
-        setResult(resData);
-        
-        const { getQuestionsByTestId } = await import('../services/db');
-        const { getDocs, collection } = await import('firebase/firestore');
-        
-        const [testSnap, qData, subjectSnap] = await Promise.all([
-          getDoc(doc(db, 'tests', resData.testId)),
-          getQuestionsByTestId(resData.testId),
-          getDocs(collection(db, 'subjects'))
-        ]);
-        
-        setQuestions(qData || []);
-        
-        const sMap: Record<string, string> = {};
-        subjectSnap.forEach(doc => {
-          sMap[doc.id] = doc.data().name;
-        });
-        setSubjectMap(sMap);
-        
-        if (testSnap.exists()) {
-          setTest({ id: testSnap.id, ...testSnap.data() });
-        }
+      if (!resultId || resultId === 'undefined') {
+        setError('Invalid Result ID');
+        setLoading(false);
+        return;
       }
-      setLoading(false);
+
+      try {
+        const resSnap = await getDoc(doc(db, 'results', resultId));
+        if (resSnap.exists()) {
+          const resData = resSnap.data();
+          setResult(resData);
+          
+          const { getQuestionsByTestId } = await import('../services/db');
+          const { getDocs, collection } = await import('firebase/firestore');
+          
+          // Use a safer way to fetch related data
+          try {
+            const [testSnap, qData, subjectSnap] = await Promise.all([
+              getDoc(doc(db, 'tests', resData.testId)).then(s => s.exists() ? s : getDoc(doc(db, 'liveTests', resData.testId))),
+              getQuestionsByTestId(resData.testId).catch(() => []),
+              getDocs(collection(db, 'subjects')).catch(() => ({ forEach: () => {} }))
+            ]);
+            
+            setQuestions(qData || []);
+            
+            const sMap: Record<string, string> = {};
+            if (subjectSnap && typeof subjectSnap.forEach === 'function') {
+              subjectSnap.forEach(doc => {
+                sMap[doc.id] = doc.data().name;
+              });
+            }
+            setSubjectMap(sMap);
+            
+            if (testSnap && testSnap.exists()) {
+              setTest({ id: testSnap.id, ...testSnap.data() });
+            }
+          } catch (innerErr) {
+            console.error("Error fetching related data:", innerErr);
+            // We can still show the result even if some related data fails
+          }
+        } else {
+          setError('Result not found');
+        }
+      } catch (err) {
+        console.error("Error fetching result:", err);
+        setError('Failed to load performance analysis');
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
   }, [resultId]);
 
-  if (loading) return <Layout><div className="h-96 flex items-center justify-center">Analyzing performance...</div></Layout>;
-  if (!result) return <Layout><div className="h-96 flex items-center justify-center">Result not found.</div></Layout>;
+  if (loading) return <Layout><div className="h-96 flex flex-col items-center justify-center gap-4">
+    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+    <p className="font-bold text-primary animate-pulse">Analyzing performance...</p>
+  </div></Layout>;
+
+  if (error || !result) return <Layout>
+    <div className="h-96 flex flex-col items-center justify-center gap-4">
+      <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center text-red-500">
+        <AlertCircle className="w-10 h-10" />
+      </div>
+      <h2 className="text-xl font-bold text-slate-800">{error || 'Result not found'}</h2>
+      <Link to="/dashboard" className="px-6 py-2 bg-primary text-white rounded-xl font-bold text-sm">Return to Dashboard</Link>
+    </div>
+  </Layout>;
 
   return (
     <Layout>
@@ -58,7 +92,10 @@ export default function Result() {
             <Award className="w-10 h-10" />
           </div>
           <h1 className="text-4xl font-extrabold text-primary tracking-tight mb-2">Test Complete!</h1>
-          <p className="text-slate-500 font-medium tracking-wide">You attempted {test?.title || 'the mock test'}</p>
+          <p className="text-slate-500 font-medium tracking-wide">
+            You attempted {test?.title || 'the mock test'} 
+            {result.attemptNumber && <span className="ml-2 px-2 py-0.5 bg-slate-100 rounded text-xs font-black text-slate-400">ATTEMPT #{result.attemptNumber}</span>}
+          </p>
         </header>
 
         {/* Score Card */}
