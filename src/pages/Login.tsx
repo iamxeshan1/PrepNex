@@ -117,13 +117,12 @@ export default function Login() {
                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                   <Lock className="w-3 h-3" /> Password
                 </label>
-                <button 
-                  type="button" 
-                  onClick={handleResetPassword}
+                <Link 
+                  to="/request-reset"
                   className="text-xs font-bold text-primary hover:underline hover:text-secondary transition-colors"
                 >
                   Forgot Password?
-                </button>
+                </Link>
               </div>
               <input 
                 required type="password" 

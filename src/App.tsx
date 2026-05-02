@@ -43,6 +43,8 @@ import LiveTestDetail from './pages/LiveTestDetail';
 import Helpdesk from './pages/Helpdesk';
 
 import About from './pages/About';
+import ResetPassword from './pages/ResetPassword';
+import RequestReset from './pages/RequestReset';
 import ScrollToTop from './components/ScrollToTop';
 
 const DataSeeder = () => {
@@ -126,6 +128,8 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/request-reset" element={<RequestReset />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           
           <Route path="/dashboard" element={
             <ProtectedRoute>

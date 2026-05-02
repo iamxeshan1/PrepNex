@@ -7,9 +7,12 @@ import crypto from "crypto";
 import dotenv from "dotenv";
 import { initializeApp, getApp, getApps, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
-import * as adminAuth from "firebase-admin/auth";
+import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import nodemailer from "nodemailer";
 import fs from "fs";
+import { initializeApp as initializeClientApp } from "firebase/app";
+import { getAuth as getClientAuth, sendPasswordResetEmail as sendClientPasswordResetEmail } from "firebase/auth";
+import clientConfig from "./firebase-applet-config.json";
 
 dotenv.config();
 
@@ -20,16 +23,10 @@ if (fs.existsSync(configPath)) {
   config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
 }
 
-let firebaseApp;
-const existingApp = getApps().find(app => app.name === 'my-app');
-if (existingApp) {
-  firebaseApp = existingApp;
-} else {
-  firebaseApp = initializeApp({
-    projectId: config.projectId,
-  }, 'my-app');
-  console.log("Firebase App initialized with project:", config.projectId);
-}
+const firebaseApp = initializeApp({
+  projectId: config.projectId,
+});
+console.log("Firebase App initialized with project:", config.projectId);
 
 let _db: any = null;
 
@@ -102,7 +99,7 @@ const sendEmail = async (to: string, subject: string, html: string, fromNameOver
 
   const fromName = fromNameOverride || "Team PrepNex Edtech";
   return dynamicTransporter.sendMail({
-    from: `"${fromName}" <${user}>`,
+    from: user,
     to,
     subject,
     html,
@@ -191,28 +188,51 @@ async function startServer() {
     }
   });
 
+  const clientApp = initializeClientApp(clientConfig);
+const clientAuth = getClientAuth(clientApp);
+const adminAuth = getAdminAuth(firebaseApp);
+
   app.post("/api/send-reset-password", async (req, res) => {
     try {
       const { email } = req.body;
-      const link = await adminAuth.getAuth(firebaseApp).generatePasswordResetLink(email);
+      
+      // Generate the password reset link via admin SDK
+      const appUrl = process.env.VITE_APP_URL || 'https://ais-dev-jiogqd5sd2opeeg53i55h6-95891610099.asia-southeast1.run.app';
+      const resetLink = await adminAuth.generatePasswordResetLink(email, {
+        url: `${appUrl}/login`
+      });
+
+      // Extract the oobCode from the Firebase generated link
+      const url = new URL(resetLink);
+      const oobCode = url.searchParams.get("oobCode");
+
+      if (!oobCode) throw new Error("Failed to generate reset code");
+
+      const customResetLink = `${appUrl}/reset-password?oobCode=${oobCode}`;
+
       const html = `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; color: #334155; padding: 40px; background-color: #f1f5f9; border-radius: 20px;">
           <div style="background-color: #ffffff; padding: 30px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
-            <h2 style="color: #4f46e5; margin-bottom: 20px;">Password Reset</h2>
-            <p style="font-size: 16px; margin-bottom: 20px;">We received a request to reset your password. Click the button below to secure your account:</p>
-            <a href="${link}" style="display: inline-block; padding: 12px 24px; background-color: #4f46e5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0;">Reset Password</a>
-            <p style="font-size: 14px; color: #64748b; margin-top: 20px;">If you didn't request this, you can safely ignore this email.</p>
+            <h1 style="color: #4f46e5; margin-bottom: 20px;">Reset Your Password</h1>
+            <p style="font-size: 16px; margin-bottom: 15px;">We received a request to reset your password for PrepNex Edtech.</p>
+            <p style="font-size: 16px; margin-bottom: 25px;">Click the button below to set a new password:</p>
+            <div style="margin: 30px 0;">
+              <a href="${customResetLink}" style="display: inline-block; padding: 12px 24px; background-color: #4f46e5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Reset Password</a>
+            </div>
+            <p style="font-size: 14px; color: #64748b;">If you didn't request this, you can safely ignore this email.</p>
             <p style="font-size: 14px; color: #64748b; margin-top: 20px;">With regards,<br><strong>Team PrepNex Edtech</strong></p>
           </div>
         </div>
       `;
-      await sendEmail(email, "Reset Your PrepNex Password", html);
+
+      await sendEmail(email, "Reset your password - PrepNex Edtech", html);
       res.json({ success: true });
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      res.status(500).json({ error: "Failed to send password reset email" });
+      res.status(500).json({ error: e.message || "Failed to process reset request" });
     }
   });
+
 
   app.post("/api/admin/send-promotional", async (req, res) => {
     try {
