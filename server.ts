@@ -5,13 +5,31 @@ import { fileURLToPath } from "url";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import dotenv from "dotenv";
-import admin from "firebase-admin";
-import { initializeApp, getApps, getApp } from "firebase-admin/app";
+import { initializeApp, getApp, getApps, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+import * as adminAuth from "firebase-admin/auth";
 import nodemailer from "nodemailer";
 import fs from "fs";
 
 dotenv.config();
+
+// Ensure app is initialized at startup
+const configPath = path.join(process.cwd(), "firebase-applet-config.json");
+let config: any = {};
+if (fs.existsSync(configPath)) {
+  config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+}
+
+let firebaseApp;
+const existingApp = getApps().find(app => app.name === 'my-app');
+if (existingApp) {
+  firebaseApp = existingApp;
+} else {
+  firebaseApp = initializeApp({
+    projectId: config.projectId,
+  }, 'my-app');
+  console.log("Firebase App initialized with project:", config.projectId);
+}
 
 let _db: any = null;
 
@@ -19,28 +37,13 @@ function getDb() {
   if (_db) return _db;
   
   try {
+    const app = firebaseApp;
     const configPath = path.join(process.cwd(), "firebase-applet-config.json");
     let config: any = {};
     if (fs.existsSync(configPath)) {
       config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
     }
-
-    // Try to initialize without explicit config if GOOGLE_APPLICATION_CREDENTIALS might be present
-    // or if we are in a GCP environment that handles it.
-    if (getApps().length === 0) {
-      if (config.projectId) {
-        initializeApp({ 
-          projectId: config.projectId,
-          // credential: admin.credential.applicationDefault() // Removed for better compatibility
-        });
-        console.log("Firestore initialized with config projectId:", config.projectId);
-      } else {
-        initializeApp();
-        console.log("Firestore initialized with default environment config");
-      }
-    }
     
-    const app = getApp();
     const dbId = config.firestoreDatabaseId && config.firestoreDatabaseId !== "(default)" 
       ? config.firestoreDatabaseId 
       : undefined;
@@ -56,9 +59,7 @@ function getDb() {
     return _db;
   } catch (err) {
     console.error("Firestore initialization failed:", err);
-    if (getApps().length === 0) initializeApp();
-    _db = getFirestore();
-    return _db;
+    throw err;
   }
 }
 
@@ -71,17 +72,24 @@ const sendEmail = async (to: string, subject: string, html: string, fromNameOver
   let user = process.env.EMAIL_USER || "prepnexedtech@gmail.com";
   let pass = process.env.EMAIL_PASS || "";
 
-  try {
-    const settingsDoc = await db.collection("settings").doc("smtp").get();
-    if (settingsDoc.exists) {
-      const data = settingsDoc.data();
-      if (data?.smtpEmail && data?.smtpPassword) {
-        user = data.smtpEmail;
-        pass = data.smtpPassword;
+  // Only try to fetch from Firestore if environment variables aren't sufficient
+  if (!pass) {
+    try {
+      const settingsDoc = await db.collection("settings").doc("smtp").get();
+      if (settingsDoc.exists) {
+        const data = settingsDoc.data();
+        if (data?.smtpEmail && data?.smtpPassword) {
+          user = data.smtpEmail;
+          pass = data.smtpPassword;
+        }
       }
+    } catch (err) {
+      console.error("Failed to read SMTP settings from Firestore, relying solely on environment variables:", err);
     }
-  } catch (err) {
-    console.error("Failed to read dynamic smtp settings, falling back to env vars:", err);
+  }
+
+  if (!pass) {
+    throw new Error("SMTP credentials missing: EMAIL_PASS environment variable or Firestore settings required.");
   }
 
   const dynamicTransporter = nodemailer.createTransport({
@@ -163,17 +171,22 @@ async function startServer() {
     try {
       const { email, name } = req.body;
       const html = `
-        <div style="font-family: Arial, sans-serif; text-align: center; color: #1e293b; padding: 20px;">
-          <h1 style="color: #4f46e5;">Welcome to PrepNex Edtech!</h1>
-          <p>Hi ${name || 'Aspirant'},</p>
-          <p>We are thrilled to have you here. Good luck with your preparation!</p>
-          <p style="margin-top: 30px;">With regards,</p>
-          <h3 style="color: #4f46e5; margin-top: 5px;">Team PrepNex Edtech</h3>
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; color: #334155; padding: 40px; background-color: #f1f5f9; border-radius: 20px;">
+          <div style="background-color: #ffffff; padding: 30px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
+            <h1 style="color: #4f46e5; margin-bottom: 20px;">Welcome to PrepNex Edtech!</h1>
+            <p style="font-size: 16px; margin-bottom: 15px;">Hi <strong>${name || 'Aspirant'}</strong>,</p>
+            <p style="font-size: 16px; margin-bottom: 20px;">We are thrilled to have you join our community! Get ready to supercharge your learning journey.</p>
+            <div style="margin: 30px 0;">
+              <a href="https://ais-dev-jiogqd5sd2opeeg53i55h6-95891610099.asia-southeast1.run.app" style="display: inline-block; padding: 12px 24px; background-color: #4f46e5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Start Learning</a>
+            </div>
+            <p style="font-size: 14px; color: #64748b;">With regards,<br><strong>Team PrepNex Edtech</strong></p>
+          </div>
         </div>
       `;
-      await sendEmail(email, "Welcome to PrepNex Edtech", html);
+      await sendEmail(email, "Welcome to PrepNex Edtech!", html);
       res.json({ success: true });
     } catch (e) {
+      console.error(e);
       res.status(500).json({ error: "Failed to send welcome email" });
     }
   });
@@ -181,17 +194,16 @@ async function startServer() {
   app.post("/api/send-reset-password", async (req, res) => {
     try {
       const { email } = req.body;
-      // Generate password reset link via Firebase Admin
-      const link = await admin.auth().generatePasswordResetLink(email);
+      const link = await adminAuth.getAuth(firebaseApp).generatePasswordResetLink(email);
       const html = `
-        <div style="font-family: Arial, sans-serif; text-align: center; color: #1e293b; padding: 30px; border-radius: 12px; background-color: #f8fafc;">
-          <h2 style="color: #4f46e5;">Password Reset Request</h2>
-          <p>Hello,</p>
-          <p>We received a request to reset your password. Click the button below to set a new password:</p>
-          <a href="${link}" style="display: inline-block; padding: 12px 24px; background-color: #4f46e5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0;">Reset Password</a>
-          <p>If you didn't request a password reset, you can safely ignore this email.</p>
-          <p style="margin-top: 30px;">With regards,</p>
-          <h3 style="color: #4f46e5; margin-top: 5px;">Team PrepNex Edtech</h3>
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; color: #334155; padding: 40px; background-color: #f1f5f9; border-radius: 20px;">
+          <div style="background-color: #ffffff; padding: 30px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
+            <h2 style="color: #4f46e5; margin-bottom: 20px;">Password Reset</h2>
+            <p style="font-size: 16px; margin-bottom: 20px;">We received a request to reset your password. Click the button below to secure your account:</p>
+            <a href="${link}" style="display: inline-block; padding: 12px 24px; background-color: #4f46e5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0;">Reset Password</a>
+            <p style="font-size: 14px; color: #64748b; margin-top: 20px;">If you didn't request this, you can safely ignore this email.</p>
+            <p style="font-size: 14px; color: #64748b; margin-top: 20px;">With regards,<br><strong>Team PrepNex Edtech</strong></p>
+          </div>
         </div>
       `;
       await sendEmail(email, "Reset Your PrepNex Password", html);
@@ -206,10 +218,13 @@ async function startServer() {
     try {
       const { subject, body, emails, fromName } = req.body;
       const html = `
-        <div style="font-family: Arial, sans-serif; color: #1e293b; padding: 20px;">
-          ${body.replace(/\n/g, '<br/>')}
-          <p style="margin-top: 30px;">With regards,</p>
-          <h3 style="color: #4f46e5; margin-top: 5px;">${fromName || "Team PrepNex Edtech"}</h3>
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #334155; padding: 40px; background-color: #f1f5f9; border-radius: 20px;">
+          <div style="background-color: #ffffff; padding: 30px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
+            <div style="font-size: 16px; line-height: 1.6; margin-bottom: 25px;">
+              ${body.replace(/\n/g, '<br/>')}
+            </div>
+            <p style="font-size: 14px; color: #64748b; margin-top: 30px;">With regards,<br><strong>${fromName || "Team PrepNex Edtech"}</strong></p>
+          </div>
         </div>
       `;
       for (const email of emails) {
@@ -217,6 +232,7 @@ async function startServer() {
       }
       res.json({ success: true });
     } catch (e) {
+      console.error(e);
       res.status(500).json({ error: "Failed to send emails" });
     }
   });
