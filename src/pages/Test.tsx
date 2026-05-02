@@ -20,6 +20,8 @@ export default function Test() {
   const [markedForReview, setMarkedForReview] = useState<Set<string>>(new Set());
   const [visited, setVisited] = useState<Set<string>>(new Set());
   const [timeLeft, setTimeLeft] = useState(0);
+  const [scheduledStartTime, setScheduledStartTime] = useState<string | null>(null);
+  const [secondsToLive, setSecondsToLive] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [attemptNumber, setAttemptNumber] = useState(1);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -51,6 +53,25 @@ export default function Test() {
       if (tSnap.exists()) {
         const tData: any = { id: tSnap.id, ...tSnap.data(), isLive };
         
+        // Handle Scheduled Start Time
+        if (tData.scheduledStartTime) {
+          const now = new Date().getTime();
+          const start = new Date(tData.scheduledStartTime).getTime();
+          const diff = (start - now) / 1000;
+          
+          if (diff > 0) {
+            setSecondsToLive(Math.floor(diff));
+            setScheduledStartTime(tData.scheduledStartTime);
+          }
+        }
+
+        const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnexedtech@gmail.com';
+        
+        if (tData.status === 'draft' && !isAdmin) {
+           navigate('/dashboard');
+           return;
+        }
+
         // Access Check
         if (isLive) {
           const isEnrolled = tData.enrolledUsers?.includes(profile?.userId || profile?.id);
@@ -60,13 +81,26 @@ export default function Test() {
              return;
           }
         } else if (!tData.isFree) {
-          const hasExamAccess = tData.examId && (profile?.purchasedExams?.includes(tData.examId) || profile?.freeExams?.includes(tData.examId));
-          const hasSubjectAccess = tData.subjectId && (profile?.purchasedSubjects?.includes(tData.subjectId) || profile?.freeSubjects?.includes(tData.subjectId));
+          let isParentPaid = false;
+          if (tData.examId) {
+            const eSnap = await getDoc(doc(db, 'exams', tData.examId));
+            if (eSnap.exists() && eSnap.data().isPaid) {
+              isParentPaid = true;
+            }
+          } else if (tData.subjectId) {
+            // Subjects are typically free, but if there's paid logic, handle it.
+            // Assuming subjects act like free exams generally.
+            isParentPaid = false;
+          }
+
+          const hasExamAccess = tData.examId && isParentPaid && (profile?.purchasedExams?.includes(tData.examId) || profile?.freeExams?.includes(tData.examId));
+          const hasSubjectAccess = tData.subjectId && isParentPaid && (profile?.purchasedSubjects?.includes(tData.subjectId) || profile?.freeSubjects?.includes(tData.subjectId));
+           
           const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnexedtech@gmail.com';
           const isPremium = profile?.isPremium;
           
           if (!hasExamAccess && !hasSubjectAccess && !isAdmin && !isPremium) {
-             navigate(`/premium?examId=${tData.examId}`);
+             navigate(isParentPaid && tData.examId ? `/premium?examId=${tData.examId}` : '/premium');
              return;
           }
         }
@@ -82,10 +116,27 @@ export default function Test() {
       setLoading(false);
     };
     fetchTestData();
-  }, [testId]);
+  }, [testId, profile]);
+
+  // Scheduled Test Countdown
+  useEffect(() => {
+    if (secondsToLive === null || secondsToLive <= 0) return;
+
+    const interval = setInterval(() => {
+      setSecondsToLive(prev => {
+        if (prev === null || prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [secondsToLive]);
 
   useEffect(() => {
-    if (loading || !timeLeft) return;
+    if (loading || !timeLeft || (secondsToLive !== null && secondsToLive > 0)) return;
     
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
@@ -228,6 +279,49 @@ export default function Test() {
   const currentQ = questions[currentIdx];
 
   if (loading) return <div className="flex h-screen items-center justify-center font-bold text-primary animate-pulse">Initializing Exam Environment...</div>;
+
+  if (secondsToLive !== null && secondsToLive > 0) {
+    const days = Math.floor(secondsToLive / (24 * 3600));
+    const hours = Math.floor((secondsToLive % (24 * 3600)) / 3600);
+    const mins = Math.floor((secondsToLive % 3600) / 60);
+    const secs = Math.floor(secondsToLive % 60);
+
+    return (
+      <div className="min-h-screen bg-[#F8F9FE] flex flex-col items-center justify-center p-6 text-center">
+        <div className="bg-white p-12 rounded-[3.5rem] shadow-2xl shadow-[#002D62]/10 border border-slate-100 max-w-xl w-full">
+           <div className="w-44 h-44 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-8 animate-pulse">
+              <Clock className="w-20 h-20 text-[#002D62] animate-spin duration-[10000ms]" />
+           </div>
+           <h2 className="text-4xl font-black text-[#002D62] tracking-tight mb-2 uppercase">Scheduled Test</h2>
+           <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mb-12">{test?.title}</p>
+           
+           <div className="grid grid-cols-4 gap-4 mb-12">
+             {[
+               { val: days, label: 'Days' },
+               { val: hours, label: 'Hrs' },
+               { val: mins, label: 'Min' },
+               { val: secs, label: 'Sec' }
+             ].map((time, i) => (
+               <div key={i} className="flex flex-col">
+                 <div className="bg-[#002D62]/5 border border-[#002D62]/10 rounded-[1.5rem] p-5 text-3xl font-black text-[#002D62]">{time.val.toString().padStart(2, '0')}</div>
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-3">{time.label}</span>
+               </div>
+             ))}
+           </div>
+           
+           <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 inline-flex items-center gap-3 mb-10">
+             <div className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+             <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest">Starts @ {new Date(scheduledStartTime!).toLocaleString()}</p>
+           </div>
+           
+           <Link to="/dashboard" className="block w-full py-6 bg-[#002D62] text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] shadow-2xl shadow-blue-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+             Wait in Lobby
+           </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (!questions.length) return <div className="flex h-screen items-center justify-center">No questions found for this test.</div>;
 
   const formatTime = (seconds: number) => {

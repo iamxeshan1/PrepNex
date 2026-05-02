@@ -4,6 +4,8 @@ import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { BookOpen, Search, ExternalLink, Download, FileText, ChevronRight } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface Material {
   id: string;
@@ -17,6 +19,8 @@ export default function StudyMaterial() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchMaterials = async () => {
@@ -37,6 +41,21 @@ export default function StudyMaterial() {
     m.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     m.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleDownload = (e: React.MouseEvent, url: string) => {
+    if (!user) {
+      e.preventDefault();
+      if (window.confirm("Please login first to download the study material. Would you like to login now?")) {
+        navigate('/login');
+      }
+      return;
+    }
+    
+    // If logged in, the natural <a> behavior will take over if we return.
+    // However, to be extra safe and ensure absolute URLs:
+    const finalUrl = url.startsWith('http') ? url : `https://${url}`;
+    window.open(finalUrl, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <Layout>
@@ -114,14 +133,12 @@ export default function StudyMaterial() {
                       </div>
                     </div>
                     
-                    <a 
-                      href={m.url}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button 
+                      onClick={(e) => handleDownload(e, m.url)}
                       className="flex items-center justify-center gap-3 px-8 py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/10 hover:bg-secondary hover:shadow-secondary/20 transition-all whitespace-nowrap active:scale-95"
                     >
-                      View Material <ExternalLink className="w-4 h-4" />
-                    </a>
+                      Download <Download className="w-4 h-4" />
+                    </button>
                   </div>
                 </motion.div>
               ))}
@@ -144,9 +161,9 @@ export default function StudyMaterial() {
               <Download className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm font-black text-indigo-900 uppercase tracking-[0.1em] mb-1">External Storage</p>
+              <p className="text-sm font-black text-indigo-900 uppercase tracking-[0.1em] mb-1">Standard Access</p>
               <p className="text-xs text-indigo-600/80 font-medium leading-relaxed">
-                Clicking "View Material" will open the document in a new tab (Google Drive or Dropbox). You can download or print from there.
+                Clicking "Download" will open the document safely. You must be logged in to access our premium resource library.
               </p>
             </div>
           </div>

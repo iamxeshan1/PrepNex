@@ -135,10 +135,10 @@ export default function AdminHelpdesk() {
               </div>
 
               {/* Chat Window */}
-              <div className="space-y-4 mb-6 bg-slate-50/50 p-4 rounded-2xl border border-slate-100 max-h-[400px] overflow-y-auto">
+              <div className="flex flex-col mb-6 bg-slate-50/50 p-4 rounded-2xl border border-slate-100 max-h-[400px] overflow-y-auto">
                 {/* Legacy message */}
                 {ticket.message && (
-                  <div className="flex justify-start">
+                  <div className="flex justify-start mb-4">
                     <div className="max-w-[85%] bg-white p-4 rounded-2xl rounded-tl-none border border-slate-200">
                       <p className="text-sm font-bold text-slate-700">{ticket.message}</p>
                       <p className="text-[10px] text-slate-400 mt-2 uppercase font-black">Initial Issue</p>
@@ -147,29 +147,38 @@ export default function AdminHelpdesk() {
                 )}
 
                 {/* Thread messages */}
-                {(ticket.messages || []).map((msg: any, idx: number) => (
-                  <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-start' : 'justify-end'}`}>
-                    <div className={`max-w-[85%] p-4 rounded-2xl border ${
-                      msg.sender === 'user' 
-                        ? 'bg-white border-slate-200 rounded-tl-none' 
-                        : 'bg-primary text-white border-primary rounded-tr-none'
-                    }`}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-[10px] font-black uppercase tracking-widest ${msg.sender === 'user' ? 'text-slate-400' : 'text-white/70'}`}>
-                          {msg.sender === 'user' ? 'User' : 'You (Admin)'}
-                        </span>
+                {(ticket.messages || []).map((msg: any, idx: number, arr: any[]) => {
+                  const isFirstInGroup = idx === 0 || arr[idx - 1].sender !== msg.sender;
+                  const isLastInGroup = idx === arr.length - 1 || arr[idx + 1].sender !== msg.sender;
+
+                  return (
+                    <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-start' : 'justify-end'} ${!isLastInGroup ? 'mb-1' : 'mb-4'}`}>
+                      <div className={`max-w-[85%] px-4 py-3 rounded-2xl border ${
+                        msg.sender === 'user' 
+                          ? `bg-white border-slate-200 ${isFirstInGroup ? 'rounded-tl-none' : 'rounded-tl-md rounded-bl-md'}` 
+                          : `bg-primary text-white border-primary ${isFirstInGroup ? 'rounded-tr-none' : 'rounded-tr-md rounded-br-md'}`
+                      }`}>
+                        {isFirstInGroup && (
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`text-[10px] font-black uppercase tracking-widest ${msg.sender === 'user' ? 'text-slate-400' : 'text-white/70'}`}>
+                              {msg.sender === 'user' ? 'User' : 'You (Admin)'}
+                            </span>
+                          </div>
+                        )}
+                        <p className={`text-sm font-bold ${msg.sender === 'user' ? 'text-slate-800' : 'text-white'}`}>{msg.text}</p>
+                        {isLastInGroup && (
+                          <p className={`text-[10px] mt-2 ${msg.sender === 'user' ? 'text-slate-400' : 'text-white/50'}`}>
+                            {new Date(msg.createdAt).toLocaleString()}
+                          </p>
+                        )}
                       </div>
-                      <p className={`text-sm font-bold ${msg.sender === 'user' ? 'text-slate-800' : 'text-white'}`}>{msg.text}</p>
-                      <p className={`text-[10px] mt-2 ${msg.sender === 'user' ? 'text-slate-400' : 'text-white/50'}`}>
-                        {new Date(msg.createdAt).toLocaleString()}
-                      </p>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 {/* Legacy reply */}
                 {ticket.reply && !(ticket.messages || []).some((m: any) => m.sender === 'admin' && m.text === ticket.reply) && (
-                  <div className="flex justify-end">
+                  <div className="flex justify-end mb-4">
                     <div className="max-w-[85%] bg-primary text-white p-4 rounded-2xl rounded-tr-none border border-primary">
                       <p className="text-sm font-bold">{ticket.reply}</p>
                       <p className="text-[10px] text-white/50 mt-2 uppercase font-black">Legacy Reply</p>

@@ -142,11 +142,11 @@ async function getRazorpay() {
     });
     return razorpayInstance;
   } catch (error: any) {
-    console.error("Error fetching Razorpay settings from Firestore:", error.message || error);
+    console.warn("Could not fetch Razorpay settings from Firestore:", error.message || error);
     
     // If it was a permission error, explain likely cause
     if (error.message?.includes("PERMISSION_DENIED") || (error.code === 7)) {
-      console.error("CRITICAL: Server lacks permission to read Firestore 'settings/razorpay'. Please ensure the Razorpay ID and Secret are set in the AI Studio Settings (Secrets) panel as VITE_RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.");
+      console.warn("Note: Server lacks IAM permission to read user's Firestore 'settings/razorpay'. Please set VITE_RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in AI Studio Settings (Secrets).");
     }
 
     throw new Error("Razorpay not configured on server. Please add VITE_RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to Settings > Secrets.");
@@ -272,12 +272,20 @@ async function startServer() {
         return res.status(400).json({ status: "failed", message: "Missing payment details" });
       }
 
-      const settingsDoc = await db.collection("settings").doc("razorpay").get();
-      const secret = settingsDoc.data()?.razorpayKeySecret || process.env.RAZORPAY_KEY_SECRET || "";
+      let secret = process.env.RAZORPAY_KEY_SECRET || "";
+      if (!secret) {
+        try {
+          const database = getDb();
+          const settingsDoc = await database.collection("settings").doc("razorpay").get();
+          secret = settingsDoc.data()?.razorpayKeySecret || "";
+        } catch (err: any) {
+          console.warn("Failed to fetch Razorpay secret from Firestore for verification:", err.message);
+        }
+      }
 
       if (!secret) {
         console.error("Razorpay secret missing during verification");
-        return res.status(500).json({ status: "failed", message: "Verification config error" });
+        return res.status(500).json({ status: "failed", message: "Verification config error. Please set RAZORPAY_KEY_SECRET in AI Studio Secrets." });
       }
 
       const body = razorpay_order_id.toString() + "|" + razorpay_payment_id.toString();

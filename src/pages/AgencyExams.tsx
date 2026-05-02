@@ -1,43 +1,74 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Layout } from '../components/Layout';
-import { getExams } from '../services/db';
-import { Search, Filter, ShieldCheck, Lock } from 'lucide-react';
+import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
+import { Search, ShieldCheck, Lock, ChevronRight, FileText } from 'lucide-react';
 
-export default function Exams() {
+export default function AgencyExams() {
+  const { agencyId } = useParams();
+  const [agency, setAgency] = useState<any>(null);
   const [exams, setExams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [category, setCategory] = useState('All');
 
   useEffect(() => {
-    const fetchExams = async () => {
-      const data = await getExams();
-      setExams(data || []);
-      setLoading(false);
+    const fetchData = async () => {
+      if (!agencyId) return;
+      try {
+        const agencySnap = await getDoc(doc(db, 'agencies', agencyId));
+        if (agencySnap.exists()) {
+          setAgency({ id: agencySnap.id, ...agencySnap.data() });
+        }
+
+        const q = query(collection(db, 'exams'), where('agencyId', '==', agencyId));
+        const examSnap = await getDocs(q);
+        setExams(examSnap.docs.map(d => ({ id: d.id, ...(d.data() as any) })).filter(e => e.status !== 'draft'));
+      } catch (err) {
+        console.error("Error fetching agency exams:", err);
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchExams();
-  }, []);
+    fetchData();
+  }, [agencyId]);
 
-  const categories = ['All', 'Government Jobs', 'Medical', 'Engineering', 'Banking', 'Police'];
-
-  const filteredExams = exams.filter(exam => {
-    const matchesSearch = exam.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = category === 'All' || exam.category === category;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredExams = exams.filter(exam => 
+    exam.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <header className="mb-12 text-center md:text-left">
-          <h1 className="text-4xl font-extrabold text-primary tracking-tight mb-4">Exam Prep Library</h1>
-          <p className="text-slate-500 font-medium max-w-xl mx-auto md:mx-0">Find and unlock comprehensive test series for all major competitive exams.</p>
-        </header>
+        {agency && (
+          <header className="mb-12 flex flex-col md:flex-row items-center gap-8 bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden">
+             {/* Background decorative */}
+             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+             
+             <div className="w-32 h-32 bg-slate-50 rounded-full flex items-center justify-center p-4 border-4 border-white shadow-xl z-10 shrink-0">
+                {agency.logoUrl ? (
+                  <img src={agency.logoUrl} alt={agency.name} className="w-full h-full object-contain" />
+                ) : (
+                  <ShieldCheck className="w-16 h-16 text-slate-300" />
+                )}
+             </div>
+             <div className="z-10 text-center md:text-left">
+                <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
+                  <Link to="/agencies" className="text-xs font-bold text-primary uppercase tracking-widest hover:underline">Agencies</Link>
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{agency.name}</span>
+                </div>
+                <h1 className="text-4xl font-extrabold text-primary tracking-tight mb-2">{agency.name} Exams</h1>
+                {agency.description && (
+                  <p className="text-slate-500 font-medium max-w-2xl">{agency.description}</p>
+                )}
+             </div>
+          </header>
+        )}
 
-        <section className="flex flex-col md:flex-row gap-6 mb-12 items-end">
-          <div className="flex-1 space-y-2">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Search Exams</label>
+        <section className="mb-8 max-w-md mx-auto md:mx-0">
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Search in {agency?.name}</label>
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
               <input 
@@ -47,20 +78,6 @@ export default function Exams() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-            </div>
-          </div>
-          
-          <div className="w-full md:w-64 space-y-2">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Category</label>
-            <div className="relative">
-              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-              <select 
-                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm outline-none appearance-none cursor-pointer font-bold text-sm text-primary"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              >
-                {categories.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
             </div>
           </div>
         </section>
@@ -78,10 +95,10 @@ export default function Exams() {
               >
                 <div className="flex flex-col md:flex-row gap-8 items-start">
                   <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center overflow-hidden p-3 group-hover:bg-primary/5 transition-colors shrink-0">
-                    {exam.logoUrl ? (
-                      <img src={exam.logoUrl} alt={exam.name} className="w-full h-full object-contain" />
+                    {agency?.logoUrl ? (
+                      <img src={agency.logoUrl} alt={agency.name} className="w-full h-full object-contain" />
                     ) : (
-                      <ShieldCheck className="w-full h-full text-slate-300 group-hover:text-primary transition-colors" />
+                      <FileText className="w-full h-full text-slate-300 group-hover:text-primary transition-colors" />
                     )}
                   </div>
                   
@@ -98,16 +115,16 @@ export default function Exams() {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 mb-4 uppercase tracking-[0.25em]">
-                      <span className="text-primary/60">{exam.organization}</span>
+                    <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 mb-4 uppercase tracking-[0.25em] flex-wrap">
+                      <span className="text-primary/60">{agency?.name}</span>
                       <span className="w-1 h-1 rounded-full bg-slate-200" />
                       <span>{exam.category}</span>
-                      <span className="text-[10px] font-black text-slate-400 mb-4 uppercase tracking-[0.25em]">&bull;</span>
+                      <span className="w-1 h-1 rounded-full bg-slate-200" />
                       <span className={`text-[10px] font-black uppercase tracking-[0.25em] ${exam.difficulty === 'Easy' ? 'text-green-500' : exam.difficulty === 'Hard' ? 'text-red-500' : 'text-amber-500'}`}>{exam.difficulty || 'Medium'}</span>
                     </div>
 
-                    <p className="text-sm text-slate-500 font-medium leading-relaxed max-w-2xl">
-                      {exam.description || "Comprehensive mock test series and study material for thorough preparation. Includes detailed solutions and real-time performance analytics."}
+                    <p className="text-sm text-slate-500 font-medium leading-relaxed max-w-2xl line-clamp-3">
+                      {exam.syllabus ? exam.syllabus : "Comprehensive mock test series and study material for thorough preparation. Includes detailed solutions and real-time performance analytics."}
                     </p>
                   </div>
                   
@@ -136,8 +153,8 @@ export default function Exams() {
           </div>
         ) : (
           <div className="text-center py-20 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
-            <h3 className="text-xl font-bold text-primary mb-2">No exams found</h3>
-            <p className="text-slate-500">Try adjusting your filters.</p>
+            <h3 className="text-xl font-bold text-primary mb-2">No exams found for {agency?.name}</h3>
+            <p className="text-slate-500">Check back later for updates.</p>
           </div>
         )}
       </div>

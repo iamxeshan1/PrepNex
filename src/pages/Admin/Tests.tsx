@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/AdminLayout';
-import { collection, addDoc, getDocs, deleteDoc, doc, query, where, getDoc, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, getDocs, deleteDoc, doc, query, where, getDoc, writeBatch, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Plus, Trash2, ChevronRight, FileText, Clock, Award, Upload, Download, Info, X } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import { Plus, Trash2, ChevronRight, FileText, Clock, Award, Upload, Download, Info, X, Shield, Edit3, Database, Loader2 } from 'lucide-react';
 
 export default function AdminTests() {
   const { examId, subjectId } = useParams();
@@ -12,20 +11,12 @@ export default function AdminTests() {
   const [tests, setTests] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [showImport, setShowImport] = useState(false);
-
-  // Form State
   const [title, setTitle] = useState('');
   const [duration, setDuration] = useState('60');
-  const [marks, setMarks] = useState('100');
-  const [positiveMarks, setPositiveMarks] = useState('1');
-  const [negativeMarks, setNegativeMarks] = useState('0.25');
-  const [isFree, setIsFree] = useState(false);
+  const [totalMarks, setTotalMarks] = useState('100');
+  const [isFree, setIsFree] = useState(true);
   const [price, setPrice] = useState('0');
-  
-  // Weightage State
-  const [sections, setSections] = useState<any[]>([]);
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -33,52 +24,19 @@ export default function AdminTests() {
       const parentId = examId || subjectId;
       if (!parentId) return;
 
-      const [pSnap, tSnap, sSnap] = await Promise.all([
+      const [pSnap, tSnap] = await Promise.all([
         getDoc(doc(db, parentCol, parentId)),
         getDocs(query(
           collection(db, 'tests'), 
           where(examId ? 'examId' : 'subjectId', '==', parentId)
-        )),
-        getDocs(collection(db, 'subjects'))
+        ))
       ]);
       if (pSnap.exists()) setParent(pSnap.data());
       setTests(tSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setSubjects(sSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
     };
     fetchData();
   }, [examId, subjectId]);
-
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const parentId = examId || subjectId;
-    await addDoc(collection(db, 'tests'), {
-      ...(examId ? { examId } : { subjectId }),
-      title,
-      duration: Number(duration),
-      totalMarks: Number(marks),
-      positiveMarks: Number(positiveMarks),
-      negativeMarks: Number(negativeMarks),
-      isFree,
-      price: isFree ? 0 : Number(price),
-      sections: examId ? sections : [], // Sections only relevant for Exams
-      createdAt: new Date().toISOString()
-    });
-    resetForm();
-    refreshTests();
-  };
-
-  const resetForm = () => {
-    setTitle('');
-    setDuration('60');
-    setMarks('100');
-    setPositiveMarks('1');
-    setNegativeMarks('0.25');
-    setIsFree(false);
-    setPrice('0');
-    setSections([]);
-    setShowAddForm(false);
-  };
 
   const refreshTests = async () => {
     const parentId = examId || subjectId;
@@ -89,267 +47,351 @@ export default function AdminTests() {
     setTests(tSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Delete this test and all its questions?')) {
-      await deleteDoc(doc(db, 'tests', id));
-      setTests(tests.filter(t => t.id !== id));
-    }
-  };
+  const [showCompositionModal, setShowCompositionModal] = useState(false);
+  const [bankCounts, setBankCounts] = useState<Record<string, Record<string, number>>>({});
+  const [composition, setComposition] = useState<Record<string, {count: number, level: string}>>({});
+  const [composing, setComposing] = useState(false);
+  const [selectedSub, setSelectedSub] = useState('');
 
-  const addSection = () => {
-    setSections([...sections, { subjectId: '', subjectName: '', numQuestions: 0, marksPerQuestion: 1 }]);
-  };
+  // New Test Data for Composition
+  const [compData, setCompData] = useState({
+    title: '',
+    duration: '60',
+    totalMarks: '100',
+    marksPerQuestion: '1',
+    negativeMarks: '0.25',
+    isFree: true,
+    price: '0',
+    scheduledStartTime: ''
+  });
 
-  const removeSection = (index: number) => {
-    setSections(sections.filter((_, i) => i !== index));
-  };
-
-  const updateSection = (index: number, field: string, value: any) => {
-    const newSections = [...sections];
-    if (field === 'subjectId') {
-      const sub = subjects.find(s => s.id === value);
-      newSections[index].subjectId = value;
-      newSections[index].subjectName = sub?.name || '';
-    } else {
-      newSections[index][field] = value;
-    }
-    setSections(newSections);
-  };
-
-  const downloadSample = () => {
-    const wb = XLSX.utils.book_new();
-    
-    // Instructions Sheet
-    const instData = [
-      ["PrepNex - Mock Test Batch Import Template"],
-      ["This tool allows you to import multiple tests at once."],
-      [],
-      ["FIELD DEFINITIONS:"],
-      ["title", "The name of the test as it will appear to students"],
-      ["duration", "Duration in minutes (e.g. 120)"],
-      ["totalMarks", "Maximum marks attainable in this test"],
-      ["isFree", "Set to 'Yes' for free access, or 'No' for paid/premium"],
-      ["price", "Price in INR (Required if isFree is 'No')"],
-      [],
-      ["PRO TIP:", "Ensure there are no blank rows between data entries."]
-    ];
-    const wsInst = XLSX.utils.aoa_to_sheet(instData);
-    wsInst['!cols'] = [{wch: 20}, {wch: 60}];
-    XLSX.utils.book_append_sheet(wb, wsInst, "Instructions");
-
-    // Sample Data Sheet
-    const sampleData = [
-      ["title", "duration", "totalMarks", "isFree", "price"],
-      ["General Awareness Full Mock 01", 120, 100, "No", 49],
-      ["Weekly Free Practice Quiz", 30, 25, "Yes", 0],
-      ["Advanced Performance Assessment", 90, 75, "No", 29]
-    ];
-    const wsSample = XLSX.utils.aoa_to_sheet(sampleData);
-    wsSample['!cols'] = [{wch: 35}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}];
-    XLSX.utils.book_append_sheet(wb, wsSample, "Data Input Template");
-
-    XLSX.writeFile(wb, "PrepNex_Tests_Import_Template.xlsx");
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      const bstr = evt.target?.result;
-      const wb = XLSX.read(bstr, { type: 'binary' });
-      
-      // Look for a sheet named "Data Input Template" or the first sheet
-      const wsname = wb.SheetNames.find(n => n.includes("Template")) || wb.SheetNames[0];
-      const ws = wb.Sheets[wsname];
-      const data = XLSX.utils.sheet_to_json(ws);
-      
-      const batch = writeBatch(db);
+  const fetchBankData = async () => {
+    setLoading(true);
+    try {
+      const parentCol = examId ? 'exams' : 'subjects';
       const parentId = examId || subjectId;
       
-      for (const row of (data as any[])) {
-        const testRef = doc(collection(db, 'tests'));
-        const _isFree = String(row.isFree).toLowerCase() === 'yes';
-        batch.set(testRef, {
-          ...(examId ? { examId } : { subjectId }),
-          title: row.title,
-          duration: Number(row.duration) || 60,
-          totalMarks: Number(row.totalMarks) || 100,
-          isFree: _isFree,
-          price: _isFree ? 0 : (Number(row.price) || 0),
-          createdAt: new Date().toISOString()
+      const [qSnap, sSnap, pSnap] = await Promise.all([
+        getDocs(query(collection(db, 'questions'), where('testId', '==', 'MASTER_BANK'))),
+        getDocs(collection(db, 'subjects')),
+        getDoc(doc(db, parentCol, parentId!))
+      ]);
+      
+      const counts: Record<string, Record<string, number>> = {};
+      qSnap.docs.forEach(doc => {
+        const q = doc.data();
+        if (!counts[q.subjectId]) counts[q.subjectId] = {};
+        const level = q.level || 'Medium';
+        counts[q.subjectId][level] = (counts[q.subjectId][level] || 0) + 1;
+        counts[q.subjectId]['total'] = (counts[q.subjectId]['total'] || 0) + 1;
+      });
+      
+      setBankCounts(counts);
+
+      const allSubjects = sSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      let availableSubjects = [];
+      const initialComp: Record<string, {count: number, level: string}> = {};
+
+      if (subjectId) {
+        // Mode: Subject-Specific Test
+        availableSubjects = allSubjects.filter(s => s.id === subjectId);
+        initialComp[subjectId] = { count: 10, level: 'Medium' };
+      } else if (examId && pSnap.exists()) {
+        // Mode: Exam Category Test (Auto-fetch subjects from weightage)
+        const data = pSnap.data();
+        const syllabusSubIds = (data.subjectsWeightage || []).map((item: any) => item.subjectId);
+        availableSubjects = allSubjects.filter(s => syllabusSubIds.includes(s.id));
+        
+        // Auto-populate all syllabus subjects into the composition list
+        syllabusSubIds.forEach((sId: string) => {
+          initialComp[sId] = { count: 0, level: 'Medium' };
         });
       }
-      
+
+      setSubjects(availableSubjects);
+      setComposition(initialComp);
+      setShowCompositionModal(true);
+    } catch (err: any) {
+      alert("Failed to fetch bank data: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const levels = ['Easy', 'Medium', 'Hard', 'UGC NET'];
+
+  const handleCompose = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!compData.title) return alert("Title required");
+    if (Object.keys(composition).length === 0) return alert("Select at least one subject");
+    
+    setComposing(true);
+    try {
+      // 1. Verify availability
+      for (const [subId, config] of Object.entries(composition)) {
+        const c = config as { count: number; level: string };
+        const available = bankCounts[subId]?.[c.level] || 0;
+        if (c.count > available) {
+          throw new Error(`Not enough ${c.level} questions in ${subjects.find(s => s.id === subId)?.name}. Requested: ${c.count}, Available: ${available}`);
+        }
+      }
+
+      // 2. Create Registry
+      const newTestRef = await addDoc(collection(db, 'tests'), {
+        ...(examId ? { examId } : { subjectId }),
+        title: compData.title,
+        duration: Number(compData.duration),
+        totalMarks: Number(compData.totalMarks),
+        marksPerQuestion: Number(compData.marksPerQuestion),
+        negativeMarks: Number(compData.negativeMarks),
+        isFree: compData.isFree,
+        price: compData.isFree ? 0 : Number(compData.price),
+        status: compData.scheduledStartTime ? 'scheduled' : 'live',
+        scheduledStartTime: compData.scheduledStartTime || null,
+        createdAt: new Date().toISOString()
+      });
+
+      // 3. Physical Withdrawal
+      const batch = writeBatch(db);
+      let totalImported = 0;
+
+      for (const [subId, config] of Object.entries(composition)) {
+        const c = config as { count: number; level: string };
+        if (c.count <= 0) continue;
+
+        const qSnap = await getDocs(query(
+          collection(db, 'questions'), 
+          where('testId', '==', 'MASTER_BANK'), 
+          where('subjectId', '==', subId),
+          where('level', '==', c.level)
+        ));
+        
+        const selectedDocs = qSnap.docs.slice(0, c.count);
+        selectedDocs.forEach(qDoc => {
+          batch.update(qDoc.ref, { 
+            testId: newTestRef.id,
+            assignedAt: new Date().toISOString() 
+          });
+          totalImported++;
+        });
+      }
+
       await batch.commit();
-      setShowImport(false);
+      alert(`Test Created! ${totalImported} questions withdrawn from Repository.`);
+      setShowCompositionModal(false);
       refreshTests();
-      alert('Import successful!');
-    };
-    reader.readAsBinaryString(file);
+    } catch (err: any) {
+      alert("Composition failed: " + err.message);
+    } finally {
+      setComposing(false);
+    }
+  };
+
+  const handleDelete = async (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    
+    try {
+      await deleteDoc(doc(db, 'tests', id));
+      alert("Test deleted successfully!");
+      setConfirmingDeleteId(null);
+      setTests(tests.filter(t => t.id !== id));
+    } catch (error: any) {
+      console.error("Delete error:", error);
+      alert(`Failed to delete test: ${error.message || "Unknown error"}`);
+    }
   };
 
   return (
     <AdminLayout title={`Tests: ${parent?.name || 'Loading...'}`} backTo={examId ? "/admin/exams" : "/admin/subjects"}>
-      <div className="mb-8 flex flex-wrap gap-4 justify-end">
-        <button 
-          onClick={downloadSample}
-          className="bg-white text-slate-600 px-6 py-3 rounded-xl font-bold flex items-center gap-2 border border-slate-200 hover:bg-slate-50 transition-all"
-        >
-          <Download className="w-5 h-5" /> Download Sample
-        </button>
-        <button 
-          onClick={() => setShowImport(!showImport)}
-          className="bg-secondary text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-secondary/20 hover:scale-[1.02] transition-all active:scale-95"
-        >
-          <Upload className="w-5 h-5" /> Import Excel
-        </button>
-        <button 
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="bg-primary text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all active:scale-95"
-        >
-          <Plus className="w-5 h-5" /> {showAddForm ? 'Cancel' : 'Add New Mock Test'}
-        </button>
+      <div className="sticky top-0 z-40 pb-6 bg-[#f8fafc]/50 backdrop-blur-md">
+        <div className="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+          <div>
+            <h2 className="text-2xl font-black text-primary tracking-tight">Withdraw & Compose Mock Tests</h2>
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">
+              {examId ? 'Composed from specific syllabus subjects' : `Withdrawing questions from repo`}
+            </p>
+          </div>
+          <div className="flex gap-4">
+            <button 
+              onClick={fetchBankData}
+              className="px-8 py-4 bg-primary text-white rounded-2xl font-bold flex items-center gap-3 shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all active:scale-95 whitespace-nowrap"
+            >
+              <Database className="w-5 h-5" /> Withdraw from Master Bank
+            </button>
+          </div>
+        </div>
       </div>
 
-      {showImport && (
-        <div className="bg-secondary/5 border-2 border-dashed border-secondary/30 p-8 rounded-3xl mb-10 text-center">
-          <input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} id="file-upload" className="hidden" />
-          <label htmlFor="file-upload" className="cursor-pointer inline-flex flex-col items-center">
-            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-secondary shadow-sm mb-4">
-              <Upload className="w-8 h-8" />
-            </div>
-            <h3 className="text-xl font-black text-secondary uppercase tracking-tight">Upload Excel File</h3>
-            <p className="text-xs font-bold text-slate-500 mt-2">Maximum file size 5MB. Must follow the sample format.</p>
-          </label>
-        </div>
-      )}
-
-      {showAddForm && (
-        <form onSubmit={handleAdd} className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm mb-10 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="md:col-span-2 space-y-2">
-              <label className="text-sm font-bold text-slate-700">Test Title</label>
-              <input 
-                required 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
-                value={title} onChange={(e) => setTitle(e.target.value)} 
-                placeholder="e.g. Full Length Mock Test 1"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Duration (Minutes)</label>
-              <input 
-                type="number" required 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
-                value={duration} onChange={(e) => setDuration(e.target.value)} 
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Total Marks</label>
-              <input 
-                type="number" required 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
-                value={marks} onChange={(e) => setMarks(e.target.value)} 
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Positive Marks per Question</label>
-              <input 
-                type="number" step="0.01" required 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
-                value={positiveMarks} onChange={(e) => setPositiveMarks(e.target.value)} 
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Negative Marks per Question (e.g. 0.25)</label>
-              <input 
-                type="number" step="0.01" required 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
-                value={negativeMarks} onChange={(e) => setNegativeMarks(e.target.value)} 
-              />
-            </div>
-            <div className="md:col-span-2 flex items-center gap-3 bg-slate-50 p-4 rounded-xl shadow-sm border border-slate-100">
-              <input 
-                type="checkbox" 
-                className="w-5 h-5 rounded border-slate-300 text-primary focus:ring-primary"
-                checked={isFree} onChange={(e) => setIsFree(e.target.checked)} 
-              />
-              <span className="text-sm font-bold text-slate-700">Mark as Free Test (Accessible without subscription)</span>
-            </div>
-            {!isFree && (
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">Price (₹)</label>
-                <input 
-                  type="number" required 
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
-                  value={price} onChange={(e) => setPrice(e.target.value)} 
-                />
+      {showCompositionModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-[2.5rem] w-full max-w-4xl max-h-[90vh] shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col overflow-hidden">
+            <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-white z-20 shrink-0">
+              <div>
+                <h3 className="text-2xl font-black text-primary uppercase tracking-tight">Compose Mock Test from Bank</h3>
+                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Inventory restricted to {examId ? `Exam Syllabus` : `Subject Repo`}</p>
               </div>
-            )}
-
-            {examId && (
-              <div className="md:col-span-2 space-y-4 pt-4 border-t border-slate-100">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-black text-primary uppercase tracking-tight flex items-center gap-2">
-                    Marks Distribution / Weightage
-                    <Info className="w-4 h-4 text-slate-300" />
-                  </h3>
-                  <button type="button" onClick={addSection} className="text-xs font-bold text-secondary flex items-center gap-1">
-                    <Plus className="w-4 h-4" /> Add Subject
-                  </button>
+              <button 
+                onClick={() => setShowCompositionModal(false)} 
+                className="p-3 hover:bg-slate-50 rounded-2xl text-slate-400 transition-colors"
+                type="button"
+              >
+                <X className="w-8 h-8" />
+              </button>
+            </div>
+            
+            <form id="compose-mock-form" onSubmit={handleCompose} className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                <div className="md:col-span-2 space-y-2">
+                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 block">Test Name (e.g. Mock Set 05)</label>
+                   <input required className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl outline-none font-bold text-primary focus:border-primary transition-all" value={compData.title} onChange={e => setCompData({...compData, title: e.target.value})} />
                 </div>
                 
-                <div className="space-y-3">
-                  {sections.map((sec, idx) => (
-                    <div key={idx} className="flex flex-wrap md:flex-nowrap gap-3 items-end bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                      <div className="flex-1 min-w-[200px] space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Subject</label>
-                        <select 
-                          required
-                          className="w-full bg-white border border-slate-200 px-3 py-2 rounded-lg text-sm outline-none"
-                          value={sec.subjectId} onChange={(e) => updateSection(idx, 'subjectId', e.target.value)}
-                        >
-                          <option value="">Select Subject</option>
-                          {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                        </select>
-                      </div>
-                      <div className="w-24 space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Questions</label>
-                        <input 
-                          type="number" required
-                          className="w-full bg-white border border-slate-200 px-3 py-2 rounded-lg text-sm outline-none"
-                          value={sec.numQuestions} onChange={(e) => updateSection(idx, 'numQuestions', Number(e.target.value))}
-                        />
-                      </div>
-                      <div className="w-24 space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Marks/Q</label>
-                        <input 
-                          type="number" step="0.01" required
-                          className="w-full bg-white border border-slate-200 px-3 py-2 rounded-lg text-sm outline-none"
-                          value={sec.marksPerQuestion} onChange={(e) => updateSection(idx, 'marksPerQuestion', Number(e.target.value))}
-                        />
-                      </div>
-                      <button type="button" onClick={() => removeSection(idx)} className="p-2 text-slate-300 hover:text-red-500 transition-colors">
-                        <X className="w-4 h-4" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-1">Duration (Min)</label>
+                    <input type="number" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none font-bold" value={compData.duration} onChange={e => setCompData({...compData, duration: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-1">Total Marks</label>
+                    <input type="number" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none font-bold" value={compData.totalMarks} onChange={e => setCompData({...compData, totalMarks: e.target.value})} />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-1">Marks/Q</label>
+                    <input type="number" step="0.1" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none font-bold" value={compData.marksPerQuestion} onChange={e => setCompData({...compData, marksPerQuestion: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-1">Negative/Q</label>
+                    <input type="number" step="0.1" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none font-bold" value={compData.negativeMarks} onChange={e => setCompData({...compData, negativeMarks: e.target.value})} />
+                  </div>
+                </div>
+
+                <div className="md:col-span-2 flex items-center gap-4 pt-2">
+                  <button type="button" onClick={() => setCompData({...compData, isFree: !compData.isFree})} className={`px-5 py-3 rounded-xl border font-black text-[10px] uppercase tracking-widest transition-all ${compData.isFree ? 'bg-secondary text-white border-secondary' : 'bg-white text-slate-400 border-slate-200'}`}>
+                    {compData.isFree ? 'FREE ACCESS' : 'PAID ACCESS'}
+                  </button>
+                  {!compData.isFree && <input type="number" placeholder="₹" className="w-24 px-3 py-3 rounded-xl border border-slate-200 font-black text-primary" value={compData.price} onChange={e => setCompData({...compData, price: e.target.value})} />}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex justify-between items-center px-1">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Withdrawal Strategy</label>
+                  {!subjectId && !examId && (
+                    <div className="flex items-center gap-3">
+                      <select 
+                        className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none focus:border-secondary transition-all"
+                        value={selectedSub}
+                        onChange={e => setSelectedSub(e.target.value)}
+                      >
+                        <option value="">Select Subject to Add</option>
+                        {subjects.map(s => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          if (selectedSub && !composition[selectedSub]) {
+                            setComposition({...composition, [selectedSub]: { count: 10, level: 'Medium' }});
+                            setSelectedSub('');
+                          }
+                        }}
+                        className="px-4 py-2 bg-secondary text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all"
+                      >
+                        Add Subject
                       </button>
                     </div>
-                  ))}
-                  {sections.length === 0 && (
-                    <p className="text-center py-6 text-slate-400 text-xs font-bold uppercase tracking-widest italic">No sections added. Marks based on total marks only.</p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 min-h-[100px]">
+                  {Object.keys(composition).length === 0 ? (
+                    <div className="h-32 border-2 border-dashed border-slate-100 rounded-3xl flex flex-col items-center justify-center bg-slate-50/50">
+                      <Database className="w-8 h-8 text-slate-200 mb-2" />
+                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No subjects selected for withdrawal</p>
+                    </div>
+                  ) : (
+                    Object.entries(composition).map(([subId, config]: [string, any]) => {
+                      const s = subjects.find(sub => sub.id === subId);
+                      if (!s) return null;
+                      return (
+                        <div key={subId} className="p-5 bg-white border border-slate-100 rounded-[2rem] flex flex-col md:flex-row md:items-center justify-between gap-4 group hover:border-secondary transition-all shadow-sm relative overflow-visible">
+                          {!subjectId && !examId && (
+                            <button 
+                              type="button" 
+                              onClick={() => {
+                                const newComp = { ...composition };
+                                delete newComp[subId];
+                                setComposition(newComp);
+                              }}
+                              className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg z-30"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          )}
+                          <div className="flex-1">
+                            <h4 className="font-extrabold text-primary uppercase text-xs tracking-tight">{s.name}</h4>
+                            <div className="flex gap-2 mt-2">
+                               {levels.map(lvl => (
+                                 <span key={lvl} className={`text-[8px] font-black uppercase ${bankCounts[s.id]?.[lvl] ? 'text-primary' : 'text-slate-300'}`}>
+                                   {lvl.slice(0,1)}: {bankCounts[s.id]?.[lvl] || 0}
+                                 </span>
+                               ))}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <select 
+                              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-black uppercase outline-none focus:bg-white"
+                              value={config.level}
+                              onChange={e => setComposition({...composition, [subId]: { ...config, level: e.target.value }})}
+                            >
+                              {levels.map(l => <option key={l} value={l}>{l}</option>)}
+                            </select>
+                            <div className="flex items-center bg-slate-50 rounded-xl border border-slate-200 px-3">
+                               <input 
+                                type="number" 
+                                min="1"
+                                className="w-16 py-2 bg-transparent text-center font-black text-primary outline-none text-xs"
+                                value={config.count}
+                                onChange={e => setComposition({...composition, [subId]: { ...config, count: parseInt(e.target.value) || 0 }})}
+                              />
+                              <span className="text-[8px] font-black text-slate-400 uppercase">Qty</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               </div>
-            )}
+            </form>
+
+            <div className="p-8 border-t border-slate-100 bg-slate-50/50 rounded-b-[2.5rem] shrink-0 z-20">
+              <button 
+                form="compose-mock-form"
+                type="submit" 
+                disabled={composing}
+                className="w-full py-5 bg-secondary text-white rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-2xl shadow-secondary/20 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 flex items-center justify-center gap-3"
+              >
+                {composing ? <Loader2 className="w-6 h-6 animate-spin text-white" /> : <Database className="w-6 h-6" />}
+                {composing ? 'Withdrawing Questions...' : 'Create Mock & Finalize Withdrawal'}
+              </button>
+              <p className="text-center text-[9px] font-black text-slate-400 mt-4 uppercase tracking-widest">Questions will be migrated from the Global Registry to this Mock Test</p>
+            </div>
           </div>
-          <button type="submit" className="w-full py-4 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all">
-            Save Mock Test
-          </button>
-        </form>
+        </div>
       )}
 
       <div className="space-y-4">
+        {tests.length === 0 && !loading && (
+          <div className="text-center py-20 bg-white rounded-3xl border border-slate-100">
+            <Database className="w-16 h-16 text-slate-100 mx-auto mb-4" />
+            <p className="font-bold text-slate-400 uppercase tracking-widest">No tests in this registry</p>
+          </div>
+        )}
         {tests.map((test) => (
           <div key={test.id} className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group shadow-sm transition-all hover:border-primary">
             <div className="flex items-center gap-4 sm:gap-6">
@@ -361,6 +403,12 @@ export default function AdminTests() {
                 <div className="flex items-center gap-2 sm:gap-4 mt-1 flex-wrap">
                   <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest"><Clock className="w-3 h-3" /> {test.duration}m</span>
                   <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest"><Award className="w-3 h-3" /> {test.totalMarks}M</span>
+                  {test.marksPerQuestion && (
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">+{test.marksPerQuestion} / -{test.negativeMarks || 0}</span>
+                  )}
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded tracking-tighter ${(!test.status || test.status === 'live') ? 'text-green-600 bg-green-50' : 'text-slate-600 bg-slate-200'}`}>
+                    {test.status || 'live'}
+                  </span>
                   {test.isFree ? (
                     <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded tracking-tighter">FREE</span>
                   ) : (
@@ -379,13 +427,31 @@ export default function AdminTests() {
               <Link to={`/admin/questions/${test.id}`} className="flex-1 sm:flex-none justify-center px-4 py-2 bg-slate-50 text-slate-600 rounded-lg font-bold hover:bg-primary hover:text-white transition-all flex items-center gap-2">
                 Questions <ChevronRight className="w-4 h-4" />
               </Link>
-              <button 
-                onClick={() => handleDelete(test.id)} 
-                className="p-2 text-slate-300 hover:text-red-500 transition-colors"
-                title="Delete"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
+              {confirmingDeleteId === test.id ? (
+                <div className="flex items-center gap-2 bg-red-50 p-1.5 rounded-xl border border-red-100 animate-in fade-in slide-in-from-right-2">
+                  <span className="text-[7px] font-black text-red-600 uppercase tracking-tighter px-1 whitespace-nowrap leading-none">Delete All Content?</span>
+                  <button 
+                    onClick={(e) => handleDelete(test.id, e)}
+                    className="px-2 py-1 bg-red-600 text-white text-[9px] font-black rounded-lg hover:bg-red-700 uppercase"
+                  >
+                    Confirm
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setConfirmingDeleteId(null); }}
+                    className="px-2 py-1 bg-white text-slate-400 text-[9px] font-black rounded-lg border border-slate-200"
+                  >
+                    X
+                  </button>
+                </div>
+              ) : (
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setConfirmingDeleteId(test.id); }} 
+                  className="p-2 text-slate-300 hover:text-red-500 transition-colors bg-slate-50 rounded-lg hover:bg-red-50"
+                  title="Delete Test Registry"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              )}
             </div>
           </div>
         ))}

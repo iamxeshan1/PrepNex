@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../lib/firebase';
-import { collection, getDocs, query, orderBy, updateDoc, doc, arrayUnion } from 'firebase/firestore';
-import { Calendar, Clock, Users, Zap, CheckCircle } from 'lucide-react';
+import { collection, getDocs, query, orderBy, where, updateDoc, doc, arrayUnion } from 'firebase/firestore';
+import { Calendar, Clock, Users, Zap, CheckCircle, Timer } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { Countdown } from './Countdown';
 
 export default function LiveTestsSection() {
   const [liveTests, setLiveTests] = useState<any[]>([]);
@@ -15,13 +16,26 @@ export default function LiveTestsSection() {
   useEffect(() => {
     const fetchLiveTests = async () => {
       try {
-        const q = query(collection(db, 'liveTests'), orderBy('startTime', 'asc'));
-        const sn = await getDocs(q);
-        const tests = sn.docs.map(d => ({ id: d.id, ...d.data() }));
-        
-        // Filter out completely ended tests (maybe keep them if we want to show past, but usually upcoming/active)
         const now = new Date().getTime();
-        const activeOrUpcoming = tests.filter((t: any) => new Date(t.endTime).getTime() > now);
+        
+        // Fetch from legacy liveTests
+        const qLive = query(collection(db, 'liveTests'), orderBy('startTime', 'asc'));
+        const snLive = await getDocs(qLive);
+        const testsLive = snLive.docs.map(d => ({ id: d.id, ...d.data(), isLegacyLive: true }));
+        
+        // Fetch from new scheduled tests
+        const qScheduled = query(collection(db, 'tests'), where('status', '==', 'scheduled'), orderBy('scheduledStartTime', 'asc'));
+        const snSched = await getDocs(qScheduled);
+        const testsSched = snSched.docs.map(d => ({ id: d.id, ...d.data(), isScheduled: true }));
+
+        const allTests = [...testsLive, ...testsSched];
+        
+        // Filter out completely ended tests
+        const activeOrUpcoming = allTests.filter((t: any) => {
+          const endTime = t.endTime || (t.scheduledStartTime ? new Date(new Date(t.scheduledStartTime).getTime() + (t.duration || 60) * 60000).toISOString() : null);
+          if (!endTime) return true;
+          return new Date(endTime).getTime() > now;
+        });
         
         setLiveTests(activeOrUpcoming);
       } catch (err) {
@@ -32,7 +46,7 @@ export default function LiveTestsSection() {
     fetchLiveTests();
   }, []);
 
-  const handleEnroll = async (testId: string, isFree: boolean, price: number) => {
+  const handleEnroll = async (testId: string, isFree: boolean, price: number, collectionName: string = 'liveTests') => {
     if (!user) {
       navigate('/login');
       return;
@@ -40,12 +54,12 @@ export default function LiveTestsSection() {
     
     if (!isFree) {
       alert(`To enroll in this paid test (₹${price}), payment gateway integration is needed.`);
-      // Mocking enrollment for now
+      return;
     }
 
     setEnrollingMap(prev => ({ ...prev, [testId]: true }));
     try {
-      await updateDoc(doc(db, 'liveTests', testId), {
+      await updateDoc(doc(db, collectionName, testId), {
         enrolledUsers: arrayUnion(user.uid)
       });
       alert('Successfully enrolled in the Live Test!');
@@ -75,14 +89,14 @@ export default function LiveTestsSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="text-center mb-16 relative">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-black uppercase tracking-widest mb-6">
-            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" /> Live Now
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 border border-red-100">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" /> Live & Upcoming
           </div>
-          <h2 className="text-4xl md:text-5xl font-black text-secondary tracking-tight mb-4">
-            Upcoming Live Tests
+          <h2 className="text-4xl md:text-5xl font-black text-primary tracking-tight mb-4">
+            Live Competitive <span className="text-secondary">Mocks</span>
           </h2>
           <p className="text-lg text-slate-500 max-w-2xl mx-auto font-medium">
-            Test your preparation among thousands of aspirants in real-time. Secure your rank.
+            Join the battle in real-time. Scheduled tests for serious contenders.
           </p>
         </div>
 
@@ -90,89 +104,112 @@ export default function LiveTestsSection() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {liveTests.map(test => {
               const now = new Date().getTime();
-              const enrollStart = new Date(test.enrollmentStartTime).getTime();
-              const enrollEnd = test.enrollmentEndTime ? new Date(test.enrollmentEndTime).getTime() : new Date(test.startTime).getTime();
-              const testStart = new Date(test.startTime).getTime();
-              const testEnd = new Date(test.endTime).getTime();
+              const startTimeValue = test.startTime || test.scheduledStartTime;
+              const endTimeValue = test.endTime || (test.scheduledStartTime ? new Date(new Date(test.scheduledStartTime).getTime() + (test.duration || 60) * 60000).toISOString() : null);
+              
+              const enrollStart = test.enrollmentStartTime ? new Date(test.enrollmentStartTime).getTime() : (new Date(startTimeValue).getTime() - 7 * 24 * 3600000); // 7 days before if not set
+              const enrollEnd = test.enrollmentEndTime ? new Date(test.enrollmentEndTime).getTime() : new Date(startTimeValue).getTime();
+              
+              const testStart = new Date(startTimeValue).getTime();
+              const testEnd = endTimeValue ? new Date(endTimeValue).getTime() : (testStart + (test.duration || 60) * 60000);
 
               const isEnrolling = now >= enrollStart && now <= enrollEnd;
               const isTestActive = now >= testStart && now <= testEnd;
               const upcomingEnrollment = now < enrollStart;
+              const waitingForStart = now > enrollEnd && now < testStart;
               
               const isEnrolled = test.enrolledUsers?.includes(user?.uid);
+              const collectionName = test.isScheduled ? 'tests' : 'liveTests';
 
               return (
-                <div key={test.id} className="relative group bg-white rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col">
+                <div key={test.id} className="relative group bg-white rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:border-secondary/20 transition-all duration-300 overflow-hidden flex flex-col">
+                  {isTestActive && (
+                    <div className="absolute top-4 right-4 z-10">
+                      <div className="flex items-center gap-1.5 px-3 py-1 bg-red-100 text-red-600 rounded-full text-[8px] font-black uppercase tracking-widest border border-red-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> Live
+                      </div>
+                    </div>
+                  )}
                   <div className="p-8 flex-1">
                     <div className="flex justify-between items-start mb-6">
-                      <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                      <div className={`p-3 rounded-2xl group-hover:scale-110 transition-transform duration-300 ${isTestActive ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
                         <Zap className="w-6 h-6" />
                       </div>
                       {test.isFree ? (
-                        <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-black uppercase tracking-widest">Free</span>
+                        <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-[10px] font-black uppercase tracking-widest">Free</span>
                       ) : (
-                        <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-black uppercase tracking-widest">₹{test.price}</span>
+                        <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-[10px] font-black uppercase tracking-widest">₹{test.price}</span>
                       )}
                     </div>
                     
-                    <h3 className="text-xl font-black text-secondary mb-2 leading-tight">{test.title}</h3>
-                    <p className="text-sm text-slate-500 line-clamp-2 mb-6">{test.description}</p>
+                    <h3 className="text-xl font-black text-primary mb-2 leading-tight group-hover:text-secondary transition-colors">{test.title}</h3>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-4">{test.isScheduled ? 'General Live Test' : 'Special Exam Mock'}</p>
+                    
+                    {!isTestActive && now < testStart && (
+                      <div className="mb-6 p-4 bg-primary/5 border border-primary/10 rounded-2xl">
+                         <div className="flex items-center gap-2 mb-3">
+                           <Timer className="w-3.5 h-3.5 text-primary" />
+                           <span className="text-[10px] font-black text-primary uppercase tracking-widest">Starting In</span>
+                         </div>
+                         <Countdown targetDate={startTimeValue} />
+                      </div>
+                    )}
                     
                     <div className="space-y-3 mb-6">
-                      <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
+                      <div className="flex items-center gap-3 text-xs font-bold text-slate-600">
                         <Calendar className="w-4 h-4 text-slate-400" />
-                        <span>{new Date(test.startTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        <span>{new Date(startTimeValue).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                       </div>
-                      <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
+                      <div className="flex items-center gap-3 text-xs font-bold text-slate-600">
                         <Clock className="w-4 h-4 text-slate-400" />
-                        <span>{test.duration} mins • {test.totalMarks} Marks</span>
+                        <span>{new Date(startTimeValue).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} • {test.duration}m</span>
                       </div>
-                      <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
+                      <div className="flex items-center gap-3 text-xs font-bold text-slate-600">
                         <Users className="w-4 h-4 text-slate-400" />
-                        <span>{test.enrolledUsers?.length || 0} Enrolled</span>
+                        <span>{test.enrolledUsers?.length || 0} Aspirants Enrolled</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-4 bg-slate-50 border-t border-slate-100">
+                  <div className="p-5 bg-slate-50 border-t border-slate-100">
                     {isEnrolled ? (
                       isTestActive ? (
                         <button 
                           onClick={() => navigate(`/test/${test.id}`)}
-                          className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"
+                          className="w-full py-4 bg-primary text-white rounded-xl font-black uppercase tracking-[0.2em] text-[10px] hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
                         >
-                         Start Live Test
+                         Enter Live Hall
                         </button>
+                      ) : now < testStart ? (
+                        <div className="flex flex-col gap-2">
+                           <button disabled className="w-full py-4 bg-white border-2 border-emerald-500 text-emerald-600 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 cursor-not-allowed">
+                             <CheckCircle className="w-4 h-4" /> Participation Confirmed
+                           </button>
+                           {waitingForStart && (
+                              <p className="text-[8px] font-black text-blue-600 text-center uppercase tracking-widest animate-pulse">Wait in Lobby for Start Time</p>
+                           )}
+                        </div>
                       ) : (
-                        <button disabled className="w-full py-4 bg-white border-2 border-green-500 text-green-600 rounded-xl font-bold flex items-center justify-center gap-2 cursor-not-allowed">
-                          <CheckCircle className="w-5 h-5" /> Enrolled successfully
+                        <button disabled className="w-full py-4 bg-slate-200 text-slate-500 rounded-xl font-black text-[10px] uppercase tracking-widest">
+                          Test Ended
                         </button>
                       )
                     ) : (
                       isEnrolling ? (
-                        test.isFree ? (
-                          <button 
-                            onClick={() => handleEnroll(test.id, test.isFree, test.price)}
-                            disabled={enrollingMap[test.id]}
-                            className="w-full py-4 bg-secondary text-white rounded-xl font-bold hover:bg-secondary/90 transition-all font-logo flex items-center justify-center gap-2"
-                          >
-                            {enrollingMap[test.id] ? 'Processing...' : 'Enroll Now'}
-                          </button>
-                        ) : (
-                          <button 
-                            onClick={() => navigate(`/live-test/${test.id}`)}
-                            className="w-full py-4 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all font-logo flex items-center justify-center gap-2"
-                          >
-                            Enroll Now
-                          </button>
-                        )
+                        <button 
+                          onClick={() => handleEnroll(test.id, test.isFree, test.price, collectionName)}
+                          disabled={enrollingMap[test.id]}
+                          className="w-full py-4 bg-secondary text-white rounded-xl font-black uppercase tracking-[0.2em] text-[10px] hover:bg-secondary/90 transition-all flex items-center justify-center gap-2"
+                        >
+                          {enrollingMap[test.id] ? 'Registering...' : 'Enroll Now'}
+                        </button>
                       ) : upcomingEnrollment ? (
-                        <button disabled className="w-full py-4 bg-slate-200 text-slate-500 rounded-xl font-bold cursor-not-allowed text-sm">
-                          Enrollment starts {new Date(test.enrollmentStartTime).toLocaleDateString()}
+                        <button disabled className="w-full py-4 bg-slate-100 text-slate-400 rounded-xl font-black text-[10px] uppercase tracking-widest cursor-not-allowed">
+                          Enrollment Opens: {new Date(enrollStart).toLocaleDateString()}
                         </button>
                       ) : (
-                        <button disabled className="w-full py-4 bg-slate-200 text-slate-500 rounded-xl font-bold cursor-not-allowed">
-                          Enrollment Closed
+                        <button disabled className="w-full py-4 bg-slate-200 text-slate-500 rounded-xl font-black text-[10px] uppercase tracking-widest">
+                          Registration Closed
                         </button>
                       )
                     )}
@@ -180,8 +217,8 @@ export default function LiveTestsSection() {
                 </div>
               );
             })}
-          </div>
-        ) : (
+        </div>
+      ) : (
           <div className="max-w-4xl mx-auto">
             <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[3rem] p-16 text-center group hover:border-primary/30 transition-colors">
               <div className="w-20 h-20 bg-white rounded-[2rem] flex items-center justify-center shadow-sm mx-auto mb-8 text-primary/20 group-hover:text-primary/40 transition-colors">

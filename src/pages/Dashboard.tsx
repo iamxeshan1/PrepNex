@@ -5,14 +5,17 @@ import { Layout } from '../components/Layout';
 import { collection, query, where, getDocs, orderBy, limit, doc, updateDoc, addDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { logActivity, ActivityAction } from '../services/activityLogger';
-import { BarChart, Clock, Award, ChevronRight, BookOpen, User as UserIcon, Bell, Calendar, Phone, Mail, Save, AlertCircle, Crown, AlertTriangle, Star, CheckCircle, Send, MessageCircle, Zap } from 'lucide-react';
+import { BarChart, Clock, Award, ChevronRight, BookOpen, User as UserIcon, Bell, Calendar, Phone, Mail, Save, AlertCircle, Crown, AlertTriangle, Star, CheckCircle, Send, MessageCircle, Zap, Timer } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Countdown } from '../components/Countdown';
 
 export default function Dashboard() {
   const { profile } = useAuth();
   const [recentResults, setRecentResults] = useState<any[]>([]);
   const [notices, setNotices] = useState<any[]>([]);
   const [subjectPerformance, setSubjectPerformance] = useState<{ id: string, name: string, accuracy: number, total: number, isWeak: boolean }[]>([]);
+  const [purchasedExams, setPurchasedExams] = useState<{id: string, name: string}[]>([]);
+  const [enrolledTests, setEnrolledTests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'profile'>('overview');
   
@@ -47,6 +50,35 @@ export default function Dashboard() {
         subjectsSnapshot.forEach(doc => {
             subjectMap[doc.id] = doc.data().name;
         });
+
+        // Fetch Purchased Exam Names
+        if (profile.purchasedExams?.length > 0) {
+          const examsSnap = await getDocs(query(collection(db, 'exams'), where('__name__', 'in', profile.purchasedExams)));
+          setPurchasedExams(examsSnap.docs.map(doc => ({ id: doc.id, name: doc.data().name })));
+        }
+
+        // Fetch Enrolled Live/Scheduled Tests
+        const enrolledQuery = query(collection(db, 'tests'), where('enrolledUsers', 'array-contains', profile.userId));
+        const enrolledSnap = await getDocs(enrolledQuery);
+        const schedTests = enrolledSnap.docs.map(doc => ({ 
+          id: doc.id, 
+          ...doc.data(), 
+          type: 'Live Hall',
+          startTime: (doc.data() as any).scheduledStartTime 
+        }));
+
+        const enrolledLiveQuery = query(collection(db, 'liveTests'), where('enrolledUsers', 'array-contains', profile.userId));
+        const enrolledLiveSnap = await getDocs(enrolledLiveQuery);
+        const liveTests = enrolledLiveSnap.docs.map(doc => ({ 
+          id: doc.id, 
+          ...doc.data(), 
+          type: 'Live Mock',
+          startTime: (doc.data() as any).startTime 
+        }));
+
+        setEnrolledTests([...schedTests, ...liveTests].sort((a: any, b: any) => 
+          new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        ));
 
         // Fetch All Results for Progress Tracking
         const allResultsQuery = query(collection(db, 'results'), where('userId', '==', profile.userId), orderBy('date', 'desc'));
@@ -245,7 +277,7 @@ export default function Dashboard() {
                   <Award className="absolute -bottom-4 -right-4 w-32 h-32 opacity-10 rotate-12" />
                   <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1">Current Mastery</p>
                   <h3 className="text-3xl font-black mb-4">Prime Scholar</h3>
-                  <Link to="/exams" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md px-4 py-2 rounded-xl text-xs font-bold transition-all">
+                  <Link to="/agencies" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md px-4 py-2 rounded-xl text-xs font-bold transition-all">
                     Level Up <ChevronRight className="w-4 h-4" />
                   </Link>
                 </div>
@@ -340,7 +372,7 @@ export default function Dashboard() {
 
                   <div className="flex items-center justify-between">
                     <h2 className="text-xl font-black text-primary tracking-tight">Recent Activity</h2>
-                    <Link to="/exams" className="text-xs font-black text-secondary uppercase tracking-widest hover:underline">Take New Test</Link>
+                    <Link to="/agencies" className="text-xs font-black text-secondary uppercase tracking-widest hover:underline">Take New Test</Link>
                   </div>
 
                   {loading ? (
@@ -383,12 +415,63 @@ export default function Dashboard() {
                       </div>
                       <h3 className="font-extrabold text-primary text-xl tracking-tight mb-2">Ready to start?</h3>
                       <p className="text-sm text-slate-500 font-medium max-w-xs mx-auto mb-8">Attempt your first mock test to begin building your preparation profile.</p>
-                      <Link to="/exams" className="bg-primary text-white px-8 py-4 rounded-2xl font-black tracking-widest uppercase text-xs shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all active:scale-95">
-                        Browse Exams
+                      <Link to="/agencies" className="bg-primary text-white px-8 py-4 rounded-2xl font-black tracking-widest uppercase text-xs shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all active:scale-95">
+                        Browse Agencies
                       </Link>
                     </div>
                   )}
                 </div>
+
+                <div className="space-y-8">
+                  {/* Enrollments Card */}
+                  <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm">
+                    <h3 className="text-lg font-black text-primary mb-6 uppercase tracking-tight">Active Hall Passes</h3>
+                    {enrolledTests.length > 0 ? (
+                      <div className="space-y-4">
+                        {enrolledTests.map((test) => {
+                          const now = new Date().getTime();
+                          const start = new Date(test.startTime).getTime();
+                          const diff = start - now;
+                          const isLive = diff <= 0;
+                          
+                          return (
+                            <Link 
+                              key={test.id} 
+                              to={`/test/${test.id}?isLive=true`}
+                              className={`block p-4 rounded-2xl border transition-all ${isLive ? 'border-primary bg-primary/5 hover:bg-primary/10' : 'border-slate-100 bg-white hover:border-secondary'}`}
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <span className={`text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-[0.1em] ${test.type === 'Live Hall' ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-600'}`}>
+                                  {test.type}
+                                </span>
+                                {isLive ? (
+                                  <span className="flex items-center gap-1 text-[8px] font-black text-primary uppercase tracking-widest animate-pulse">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-primary" /> LIVE NOW
+                                  </span>
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                     <Timer className="w-2.5 h-2.5 text-secondary" />
+                                     <div className="text-[10px] font-black text-secondary">
+                                       <Countdown targetDate={test.startTime} compact />
+                                     </div>
+                                  </div>
+                                )}
+                              </div>
+                              <h4 className="text-xs font-extrabold text-primary truncate mb-1">{test.title}</h4>
+                              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                                {new Date(test.startTime).toLocaleDateString()}
+                              </p>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-4">
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest leading-loose">No active enrollments</p>
+                        <Link to="/" className="text-[10px] font-black text-primary hover:underline tracking-widest uppercase mt-4 inline-block">Join Live Mocks →</Link>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Subscriptions Card */}
                   <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm">
@@ -403,13 +486,13 @@ export default function Dashboard() {
                           {profile?.premiumExpiry && <p className="text-[10px] font-bold text-purple-600 uppercase tracking-widest mt-1">Valid till {new Date(profile.premiumExpiry).toLocaleDateString()}</p>}
                         </div>
                       </div>
-                    ) : profile?.purchasedExams?.length > 0 ? (
+                    ) : purchasedExams.length > 0 ? (
                       <div className="space-y-3">
-                        {profile.purchasedExams.map((examId: string) => (
-                          <div key={examId} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 group hover:border-secondary transition-all">
+                        {purchasedExams.map((exam) => (
+                          <Link key={exam.id} to={`/exam/${exam.id}`} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 group hover:border-secondary transition-all">
                             <div className="w-1.5 h-1.5 rounded-full bg-secondary group-hover:scale-150 transition-transform" />
-                            <span className="text-[10px] font-black text-primary truncate tracking-widest uppercase">ID: {examId.slice(-8)}</span>
-                          </div>
+                            <span className="text-[10px] font-black text-primary truncate tracking-widest uppercase">{exam.name}</span>
+                          </Link>
                         ))}
                       </div>
                     ) : (
@@ -472,7 +555,8 @@ export default function Dashboard() {
                     )}
                   </div>
                 </div>
-              </motion.div>
+              </div>
+            </motion.div>
             ) : (
             <motion.div 
               key="profile"

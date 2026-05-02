@@ -61,7 +61,9 @@ export default function Subjects() {
             getDocs(query(collection(db, 'tests'), where('subjectId', '==', subjectId), orderBy('createdAt', 'desc')))
           ]);
           if (sSnap.exists()) setSelectedSubject({ id: sSnap.id, ...sSnap.data() });
-          setTests(tSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+          
+          const fetchedTests = tSnap.docs.map(d => ({ id: d.id, ...d.data() as any }));
+          setTests(fetchedTests.filter(t => t.status !== 'draft'));
         } else {
           const q = query(collection(db, 'subjects'), orderBy('createdAt', 'desc'));
           const snap = await getDocs(q);

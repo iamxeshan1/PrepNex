@@ -17,7 +17,8 @@ import {
   MessageCircle,
   Mail,
   Activity,
-  Crown
+  Crown,
+  Database
 } from 'lucide-react';
 
 export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, backTo?: string }> = ({ children, title, backTo }) => {
@@ -41,8 +42,10 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
                   { label: 'Dashboard', path: '/admin', icon: LayoutDashboard },
                   { label: 'Notices', path: '/admin/notices', icon: Bell },
                   { label: 'Thoughts', path: '/admin/thoughts', icon: Sparkles },
+                  { label: 'Agencies', path: '/admin/agencies', icon: Layers },
                   { label: 'Subjects', path: '/admin/subjects', icon: Layers },
                   { label: 'Exams', path: '/admin/exams', icon: BookOpen },
+                  { label: 'Master Bank', path: '/admin/mock-tests', icon: Database },
                   { label: 'Live Tests', path: '/admin/live-tests', icon: CreditCard },
                   { label: 'Users', path: '/admin/users', icon: Users },
                   { label: 'Coupons', path: '/admin/coupons', icon: Ticket },

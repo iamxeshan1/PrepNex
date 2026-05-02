@@ -9,11 +9,14 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
-import Exams from './pages/Exams';
+import Agencies from './pages/Agencies';
+import AgencyExams from './pages/AgencyExams';
 import ExamDetail from './pages/ExamDetail';
 import Test from './pages/Test';
 import Result from './pages/Result';
+import AdminMockTestBank from './pages/Admin/MockTestBank';
 import AdminDashboard from './pages/Admin/Dashboard';
+import AdminAgencies from './pages/Admin/Agencies';
 import AdminExams from './pages/Admin/Exams';
 import AdminTests from './pages/Admin/Tests';
 import AdminQuestions from './pages/Admin/Questions';
@@ -130,7 +133,8 @@ export default function App() {
             </ProtectedRoute>
           } />
           
-          <Route path="/exams" element={<Exams />} />
+          <Route path="/agencies" element={<Agencies />} />
+          <Route path="/agency/:agencyId" element={<AgencyExams />} />
           <Route path="/subjects" element={<Subjects />} />
           <Route path="/premium" element={<Premium />} />
           <Route path="/about" element={<About />} />
@@ -205,9 +209,19 @@ export default function App() {
               <AdminSubjects />
             </ProtectedRoute>
           } />
+          <Route path="/admin/agencies" element={
+            <ProtectedRoute adminOnly>
+              <AdminAgencies />
+            </ProtectedRoute>
+          } />
           <Route path="/admin/exams" element={
             <ProtectedRoute adminOnly>
               <AdminExams />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/mock-tests" element={
+            <ProtectedRoute adminOnly>
+              <AdminMockTestBank />
             </ProtectedRoute>
           } />
           <Route path="/admin/tests/:examId" element={

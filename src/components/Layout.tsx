@@ -20,7 +20,7 @@ export const Navbar = () => {
 
   const menuItems = [
     { label: 'Home', path: '/', icon: Home },
-    { label: 'Exams', path: '/exams', icon: Layers },
+    { label: 'Agencies', path: '/agencies', icon: Layers },
     { label: 'Material', path: '/study-material', icon: BookOpen },
     { label: 'Subjects', path: '/subjects', icon: BookOpen },
     { label: 'About Us', path: '/about', icon: Users },
@@ -48,7 +48,7 @@ export const Navbar = () => {
             </div>
 
             <div className="hidden md:flex items-center gap-8">
-              <Link to="/exams" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors uppercase tracking-widest text-[10px]">Exams</Link>
+              <Link to="/agencies" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors uppercase tracking-widest text-[10px]">Agencies</Link>
               <Link to="/study-material" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors uppercase tracking-widest text-[10px]">Material</Link>
               <Link to="/about" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors uppercase tracking-widest text-[10px]">About</Link>
               <Link to="/contact" className="text-sm font-bold text-slate-600 hover:text-primary transition-colors uppercase tracking-widest text-[10px]">Contact</Link>
@@ -196,9 +196,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             <div className="md:col-span-2 md:col-start-7 space-y-8">
               <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Quick Navigation</h4>
               <nav className="flex flex-col gap-4">
-                <Link to="/exams" className="text-sm font-bold text-slate-300 hover:text-white transition-all hover:translate-x-1 flex items-center gap-2 group">
+                <Link to="/agencies" className="text-sm font-bold text-slate-300 hover:text-white transition-all hover:translate-x-1 flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 rounded-full bg-secondary group-hover:scale-150 transition-all" />
-                  Exam Library
+                  Agencies
                 </Link>
                 <Link to="/study-material" className="text-sm font-bold text-slate-300 hover:text-white transition-all hover:translate-x-1 flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 rounded-full bg-secondary group-hover:scale-150 transition-all" />

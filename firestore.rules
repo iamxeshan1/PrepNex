@@ -1,43 +1,40 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Default deny
-    match /tickets/{ticketId} {
-      allow read: if isOwner(resource.data.userId) || isAdmin();
-      allow create: if isOwner(request.resource.data.userId);
-      allow update: if isOwner(resource.data.userId) || isAdmin();
-      allow delete: if isAdmin();
-    }
-
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
     // Helpers
     function isSignedIn() {
       return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email in ['iamxeshan1@gmail.com', 'prepnexedtech@gmail.com'] ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
     }
 
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isAdmin() {
-      return isSignedIn() && (
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
-        request.auth.token.email == 'iamxeshan1@gmail.com' ||
-        request.auth.token.email == 'prepnexedtech@gmail.com'
-      );
-    }
-
-    function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
-    }
-
     function isExamPurchased(userId, examId) {
       return exists(/databases/$(database)/documents/subscriptions/$(userId + '_' + examId)) &&
              get(/databases/$(database)/documents/subscriptions/$(userId + '_' + examId)).data.paymentStatus == 'completed';
+    }
+
+    // Agencies
+    match /agencies/{agencyId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Tickets
+    match /tickets/{ticketId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isOwner(request.resource.data.userId);
+      allow update: if isOwner(resource.data.userId) || isAdmin();
+      allow delete: if isAdmin();
     }
 
     // Users
@@ -50,8 +47,8 @@ service cloud.firestore {
 
     // Exams
     match /exams/{examId} {
-      allow read: if true; // Public list
-      allow write: if isAdmin();
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
     }
 
     // LiveTests
@@ -72,8 +69,8 @@ service cloud.firestore {
 
     // Tests
     match /tests/{testId} {
-      allow read: if true; // Allow reading test metadata
-      allow write: if isAdmin();
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
     }
 
     // Questions
@@ -154,6 +151,11 @@ service cloud.firestore {
     match /study_material/{materialId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

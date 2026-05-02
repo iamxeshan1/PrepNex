@@ -82,12 +82,16 @@ export default function AdminStudyMaterial() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure?')) return;
+    if (!id) return;
+    if (!window.confirm('Are you sure you want to delete this study material document?')) return;
+    
     try {
       await deleteDoc(doc(db, 'study_material', id));
       setMaterials(prev => prev.filter(m => m.id !== id));
-    } catch (err) {
-      console.error(err);
+      alert("Material successfully removed from library.");
+    } catch (err: any) {
+      console.error("Delete Error:", err);
+      alert("Error deleting material: " + (err.message || "Unknown error"));
     }
   };
 

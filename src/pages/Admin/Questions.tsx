@@ -18,9 +18,12 @@ export default function AdminQuestions() {
   // Form State
   const [question, setQuestion] = useState('');
   const [subjectId, setSubjectId] = useState('');
+  const [newSubjectName, setNewSubjectName] = useState('');
+  const [level, setLevel] = useState('Medium');
   const [options, setOptions] = useState(['', '', '', '']);
   const [correct, setCorrect] = useState('');
   const [explanation, setExplanation] = useState('');
+  const [previouslyAskedIn, setPreviouslyAskedIn] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,16 +49,39 @@ export default function AdminQuestions() {
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!correct) return alert('Select correct answer');
+    
+    let finalSubjectId = test?.subjectId || subjectId;
+    
+    // Create new subject if specified
+    if (newSubjectName.trim()) {
+      const existing = subjects.find(s => s.name.toLowerCase() === newSubjectName.trim().toLowerCase());
+      if (existing) {
+        finalSubjectId = existing.id;
+      } else {
+        const subRef = await addDoc(collection(db, 'subjects'), {
+          name: newSubjectName.trim(),
+          createdAt: new Date().toISOString()
+        });
+        finalSubjectId = subRef.id;
+        // Refresh subjects local state to avoid redundant creations
+        const sSnap = await getDocs(collection(db, 'subjects'));
+        setSubjects(sSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      }
+    }
+
     await addDoc(collection(db, 'questions'), {
       testId,
-      subjectId: test?.subjectId || subjectId,
+      subjectId: finalSubjectId,
+      level,
       question,
       options,
       correctAnswer: correct,
       explanation,
+      previouslyAskedIn,
       createdAt: new Date().toISOString()
     });
-    setQuestion(''); setOptions(['', '', '', '']); setCorrect(''); setExplanation(''); setSubjectId('');
+    setQuestion(''); setOptions(['', '', '', '']); setCorrect(''); setExplanation(''); setSubjectId(''); setPreviouslyAskedIn('');
+    setNewSubjectName(''); setLevel('Medium');
     setShowAddForm(false);
     refreshQuestions();
   };
@@ -96,13 +122,13 @@ export default function AdminQuestions() {
 
     // Sample
     const sampleData = [
-      ["question", "subjectName", "option1", "option2", "option3", "option4", "correctAnswer", "explanation"],
-      ["What is 10 + 5?", "Mathematics", "12", "15", "18", "20", "15", "Simple addition logic."],
-      ["Who wrote the Indian Constitution?", "Polity", "B.R. Ambedkar", "Nehru", "Gandhi", "Prasad", "B.R. Ambedkar", "Dr. B.R. Ambedkar was the chairman of the drafting committee."]
+      ["question", "subjectName", "level", "option1", "option2", "option3", "option4", "correctAnswer", "explanation", "previouslyAskedIn"],
+      ["What is 10 + 5?", "Mathematics", "Easy", "12", "15", "18", "20", "15", "Simple addition logic.", "SSC CGL 2022"],
+      ["Who wrote the Indian Constitution?", "Polity", "Medium", "B.R. Ambedkar", "Nehru", "Gandhi", "Prasad", "B.R. Ambedkar", "Dr. B.R. Ambedkar was the chairman of the drafting committee.", "UPSC Prelims 2023"]
     ];
     const wsSample = XLSX.utils.aoa_to_sheet(sampleData);
     wsSample['!cols'] = [
-      {wch: 40}, {wch: 20}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 20}, {wch: 40}
+      {wch: 40}, {wch: 20}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 20}, {wch: 40}, {wch: 30}
     ];
     XLSX.utils.book_append_sheet(wb, wsSample, "Question Entry Template");
 
@@ -125,19 +151,36 @@ export default function AdminQuestions() {
       
       for (const row of (data as any[])) {
         let qSubId = test?.subjectId || '';
-        if (!qSubId && row.subjectName) {
-          const sub = subjects.find(s => s.name.toLowerCase() === String(row.subjectName).toLowerCase());
-          qSubId = sub?.id || '';
+        const rowSubName = String(row.subjectName || '').trim();
+        
+        if (!qSubId && rowSubName) {
+          const sub = subjects.find(s => s.name.toLowerCase() === rowSubName.toLowerCase());
+          if (sub) {
+            qSubId = sub.id;
+          } else {
+             // Create Subject On the fly
+             const newSubRef = await addDoc(collection(db, 'subjects'), {
+               name: rowSubName,
+               createdAt: new Date().toISOString()
+             });
+             qSubId = newSubRef.id;
+             // Sync local subjects for next iterations
+             const freshSubs = await getDocs(collection(db, 'subjects'));
+             const updatedSubs = freshSubs.docs.map(d => ({ id: d.id, ...d.data() }));
+             setSubjects(updatedSubs);
+          }
         }
 
         const qRef = doc(collection(db, 'questions'));
         batch.set(qRef, {
           testId,
           subjectId: qSubId,
+          level: row.level || 'Medium',
           question: row.question,
           options: [row.option1, row.option2, row.option3, row.option4],
           correctAnswer: row.correctAnswer,
           explanation: row.explanation || '',
+          previouslyAskedIn: row.previouslyAskedIn || '',
           createdAt: new Date().toISOString()
         });
       }
@@ -150,8 +193,14 @@ export default function AdminQuestions() {
     reader.readAsBinaryString(file);
   };
 
+  const getBackLink = () => {
+    if (test?.examId) return `/admin/tests/${test.examId}`;
+    if (test?.subjectId) return `/admin/subject-tests/${test.subjectId}`;
+    return `/admin/mock-tests`; // Default for bank tests
+  };
+
   return (
-    <AdminLayout title={`Questions: ${test?.title || 'Loading...'}`} backTo={test?.examId ? `/admin/tests/${test.examId}` : `/admin/subject-tests/${test?.subjectId}`}>
+    <AdminLayout title={`Questions: ${test?.title || 'Loading...'}`} backTo={getBackLink()}>
       <div className="mb-8 flex flex-wrap gap-4 justify-end">
         <button 
           onClick={downloadSample}
@@ -181,7 +230,7 @@ export default function AdminQuestions() {
               <Upload className="w-8 h-8" />
             </div>
             <h3 className="text-xl font-black text-secondary uppercase tracking-tight">Upload Questions Excel</h3>
-            <p className="text-xs font-bold text-slate-500 mt-2">Columns: question, subjectName (optional for exams), option1, option2, option3, option4, correctAnswer, explanation</p>
+            <p className="text-xs font-bold text-slate-500 mt-2">Columns: question, subjectName (optional for exams), option1, option2, option3, option4, correctAnswer, explanation, previouslyAskedIn</p>
           </label>
         </div>
       )}
@@ -200,18 +249,43 @@ export default function AdminQuestions() {
               </div>
               
               {!test?.subjectId && (
-                <div className="md:col-span-2 space-y-2">
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700">Subject Category</label>
                   <select 
-                    required={!test?.subjectId}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
-                    value={subjectId} onChange={(e) => setSubjectId(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary font-bold"
+                    value={subjectId} onChange={(e) => { setSubjectId(e.target.value); if(e.target.value) setNewSubjectName(''); }}
                   >
                     <option value="">Select a Subject</option>
                     {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
                 </div>
-              )}
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700">Or Create New Subject</label>
+                  <input 
+                    placeholder="Type subject name..."
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
+                    value={newSubjectName} onChange={(e) => { setNewSubjectName(e.target.value); if(e.target.value) setSubjectId(''); }}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="md:col-span-2 space-y-2">
+              <label className="text-sm font-bold text-slate-700">Question Level</label>
+              <div className="grid grid-cols-4 gap-2">
+                 {['Easy', 'Medium', 'Hard', 'UGC NET'].map((lvl) => (
+                   <button
+                    key={lvl}
+                    type="button"
+                    onClick={() => setLevel(lvl)}
+                    className={`py-3 rounded-xl font-bold border-2 transition-all text-xs ${level === lvl ? 'border-primary bg-primary/5 text-primary' : 'border-slate-100 text-slate-400 hover:bg-slate-50'}`}
+                   >
+                     {lvl}
+                   </button>
+                 ))}
+              </div>
+            </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -247,6 +321,15 @@ export default function AdminQuestions() {
                 value={explanation} onChange={(e) => setExplanation(e.target.value)} 
               />
             </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700">Previously Asked In (Optional)</label>
+              <input 
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
+                value={previouslyAskedIn} onChange={(e) => setPreviouslyAskedIn(e.target.value)} 
+                placeholder="e.g. UPSC Prelims 2023, SSC CGL 2022"
+              />
+            </div>
           </div>
           <button type="submit" className="w-full py-4 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all font-logo">
             Save Question
@@ -264,6 +347,7 @@ export default function AdminQuestions() {
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Question {idx + 1}</span>
                     {sub && <span className="text-[10px] font-bold text-secondary bg-secondary/5 px-2 py-0.5 rounded uppercase tracking-tighter shrink-0">{sub.name}</span>}
+                    {q.previouslyAskedIn && <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded uppercase tracking-tighter shrink-0">Asked In: {q.previouslyAskedIn}</span>}
                   </div>
                   <p className="text-base sm:text-lg font-bold text-primary mt-1 leading-tight">{q.question}</p>
                 </div>

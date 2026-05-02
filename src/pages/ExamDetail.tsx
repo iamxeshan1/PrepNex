@@ -3,15 +3,16 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { useAuth } from '../context/AuthContext';
 import { getTestsByExamId, createSubscription, getResultsByTestId } from '../services/db';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, getDocs, query, collection, documentId, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { ChevronLeft, Lock, Play, Clock, FileText, CheckCircle2, ShoppingBag, Award, History } from 'lucide-react';
+import { ChevronLeft, Lock, Play, Clock, FileText, CheckCircle2, ShoppingBag, Award, History, Building2 } from 'lucide-react';
 
 export default function ExamDetail() {
   const { examId } = useParams();
   const { profile, user } = useAuth();
   const navigate = useNavigate();
   const [exam, setExam] = useState<any>(null);
+  const [agency, setAgency] = useState<any>(null);
   const [tests, setTests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
@@ -23,15 +24,30 @@ export default function ExamDetail() {
       if (!examId) return;
       const examSnap = await getDoc(doc(db, 'exams', examId));
       if (examSnap.exists()) {
-        setExam({ id: examSnap.id, ...examSnap.data() });
+        const examData = examSnap.data();
+        const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnexedtech@gmail.com';
+        if (examData.status === 'draft' && !isAdmin) {
+          navigate('/dashboard');
+          return;
+        }
+        setExam({ id: examSnap.id, ...examData });
+        
+        if (examData.agencyId) {
+           const agencySnap = await getDoc(doc(db, 'agencies', examData.agencyId));
+           if (agencySnap.exists()) {
+             setAgency({ id: agencySnap.id, ...agencySnap.data() });
+           }
+        }
       }
       const testsData = await getTestsByExamId(examId);
-      setTests(testsData || []);
+      const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnexedtech@gmail.com';
+      const visibleTests = (testsData || []).filter((t: any) => t.status !== 'draft' || isAdmin);
+      setTests(visibleTests);
       
       // Fetch results for these tests if user is logged in
       if (user) {
         const resultsMap: Record<string, any[]> = {};
-        for (const test of testsData || []) {
+        for (const test of visibleTests) {
           const results = await getResultsByTestId(user.uid, test.id);
           resultsMap[test.id] = results || [];
         }
@@ -57,8 +73,8 @@ export default function ExamDetail() {
   const hasAccess = (test: any) => {
     if (test.isFree) return true;
     if (profile?.isPremium) return true;
-    if (profile?.purchasedExams?.includes(examId)) return true;
-    if (profile?.freeExams?.includes(examId)) return true;
+    if (exam?.isPaid && profile?.purchasedExams?.includes(examId)) return true;
+    if (exam?.isPaid && profile?.freeExams?.includes(examId)) return true;
     return false;
   };
 
@@ -191,8 +207,8 @@ export default function ExamDetail() {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Link to="/exams" className="inline-flex items-center gap-1 text-sm font-bold text-slate-400 hover:text-primary mb-8 transition-colors">
-          <ChevronLeft className="w-4 h-4" /> Back to Library
+        <Link to={agency?.id ? `/agency/${agency.id}` : "/agencies"} className="inline-flex items-center gap-1 text-sm font-bold text-slate-400 hover:text-primary mb-8 transition-colors">
+          <ChevronLeft className="w-4 h-4" /> Back to {agency?.name || 'Agencies'}
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
@@ -200,7 +216,12 @@ export default function ExamDetail() {
           <div className="lg:col-span-2 space-y-12">
             <header>
               <div className="flex items-center gap-3 text-xs font-bold text-secondary uppercase tracking-widest mb-4">
-                <span>{exam.organization}</span>
+                {agency?.logoUrl ? (
+                  <img src={agency.logoUrl} alt={agency.name} className="w-6 h-6 object-contain rounded" />
+                ) : (
+                  <Building2 className="w-4 h-4" />
+                )}
+                <span>{agency?.name || exam.organization}</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
                 <span>{exam.category}</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
@@ -209,6 +230,61 @@ export default function ExamDetail() {
               <h1 className="text-4xl md:text-5xl font-extrabold text-primary tracking-tight mb-6">{exam.name}</h1>
               <p className="text-lg text-slate-600 leading-relaxed max-w-2xl">{exam.description || 'Comprehensive test series designed to mimic the actual exam environment and pattern.'}</p>
             </header>
+
+            {/* Exam Highlights Section */}
+            {(exam.totalPosts || (exam.postDistribution && exam.postDistribution.length > 0)) && (
+              <section className="bg-slate-50 rounded-[2rem] p-8 border border-slate-100 mb-8">
+                <h2 className="text-2xl font-bold text-primary mb-6">Exam Highlights</h2>
+                
+                {exam.totalPosts && (
+                  <div className="mb-8 p-6 bg-white rounded-2xl border border-slate-200 flex items-center justify-between">
+                    <span className="text-primary font-black">Total Posts Advertised</span>
+                    <span className="text-3xl font-black text-secondary">{exam.totalPosts}</span>
+                  </div>
+                )}
+
+                {exam.postDistribution && exam.postDistribution.length > 0 && (
+                  <div className="space-y-4">
+                     <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest pl-1 mb-2">Category-wise Distribution</h3>
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {exam.postDistribution.map((pd: any, idx: number) => (
+                           <div key={idx} className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                              <span className="text-primary font-black text-sm">{pd.category}</span>
+                              <span className="bg-primary/10 text-primary px-3 py-1 rounded-lg text-xs font-black">{pd.count} Posts</span>
+                           </div>
+                        ))}
+                     </div>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* Syllabus & Weightage Section */}
+            {(exam.syllabus || (exam.subjectsWeightage && exam.subjectsWeightage.length > 0)) && (
+              <section className="bg-slate-50 rounded-[2rem] p-8 border border-slate-100 mb-8">
+                <h2 className="text-2xl font-bold text-primary mb-6">Exam Syllabus & Marks Distribution</h2>
+                
+                {exam.syllabus && (
+                  <div className="mb-8 font-medium text-slate-600 leading-relaxed whitespace-pre-wrap">
+                    {exam.syllabus}
+                  </div>
+                )}
+
+                {exam.subjectsWeightage && exam.subjectsWeightage.length > 0 && (
+                  <div className="space-y-4">
+                     <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest pl-1 mb-2">Subject Weightage</h3>
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {exam.subjectsWeightage.map((sw: any, idx: number) => (
+                           <div key={idx} className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                              <span className="text-primary font-black text-sm">{sw.subject}</span>
+                              <span className="bg-primary/10 text-primary px-3 py-1 rounded-lg text-xs font-black">{sw.marks} Marks</span>
+                           </div>
+                        ))}
+                     </div>
+                  </div>
+                )}
+              </section>
+            )}
 
             <section>
               <div className="flex justify-between items-center mb-8">
@@ -239,6 +315,11 @@ export default function ExamDetail() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                              <h4 className="font-bold text-primary">{test.title}</h4>
+                             {test.status === 'draft' && (
+                               <span className="text-[10px] font-black bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                                 Draft
+                               </span>
+                             )}
                              {results.length > 0 && (
                                <span className="text-[10px] font-black bg-primary/10 text-primary px-2 py-0.5 rounded-full uppercase tracking-tighter">
                                  {results.length} Attempt{results.length > 1 ? 's' : ''}
@@ -273,10 +354,10 @@ export default function ExamDetail() {
                           </Link>
                         ) : (
                           <Link 
-                            to={`/premium?examId=${examId}`}
+                            to={exam?.isPaid ? `/premium?examId=${examId}` : '/premium'}
                             className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-200 text-slate-600 text-sm font-bold rounded-xl hover:bg-slate-300 transition-all"
                           >
-                            Unlock Exam
+                            {exam?.isPaid ? 'Unlock Exam' : 'Get Premium Pass'}
                           </Link>
                         )}
                       </div>

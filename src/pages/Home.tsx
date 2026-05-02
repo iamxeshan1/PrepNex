@@ -409,8 +409,18 @@ const TestimonialsSection = () => {
 
 export default function Home() {
   const [popularExams, setPopularExams] = useState<any[]>([]);
+  const [agencies, setAgencies] = useState<any[]>([]);
   const [loadingExams, setLoadingExams] = useState(true);
   const [settings, setSettings] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchAgencies = async () => {
+      const q = query(collection(db, 'agencies'), orderBy('createdAt', 'desc'));
+      const snap = await getDocs(q);
+      setAgencies(snap.docs.map(doc => ({ id: doc.id, ...doc.data() as any })));
+    };
+    fetchAgencies();
+  }, []);
 
   useEffect(() => {
     const fetchGeneral = async () => {
@@ -433,7 +443,9 @@ export default function Home() {
           limit(4)
         );
         const snapshot = await getDocs(q);
-        setPopularExams(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const fetchedExams = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+        // Filter out drafts on the client side since Firestore query ignores docs without the field if we queried by !=
+        setPopularExams(fetchedExams.filter(exam => exam.status !== 'draft'));
       } catch (error) {
         console.error("Error fetching popular exams:", error);
       } finally {
@@ -475,14 +487,36 @@ export default function Home() {
               Real exam simulation with instant insights.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/exams" className="w-full sm:w-auto px-8 py-4 bg-primary text-white rounded-xl font-bold text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all active:scale-95">
-                Explore Test Series
+              <Link to="/agencies" className="w-full sm:w-auto px-8 py-4 bg-primary text-white rounded-xl font-bold text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all active:scale-95">
+                Explore Agencies
               </Link>
               <Link to="/signup" className="w-full sm:w-auto px-8 py-4 bg-white text-primary border-2 border-primary/20 rounded-xl font-bold text-lg hover:border-primary/40 transition-all">
                 Try Free Mock Test
               </Link>
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      <section className="py-16 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-end mb-10">
+            <div>
+              <h2 className="text-3xl font-black text-primary tracking-tight">Recruitment Agencies</h2>
+              <p className="text-slate-500 font-medium mt-1">Browse exams by recruitment body.</p>
+            </div>
+            <Link to="/agencies" className="text-xs font-bold text-secondary hover:underline">View All</Link>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {agencies.slice(0, 6).map(agency => (
+              <Link to={`/agency/${agency.id}`} key={agency.id} className="bg-white p-4 rounded-2xl border border-slate-100 hover:border-primary transition-all text-center flex flex-col items-center gap-2 group">
+                 <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-50">
+                   {agency.logoUrl ? <img src={agency.logoUrl} alt={agency.name} /> : <div className="w-full h-full bg-slate-200" />}
+                 </div>
+                 <span className="text-xs font-bold text-primary truncate max-w-full">{agency.name}</span>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -554,8 +588,8 @@ export default function Home() {
               <h2 className="text-3xl font-bold text-primary tracking-tight">Popular Exams</h2>
               <p className="text-slate-500 mt-2">Comprehensive coverage for every topic.</p>
             </div>
-            <Link to="/exams" className="text-sm font-bold text-secondary flex items-center gap-1 group">
-              View All Exams
+            <Link to="/agencies" className="text-sm font-bold text-secondary flex items-center gap-1 group">
+              View All Agencies
               <div className="group-hover:translate-x-1 transition-transform">→</div>
             </Link>
           </div>

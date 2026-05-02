@@ -195,10 +195,10 @@ export default function Helpdesk() {
                     </span>
                   </div>
 
-                  <div className="space-y-4 mb-6">
+                  <div className="flex flex-col mb-6">
                     {/* Render legacy message if it exists */}
                     {ticket.message && (
-                      <div className="flex justify-start">
+                      <div className="flex justify-start mb-4">
                         <div className="max-w-[85%] bg-slate-50 p-4 rounded-2xl rounded-tl-none border border-slate-100">
                           <p className="text-sm font-bold text-slate-700">{ticket.message}</p>
                           <p className="text-[10px] text-slate-400 mt-2">Original Message</p>
@@ -207,27 +207,36 @@ export default function Helpdesk() {
                     )}
 
                     {/* Render modern messages */}
-                    {(ticket.messages || []).map((msg: any, idx: number) => (
-                      <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-start' : 'justify-end'}`}>
-                        <div className={`max-w-[85%] p-4 rounded-2xl border ${
-                          msg.sender === 'user' 
-                            ? 'bg-slate-50 border-slate-100 rounded-tl-none' 
-                            : 'bg-primary/5 border-primary/10 rounded-tr-none'
-                        }`}>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className={`text-[10px] font-black uppercase tracking-widest ${msg.sender === 'user' ? 'text-slate-400' : 'text-primary'}`}>
-                              {msg.sender === 'user' ? 'You' : 'Admin'}
-                            </span>
+                    {(ticket.messages || []).map((msg: any, idx: number, arr: any[]) => {
+                      const isFirstInGroup = idx === 0 || arr[idx - 1].sender !== msg.sender;
+                      const isLastInGroup = idx === arr.length - 1 || arr[idx + 1].sender !== msg.sender;
+
+                      return (
+                        <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-start' : 'justify-end'} ${!isLastInGroup ? 'mb-1' : 'mb-4'}`}>
+                          <div className={`max-w-[85%] px-4 py-3 rounded-2xl border ${
+                            msg.sender === 'user' 
+                              ? `bg-slate-50 border-slate-100 ${isFirstInGroup ? 'rounded-tl-none' : 'rounded-tl-md rounded-bl-md'}` 
+                              : `bg-primary/5 border-primary/10 ${isFirstInGroup ? 'rounded-tr-none' : 'rounded-tr-md rounded-br-md'}`
+                          }`}>
+                            {isFirstInGroup && (
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${msg.sender === 'user' ? 'text-slate-400' : 'text-primary'}`}>
+                                  {msg.sender === 'user' ? 'You' : 'Admin'}
+                                </span>
+                              </div>
+                            )}
+                            <p className="text-sm font-bold text-slate-800">{msg.text}</p>
+                            {isLastInGroup && (
+                              <p className="text-[10px] text-slate-400 mt-2">{new Date(msg.createdAt).toLocaleString()}</p>
+                            )}
                           </div>
-                          <p className="text-sm font-bold text-slate-800">{msg.text}</p>
-                          <p className="text-[10px] text-slate-400 mt-2">{new Date(msg.createdAt).toLocaleString()}</p>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
 
                     {/* Render legacy reply if it exists */}
                     {ticket.reply && !(ticket.messages || []).some((m: any) => m.sender === 'admin' && m.text === ticket.reply) && (
-                      <div className="flex justify-end">
+                      <div className="flex justify-end mb-4">
                         <div className="max-w-[85%] bg-primary/5 p-4 rounded-2xl rounded-tr-none border border-primary/10">
                           <p className="text-sm font-bold text-slate-800">{ticket.reply}</p>
                           <p className="text-[10px] text-primary mt-2 uppercase font-black">Admin Reply (Legacy)</p>

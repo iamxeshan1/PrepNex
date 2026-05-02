@@ -43,7 +43,7 @@ export default function Premium() {
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
 
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -90,7 +90,13 @@ export default function Premium() {
     try {
       const snap = await getDoc(doc(db, 'exams', examId!));
       if (snap.exists()) {
-        setTargetExam({ id: snap.id, ...snap.data() });
+        const data = snap.data();
+        const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnexedtech@gmail.com';
+        if (data.status === 'draft' && !isAdmin) {
+          navigate('/dashboard');
+          return;
+        }
+        setTargetExam({ id: snap.id, ...data });
       }
     } catch (err) {
       console.error("Error fetching exam details:", err);
