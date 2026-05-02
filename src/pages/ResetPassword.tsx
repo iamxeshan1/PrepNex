@@ -6,6 +6,7 @@ import { getAuth, confirmPasswordReset } from 'firebase/auth';
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
   const oobCode = searchParams.get('oobCode');
+  const customToken = searchParams.get('customToken');
   const navigate = useNavigate();
 
   const [password, setPassword] = useState('');
@@ -15,14 +16,29 @@ export default function ResetPassword() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!oobCode) return setMessage({ type: 'error', text: 'Invalid reset link.' });
+    if (!oobCode && !customToken) return setMessage({ type: 'error', text: 'Invalid reset link.' });
 
     setLoading(true);
     try {
-      const auth = getAuth();
-      await confirmPasswordReset(auth, oobCode, password);
-      setMessage({ type: 'success', text: 'Password reset successfully!' });
-      setTimeout(() => navigate('/login'), 2000);
+      if (customToken) {
+        // Custom reset flow
+        const response = await fetch('/api/complete-reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: customToken, password }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to reset password');
+        
+        setMessage({ type: 'success', text: 'Password reset successfully!' });
+        setTimeout(() => navigate('/login'), 2000);
+      } else {
+        // Standard Firebase reset flow (fallback)
+        const auth = getAuth();
+        await confirmPasswordReset(auth, oobCode!, password);
+        setMessage({ type: 'success', text: 'Password reset successfully!' });
+        setTimeout(() => navigate('/login'), 2000);
+      }
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message || 'Failed to reset password' });
     } finally {
