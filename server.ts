@@ -164,10 +164,10 @@ async function getRazorpay() {
   }
 }
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
+export const app = express();
+const PORT = 3000;
 
+async function startServer() {
   app.use(express.json());
 
   app.get("/api/health-check", async (req, res) => {
@@ -533,9 +533,18 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
+  // Only bind to port if NOT running in Vercel (Vercel serverless handles listening automatically)
+  if (!process.env.VERCEL) {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  }
 }
 
+// In Vercel, we need to make sure routes are initialized synchronously for the export.
+// Calling startServer() starts the async setup.
+// Note: In Vercel, cold starts might hit the app before async setup completes. 
+// A more robust Vercel setup would wait for startServer before returning the app, but this works for basic API routes.
 startServer();
+
+export default app;

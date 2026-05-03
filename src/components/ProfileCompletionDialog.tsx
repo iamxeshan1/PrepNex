@@ -20,6 +20,7 @@ export default function ProfileCompletionDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasDismissed, setHasDismissed] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -30,7 +31,7 @@ export default function ProfileCompletionDialog() {
   });
 
   useEffect(() => {
-    if (!loading && user && profile && !profile.profileCompleted) {
+    if (!loading && user && profile && !profile.profileCompleted && !hasDismissed) {
       setIsOpen(true);
       setFormData({
         name: profile.name || user.displayName || '',
@@ -87,7 +88,7 @@ export default function ProfileCompletionDialog() {
         >
           <div className="bg-indigo-600 p-8 text-center text-white relative">
             <button
-              onClick={() => setIsOpen(false)}
+              onClick={() => { setIsOpen(false); setHasDismissed(true); }}
               className="absolute top-4 right-4 p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors"
             >
               <X size={20} />
