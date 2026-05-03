@@ -488,17 +488,30 @@ async function startServer() {
   });
 
   // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
+  const isProduction = process.env.NODE_ENV === "production" || fs.existsSync(path.join(process.cwd(), "dist"));
+  
+  if (!isProduction) {
+    console.log("[Server] Starting in DEVELOPMENT mode with Vite middleware.");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
+    console.log("[Server] Starting in PRODUCTION mode.");
     const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
+    
+    // Serve static files from dist
+    app.use(express.static(distPath, { index: false }));
+    
+    // Fallback for SPA: serve index.html for any route that isn't a static file or API
     app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
+      const indexPath = path.join(distPath, "index.html");
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(404).send("Application build not found. Please run 'npm run build' first.");
+      }
     });
   }
 
