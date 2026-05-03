@@ -1,5 +1,4 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import Razorpay from "razorpay";
@@ -21,15 +20,31 @@ if (fs.existsSync(configPath)) {
 }
 console.log("[Config Debug] Loaded Firebase config. Project ID:", config.projectId, "Database ID:", config.firestoreDatabaseId);
 
-// Initialize Admin SDK - use default credentials in Cloud Run
-const firebaseApp = getApps().length === 0 ? initializeApp(config.projectId ? { projectId: config.projectId } : undefined) : getApp();
-console.log(`Firebase Admin SDK initialized successfully.`);
+// Lazy Initialize Admin SDK
+let firebaseApp: any = null;
+
+function getFirebaseApp() {
+  if (firebaseApp) return firebaseApp;
+  try {
+    if (process.env.VERCEL && !process.env.FIREBASE_PRIVATE_KEY && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+      throw new Error("Missing FIREBASE_PRIVATE_KEY on Vercel. Admin SDK will hang in this environment.");
+    }
+    firebaseApp = getApps().length === 0 ? initializeApp(config.projectId ? { projectId: config.projectId } : undefined) : getApp();
+    console.log(`Firebase Admin SDK initialized successfully.`);
+  } catch (err: any) {
+    console.warn(`[Firebase Admin] Initialization failed (expected in environments like Vercel without a Service Account):`, err.message);
+  }
+  return firebaseApp;
+}
 
 let _db: any = null;
 
 function getDb() {
   if (_db) return _db;
   
+  const app = getFirebaseApp();
+  if (!app) throw new Error("Firebase Admin app is not initialized");
+
   const dbId = config.firestoreDatabaseId && config.firestoreDatabaseId !== "(default)" 
     ? config.firestoreDatabaseId 
     : undefined;
@@ -37,9 +52,9 @@ function getDb() {
   try {
     if (dbId) {
       console.log(`[Firestore Debug] Initializing with named database: ${dbId}`);
-      _db = getFirestore(firebaseApp, dbId);
+      _db = getFirestore(app, dbId);
     } else {
-      _db = getFirestore(firebaseApp);
+      _db = getFirestore(app);
       console.log("[Firestore Debug] Initializing with default database.");
     }
     return _db;
@@ -167,10 +182,9 @@ async function getRazorpay() {
 export const app = express();
 const PORT = 3000;
 
-async function startServer() {
-  app.use(express.json());
+app.use(express.json());
 
-  app.get("/api/health-check", async (req, res) => {
+app.get("/api/health-check", async (req, res) => {
     try {
       console.log(`[Health Check] Project: ${config.projectId}, DB: ${config.firestoreDatabaseId || "(default)"}`);
       console.log("[Health Check] Testing Firestore connection via Admin SDK...");
@@ -222,10 +236,12 @@ async function startServer() {
     }
   });
 
-  const adminAuth = getAdminAuth(firebaseApp);
-
   app.post("/api/admin/send-promotional", async (req, res) => {
     try {
+      const appInst = getFirebaseApp();
+      if (!appInst) throw new Error("Firebase not initialized");
+      const adminAuth = getAdminAuth(appInst);
+      
       const { subject, body, emails, fromName } = req.body;
       const html = `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #334155; padding: 40px; background-color: #f1f5f9; border-radius: 20px;">
@@ -488,7 +504,9 @@ async function startServer() {
   const isProduction = process.env.NODE_ENV === "production" || fs.existsSync(path.join(process.cwd(), "dist"));
   
   if (!isProduction) {
-    console.log("[Server] Starting in DEVELOPMENT mode with Vite middleware.");
+  console.log("[Server] Starting in DEVELOPMENT mode with Vite middleware.");
+  (async () => {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -515,7 +533,8 @@ async function startServer() {
         next(e);
       }
     });
-  } else {
+  })();
+} else {
     console.log("[Server] Starting in PRODUCTION mode.");
     const distPath = path.join(process.cwd(), "dist");
     
@@ -539,12 +558,5 @@ async function startServer() {
       console.log(`Server running on http://localhost:${PORT}`);
     });
   }
-}
-
-// In Vercel, we need to make sure routes are initialized synchronously for the export.
-// Calling startServer() starts the async setup.
-// Note: In Vercel, cold starts might hit the app before async setup completes. 
-// A more robust Vercel setup would wait for startServer before returning the app, but this works for basic API routes.
-startServer();
 
 export default app;
