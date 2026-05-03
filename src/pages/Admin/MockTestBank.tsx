@@ -11,6 +11,7 @@ export default function MockTestBank() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [showImport, setShowImport] = useState(false);
   const [activeSubjectId, setActiveSubjectId] = useState<string>('all');
   const [importing, setImporting] = useState(false);
@@ -52,7 +53,7 @@ export default function MockTestBank() {
     }
   };
 
-  const handleAddQuestion = async (e: React.FormEvent) => {
+  const handleSaveQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
     if ((!newQ.subjectId && !newQ.newSubjectName) || !newQ.question || !newQ.correctAnswer) {
       alert("Please fill required fields");
@@ -79,7 +80,7 @@ export default function MockTestBank() {
         }
       }
 
-      await addDoc(collection(db, 'questions'), {
+      const questionData = {
         subjectId,
         level: newQ.level,
         question: newQ.question,
@@ -88,8 +89,16 @@ export default function MockTestBank() {
         explanation: newQ.explanation,
         previouslyAskedIn: newQ.previouslyAskedIn,
         testId: 'MASTER_BANK',
-        createdAt: new Date().toISOString()
-      });
+        updatedAt: new Date().toISOString()
+      };
+
+      if (editingQuestionId) {
+        await updateDoc(doc(db, 'questions', editingQuestionId), questionData);
+        alert("Question updated in Master Bank");
+      } else {
+        await addDoc(collection(db, 'questions'), { ...questionData, createdAt: new Date().toISOString() });
+        alert("Question added to Master Bank");
+      }
 
       setNewQ({
         subjectId: '',
@@ -101,12 +110,29 @@ export default function MockTestBank() {
         explanation: '',
         previouslyAskedIn: ''
       });
+      setEditingQuestionId(null);
       setShowAddForm(false);
       fetchData();
-      alert("Question added to Master Bank");
     } catch (error) {
-      alert("Error adding question");
+      console.error(error);
+      alert("Error saving question");
     }
+  };
+
+  const handleEdit = (q: any) => {
+    setEditingQuestionId(q.id);
+    setNewQ({
+      subjectId: q.subjectId,
+      newSubjectName: '',
+      level: q.level,
+      question: q.question,
+      options: q.options,
+      correctAnswer: q.correctAnswer,
+      explanation: q.explanation || '',
+      previouslyAskedIn: q.previouslyAskedIn || ''
+    });
+    setShowAddForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const downloadSample = () => {
@@ -269,10 +295,10 @@ export default function MockTestBank() {
             <Upload className="w-5 h-5" /> Bulk Import
           </button>
           <button 
-            onClick={() => setShowAddForm(!showAddForm)}
+            onClick={() => { setShowAddForm(!showAddForm); if(!showAddForm) setEditingQuestionId(null); }}
             className="px-6 py-3 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all flex items-center gap-2"
           >
-            <Plus className="w-5 h-5" /> New Question
+            <Plus className="w-5 h-5" /> {showAddForm ? 'Cancel' : (editingQuestionId ? 'Cancel Edit' : 'New Question')}
           </button>
         </div>
       </div>
@@ -296,7 +322,7 @@ export default function MockTestBank() {
             <h3 className="text-xl font-black text-primary uppercase">Manual Bank Entry</h3>
             <button onClick={() => setShowAddForm(false)}><X className="text-slate-300" /></button>
           </div>
-          <form onSubmit={handleAddQuestion} className="space-y-6">
+          <form onSubmit={handleSaveQuestion} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest block">Subject & Level</label>
@@ -385,7 +411,7 @@ export default function MockTestBank() {
               />
             </div>
             <button type="submit" className="w-full py-4 bg-primary text-white rounded-2xl font-bold shadow-lg shadow-primary/20 hover:scale-[1.01] transition-all">
-              Commit to Master Bank
+              {editingQuestionId ? 'Update Question' : 'Commit to Master Bank'}
             </button>
           </form>
         </div>
@@ -481,9 +507,14 @@ export default function MockTestBank() {
                       </button>
                     </div>
                   ) : (
-                    <button onClick={() => setConfirmingDeleteId(q.id)} className="p-2 text-slate-200 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Remove from Bank">
-                      <Trash2 className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => handleEdit(q)} className="p-2 text-primary hover:bg-primary/5 rounded-xl transition-all" title="Edit Question">
+                        <Edit3 className="w-5 h-5" />
+                      </button>
+                      <button onClick={() => setConfirmingDeleteId(q.id)} className="p-2 text-slate-200 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Remove from Bank">
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
                   )}
                 </div>
                 <h4 className="text-lg font-bold text-slate-700 mb-6 leading-relaxed">{q.question}</h4>

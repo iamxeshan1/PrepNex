@@ -377,13 +377,13 @@ export default function AdminQuestions() {
                   </div>
                   <p className="text-base sm:text-lg font-bold text-primary mt-1 leading-tight">{q.question}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                 <div className="flex items-center gap-2">
                   <button 
-                    onClick={() => { console.log('Editing question:', q.id); handleEdit(q); }}
-                    className="px-3 py-1.5 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-all shrink-0"
-                    title="Edit"
+                    onClick={() => handleEdit(q)}
+                    className="p-2 text-primary hover:text-primary hover:bg-primary/5 rounded-xl transition-all shrink-0"
+                    title="Edit Question"
                   >
-                     EDIT
+                     <HelpCircle className="w-5 h-5" />
                   </button>
                   <button 
                     onClick={() => handleDelete(q.id)} 
