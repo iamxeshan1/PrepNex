@@ -127,10 +127,10 @@ async function getRazorpay() {
   if (razorpayInstance) return razorpayInstance;
   
   // Try Environment Variables FIRST as they are most reliable in this environment
-  const envKeyId = process.env.VITE_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID || "";
+  const envKeyId = process.env.RAZORPAY_KEY_ID || process.env.VITE_RAZORPAY_KEY_ID || "";
   const envKeySecret = process.env.RAZORPAY_KEY_SECRET || "";
 
-  console.log(`Razorpay env check: ID_env=${process.env.VITE_RAZORPAY_KEY_ID ? 'VITE_PRESENT' : (process.env.RAZORPAY_KEY_ID ? 'PLAIN_PRESENT' : 'MISSING')}, SECRET=${envKeySecret ? 'PRESENT' : 'MISSING'}`);
+  console.log(`Razorpay env check: ID_env=${process.env.RAZORPAY_KEY_ID ? 'RAZORPAY_PRESENT' : (process.env.VITE_RAZORPAY_KEY_ID ? 'VITE_PRESENT' : 'MISSING')}, SECRET=${envKeySecret ? 'PRESENT' : 'MISSING'}`);
 
   if (envKeyId && envKeySecret) {
     console.log("Initializing Razorpay using environment variables.");
