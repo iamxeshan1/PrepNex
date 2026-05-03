@@ -66,7 +66,8 @@ export default function AdminCoupons() {
       await deleteDoc(doc(db, 'coupons', id));
       fetchCoupons();
     } catch (err) {
-      alert("Failed to delete.");
+      console.error(err);
+      alert("Failed to delete: " + (err instanceof Error ? err.message : String(err)));
     }
   };
 

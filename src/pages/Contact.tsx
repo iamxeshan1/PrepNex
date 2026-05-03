@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Send, MessageSquare, Clock } from 'lucide-react';
+import { Mail, Phone, MapPin, MessageSquare, Clock } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Layout } from '../components/Layout';
@@ -36,9 +36,9 @@ export default function Contact() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <div className="flex justify-center">
           {/* Info Side */}
-          <div className="space-y-6">
+          <div className="w-full max-w-2xl space-y-6">
             <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
               <h2 className="text-3xl font-black text-primary tracking-tight mb-4">Get in touch</h2>
               
@@ -86,35 +86,6 @@ export default function Contact() {
                 <p className="text-amber-400 text-sm italic mt-2">Closed on Sundays & Public Holidays</p>
               </div>
             </div>
-          </div>
-
-          {/* Map / Message Side */}
-          <div className="h-full min-h-[500px]">
-            {settings?.contactMapUrl ? (
-              <div className="w-full h-full rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl">
-                <iframe 
-                  src={settings.contactMapUrl}
-                  className="w-full h-full grayscale hover:grayscale-0 transition-all duration-700" 
-                  style={{ border: 0 }} 
-                  allowFullScreen 
-                  loading="lazy" 
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
-              </div>
-            ) : (
-              <div className="w-full h-full rounded-[2.5rem] bg-white p-12 border border-slate-100 flex flex-col items-center justify-center text-center shadow-sm">
-                <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6">
-                  <Send className="w-10 h-10 text-slate-300" />
-                </div>
-                <h3 className="text-2xl font-black text-primary mb-2">Message Us</h3>
-                <p className="text-slate-400 font-medium mb-8">We usually respond within 24 hours.</p>
-                <div className="w-full max-w-sm space-y-4">
-                  <input type="text" placeholder="Your Name" className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-primary font-medium" />
-                  <textarea placeholder="Your Message" className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-primary font-medium min-h-[120px]" />
-                  <button className="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20">Send Message</button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>

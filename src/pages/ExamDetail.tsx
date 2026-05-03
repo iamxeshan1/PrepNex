@@ -15,6 +15,7 @@ export default function ExamDetail() {
   const [exam, setExam] = useState<any>(null);
   const [agency, setAgency] = useState<any>(null);
   const [tests, setTests] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [testResults, setTestResults] = useState<Record<string, any[]>>({});
@@ -23,7 +24,11 @@ export default function ExamDetail() {
   useEffect(() => {
     const fetchData = async () => {
       if (!examId) return;
-      const examSnap = await getDoc(doc(db, 'exams', examId));
+      const [examSnap, subjectsSnap] = await Promise.all([
+        getDoc(doc(db, 'exams', examId)),
+        getDocs(collection(db, 'subjects'))
+      ]);
+      
       if (examSnap.exists()) {
         const examData = examSnap.data();
         const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnexedtech@gmail.com';
@@ -40,9 +45,11 @@ export default function ExamDetail() {
            }
         }
       }
+      
+      setSubjects(subjectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      
       const testsData = await getTestsByExamId(examId);
-      const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnexedtech@gmail.com';
-      const visibleTests = (testsData || []).filter((t: any) => t.status !== 'draft' || isAdmin);
+      const visibleTests = testsData || [];
       setTests(visibleTests);
       
       // Fetch results for these tests if user is logged in
@@ -72,10 +79,27 @@ export default function ExamDetail() {
   }, [examId, user]);
 
   const hasAccess = (test: any) => {
-    if (test.isFree) return true;
+    const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnexedtech@gmail.com';
+    if (test.status === 'draft' && !isAdmin) return false;
+
+    // Premium users get access to everything.
     if (profile?.isPremium) return true;
-    if (exam?.isPaid && profile?.purchasedExams?.includes(examId)) return true;
-    if (exam?.isPaid && profile?.freeExams?.includes(examId)) return true;
+
+    // Paid Exam Logic
+    if (exam?.isPaid) {
+      // Must have purchased the exam to access any mocks
+      return profile?.purchasedExams?.includes(examId);
+    }
+
+    // Free Exam Logic
+    // User must be enrolled in the free exam
+    if (profile?.freeExams?.includes(examId)) {
+      // Free mocks within a free exam are accessible after enrollment
+      if (test.isFree) return true;
+      // Paid mocks within a free exam are not accessible just by enrollment
+      return false;
+    }
+    
     return false;
   };
 
@@ -154,7 +178,9 @@ export default function ExamDetail() {
                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {exam.subjectsWeightage.map((sw: any, idx: number) => (
                          <div key={idx} className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                            <span className="text-primary font-black text-sm">{sw.subject}</span>
+                            <span className="text-primary font-black text-sm">
+                              {sw.subject || subjects.find(s => s.id === sw.subjectId)?.name || 'Unknown'}
+                            </span>
                             <span className="bg-primary/10 text-primary px-3 py-1 rounded-lg text-xs font-black">{sw.marks} Marks</span>
                          </div>
                       ))}
@@ -214,28 +240,30 @@ export default function ExamDetail() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        {results.length > 0 && (
-                          <Link 
-                            to={`/result/${latestResult.id}`}
-                            className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 text-slate-600 text-sm font-bold rounded-xl hover:bg-slate-50 transition-all shadow-sm"
-                          >
-                            Last Result
-                          </Link>
-                        )}
                         {unlocked ? (
-                          <Link 
-                            to={`/test/${test.id}`}
-                            className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary/90 transition-all active:scale-95 shadow-md whitespace-nowrap"
-                          >
-                            <Play className="w-4 h-4 fill-white" /> {results.length > 0 ? 'Retake Mock' : 'Start Mock'}
-                          </Link>
+                          <>
+                            {results.length > 0 && (
+                              <Link 
+                                to={`/result/${latestResult.id}`}
+                                className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 text-slate-600 text-sm font-bold rounded-xl hover:bg-slate-50 transition-all shadow-sm"
+                              >
+                                Last Result
+                              </Link>
+                            )}
+                            <Link 
+                              to={`/test/${test.id}`}
+                              className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary/90 transition-all active:scale-95 shadow-md whitespace-nowrap"
+                            >
+                              <Play className="w-4 h-4 fill-white" /> {results.length > 0 ? 'Retake Mock' : 'Start Mock'}
+                            </Link>
+                          </>
                         ) : (
-                          <Link 
-                            to={exam?.isPaid ? `/premium?examId=${examId}` : '/premium'}
+                          <button 
+                            onClick={handlePurchaseClick}
                             className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-200 text-slate-600 text-sm font-bold rounded-xl hover:bg-slate-300 transition-all"
                           >
-                            {exam?.isPaid ? 'Unlock Exam' : 'Get Premium Pass'}
-                          </Link>
+                            <Lock className="w-4 h-4" /> Unlock Exam
+                          </button>
                         )}
                       </div>
                     </div>

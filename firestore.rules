@@ -63,8 +63,8 @@ service cloud.firestore {
     
     // Coupons
     match /coupons/{couponId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
 
     // Tests
@@ -150,12 +150,6 @@ service cloud.firestore {
     // Study Material
     match /study_material/{materialId} {
       allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // Coupons
-    match /coupons/{couponId} {
-      allow read: if isSignedIn();
       allow write: if isAdmin();
     }
 

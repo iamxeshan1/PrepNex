@@ -80,7 +80,10 @@ export default function AdminExams() {
       category: type === 'recruitment' ? cat : 'Competitive',
       price: Number(price),
       isPaid: isPaid,
-      subjectsWeightage: subjectsWeightage,
+      subjectsWeightage: subjectsWeightage.map(sw => ({
+        ...sw,
+        subject: subjects.find(s => s.id === sw.subjectId)?.name || 'Unknown'
+      })),
       totalPosts: type === 'recruitment' ? Number(totalPosts) : 0,
       postDistribution: type === 'recruitment' ? postDistribution.map(p => ({ category: p.category, count: Number(p.count) })) : [],
       isPopular,
