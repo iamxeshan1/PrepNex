@@ -88,7 +88,13 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
         });
         
         if (verifyResponse.ok) {
-          const result = await verifyResponse.json();
+          let result: any = {};
+          const resultText = await verifyResponse.text();
+          try {
+            result = JSON.parse(resultText);
+          } catch (e) {
+            console.error("Failed to parse verify-payment response:", resultText);
+          }
           if (result.needsClientUpdate) {
             try {
                const { doc, getDoc, updateDoc, addDoc, collection } = await import('firebase/firestore');
@@ -174,7 +180,14 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
 
       // 2. Fetch Razorpay Config
       const configResponse = await fetch('/api/payment-status');
-      const config = await configResponse.json();
+      let config: any = {};
+      const configText = await configResponse.text();
+      try {
+        config = JSON.parse(configText);
+      } catch (e) {
+        console.error("Failed to parse payment-status response:", configText);
+        throw new Error("Server Error: Payment system is not accessible.");
+      }
 
       if (!config.configured) throw new Error('Payment system is not properly configured by administrator.');
 
@@ -198,7 +211,13 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
             });
 
             if (verifyResponse.ok) {
-              const result = await verifyResponse.json();
+              let result: any = {};
+              const resultText = await verifyResponse.text();
+              try {
+                result = JSON.parse(resultText);
+              } catch (e) {
+                console.error("Failed to parse verify-payment response:", resultText);
+              }
               if (result.needsClientUpdate) {
                 // Server IAM failed, update DB manually via Web SDK
                 try {

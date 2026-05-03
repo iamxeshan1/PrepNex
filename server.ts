@@ -1,6 +1,5 @@
 import express from "express";
 import path from "path";
-import { fileURLToPath } from "url";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import dotenv from "dotenv";
@@ -121,9 +120,6 @@ const sendEmail = async (to: string, subject: string, html: string, fromNameOver
     html,
   });
 };
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 let razorpayInstance: Razorpay | null = null;
 
