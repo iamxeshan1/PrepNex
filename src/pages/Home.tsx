@@ -418,7 +418,9 @@ export default function Home() {
     const fetchAgencies = async () => {
       const q = query(collection(db, 'agencies'), orderBy('createdAt', 'desc'));
       const snap = await getDocs(q);
-      setAgencies(snap.docs.map(doc => ({ id: doc.id, ...doc.data() as any })));
+      const ags = snap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+      ags.sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setAgencies(ags);
     };
     fetchAgencies();
   }, []);

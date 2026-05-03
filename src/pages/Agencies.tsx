@@ -15,7 +15,9 @@ export default function Agencies() {
       try {
         const q = query(collection(db, 'agencies'), orderBy('createdAt', 'desc'));
         const snapshot = await getDocs(q);
-        setAgencies(snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) })).filter(a => a.status !== 'draft'));
+        const ags = snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) })).filter(a => a.status !== 'draft');
+        ags.sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setAgencies(ags);
       } catch (err) {
         console.error("Error fetching agencies:", err);
       } finally {

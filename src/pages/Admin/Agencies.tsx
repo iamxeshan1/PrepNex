@@ -15,13 +15,14 @@ export default function AdminAgencies() {
   const [description, setDescription] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
   const [status, setStatus] = useState('draft');
+  const [isFeatured, setIsFeatured] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAgencies();
   }, []);
-
+                                                                                                                                                                                                                                                                            
   const fetchAgencies = async () => {
     try {
       const snapshot = await getDocs(collection(db, 'agencies'));
@@ -64,6 +65,7 @@ export default function AdminAgencies() {
       description: description || '',
       logoUrl: logoUrl || '',
       status: status || 'draft',
+      isFeatured: !!isFeatured,
       updatedAt: new Date().toISOString()
     };
 
@@ -93,6 +95,7 @@ export default function AdminAgencies() {
     setDescription('');
     setLogoUrl('');
     setStatus('draft');
+    setIsFeatured(false);
     setEditingId(null);
   };
 
@@ -102,6 +105,7 @@ export default function AdminAgencies() {
     setDescription(agency.description || '');
     setLogoUrl(agency.logoUrl || '');
     setStatus(agency.status || 'draft');
+    setIsFeatured(!!agency.isFeatured);
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -180,6 +184,14 @@ export default function AdminAgencies() {
                 <option value="draft">Draft (Hidden)</option>
                 <option value="live">Live (Published)</option>
               </select>
+            </div>
+            <div className="space-y-2 flex items-center gap-2 pt-6">
+              <input 
+                type="checkbox"
+                className="w-5 h-5 rounded border-slate-200 text-primary focus:ring-primary"
+                checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} 
+              />
+              <label className="text-sm font-bold text-slate-700">Mark as Featured</label>
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">

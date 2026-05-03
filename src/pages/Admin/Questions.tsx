@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AdminLayout } from '../../components/AdminLayout';
-import { collection, addDoc, getDocs, deleteDoc, doc, query, where, getDoc, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, getDocs, deleteDoc, doc, query, where, getDoc, writeBatch, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Plus, Trash2, HelpCircle, CheckCircle2, Upload, Download, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -13,6 +13,7 @@ export default function AdminQuestions() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [showImport, setShowImport] = useState(false);
 
   // Form State
@@ -46,7 +47,14 @@ export default function AdminQuestions() {
     fetchData();
   }, [testId]);
 
-  const handleAdd = async (e: React.FormEvent) => {
+  const resetForm = () => {
+    setQuestion(''); setOptions(['', '', '', '']); setCorrect(''); setExplanation(''); setSubjectId(''); setPreviouslyAskedIn('');
+    setNewSubjectName(''); setLevel('Medium');
+    setEditingQuestionId(null);
+    setShowAddForm(false);
+  };
+
+  const handleSaveQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!correct) return alert('Select correct answer');
     
@@ -69,7 +77,7 @@ export default function AdminQuestions() {
       }
     }
 
-    await addDoc(collection(db, 'questions'), {
+    const questionData = {
       testId,
       subjectId: finalSubjectId,
       level,
@@ -78,17 +86,35 @@ export default function AdminQuestions() {
       correctAnswer: correct,
       explanation,
       previouslyAskedIn,
-      createdAt: new Date().toISOString()
-    });
-    setQuestion(''); setOptions(['', '', '', '']); setCorrect(''); setExplanation(''); setSubjectId(''); setPreviouslyAskedIn('');
-    setNewSubjectName(''); setLevel('Medium');
-    setShowAddForm(false);
+      updatedAt: new Date().toISOString()
+    };
+
+    if (editingQuestionId) {
+        await updateDoc(doc(db, 'questions', editingQuestionId), questionData);
+    } else {
+        await addDoc(collection(db, 'questions'), { ...questionData, createdAt: new Date().toISOString() });
+    }
+
+    resetForm();
     refreshQuestions();
   };
 
   const refreshQuestions = async () => {
     const qSnap = await getDocs(query(collection(db, 'questions'), where('testId', '==', testId)));
     setQuestions(qSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+  };
+
+  const handleEdit = (q: any) => {
+    setEditingQuestionId(q.id);
+    setQuestion(q.question);
+    setSubjectId(q.subjectId);
+    setLevel(q.level);
+    setOptions(q.options);
+    setCorrect(q.correctAnswer);
+    setExplanation(q.explanation || '');
+    setPreviouslyAskedIn(q.previouslyAskedIn || '');
+    setShowAddForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async (id: string) => {
@@ -215,10 +241,10 @@ export default function AdminQuestions() {
           <Upload className="w-5 h-5" /> Import Excel
         </button>
         <button 
-          onClick={() => setShowAddForm(!showAddForm)}
+          onClick={() => { setShowAddForm(!showAddForm); if(!showAddForm) setEditingQuestionId(null); }}
           className="bg-primary text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all"
         >
-          <Plus className="w-5 h-5" /> {showAddForm ? 'Cancel' : 'Add Question'}
+          <Plus className="w-5 h-5" /> {showAddForm ? 'Cancel' : (editingQuestionId ? 'Cancel Edit' : 'Add Question')}
         </button>
       </div>
 
@@ -236,7 +262,7 @@ export default function AdminQuestions() {
       )}
 
       {showAddForm && (
-        <form onSubmit={handleAdd} className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm mb-10 space-y-6">
+        <form onSubmit={handleSaveQuestion} className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm mb-10 space-y-6">
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2 space-y-2">
@@ -332,7 +358,7 @@ export default function AdminQuestions() {
             </div>
           </div>
           <button type="submit" className="w-full py-4 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all font-logo">
-            Save Question
+            {editingQuestionId ? 'Update Question' : 'Save Question'}
           </button>
         </form>
       )}
@@ -342,7 +368,7 @@ export default function AdminQuestions() {
           const sub = subjects.find(s => s.id === q.subjectId);
           return (
             <div key={q.id} className="bg-white border border-slate-100 rounded-[2rem] p-5 sm:p-8 shadow-sm group">
-              <div className="flex justify-between items-start gap-4 mb-6">
+              <div className="flex justify-between items-center gap-4 mb-6">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Question {idx + 1}</span>
@@ -351,13 +377,22 @@ export default function AdminQuestions() {
                   </div>
                   <p className="text-base sm:text-lg font-bold text-primary mt-1 leading-tight">{q.question}</p>
                 </div>
-                <button 
-                  onClick={() => handleDelete(q.id)} 
-                  className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all shrink-0"
-                  title="Delete"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => { console.log('Editing question:', q.id); handleEdit(q); }}
+                    className="px-3 py-1.5 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-all shrink-0"
+                    title="Edit"
+                  >
+                     EDIT
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(q.id)} 
+                    className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all shrink-0"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
