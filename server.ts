@@ -496,7 +496,28 @@ async function startServer() {
       server: { middlewareMode: true },
       appType: "spa",
     });
+    
+    // IMPORTANT: Only use vite middleware for assets/transformations
     app.use(vite.middlewares);
+    
+    // Fallback for SPA in dev mode: Serve index.html for any non-API route
+    app.get("*", async (req, res, next) => {
+      // Skip API and files with extensions
+      if (req.originalUrl.startsWith('/api') || req.originalUrl.includes('.')) {
+        return next();
+      }
+      
+      try {
+        const template = fs.readFileSync(path.resolve(process.cwd(), "index.html"), "utf-8");
+        const html = await vite.transformIndexHtml(req.originalUrl, template);
+        res.status(200).set({ "Content-Type": "text/html" }).end(html);
+      } catch (e) {
+        if (e instanceof Error) {
+          vite.ssrFixStacktrace(e);
+        }
+        next(e);
+      }
+    });
   } else {
     console.log("[Server] Starting in PRODUCTION mode.");
     const distPath = path.join(process.cwd(), "dist");

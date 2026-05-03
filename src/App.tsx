@@ -48,67 +48,6 @@ import RequestReset from './pages/RequestReset';
 import ScrollToTop from './components/ScrollToTop';
 import ProfileCompletionDialog from './components/ProfileCompletionDialog';
 
-const DataSeeder = () => {
-  const { user, loading } = useAuth();
-
-  useEffect(() => {
-    const seedIfMissing = async () => {
-      if (loading || !user) return;
-      
-      try {
-        const examCheck = await getDocs(query(collection(db, 'exams'), where('name', '==', 'JKSSB JKP SI'), limit(1)));
-        if (examCheck.empty) {
-          console.log("Seeding demo data...");
-          // 1. Add Exam
-          const examRef = await addDoc(collection(db, 'exams'), {
-            name: 'JKSSB JKP SI',
-            description: 'Jammu & Kashmir Services Selection Board - Sub Inspector (Police)',
-            organization: 'JKSSB',
-            isPopular: true,
-            createdAt: new Date().toISOString()
-          });
-          await setDoc(doc(db, 'exams', examRef.id), { id: examRef.id }, { merge: true });
-
-          // 2. Add Test for Exam
-          await addDoc(collection(db, 'tests'), {
-            examId: examRef.id,
-            title: 'JKP SI Full Mock Test 01',
-            duration: 120,
-            totalMarks: 150,
-            isFree: true,
-            createdAt: new Date().toISOString()
-          });
-
-          // 3. Add Subject
-          const subjectRef = await addDoc(collection(db, 'subjects'), {
-            name: 'Computer Science',
-            icon: 'Cpu',
-            description: 'Fundamental concepts, hardware, software, and networking basics for competitive exams.',
-            createdAt: new Date().toISOString()
-          });
-          await setDoc(doc(db, 'subjects', subjectRef.id), { id: subjectRef.id }, { merge: true });
-
-          // 4. Add Test for Subject
-          await addDoc(collection(db, 'tests'), {
-            subjectId: subjectRef.id,
-            title: 'Basic Computing & Hardware Mock',
-            duration: 30,
-            totalMarks: 50,
-            isFree: true,
-            createdAt: new Date().toISOString()
-          });
-          console.log("Seeding complete.");
-        }
-      } catch (err) {
-        console.error("Auto-seed error:", err);
-      }
-    };
-    seedIfMissing();
-  }, [user, loading]);
-
-  return null;
-};
-
 const ProtectedRoute = ({ children, adminOnly = false }: { children: React.ReactNode, adminOnly?: boolean }) => {
   const { user, profile, loading, isAdmin } = useAuth();
   
@@ -122,7 +61,6 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: React.React
 export default function App() {
   return (
     <AuthProvider>
-      <DataSeeder />
       <ProfileCompletionDialog />
       <Router>
         <ScrollToTop />
