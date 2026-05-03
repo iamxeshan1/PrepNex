@@ -100,6 +100,10 @@ export default function AdminUsers() {
     const data = users.map(u => ({
       'Legal Name': u.name || 'N/A',
       'Email Identity': u.email,
+      'Phone': u.phone || 'N/A',
+      'Address': u.address || 'N/A',
+      'District': u.district || 'N/A',
+      'State': u.state || 'N/A',
       'System Role': u.role?.toUpperCase() || 'STUDENT',
       'Account Health': u.isBlocked ? 'SUSPENDED' : 'OPERATIONAL',
       'Access Type': u.subscriptionExpiry ? 'PREMIUM' : 'BASIC',
@@ -111,7 +115,7 @@ export default function AdminUsers() {
 
     const wsUsers = XLSX.utils.json_to_sheet(data);
     wsUsers['!cols'] = [
-      {wch: 25}, {wch: 30}, {wch: 15}, {wch: 18}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 20}, {wch: 15}
+      {wch: 25}, {wch: 30}, {wch: 15}, {wch: 30}, {wch: 15}, {wch: 20}, {wch: 15}, {wch: 18}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 20}, {wch: 15}
     ];
     XLSX.utils.book_append_sheet(wb, wsUsers, "Student Roster");
 
@@ -225,7 +229,9 @@ export default function AdminUsers() {
                                {user.name}
                                {user.role === 'admin' && <span className="text-[8px] px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded">ADMIN</span>}
                              </p>
-                             <p className="text-xs text-slate-400 font-medium">{user.email}</p>
+                             <p className="text-[10px] text-slate-400 font-medium">{user.email}</p>
+                              {user.phone && <p className="text-[10px] text-secondary font-black">{user.phone}</p>}
+                              {user.district && <p className="text-[10px] text-slate-400">{user.district}, {user.state}</p>}
                            </div>
                          </div>
                        </td>

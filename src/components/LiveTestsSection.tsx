@@ -5,11 +5,15 @@ import { Calendar, Clock, Users, Zap, CheckCircle, Timer } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Countdown } from './Countdown';
+import CheckoutModal from './CheckoutModal';
 
 export default function LiveTestsSection() {
   const [liveTests, setLiveTests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [enrollingMap, setEnrollingMap] = useState<Record<string, boolean>>({});
+  const [selectedTest, setSelectedTest] = useState<any>(null);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
   const { user, profile } = useAuth();
   const navigate = useNavigate();
 
@@ -53,7 +57,12 @@ export default function LiveTestsSection() {
     }
     
     if (!isFree) {
-      alert(`To enroll in this paid test (₹${price}), payment gateway integration is needed.`);
+      setSelectedTest({
+        id: testId,
+        name: liveTests.find(t => t.id === testId)?.title || "Live Test",
+        price: price
+      });
+      setIsCheckoutOpen(true);
       return;
     }
 
@@ -235,6 +244,15 @@ export default function LiveTestsSection() {
           </div>
         )}
       </div>
+      <CheckoutModal 
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        item={selectedTest || { id: '', name: '', price: 0 }}
+        onSuccess={() => {
+          alert('Successfully enrolled in the Live Test!');
+          window.location.reload();
+        }}
+      />
     </section>
   );
 }

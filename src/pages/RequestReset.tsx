@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail } from 'lucide-react';
+import { Mail, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
+import { auth } from '../lib/firebase';
+import { sendPasswordResetEmail } from 'firebase/auth';
 
 export default function RequestReset() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [message, setMessage] = useState<{ type: 'success' | 'error' | 'warning', text: string } | null>(null);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -13,20 +16,25 @@ export default function RequestReset() {
     setMessage(null);
 
     try {
-      const response = await fetch('/api/send-reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+      await sendPasswordResetEmail(auth, email);
+      setMessage({ 
+        type: 'success', 
+        text: 'A reset link has been sent to your email. Please check your inbox and spam folder.' 
       });
-      const data = await response.json();
-      
-      if (response.ok) {
-        setMessage({ type: 'success', text: 'Reset link sent to your email!' });
-      } else {
-        throw new Error(data.error || 'Failed to send reset link');
-      }
     } catch (error: any) {
-      setMessage({ type: 'error', text: error.message });
+      console.error('Reset error:', error);
+      let errorMsg = 'Failed to send reset link. Please verify your email or try again later.';
+      
+      if (error.code === 'auth/user-not-found') {
+        // Firebase doesn't always return this depending on security settings
+        setMessage({ type: 'success', text: 'If that email is registered, a reset link has been sent.' });
+        return;
+      }
+
+      setMessage({ 
+        type: 'error', 
+        text: errorMsg 
+      });
     } finally {
       setLoading(false);
     }
@@ -34,34 +42,63 @@ export default function RequestReset() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50">
-      <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 max-w-md w-full">
-        <h1 className="text-2xl font-extrabold text-primary mb-6">Reset Password</h1>
-        <p className="text-slate-600 mb-6">Enter your email address and we'll send you a link to reset your password.</p>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="relative">
-            <Mail className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
-            <input
-              type="email"
-              placeholder="Email"
-              className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+      <div className="max-w-md w-full">
+        <button 
+          onClick={() => navigate('/login')}
+          className="mb-6 flex items-center gap-2 text-slate-400 font-bold hover:text-primary transition-colors text-xs uppercase tracking-widest"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Login
+        </button>
+
+        <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl shadow-primary/5 border border-slate-100">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-primary/5 rounded-2xl flex items-center justify-center text-primary mx-auto mb-4">
+              <Mail className="w-8 h-8" />
+            </div>
+            <h1 className="text-3xl font-black text-primary tracking-tight">Reset Password</h1>
+            <p className="text-slate-400 font-bold mt-2 text-xs uppercase tracking-widest leading-relaxed">
+              We'll send you a link to get back into your account
+            </p>
           </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-primary text-white rounded-xl font-bold hover:opacity-90 disabled:opacity-50"
-          >
-            {loading ? 'Sending...' : 'Send Reset Link'}
-          </button>
-        </form>
-        {message && (
-          <p className={`mt-4 text-sm ${message.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
-            {message.text}
-          </p>
-        )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">
+                Registered Email
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                <input
+                  type="email"
+                  placeholder="name@example.com"
+                  className="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all font-bold text-primary"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-5 bg-primary text-white rounded-2xl font-black tracking-widest uppercase text-sm hover:bg-secondary transition-all shadow-lg shadow-primary/20 active:scale-95 disabled:opacity-50"
+            >
+              {loading ? 'Sending Request...' : 'Send Reset Link'}
+            </button>
+          </form>
+
+          {message && (
+            <div className={`mt-8 p-4 rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2 border ${
+              message.type === 'success' ? 'bg-green-50 border-green-100 text-green-700' : 
+              message.type === 'warning' ? 'bg-amber-50 border-amber-100 text-amber-700' :
+              'bg-red-50 border-red-100 text-red-700'
+            }`}>
+              {message.type === 'success' ? <CheckCircle2 className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
+              <p className="text-xs font-bold leading-relaxed">{message.text}</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

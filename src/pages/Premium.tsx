@@ -22,6 +22,7 @@ import {
   X
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import CheckoutModal from '../components/CheckoutModal';
 
 export default function Premium() {
   const [searchParams] = useSearchParams();
@@ -37,18 +38,13 @@ export default function Premium() {
   const [loading, setLoading] = useState(false);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   
-  // Coupon state
-  const [couponCode, setCouponCode] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
-  const [couponError, setCouponError] = useState('');
-  const [couponLoading, setCouponLoading] = useState(false);
-
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  
   const { user, profile } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchPremiumPrice();
-    fetchRazorpayConfig();
     if (examId) {
       fetchTargetExam();
     }
@@ -105,198 +101,9 @@ export default function Premium() {
     }
   };
 
-  const getBasePrice = () => {
-    return targetExam ? (targetExam.price || 499) : parseInt(premiumPrice);
-  };
-
-  const getFinalPrice = () => {
-    const base = getBasePrice();
-    if (!appliedCoupon) return base;
-    if (appliedCoupon.discountType === 'fixed') {
-      return Math.max(0, base - appliedCoupon.discountValue);
-    } else {
-      const discountAmount = (base * appliedCoupon.discountValue) / 100;
-      return Math.max(0, base - discountAmount);
-    }
-  };
-
-  const handleApplyCoupon = async () => {
-    if (!couponCode) return;
-    setCouponLoading(true);
-    setCouponError('');
-    try {
-      const codeUpper = couponCode.toUpperCase();
-      const q = query(collection(db, 'coupons'), where('code', '==', codeUpper), where('isActive', '==', true), limit(1));
-      const snap = await getDocs(q);
-      
-      if (snap.empty) {
-        setCouponError('Invalid or expired coupon code.');
-        setAppliedCoupon(null);
-      } else {
-        const couponData = snap.docs[0].data();
-        setAppliedCoupon({ id: snap.docs[0].id, ...couponData });
-      }
-    } catch (err) {
-      setCouponError('Error applying coupon. Please try again.');
-    } finally {
-      setCouponLoading(false);
-    }
-  };
-
-  const handleRemoveCoupon = () => {
-    setAppliedCoupon(null);
-    setCouponCode('');
-    setCouponError('');
-  };
-
-  const handlePurchase = async () => {
+  const handlePurchase = () => {
     if (!user) return navigate('/login');
-    
-    // Purchase specific exam
-    if (targetExam) {
-      if (!targetExam.isPaid || getFinalPrice() === 0) {
-        setPurchaseLoading(true);
-        try {
-          await createSubscription(user.uid, targetExam.id, 0);
-          alert('Successfully unlocked the exam!');
-          navigate(`/exam/${targetExam.id}`);
-        } catch (err) {
-          console.error("Subscription error:", err);
-          alert("Failed to activate subscription.");
-        } finally {
-          setPurchaseLoading(false);
-        }
-        return;
-      }
-
-      initiatePayment(getFinalPrice(), 'Exam Mode' + (appliedCoupon ? ` (Coupon: ${appliedCoupon.code})` : ''), async () => {
-        await createSubscription(user.uid, targetExam.id, getFinalPrice());
-        navigate(`/exam/${targetExam.id}`);
-      }, `rcpt_exam_${targetExam.id.slice(0, 8)}`);
-
-    } else {
-      // Purchase global premium pass
-      if (getFinalPrice() === 0) {
-         setPurchaseLoading(true);
-         try {
-           await activatePremiumAccess(user.uid, 12, 0);
-           alert('Successfully unlocked Premium Pass!');
-           navigate('/dashboard');
-         } catch (err) {
-           alert('Failed to activate premium pass');
-         } finally {
-           setPurchaseLoading(false);
-         }
-         return;
-      }
-
-      initiatePayment(getFinalPrice(), 'Global Premium Pass' + (appliedCoupon ? ` (Coupon: ${appliedCoupon.code})` : ''), async () => {
-        await activatePremiumAccess(user.uid, 12, getFinalPrice());
-        navigate('/dashboard');
-      }, `rcpt_premium_${user.uid.slice(0, 8)}`);
-    }
-  };
-
-  const initiatePayment = async (amount: number, description: string, onSuccess: () => Promise<void>, receipt: string) => {
-    setPurchaseLoading(true);
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-      // 1. Create order on backend
-      const response = await fetch('/api/create-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: amount,
-          currency: 'INR',
-          receipt: receipt,
-        }),
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || errorData.error || 'Failed to create order on server.');
-      }
-
-      const order = await response.json();
-      
-      if (!order || !order.id) {
-        throw new Error('Invalid order response from server.');
-      }
-
-      // 2. Open Razorpay Checkout
-      const options = {
-        key: razorpayKeyId || import.meta.env.VITE_RAZORPAY_KEY_ID || '',
-        amount: order.amount || (amount * 100),
-        currency: order.currency || 'INR',
-        name: "PrepNex",
-        description: description,
-        order_id: order.id,
-        modal: {
-          ondismiss: function() {
-            setPurchaseLoading(false);
-          }
-        },
-        handler: async (response: any) => {
-          setPurchaseLoading(true);
-          try {
-            if (!response.razorpay_order_id || !response.razorpay_payment_id) {
-              alert('Payment was not completed correctly.');
-              setPurchaseLoading(false);
-              return;
-            }
-            // 3. Verify payment on backend
-            const verifyRes = await fetch('/api/verify-payment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              }),
-            });
-
-            const verifyData = await verifyRes.json();
-            if (verifyData.status === 'ok') {
-              await onSuccess();
-            } else {
-              alert('Payment verification failed. Please contact support if amount was deducted.');
-              setPurchaseLoading(false);
-            }
-          } catch (err: any) {
-            console.error("Verification error:", err);
-            alert("Error during verification: " + (err.message || String(err)));
-            setPurchaseLoading(false);
-          }
-        },
-        prefill: {
-          name: user?.displayName || "",
-          email: user?.email || "",
-        },
-        theme: {
-          color: "#002045",
-        },
-      };
-
-      if (!(window as any).Razorpay) {
-        throw new Error('Payment gateway (Razorpay) failed to load. Please refresh and try again.');
-      }
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
-    } catch (error: any) {
-      console.error('Payment Error:', error);
-      if (error.name === 'AbortError') {
-        alert('Payment request timed out. Please check your connection.');
-      } else {
-        alert(error.message || 'Failed to initiate payment. Please try again.');
-      }
-      setPurchaseLoading(false);
-    }
+    setIsCheckoutOpen(true);
   };
   const benefits = [
     {
@@ -379,109 +186,19 @@ export default function Premium() {
               transition={{ delay: 0.3 }}
               className="flex flex-col items-center gap-6"
             >
-              {targetExam ? (
-                <div className="flex flex-col items-center gap-4">
-                  {/* Coupon Section */}
-                  <div className="flex flex-col items-center gap-2 w-full max-w-sm mb-6">
-                    {appliedCoupon ? (
-                      <div className="flex items-center justify-between w-full p-4 bg-green-50 border border-green-200 rounded-2xl">
-                        <div className="flex items-center gap-3">
-                          <Tag className="w-5 h-5 text-green-600" />
-                          <div className="text-left">
-                            <p className="text-sm font-bold text-green-700 uppercase tracking-wide">{appliedCoupon.code}</p>
-                            <p className="text-xs font-bold text-green-600">Saved ₹{getBasePrice() - getFinalPrice()}</p>
-                          </div>
-                        </div>
-                        <button onClick={handleRemoveCoupon} className="p-2 text-green-600 hover:bg-green-100 rounded-xl transition-all">
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 w-full">
-                        <input 
-                          type="text" 
-                          placeholder="Have a coupon code?" 
-                          value={couponCode} 
-                          onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                          className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary font-bold tracking-widest text-sm"
-                        />
-                        <button 
-                          onClick={handleApplyCoupon}
-                          disabled={!couponCode || couponLoading}
-                          className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all disabled:opacity-50 text-sm"
-                        >
-                          {couponLoading ? '...' : 'Apply'}
-                        </button>
-                      </div>
-                    )}
-                    {couponError && <p className="text-xs font-bold text-red-500">{couponError}</p>}
-                  </div>
-
-                   <button
-                    disabled={purchaseLoading}
-                    onClick={handlePurchase}
-                    className="inline-flex items-center justify-center gap-3 px-12 py-6 bg-primary text-white rounded-[2rem] font-black text-xl shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-                  >
-                    {purchaseLoading ? 'Processing...' : `Unlock ${targetExam.name} for ₹${getFinalPrice()}`} <Zap className="w-5 h-5 fill-white" />
-                  </button>
-                  {appliedCoupon && <p className="text-xs font-bold text-slate-400 line-through">Original Price: ₹{getBasePrice()}</p>}
-                  <Link to="/exams" className="text-secondary font-black text-xs uppercase tracking-widest hover:underline mt-4">Or explore other exams</Link>
+              <div className="flex flex-col items-center gap-4">
+                <button
+                  onClick={handlePurchase}
+                  className="inline-flex items-center justify-center gap-3 px-12 py-6 bg-primary text-white rounded-[2rem] font-black text-xl shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all"
+                >
+                  {targetExam ? `Unlock ${targetExam.name} Now` : `Get ${premiumTitle} Access`} <Zap className="w-5 h-5 fill-white" />
+                </button>
+                <div className="flex items-center gap-3 mt-2">
+                  <span className="text-lg font-black text-slate-400 line-through">₹{targetExam ? targetExam.price : premiumOriginalPrice}</span>
+                  <span className="text-3xl font-black text-slate-900">₹{targetExam ? targetExam.price : premiumPrice}</span>
                 </div>
-              ) : (
-                <div className="flex flex-col items-center gap-4">
-                  {/* Coupon Section */}
-                  <div className="flex flex-col items-center gap-2 w-full max-w-sm mb-6">
-                    {appliedCoupon ? (
-                      <div className="flex items-center justify-between w-full p-4 bg-green-50 border border-green-200 rounded-2xl">
-                        <div className="flex items-center gap-3">
-                          <Tag className="w-5 h-5 text-green-600" />
-                          <div className="text-left">
-                            <p className="text-sm font-bold text-green-700 uppercase tracking-wide">{appliedCoupon.code}</p>
-                            <p className="text-xs font-bold text-green-600">Saved ₹{getBasePrice() - getFinalPrice()}</p>
-                          </div>
-                        </div>
-                        <button onClick={handleRemoveCoupon} className="p-2 text-green-600 hover:bg-green-100 rounded-xl transition-all">
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 w-full">
-                        <input 
-                          type="text" 
-                          placeholder="Have a coupon code?" 
-                          value={couponCode} 
-                          onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                          className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary font-bold tracking-widest text-sm"
-                        />
-                        <button 
-                          onClick={handleApplyCoupon}
-                          disabled={!couponCode || couponLoading}
-                          className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all disabled:opacity-50 text-sm"
-                        >
-                          {couponLoading ? '...' : 'Apply'}
-                        </button>
-                      </div>
-                    )}
-                    {couponError && <p className="text-xs font-bold text-red-500">{couponError}</p>}
-                  </div>
-
-              <button
-                disabled={purchaseLoading}
-                onClick={handlePurchase}
-                className="inline-flex items-center justify-center gap-3 px-12 py-6 bg-secondary text-white rounded-[2rem] font-black text-lg shadow-2xl shadow-secondary/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-              >
-                {purchaseLoading ? 'Processing...' : `Get ${premiumTitle} for ₹${getFinalPrice()}`} <Crown className="w-6 h-6" />
-              </button>
-              {appliedCoupon ? (
-                <p className="text-xs font-bold text-slate-400 line-through">Original Price: ₹{getBasePrice()}</p>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-400 line-through">₹{premiumOriginalPrice}</span>
-                  <span className="text-xs font-bold text-green-600">{premiumSubtitle}</span>
-                </div>
-              )}
-                </div>
-              )}
+                <Link to="/exams" className="text-secondary font-black text-xs uppercase tracking-widest hover:underline mt-4">Or explore other exams</Link>
+              </div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-6">
                 Immediate access to all premium features
               </p>
@@ -583,6 +300,19 @@ export default function Premium() {
           </div>
         </section>
       </div>
+      <CheckoutModal 
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        item={{
+          id: targetExam ? targetExam.id : "PREMIUM_PASS",
+          name: targetExam ? targetExam.name : premiumTitle,
+          price: targetExam ? (targetExam.price || 499) : parseInt(premiumPrice),
+        }}
+        onSuccess={() => {
+          alert('Purchase successful!');
+          navigate('/dashboard');
+        }}
+      />
     </Layout>
   );
 }

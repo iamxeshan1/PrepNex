@@ -6,6 +6,7 @@ import { getTestsByExamId, createSubscription, getResultsByTestId } from '../ser
 import { doc, getDoc, getDocs, query, collection, documentId, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { ChevronLeft, Lock, Play, Clock, FileText, CheckCircle2, ShoppingBag, Award, History, Building2 } from 'lucide-react';
+import CheckoutModal from '../components/CheckoutModal';
 
 export default function ExamDetail() {
   const { examId } = useParams();
@@ -78,127 +79,12 @@ export default function ExamDetail() {
     return false;
   };
 
-  const handlePurchase = async () => {
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
+  const handlePurchaseClick = () => {
     if (!user) return navigate('/login');
     if (!examId || !exam) return;
-    
-    if (!exam.isPaid) {
-      setPurchaseLoading(true);
-      try {
-        await createSubscription(user.uid, examId);
-        window.location.reload();
-      } catch (err) {
-        console.error("Subscription error:", err);
-        alert("Failed to activate free subscription.");
-      } finally {
-        setPurchaseLoading(false);
-      }
-      return;
-    }
-
-    setPurchaseLoading(true);
-    try {
-      // Create a controller to abort the fetch if it takes too long
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds timeout
-
-      // 1. Create order on backend
-      const response = await fetch('/api/create-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: exam.price || 0,
-          currency: 'INR',
-          receipt: `rcpt_${(examId || '').slice(0, 10)}`,
-        }),
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || errorData.error || 'Failed to create order on server.');
-      }
-
-      const order = await response.json();
-      
-      if (!order || !order.id) {
-        throw new Error('Invalid order response from server.');
-      }
-
-      // 2. Open Razorpay Checkout
-      const options = {
-        key: razorpayKeyId || import.meta.env.VITE_RAZORPAY_KEY_ID || '',
-        amount: order.amount || (exam.price * 100),
-        currency: order.currency || 'INR',
-        name: "PrepNex",
-        description: `Purchase ${exam.name}`,
-        order_id: order.id,
-        modal: {
-          ondismiss: function() {
-            setPurchaseLoading(false);
-          }
-        },
-        handler: async (response: any) => {
-          setPurchaseLoading(true); // Keep loading during verification
-          try {
-            if (!response.razorpay_order_id || !response.razorpay_payment_id) {
-              alert('Payment was not completed correctly.');
-              setPurchaseLoading(false);
-              return;
-            }
-            // 3. Verify payment on backend
-            const verifyRes = await fetch('/api/verify-payment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              }),
-            });
-
-            const verifyData = await verifyRes.json();
-            if (verifyData.status === 'ok') {
-              // 4. Update subscription in Firestore
-              await createSubscription(user.uid, examId);
-              alert('Payment successful! Your course is now unlocked.');
-              window.location.reload();
-            } else {
-              alert('Payment verification failed. Please contact support if amount was deducted.');
-              setPurchaseLoading(false);
-            }
-          } catch (err: any) {
-             console.error("Verification error:", err);
-             alert("Error during payment verification: " + (err.message || String(err)));
-             setPurchaseLoading(false);
-          }
-        },
-        prefill: {
-          name: user.displayName || "",
-          email: user.email || "",
-        },
-        theme: {
-          color: "#002045",
-        },
-      };
-
-      if (!(window as any).Razorpay) {
-        throw new Error('Payment gateway (Razorpay) failed to load. Please refresh and try again.');
-      }
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
-    } catch (error: any) {
-      console.error('Payment Error:', error);
-      if (error.name === 'AbortError') {
-        alert('Payment request timed out. Please check your internet connection and try again.');
-      } else {
-        alert(error.message || 'Failed to initiate payment. Please try again.');
-      }
-      setPurchaseLoading(false);
-    } 
+    setIsCheckoutOpen(true);
   };
 
   if (loading) return <Layout><div className="flex h-96 items-center justify-center">Loading...</div></Layout>;
@@ -402,11 +288,10 @@ export default function ExamDetail() {
                     <span className="text-3xl font-extrabold text-primary">₹{exam.price || 'Free'}</span>
                   </div>
                   <button 
-                    disabled={purchaseLoading}
-                    onClick={handlePurchase}
+                    onClick={handlePurchaseClick}
                     className="w-full py-4 bg-secondary text-white rounded-2xl font-bold text-lg shadow-lg shadow-secondary/20 hover:bg-secondary/90 transition-all flex items-center justify-center gap-2"
                   >
-                    <ShoppingBag className="w-5 h-5" /> {purchaseLoading ? 'Processing...' : 'Buy Now'}
+                    <ShoppingBag className="w-5 h-5" /> Buy Now
                   </button>
                   <p className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest">
                     One-time payment • Valid for 1 Year
@@ -417,6 +302,20 @@ export default function ExamDetail() {
           </div>
         </div>
       </div>
+      <CheckoutModal 
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        item={{
+          id: exam.id,
+          name: exam.name,
+          price: exam.price || 0,
+          description: exam.description
+        }}
+        onSuccess={() => {
+          alert('Enrollment successful!');
+          window.location.reload();
+        }}
+      />
     </Layout>
   );
 }

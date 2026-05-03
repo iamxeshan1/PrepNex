@@ -35,7 +35,7 @@ export default function Signup() {
         createdAt: new Date().toISOString()
       });
 
-      // Send welcome email
+      // Send welcome email (handled by branded email service)
       fetch('/api/send-welcome', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

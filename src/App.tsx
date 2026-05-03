@@ -46,6 +46,7 @@ import About from './pages/About';
 import ResetPassword from './pages/ResetPassword';
 import RequestReset from './pages/RequestReset';
 import ScrollToTop from './components/ScrollToTop';
+import ProfileCompletionDialog from './components/ProfileCompletionDialog';
 
 const DataSeeder = () => {
   const { user, loading } = useAuth();
@@ -122,6 +123,7 @@ export default function App() {
   return (
     <AuthProvider>
       <DataSeeder />
+      <ProfileCompletionDialog />
       <Router>
         <ScrollToTop />
         <Routes>

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Mail, Lock, LogIn, Chrome, AlertCircle } from 'lucide-react';
 import { auth, db } from '../lib/firebase';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { Logo } from '../components/Logo';
 import { Layout } from '../components/Layout';
@@ -13,31 +13,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [resetMessage, setResetMessage] = useState('');
   const navigate = useNavigate();
-
-  const handleResetPassword = async () => {
-    if (!email) {
-      setError('Please enter your email address to reset password');
-      return;
-    }
-    setLoading(true);
-    setError('');
-    setResetMessage('');
-    try {
-      const response = await fetch('/api/send-reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
-      if (!response.ok) throw new Error('API request failed');
-      setResetMessage('Password reset email sent! Check your inbox.');
-    } catch (err: any) {
-      setError('Failed to send password reset email.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,13 +112,6 @@ export default function Login() {
               <div className="p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2 text-red-600 text-xs font-bold">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 {error}
-              </div>
-            )}
-            
-            {resetMessage && (
-              <div className="p-4 bg-green-50 border border-green-100 rounded-xl flex items-center gap-2 text-green-600 text-xs font-bold">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                {resetMessage}
               </div>
             )}
 

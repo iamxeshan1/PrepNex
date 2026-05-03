@@ -43,7 +43,7 @@ export const Navbar = () => {
                 <Menu className="w-5 h-5" />
               </button>
               <Link to="/" className="flex items-center gap-2 group">
-                <Logo className="text-2xl" />
+                <Logo className="text-3xl sm:text-4xl" />
               </Link>
             </div>
 
@@ -107,7 +107,7 @@ export const Navbar = () => {
             >
               <div className="flex items-center justify-between mb-12">
                 <div className="flex items-center gap-2">
-                  <Logo className="text-2xl" />
+                  <Logo className="text-3xl" />
                 </div>
                 <button 
                   onClick={() => setIsSidebarOpen(false)}

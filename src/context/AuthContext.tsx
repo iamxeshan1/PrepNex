@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 
 interface AuthContextType {
@@ -20,45 +20,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      if (user) {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          const data = userDoc.data();
-          if (data.isBlocked) {
-            await auth.signOut();
-            setUser(null);
-            setProfile(null);
-            alert("Your account has been blocked by an administrator.");
+    let profileUnsubscribe: (() => void) | null = null;
+
+    const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
+      if (profileUnsubscribe) {
+        profileUnsubscribe();
+        profileUnsubscribe = null;
+      }
+
+      setUser(authUser);
+      
+      if (authUser) {
+        const userDocRef = doc(db, 'users', authUser.uid);
+        
+        // Use onSnapshot for real-time profile updates
+        profileUnsubscribe = onSnapshot(userDocRef, async (snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.data();
+            if (data.isBlocked) {
+              await auth.signOut();
+              setUser(null);
+              setProfile(null);
+              alert("Your account has been blocked.");
+            } else {
+              setProfile(data);
+            }
           } else {
-            setProfile(data);
+            // New user profile creation
+            const isAdminEmail = authUser.email === 'iamxeshan1@gmail.com' || authUser.email === 'prepnexedtech@gmail.com';
+            const newProfile = {
+              userId: authUser.uid,
+              name: authUser.displayName || authUser.email?.split('@')[0] || 'User',
+              email: authUser.email,
+              role: isAdminEmail ? 'admin' : 'student',
+              isPremium: false,
+              premiumExpiry: null,
+              purchasedExams: [],
+              testsAttempted: 0,
+              averageScore: 0,
+              profileCompleted: false, // Explicitly false for new users
+              createdAt: new Date().toISOString()
+            };
+            await setDoc(userDocRef, newProfile);
+            // Profile will be set by the next snapshot trigger
           }
-        } else {
-          // New user profile creation
-          const isAdminEmail = user.email === 'iamxeshan1@gmail.com' || user.email === 'prepnexedtech@gmail.com';
-          const newProfile = {
-            userId: user.uid,
-            name: user.displayName || user.email?.split('@')[0] || 'User',
-            email: user.email,
-            role: isAdminEmail ? 'admin' : 'student',
-            isPremium: false,
-            premiumExpiry: null,
-            purchasedExams: [],
-            testsAttempted: 0,
-            averageScore: 0,
-            createdAt: new Date().toISOString()
-          };
-          await setDoc(doc(db, 'users', user.uid), newProfile);
-          setProfile(newProfile);
-        }
+          setLoading(false);
+        }, (error) => {
+          console.error("Profile snapshot error:", error);
+          setLoading(false);
+        });
       } else {
         setProfile(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      if (profileUnsubscribe) profileUnsubscribe();
+    };
   }, []);
 
   const value = {

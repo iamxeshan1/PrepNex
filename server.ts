@@ -5,14 +5,11 @@ import { fileURLToPath } from "url";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import dotenv from "dotenv";
-import { initializeApp, getApp, getApps, cert } from "firebase-admin/app";
+import { initializeApp, getApp, getApps } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import nodemailer from "nodemailer";
 import fs from "fs";
-import { initializeApp as initializeClientApp } from "firebase/app";
-import { getAuth as getClientAuth, sendPasswordResetEmail as sendClientPasswordResetEmail } from "firebase/auth";
-import clientConfig from "./firebase-applet-config.json";
 
 dotenv.config();
 
@@ -22,71 +19,73 @@ let config: any = {};
 if (fs.existsSync(configPath)) {
   config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
 }
+console.log("[Config Debug] Loaded Firebase config. Project ID:", config.projectId, "Database ID:", config.firestoreDatabaseId);
 
-const firebaseApp = initializeApp({
-  projectId: config.projectId,
-});
-console.log("Firebase App initialized with project:", config.projectId);
+// Initialize Admin SDK - use default credentials in Cloud Run
+const firebaseApp = getApps().length === 0 ? initializeApp() : getApp();
+console.log(`Firebase Admin SDK initialized successfully.`);
 
 let _db: any = null;
 
 function getDb() {
   if (_db) return _db;
   
-  try {
-    const app = firebaseApp;
-    const configPath = path.join(process.cwd(), "firebase-applet-config.json");
-    let config: any = {};
-    if (fs.existsSync(configPath)) {
-      config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-    }
-    
-    const dbId = config.firestoreDatabaseId && config.firestoreDatabaseId !== "(default)" 
-      ? config.firestoreDatabaseId 
-      : undefined;
+  const dbId = config.firestoreDatabaseId && config.firestoreDatabaseId !== "(default)" 
+    ? config.firestoreDatabaseId 
+    : undefined;
 
+  try {
     if (dbId) {
-      _db = getFirestore(app, dbId);
-      console.log("Firestore using named database:", dbId);
+      console.log(`[Firestore Debug] Initializing with named database: ${dbId}`);
+      _db = getFirestore(firebaseApp, dbId);
     } else {
-      _db = getFirestore(app);
-      console.log("Firestore using default database");
+      _db = getFirestore(firebaseApp);
+      console.log("[Firestore Debug] Initializing with default database.");
     }
-    
     return _db;
-  } catch (err) {
-    console.error("Firestore initialization failed:", err);
+  } catch (err: any) {
+    console.error(`[Firestore Debug] FATAL Firestore initialization failure:`, err.message);
     throw err;
   }
 }
 
-// Helper to use db safely
+// Wrapper for collection to handle potential permission issues on named databases
 const db = {
-  collection: (name: string) => getDb().collection(name)
+  collection: (name: string) => {
+    const database = getDb();
+    const originalCollection = database.collection(name);
+    
+    // We can't easily proxy the entire collection object, so we'll just handle it in the routes
+    return originalCollection;
+  }
 };
 
 const sendEmail = async (to: string, subject: string, html: string, fromNameOverride?: string) => {
-  let user = process.env.EMAIL_USER || "prepnexedtech@gmail.com";
-  let pass = process.env.EMAIL_PASS || "";
+  let user = process.env.EMAIL_USER || process.env.SMTP_USER || "prepnexedtech@gmail.com";
+  let pass = process.env.EMAIL_PASS || process.env.SMTP_PASS || "";
 
   // Only try to fetch from Firestore if environment variables aren't sufficient
   if (!pass) {
     try {
-      const settingsDoc = await db.collection("settings").doc("smtp").get();
+      console.log("[Email Service] EMAIL_PASS missing, attempting to fetch from Firestore settings/smtp...");
+      const database = getDb();
+      const settingsDoc = await database.collection("settings").doc("smtp").get();
       if (settingsDoc.exists) {
         const data = settingsDoc.data();
         if (data?.smtpEmail && data?.smtpPassword) {
           user = data.smtpEmail;
           pass = data.smtpPassword;
+          console.log("[Email Service] Successfully loaded SMTP credentials from Firestore.");
         }
       }
-    } catch (err) {
-      console.error("Failed to read SMTP settings from Firestore, relying solely on environment variables:", err);
+    } catch (err: any) {
+      console.warn("[Email Service] Failed to read SMTP settings from Firestore (Permission Denied?), will use default/env fallback:", err.message);
+      // Don't throw here, let it try the fallback or throw the descriptive error later
     }
   }
 
   if (!pass) {
-    throw new Error("SMTP credentials missing: EMAIL_PASS environment variable or Firestore settings required.");
+    throw new Error("SMTP credentials missing: Please set EMAIL_PASS in the AI Studio Settings > Secrets (with name EMAIL_PASS).");
   }
 
   const dynamicTransporter = nodemailer.createTransport({
@@ -98,8 +97,10 @@ const sendEmail = async (to: string, subject: string, html: string, fromNameOver
   });
 
   const fromName = fromNameOverride || "Team PrepNex Edtech";
+  console.log(`[Email Service] Sending email to: ${to}, subject: ${subject}`);
+  
   return dynamicTransporter.sendMail({
-    from: user,
+    from: `"${fromName}" <${user}>`,
     to,
     subject,
     html,
@@ -164,7 +165,35 @@ async function startServer() {
 
   app.use(express.json());
 
-  app.post("/api/send-welcome", async (req, res) => {
+  app.get("/api/health-check", async (req, res) => {
+    try {
+      console.log(`[Health Check] Project: ${config.projectId}, DB: ${config.firestoreDatabaseId || "(default)"}`);
+      console.log("[Health Check] Testing Firestore connection via Admin SDK...");
+      const database = getDb();
+      const snapshot = await database.collection("users").limit(1).get();
+      
+      res.json({ 
+        status: "ok", 
+        firestore: "connected",
+        project: config.projectId,
+        databaseId: config.firestoreDatabaseId || "(default)",
+        userCount: snapshot.size,
+        method: "Admin-SDK"
+      });
+    } catch (e: any) {
+      console.error("[Health Check] FAILED:", e.message);
+      res.status(500).json({ 
+        status: "error", 
+        firestore: "failed",
+        project: config.projectId,
+        error: e.message,
+        code: e.code,
+        method: "Admin-SDK"
+      });
+    }
+  });
+
+    app.post("/api/send-welcome", async (req, res) => {
     try {
       const { email, name } = req.body;
       const html = `
@@ -188,54 +217,7 @@ async function startServer() {
     }
   });
 
-  const clientApp = initializeClientApp(clientConfig);
-const clientAuth = getClientAuth(clientApp);
-const adminAuth = getAdminAuth(firebaseApp);
-
-  app.post("/api/send-reset-password", async (req, res) => {
-    try {
-      const { email } = req.body;
-      
-      // Generate the password reset link via admin SDK
-      const appUrl = process.env.VITE_APP_URL || 'https://ais-dev-jiogqd5sd2opeeg53i55h6-95891610099.asia-southeast1.run.app';
-      const resetLink = await adminAuth.generatePasswordResetLink(email, {
-        url: `${appUrl}/login`
-      });
-
-      // Extract the oobCode from the Firebase generated link
-      const url = new URL(resetLink);
-      const oobCode = url.searchParams.get("oobCode");
-
-      if (!oobCode) throw new Error("Failed to generate reset code");
-
-      const customResetLink = `${appUrl}/reset-password?oobCode=${oobCode}`;
-
-      const html = `
-        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; color: #334155; padding: 40px; background-color: #f1f5f9; border-radius: 20px;">
-          <div style="background-color: #ffffff; padding: 30px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
-            <h1 style="color: #4f46e5; margin-bottom: 20px;">Reset Your Password</h1>
-            <p style="font-size: 16px; margin-bottom: 15px;">We received a request to reset your password for PrepNex Edtech.</p>
-            <p style="font-size: 16px; margin-bottom: 25px;">Click the button below to set a new password:</p>
-            <div style="margin: 30px 0;">
-              <a href="${customResetLink}" style="display: inline-block; padding: 12px 24px; background-color: #4f46e5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Reset Password</a>
-            </div>
-            <p style="font-size: 14px; color: #64748b;">If you didn't request this, you can safely ignore this email.</p>
-            <p style="font-size: 14px; color: #64748b; margin-top: 20px;">With regards,<br><strong>Team PrepNex Edtech</strong></p>
-          </div>
-        </div>
-      `;
-
-      await sendEmail(email, "Reset your password - PrepNex Edtech", html);
-      res.json({ success: true });
-    } catch (e: any) {
-      console.error(e);
-      res.status(500).json({ error: e.message || "Failed to process reset request" });
-    }
-  });
-
-  // Reverted: Removed /api/complete-reset-password
-
-  // Reverted: Removed /api/admin/delete-all-subjects due to IAM permission issues on named database
+  const adminAuth = getAdminAuth(firebaseApp);
 
   app.post("/api/admin/send-promotional", async (req, res) => {
     try {
@@ -270,45 +252,153 @@ const adminAuth = getAdminAuth(firebaseApp);
     }
   });
 
+  app.post("/api/validate-coupon", async (req, res) => {
+    try {
+      const { code } = req.body;
+      if (!code) return res.status(400).json({ error: "Coupon code is required" });
+
+      const database = getDb();
+      const couponsRef = database.collection("coupons");
+      const normalizedCode = code.trim().toUpperCase();
+      
+      console.log(`[Coupon Debug] Validating coupon: "${normalizedCode}" in database: ${database.databaseId || "(default)"}`);
+      
+      try {
+        const q = await couponsRef.where("code", "==", normalizedCode).get();
+
+        if (q.empty) {
+          console.log(`[Coupon Debug] Coupon "${normalizedCode}" not found in DB`);
+          return res.status(404).json({ valid: false, message: "Invalid coupon code" });
+        }
+
+        const couponData = q.docs[0].data();
+        const isActive = couponData.isActive === true || couponData.isActive === "true";
+        
+        if (!isActive) {
+          console.log(`[Coupon Debug] Coupon "${normalizedCode}" is inactive`);
+          return res.status(404).json({ valid: false, message: "This coupon is expired or disabled" });
+        }
+
+        console.log(`[Coupon Debug] Validated:`, couponData);
+        res.json({ 
+          valid: true, 
+          discountType: couponData.discountType, 
+          discountValue: couponData.discountValue 
+        });
+      } catch (queryErr: any) {
+        console.error(`[Coupon Debug] Firestore error:`, queryErr.message);
+        if (queryErr.message.includes("PERMISSION_DENIED") || queryErr.code === 7) {
+          return res.status(500).json({ 
+            error: "PERMISSION_DENIED", 
+            message: `Server lacks permission to access Firestore collection 'coupons' in database: ${database.databaseId || "(default)"}. Please check your Firebase settings.`,
+            details: queryErr.message
+          });
+        }
+        throw queryErr;
+      }
+    } catch (error: any) {
+      console.error("Coupon validation error:", error);
+      res.status(500).json({ error: error.message || "Failed to validate coupon" });
+    }
+  });
+
   app.post("/api/create-order", async (req, res) => {
     console.log("Received create-order request:", req.body);
     try {
-      const { amount, currency = "INR", receipt } = req.body;
+      const { amount: clientAmount, itemId, couponCode } = req.body;
       
-      if (!amount) {
-        console.error("Amount missing in request");
-        return res.status(400).json({ error: "Amount is required" });
+      if (!clientAmount || !itemId) {
+        return res.status(400).json({ error: "Amount and Item ID are required" });
       }
 
-      console.log("Initializing Razorpay...");
+      // 1. Fetch item to verify original price (Security)
+      const database = getDb();
+      let originalPrice = 0;
+      let itemName = "Package";
+
+      if (itemId === "PREMIUM_PASS") {
+        const settingsDoc = await database.collection("settings").doc("general").get();
+        originalPrice = parseInt(settingsDoc.data()?.premiumPrice || "599");
+        itemName = settingsDoc.data()?.premiumTitle || "Unlimited 1-Year Pass";
+      } else {
+        const examDoc = await database.collection("exams").doc(itemId).get();
+        if (examDoc.exists) {
+          originalPrice = examDoc.data()?.price || 0;
+          itemName = examDoc.data()?.name || "Exam Package";
+        } else {
+          // Check liveTests if not in exams
+          const liveTestDoc = await database.collection("liveTests").doc(itemId).get();
+          if (liveTestDoc.exists) {
+            originalPrice = liveTestDoc.data()?.price || 0;
+            itemName = liveTestDoc.data()?.title || "Live Test";
+          }
+        }
+      }
+
+      if (originalPrice === 0) {
+        return res.status(400).json({ error: "Invalid item or item is free" });
+      }
+
+      // 2. Apply Coupon server-side
+      let finalAmount = originalPrice;
+      if (couponCode) {
+        const normalizedCoupon = couponCode.trim().toUpperCase();
+        console.log(`[Order Debug] Applying coupon server-side: "${normalizedCoupon}" in database: ${database.databaseId || "(default)"}`);
+        
+        try {
+          const couponQ = await database.collection("coupons").where("code", "==", normalizedCoupon).limit(1).get();
+          if (!couponQ.empty) {
+            const coupon = couponQ.docs[0].data();
+            const isActive = coupon.isActive === true || coupon.isActive === "true";
+            
+            if (isActive) {
+              console.log(`[Order Debug] Coupon "${normalizedCoupon}" applied.`);
+              if (coupon.discountType === "percentage") {
+                finalAmount = originalPrice - (originalPrice * (coupon.discountValue / 100));
+              } else {
+                finalAmount = Math.max(0, originalPrice - coupon.discountValue);
+              }
+            } else {
+              console.log(`[Order Debug] Coupon "${normalizedCoupon}" is inactive.`);
+            }
+          } else {
+            console.log(`[Order Debug] Coupon "${normalizedCoupon}" not found.`);
+          }
+        } catch (couponQueryErr: any) {
+          console.warn(`[Order Debug] Failed to validate coupon due to permissions, ignoring coupon:`, couponQueryErr.message);
+          // We don't fail the whole order creation, but we log the warning
+        }
+      }
+
+      console.log(`Calculated server-side amount: ${finalAmount} (Original: ${originalPrice})`);
+      
       const razorpay = await getRazorpay();
       
-      console.log("Creating Razorpay order...");
       const options = {
-        amount: Math.round(amount * 100), // Razorpay expects paise
-        currency,
-        receipt,
+        amount: Math.round(finalAmount * 100), // Paise
+        currency: "INR",
+        receipt: `receipt_${Date.now()}`,
+        notes: {
+          itemId,
+          itemName,
+          couponCode: couponCode || "NONE"
+        }
       };
 
       const order = await razorpay.orders.create(options);
-      console.log("Order created successfully:", order.id);
       res.json(order);
     } catch (error: any) {
-      console.error("Order creation failed error detail:", error);
-      res.status(500).json({ 
-        error: "Failed to create order", 
-        message: error.message || "Internal Server Error",
-        detail: process.env.NODE_ENV !== 'production' ? error.toString() : undefined
-      });
+      console.error("Order creation failed:", error);
+      res.status(500).json({ error: error.message });
     }
   });
 
   app.post("/api/verify-payment", async (req, res) => {
     try {
-      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature, userId, itemId } = req.body;
       
-      if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-        return res.status(400).json({ status: "failed", message: "Missing payment details" });
+      if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !userId || !itemId) {
+        return res.status(400).json({ status: "failed", message: "Missing required details" });
       }
 
       let secret = process.env.RAZORPAY_KEY_SECRET || "";
@@ -318,29 +408,82 @@ const adminAuth = getAdminAuth(firebaseApp);
           const settingsDoc = await database.collection("settings").doc("razorpay").get();
           secret = settingsDoc.data()?.razorpayKeySecret || "";
         } catch (err: any) {
-          console.warn("Failed to fetch Razorpay secret from Firestore for verification:", err.message);
+          console.warn("Secret fetch failed:", err.message);
         }
       }
 
-      if (!secret) {
-        console.error("Razorpay secret missing during verification");
-        return res.status(500).json({ status: "failed", message: "Verification config error. Please set RAZORPAY_KEY_SECRET in AI Studio Secrets." });
-      }
-
-      const body = razorpay_order_id.toString() + "|" + razorpay_payment_id.toString();
-      const expectedSignature = crypto
-        .createHmac("sha256", secret)
-        .update(body)
-        .digest("hex");
+      const body = razorpay_order_id + "|" + razorpay_payment_id;
+      const expectedSignature = crypto.createHmac("sha256", secret).update(body).digest("hex");
 
       if (expectedSignature === razorpay_signature) {
-        res.json({ status: "ok", message: "Payment verified successfully" });
+        // PAYMENT SUCCESS -> Update User in Firestore
+        const database = getDb();
+        const userRef = database.collection("users").doc(userId);
+        const userDoc = await userRef.get();
+
+        if (userDoc.exists) {
+          if (itemId === "PREMIUM_PASS") {
+            // Sitewide Premium Activation
+            const expiryDate = new Date();
+            expiryDate.setFullYear(expiryDate.getFullYear() + 1); // 1 year validity
+            
+            await userRef.update({
+              isPremium: true,
+              subscriptionExpiry: expiryDate.toISOString()
+            });
+
+            await database.collection("subscriptions").add({
+              userId,
+              type: "global_premium",
+              purchaseDate: new Date().toISOString(),
+              expiryDate: expiryDate.toISOString(),
+              paymentId: razorpay_payment_id,
+              orderId: razorpay_order_id,
+              paymentStatus: "completed",
+              amount: 599 // Usually the price from create-order
+            });
+          } else {
+            // Check if it's a live test or regular exam
+            const liveTestRef = database.collection("liveTests").doc(itemId);
+            const liveTestDoc = await liveTestRef.get();
+            
+            if (liveTestDoc.exists) {
+              // It's a live test -> Enroll user
+              const enrolledUsers = liveTestDoc.data()?.enrolledUsers || [];
+              if (!enrolledUsers.includes(userId)) {
+                enrolledUsers.push(userId);
+                await liveTestRef.update({ enrolledUsers });
+              }
+            } else {
+              // It's an exam package
+              const userData = userDoc.data();
+              const purchasedExams = userData?.purchasedExams || [];
+              
+              if (!purchasedExams.includes(itemId)) {
+                purchasedExams.push(itemId);
+                await userRef.update({ purchasedExams });
+              }
+            }
+            
+            // Record generic subscription/purchase log
+            await database.collection("subscriptions").add({
+              userId,
+              examId: itemId, // Used for both exam and live test ID here
+              purchaseDate: new Date().toISOString(),
+              paymentId: razorpay_payment_id,
+              orderId: razorpay_order_id,
+              paymentStatus: "completed"
+            });
+          }
+        }
+
+        res.json({ status: "ok", message: "Purchase completed successfully" });
       } else {
         res.status(400).json({ status: "failed", message: "Invalid signature" });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Payment verification failed:", error);
-      res.status(500).json({ error: "Verification error" });
+      res.status(500).json({ error: "Verification error", detail: error.message });
     }
   });
 

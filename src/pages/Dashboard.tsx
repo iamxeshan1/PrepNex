@@ -5,7 +5,7 @@ import { Layout } from '../components/Layout';
 import { collection, query, where, getDocs, orderBy, limit, doc, updateDoc, addDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { logActivity, ActivityAction } from '../services/activityLogger';
-import { BarChart, Clock, Award, ChevronRight, BookOpen, User as UserIcon, Bell, Calendar, Phone, Mail, Save, AlertCircle, Crown, AlertTriangle, Star, CheckCircle, Send, MessageCircle, Zap, Timer } from 'lucide-react';
+import { BarChart, Clock, Award, ChevronRight, BookOpen, User as UserIcon, Bell, Calendar, Phone, Mail, Save, AlertCircle, Crown, AlertTriangle, Star, CheckCircle, Send, MessageCircle, Zap, Timer, MapPin, Building, Map } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Countdown } from '../components/Countdown';
 
@@ -21,10 +21,22 @@ export default function Dashboard() {
   
   // Profile state for editing
   const [name, setName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [dob, setDob] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [district, setDistrict] = useState('');
+  const [state, setState] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+  const INDIAN_STATES = [
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
+    "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", 
+    "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", 
+    "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", 
+    "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+    "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", 
+    "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+  ].sort();
 
   // Review state
   const [reviewContent, setReviewContent] = useState('');
@@ -35,8 +47,10 @@ export default function Dashboard() {
   useEffect(() => {
     if (profile) {
       setName(profile.name || '');
-      setPhoneNumber(profile.phoneNumber || '');
-      setDob(profile.dob || '');
+      setPhone(profile.phone || '');
+      setAddress(profile.address || '');
+      setDistrict(profile.district || '');
+      setState(profile.state || '');
     }
   }, [profile]);
 
@@ -134,16 +148,26 @@ export default function Dashboard() {
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile?.userId) return;
+    
+    // Basic validation
+    if (!name.trim()) return setSaveMessage({ type: 'error', text: 'Name is required' });
+    if (!phone.trim() || !/^\d{10}$/.test(phone)) return setSaveMessage({ type: 'error', text: 'Valid 10-digit phone required' });
+    if (!address.trim()) return setSaveMessage({ type: 'error', text: 'Address is required' });
+    if (!district.trim()) return setSaveMessage({ type: 'error', text: 'District is required' });
+    if (!state) return setSaveMessage({ type: 'error', text: 'State is required' });
+
     setSavingProfile(true);
     setSaveMessage(null);
     try {
       await updateDoc(doc(db, 'users', profile.userId), {
         name,
-        phoneNumber,
-        dob,
+        phone,
+        address,
+        district,
+        state,
         updatedAt: new Date().toISOString()
       });
-      await logActivity(profile.userId, ActivityAction.PROFILE_UPDATE, 'Updated profile details (name/phone/dob).');
+      await logActivity(profile.userId, ActivityAction.PROFILE_UPDATE, 'Updated profile details (name/phone/location).');
       setSaveMessage({ type: 'success', text: 'Profile updated successfully!' });
     } catch (error) {
       console.error(error);
@@ -576,39 +600,86 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <form onSubmit={handleUpdateProfile} className="space-y-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Display Name</label>
+                <form onSubmit={handleUpdateProfile} className="p-8 space-y-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Full Name</label>
                       <div className="relative">
-                        <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                        <input 
-                          required className="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all font-bold text-primary"
-                          value={name} onChange={(e) => setName(e.target.value)}
+                        <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                        <input
+                          type="text"
+                          required
+                          value={name}
+                          onChange={e => setName(e.target.value)}
+                          className="w-full pl-11 pr-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-indigo-500 transition-all outline-none text-slate-700 font-medium"
+                          placeholder="Enter your full name"
                         />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Phone Number</label>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Phone Number</label>
                       <div className="relative">
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                        <input 
+                        <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                        <input
                           type="tel"
-                          placeholder="+91 XXXXX XXXXX"
-                          className="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all font-bold text-primary"
-                          value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)}
+                          required
+                          pattern="[0-9]{10}"
+                          value={phone}
+                          onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                          className="w-full pl-11 pr-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-indigo-500 transition-all outline-none text-slate-700 font-medium"
+                          placeholder="10-digit mobile number"
                         />
                       </div>
                     </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Date of Birth</label>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Full Address</label>
                       <div className="relative">
-                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                        <input 
-                          type="date"
-                          className="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all font-bold text-primary"
-                          value={dob} onChange={(e) => setDob(e.target.value)}
+                        <MapPin className="absolute left-3.5 top-3 text-slate-400" size={18} />
+                        <textarea
+                          required
+                          value={address}
+                          onChange={e => setAddress(e.target.value)}
+                          rows={2}
+                          className="w-full pl-11 pr-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-indigo-500 transition-all outline-none text-slate-700 font-medium resize-none"
+                          placeholder="House No, Locality, Area..."
                         />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">District</label>
+                        <div className="relative">
+                          <Building className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                          <input
+                            type="text"
+                            required
+                            value={district}
+                            onChange={e => setDistrict(e.target.value)}
+                            className="w-full pl-11 pr-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-indigo-500 transition-all outline-none text-slate-700 font-medium"
+                            placeholder="District"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">State</label>
+                        <div className="relative">
+                          <Map className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
+                          <select
+                            required
+                            value={state}
+                            onChange={e => setState(e.target.value)}
+                            className="w-full pl-11 pr-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-indigo-500 transition-all outline-none text-slate-700 font-medium appearance-none"
+                          >
+                            <option value="">Select State</option>
+                            {INDIAN_STATES.map(st => (
+                              <option key={st} value={st}>{st}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
                     </div>
                   </div>

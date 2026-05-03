@@ -15,12 +15,14 @@ export default function ResetPassword() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!oobCode) return setMessage({ type: 'error', text: 'Invalid reset link.' });
+    if (!oobCode) return setMessage({ type: 'error', text: 'Invalid or missing reset link. Please request a new one.' });
 
     setLoading(true);
     try {
+      // Handle standard Firebase reset
       const auth = getAuth();
       await confirmPasswordReset(auth, oobCode, password);
+
       setMessage({ type: 'success', text: 'Password reset successfully!' });
       setTimeout(() => navigate('/login'), 2000);
     } catch (error: any) {
