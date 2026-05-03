@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
-import { collection, query, getDocs, doc, updateDoc, writeBatch } from 'firebase/firestore';
+import { collection, query, getDocs, doc, updateDoc, writeBatch, deleteDoc, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { 
   Search, 
@@ -16,7 +16,8 @@ import {
   XCircle,
   Download,
   MoreVertical,
-  Star
+  Star,
+  Clock
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -27,6 +28,7 @@ export default function AdminUsers() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [showPrivilegeModal, setShowPrivilegeModal] = useState(false);
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -35,7 +37,7 @@ export default function AdminUsers() {
   const fetchData = async () => {
     try {
       const [uSnap, eSnap] = await Promise.all([
-        getDocs(collection(db, 'users')),
+        getDocs(query(collection(db, 'users'), orderBy('name', 'asc'))),
         getDocs(collection(db, 'exams'))
       ]);
       setUsers(uSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -43,6 +45,18 @@ export default function AdminUsers() {
       setLoading(false);
     } catch (error) {
       console.error("Error fetching admin users:", error);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      await deleteDoc(doc(db, 'users', userId));
+      setUsers(users.filter(u => u.id !== userId));
+      setConfirmingDeleteId(null);
+      alert("User deleted permanently.");
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      alert("Failed to delete user record.");
     }
   };
 
@@ -186,111 +200,148 @@ export default function AdminUsers() {
           <div className="overflow-x-auto scrollbar-hide">
             <table className="w-full min-w-[800px]">
               <thead>
-              <tr className="border-b border-slate-50">
-                  <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Profile</th>
-                  <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Subscription</th>
-                  <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Performance</th>
-                  <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
-                  <th className="px-8 py-6 text-right text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {filteredUsers.map(user => {
-                  const status = user.isPremium ? 'Premium' : (user.purchasedExams?.length > 0 || user.freeExams?.length > 0 ? 'Basic' : 'Free');
-                  return (
-                    <tr key={user.id} className={`hover:bg-slate-50/50 transition-colors ${user.isBlocked ? 'bg-red-50/20' : ''}`}>
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-black ${user.role === 'admin' ? 'bg-orange-500' : 'bg-primary'}`}>
-                            {user.role === 'admin' ? <ShieldCheck className="w-5 h-5" /> : user.name?.[0].toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="font-bold text-primary flex items-center gap-2">
-                              {user.name}
-                              {user.role === 'admin' && <span className="text-[8px] px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded">ADMIN</span>}
-                            </p>
-                            <p className="text-xs text-slate-400 font-medium">{user.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">
-                        <div className="flex flex-col gap-2">
-                          <span className={`w-fit inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
-                            status === 'Premium' ? 'bg-purple-50 text-purple-600 border-purple-100 shadow-sm shadow-purple-100' :
-                            status === 'Basic' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                            'bg-slate-50 text-slate-400 border-slate-100'
-                          }`}>
-                            {status} Access
-                          </span>
-                          {user.isPremium && user.premiumExpiry && (
-                            <p className="text-[9px] font-bold text-purple-400 uppercase flex items-center gap-1">
-                              <Calendar className="w-2.5 h-2.5" /> Expires {new Date(user.premiumExpiry).toLocaleDateString()}
-                            </p>
-                          )}
-                          {!user.isPremium && (user.freeExams?.length > 0 || user.purchasedExams?.length > 0) && (
-                            <p className="text-[9px] font-bold text-blue-400 uppercase">
-                              {(user.freeExams?.length || 0) + (user.purchasedExams?.length || 0)} Exams Unlocked
-                            </p>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">
-                        <div className="w-48 space-y-3">
-                          <div className="space-y-1">
-                            <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-slate-400">
-                              <span>Performance Rank</span>
-                              <span className="text-primary">{Math.round(user.averageScore || 0)}%</span>
-                            </div>
-                            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-50">
-                              <div 
-                                className="h-full bg-primary transition-all duration-1000" 
-                                style={{ width: `${Math.min(100, user.averageScore || 0)}%` }} 
-                              />
-                            </div>
-                          </div>
-                          <div className="space-y-1">
-                            <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-slate-400">
-                              <span>Exam Stamina</span>
-                              <span className="text-secondary">{user.testsAttempted || 0} Tests</span>
-                            </div>
-                            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-50">
-                              <div 
-                                className="h-full bg-secondary transition-all duration-1000" 
-                                style={{ width: `${Math.min(100, ((user.testsAttempted || 0) / 50) * 100)}%` }} 
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">
-                    {user.isBlocked ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-tighter border border-red-100">
-                        <Ban className="w-3 h-3" /> Blocked
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-600 rounded-full text-[10px] font-black uppercase tracking-tighter border border-green-100">
-                        <CheckCircle2 className="w-3 h-3" /> Active
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-8 py-6 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button 
-                        onClick={() => { setSelectedUser(user); setShowPrivilegeModal(true); }}
-                        className="p-2.5 bg-slate-50 text-slate-400 hover:text-amber-600 rounded-xl transition-all"
-                        title="Manage Privileges"
-                      >
-                        <Trophy className="w-5 h-5" />
-                      </button>
-                      <button 
-                        onClick={() => handleToggleBlock(user.id, !!user.isBlocked)}
-                        className={`p-2.5 rounded-xl transition-all ${user.isBlocked ? 'bg-red-50 text-red-600' : 'bg-slate-50 text-slate-400 hover:text-red-500'}`}
-                        title={user.isBlocked ? 'Unblock' : 'Block'}
-                      >
-                        <Ban className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </td>
+                  <tr className="border-b border-slate-50">
+                   <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Profile</th>
+                   <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Subscription</th>
+                   <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Performance</th>
+                   <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
+                   <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Activity</th>
+                   <th className="px-8 py-6 text-right text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
+                 </tr>
+               </thead>
+               <tbody className="divide-y divide-slate-50">
+                 {filteredUsers.map(user => {
+                   const status = user.isPremium ? 'Premium' : (user.purchasedExams?.length > 0 || user.freeExams?.length > 0 ? 'Basic' : 'Free');
+                   const lastActive = user.lastLogin || user.lastActive || user.createdAt;
+                   return (
+                     <tr key={user.id} className={`hover:bg-slate-50/50 transition-colors ${user.isBlocked ? 'bg-red-50/20' : ''}`}>
+                       <td className="px-8 py-6">
+                         <div className="flex items-center gap-4">
+                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-black ${user.role === 'admin' ? 'bg-orange-500' : 'bg-primary'}`}>
+                             {user.role === 'admin' ? <ShieldCheck className="w-5 h-5" /> : user.name?.[0].toUpperCase()}
+                           </div>
+                           <div>
+                             <p className="font-bold text-primary flex items-center gap-2">
+                               {user.name}
+                               {user.role === 'admin' && <span className="text-[8px] px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded">ADMIN</span>}
+                             </p>
+                             <p className="text-xs text-slate-400 font-medium">{user.email}</p>
+                           </div>
+                         </div>
+                       </td>
+                       <td className="px-8 py-6">
+                         <div className="flex flex-col gap-2">
+                           <span className={`w-fit inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                             status === 'Premium' ? 'bg-purple-50 text-purple-600 border-purple-100 shadow-sm shadow-purple-100' :
+                             status === 'Basic' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                             'bg-slate-50 text-slate-400 border-slate-100'
+                           }`}>
+                             {status} Access
+                           </span>
+                           {user.isPremium && user.premiumExpiry && (
+                             <p className="text-[9px] font-bold text-purple-400 uppercase flex items-center gap-1">
+                               <Calendar className="w-2.5 h-2.5" /> Expires {new Date(user.premiumExpiry).toLocaleDateString()}
+                             </p>
+                           )}
+                           {!user.isPremium && (user.freeExams?.length > 0 || user.purchasedExams?.length > 0) && (
+                             <p className="text-[9px] font-bold text-blue-400 uppercase">
+                               {(user.freeExams?.length || 0) + (user.purchasedExams?.length || 0)} Exams Unlocked
+                             </p>
+                           )}
+                         </div>
+                       </td>
+                       <td className="px-8 py-6">
+                         <div className="w-48 space-y-3">
+                           <div className="space-y-1">
+                             <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-slate-400">
+                               <span>Performance Rank</span>
+                               <span className="text-primary">{Math.round(user.averageScore || 0)}%</span>
+                             </div>
+                             <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-50">
+                               <div 
+                                 className="h-full bg-primary transition-all duration-1000" 
+                                 style={{ width: `${Math.min(100, user.averageScore || 0)}%` }} 
+                               />
+                             </div>
+                           </div>
+                           <div className="space-y-1">
+                             <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-slate-400">
+                               <span>Exam Stamina</span>
+                               <span className="text-secondary">{user.testsAttempted || 0} Tests</span>
+                             </div>
+                             <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-50">
+                               <div 
+                                 className="h-full bg-secondary transition-all duration-1000" 
+                                 style={{ width: `${Math.min(100, ((user.testsAttempted || 0) / 50) * 100)}%` }} 
+                               />
+                             </div>
+                           </div>
+                         </div>
+                       </td>
+                       <td className="px-8 py-6">
+                     {user.isBlocked ? (
+                       <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-tighter border border-red-100">
+                         <Ban className="w-3 h-3" /> Blocked
+                       </span>
+                     ) : (
+                       <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-600 rounded-full text-[10px] font-black uppercase tracking-tighter border border-green-100">
+                         <CheckCircle2 className="w-3 h-3" /> Active
+                       </span>
+                     )}
+                   </td>
+                   <td className="px-8 py-6">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] font-black text-slate-700 uppercase tracking-tight flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-secondary" /> {lastActive ? new Date(lastActive).toLocaleDateString() : 'Never'}
+                        </span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                          {lastActive ? new Date(lastActive).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                        </span>
+                      </div>
+                   </td>
+                   <td className="px-8 py-6 text-right">
+                     <div className="flex items-center justify-end gap-2">
+                       <button 
+                         onClick={() => { setSelectedUser(user); setShowPrivilegeModal(true); }}
+                         className="p-2.5 bg-slate-50 text-slate-400 hover:text-amber-600 rounded-xl transition-all"
+                         title="Manage Privileges"
+                       >
+                         <Trophy className="w-5 h-5" />
+                       </button>
+                       <button 
+                         onClick={() => handleToggleBlock(user.id, !!user.isBlocked)}
+                         className={`p-2.5 rounded-xl transition-all ${user.isBlocked ? 'bg-red-50 text-red-600' : 'bg-slate-50 text-slate-400 hover:text-red-500'}`}
+                         title={user.isBlocked ? 'Unblock' : 'Block'}
+                       >
+                         <Ban className="w-5 h-5" />
+                       </button>
+
+                       {confirmingDeleteId === user.id ? (
+                         <div className="flex items-center gap-1 bg-red-100 p-1 rounded-xl animate-in slide-in-from-right-2">
+                           <button 
+                             onClick={() => handleDeleteUser(user.id)}
+                             className="px-3 py-1.5 bg-red-600 text-white text-[9px] font-black rounded-lg uppercase"
+                           >
+                             Confirm
+                           </button>
+                           <button 
+                             onClick={() => setConfirmingDeleteId(null)}
+                             className="px-3 py-1.5 bg-white text-slate-400 text-[9px] font-black rounded-lg border border-red-200 uppercase"
+                           >
+                             X
+                           </button>
+                         </div>
+                       ) : (
+                         <button 
+                           onClick={() => setConfirmingDeleteId(user.id)}
+                           className="p-2.5 bg-slate-50 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                           title="Delete User"
+                         >
+                           <Trash2 className="w-5 h-5" />
+                         </button>
+                       )}
+                     </div>
+                   </td>
                 </tr>
                 );
               })}

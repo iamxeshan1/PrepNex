@@ -12,6 +12,7 @@ export default function AdminExams() {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [type, setType] = useState<'recruitment' | 'competitive'>('recruitment');
   
   // Form State
   const [name, setName] = useState('');
@@ -76,13 +77,14 @@ export default function AdminExams() {
     const examData = {
       name,
       agencyId,
-      category: cat,
+      type,
+      category: type === 'recruitment' ? cat : 'Competitive',
       price: Number(price),
       isPaid: isPaid,
-      syllabus,
-      subjectsWeightage,
-      totalPosts: Number(totalPosts),
-      postDistribution: postDistribution.map(p => ({ category: p.category, count: Number(p.count) })),
+      syllabus: type === 'recruitment' ? syllabus : '',
+      subjectsWeightage: type === 'recruitment' ? subjectsWeightage : [],
+      totalPosts: type === 'recruitment' ? Number(totalPosts) : 0,
+      postDistribution: type === 'recruitment' ? postDistribution.map(p => ({ category: p.category, count: Number(p.count) })) : [],
       isPopular,
       status,
       updatedAt: new Date().toISOString()
@@ -108,6 +110,7 @@ export default function AdminExams() {
     setEditingId(exam.id);
     setName(exam.name);
     setAgencyId(exam.agencyId || '');
+    setType(exam.type || 'recruitment');
     setCat(exam.category || 'Government Jobs');
     setPrice((exam.price ?? 0).toString());
     setIsPaid(exam.isPaid || false);
@@ -122,7 +125,7 @@ export default function AdminExams() {
   };
 
   const resetForm = () => {
-    setName(''); setAgencyId(''); setPrice('0'); setIsPaid(false); setSyllabus(''); setSubjectsWeightage([]); setTotalPosts(''); setPostDistribution([]); setIsPopular(false); setStatus('draft');
+    setName(''); setAgencyId(''); setPrice('0'); setIsPaid(false); setSyllabus(''); setSubjectsWeightage([]); setTotalPosts(''); setPostDistribution([]); setIsPopular(false); setStatus('draft'); setType('recruitment');
   };
 
   const cancelForm = () => {
@@ -165,6 +168,24 @@ export default function AdminExams() {
       {showAddForm && (
         <form onSubmit={handleAdd} className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm mb-10 space-y-6 animate-in zoom-in-95 duration-300">
           <h3 className="text-xl font-bold text-primary">{editingId ? 'Edit Exam' : 'Create New Exam'}</h3>
+          
+          <div className="flex gap-4 p-1 bg-slate-100 rounded-2xl w-fit">
+            <button
+              type="button"
+              onClick={() => setType('recruitment')}
+              className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${type === 'recruitment' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              Recruitment Exam
+            </button>
+            <button
+              type="button"
+              onClick={() => setType('competitive')}
+              className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${type === 'competitive' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              Competitive Exam
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700">Exam Name</label>
@@ -186,98 +207,104 @@ export default function AdminExams() {
               </select>
             </div>
             
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-bold text-slate-700">Exam Syllabus</label>
-              <textarea 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary min-h-[100px]"
-                placeholder="Enter overall exam syllabus..."
-                value={syllabus} onChange={(e) => setSyllabus(e.target.value)} 
-              />
-            </div>
-            
-            <div className="space-y-4 md:col-span-2 border-t border-slate-100 pt-4">
-              <div className="flex justify-between items-center">
-                <label className="text-sm font-bold text-slate-700">Subjects & Weightage (Syllabus Selection)</label>
-                <button type="button" onClick={addSubject} className="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
-                  <Plus className="w-3 h-3" /> Include Subject
-                </button>
-              </div>
-              <div className="space-y-3">
-                 {subjectsWeightage.map((sw, i) => (
-                   <div key={i} className="flex gap-4 items-center bg-slate-50 p-2 border border-slate-200 rounded-xl">
-                      <select 
-                        required
-                        value={sw.subjectId} onChange={e => updateSubject(i, 'subjectId', e.target.value)}
-                        className="flex-1 px-3 py-2 bg-white rounded-lg border border-slate-200 text-sm outline-none focus:ring-1 focus:ring-primary appearance-none font-bold"
-                      >
-                        <option value="">Select Included Subject</option>
-                        {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                      </select>
-                      <input 
-                        placeholder="Q Count"
-                        title="Number of questions from this subject"
-                        value={sw.marks} onChange={e => updateSubject(i, 'marks', e.target.value)}
-                        className="w-24 px-3 py-2 bg-white rounded-lg border border-slate-200 text-sm outline-none focus:ring-1 focus:ring-primary"
-                      />
-                      <button type="button" onClick={() => removeSubject(i)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                   </div>
-                 ))}
-                 {subjectsWeightage.length === 0 && (
-                   <p className="text-xs text-slate-400 font-medium">No subjects added. Add subjects and their marks weightage.</p>
-                 )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Category</label>
-              <select 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
-                value={cat} onChange={(e) => setCat(e.target.value)}
-              >
-                {['Government Jobs', 'Medical', 'Engineering', 'Banking', 'Police'].map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Total Posts Advertised</label>
-              <input 
-                type="number"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
-                value={totalPosts} onChange={(e) => setTotalPosts(e.target.value)} 
-              />
-            </div>
+            {type === 'recruitment' && (
+              <>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-sm font-bold text-slate-700">Exam Syllabus</label>
+                  <textarea 
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary min-h-[100px]"
+                    placeholder="Enter overall exam syllabus..."
+                    value={syllabus} onChange={(e) => setSyllabus(e.target.value)} 
+                  />
+                </div>
+                
+                <div className="space-y-4 md:col-span-2 border-t border-slate-100 pt-4">
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm font-bold text-slate-700">Subjects & Weightage (Syllabus Selection)</label>
+                    <button type="button" onClick={addSubject} className="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
+                      <Plus className="w-3 h-3" /> Include Subject
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                     {subjectsWeightage.map((sw, i) => (
+                       <div key={i} className="flex gap-4 items-center bg-slate-50 p-2 border border-slate-200 rounded-xl">
+                          <select 
+                            required
+                            value={sw.subjectId} onChange={e => updateSubject(i, 'subjectId', e.target.value)}
+                            className="flex-1 px-3 py-2 bg-white rounded-lg border border-slate-200 text-sm outline-none focus:ring-1 focus:ring-primary appearance-none font-bold"
+                          >
+                            <option value="">Select Included Subject</option>
+                            {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                          </select>
+                          <input 
+                            placeholder="Q Count"
+                            title="Number of questions from this subject"
+                            value={sw.marks} onChange={e => updateSubject(i, 'marks', e.target.value)}
+                            className="w-24 px-3 py-2 bg-white rounded-lg border border-slate-200 text-sm outline-none focus:ring-1 focus:ring-primary"
+                          />
+                          <button type="button" onClick={() => removeSubject(i)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                       </div>
+                     ))}
+                     {subjectsWeightage.length === 0 && (
+                       <p className="text-xs text-slate-400 font-medium">No subjects added. Add subjects and their marks weightage.</p>
+                     )}
+                  </div>
+                </div>
 
-            <div className="space-y-4 md:col-span-2 border-t border-slate-100 pt-4">
-              <div className="flex justify-between items-center">
-                <label className="text-sm font-bold text-slate-700">Category-wise Post Distribution</label>
-                <button type="button" onClick={addPostCategory} className="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
-                  <Plus className="w-3 h-3" /> Add Category
-                </button>
-              </div>
-              <div className="space-y-3">
-                 {postDistribution.map((pd, i) => (
-                   <div key={i} className="flex gap-4 items-center bg-slate-50 p-2 border border-slate-200 rounded-xl">
-                      <input 
-                        placeholder="Category (e.g. Gen, RBA, OBC)"
-                        value={pd.category} onChange={e => updatePostCategory(i, 'category', e.target.value)}
-                        className="flex-1 px-3 py-2 bg-white rounded-lg border border-slate-200 text-sm outline-none focus:ring-1 focus:ring-primary"
-                      />
-                      <input 
-                        type="number"
-                        placeholder="Count"
-                        value={pd.count} onChange={e => updatePostCategory(i, 'count', e.target.value)}
-                        className="w-24 px-3 py-2 bg-white rounded-lg border border-slate-200 text-sm outline-none focus:ring-1 focus:ring-primary"
-                      />
-                      <button type="button" onClick={() => removePostCategory(i)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                   </div>
-                 ))}
-                 {postDistribution.length === 0 && (
-                   <p className="text-xs text-slate-400 font-medium">No distribution added. Add categories if required.</p>
-                 )}
-              </div>
-            </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700">Category</label>
+                  <select 
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
+                    value={cat} onChange={(e) => setCat(e.target.value)}
+                  >
+                    {['Government Jobs', 'Medical', 'Engineering', 'Banking', 'Police'].map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700">Total Posts Advertised</label>
+                  <input 
+                    type="number"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
+                    value={totalPosts} onChange={(e) => setTotalPosts(e.target.value)} 
+                  />
+                </div>
+
+                <div className="space-y-4 md:col-span-2 border-t border-slate-100 pt-4">
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm font-bold text-slate-700">Category-wise Post Distribution</label>
+                    <button type="button" onClick={addPostCategory} className="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
+                      <Plus className="w-3 h-3" /> Add Category
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                     {postDistribution.map((pd, i) => (
+                       <div key={i} className="flex gap-4 items-center bg-slate-50 p-2 border border-slate-200 rounded-xl">
+                          <input 
+                            placeholder="Category (e.g. Gen, RBA, OBC)"
+                            value={pd.category} onChange={e => updatePostCategory(i, 'category', e.target.value)}
+                            className="flex-1 px-3 py-2 bg-white rounded-lg border border-slate-200 text-sm outline-none focus:ring-1 focus:ring-primary"
+                          />
+                          <input 
+                            type="number"
+                            placeholder="Count"
+                            value={pd.count} onChange={e => updatePostCategory(i, 'count', e.target.value)}
+                            className="w-24 px-3 py-2 bg-white rounded-lg border border-slate-200 text-sm outline-none focus:ring-1 focus:ring-primary"
+                          />
+                          <button type="button" onClick={() => removePostCategory(i)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                       </div>
+                     ))}
+                     {postDistribution.length === 0 && (
+                       <p className="text-xs text-slate-400 font-medium">No distribution added. Add categories if required.</p>
+                     )}
+                  </div>
+                </div>
+              </>
+            )}
+            
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700">Status</label>
               <select 
@@ -356,11 +383,14 @@ export default function AdminExams() {
                   {exam.isPopular && (
                     <span className="px-2 py-0.5 bg-secondary/10 text-secondary text-[8px] font-black uppercase rounded-full tracking-wider">Popular</span>
                   )}
+                  {exam.type === 'competitive' && (
+                    <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[8px] font-black uppercase rounded-full tracking-wider">Competitive</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
                   <span className="truncate">{agencies.find(a => a.id === exam.agencyId)?.name || 'No Agency'}</span>
                   <span className="w-1 h-1 rounded-full bg-slate-200 shrink-0" />
-                  <span className="truncate">{exam.category}</span>
+                  <span className="truncate">{exam.type === 'competitive' ? 'Competitive Program' : exam.category}</span>
                 </div>
               </div>
             </div>

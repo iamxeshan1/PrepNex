@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Users, BookOpen, CreditCard, Award, ArrowUpRight, FileSpreadsheet } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -10,8 +10,14 @@ export default function AdminDashboard() {
     users: 0,
     exams: 0,
     subscriptions: 0,
-    tests: 0
+    premium_subscriptions: 0,
+    tests: 0,
+    liveTests: 0
   });
+
+  const totalMockTests = stats.tests + stats.liveTests;
+  const totalSubscriptions = stats.subscriptions + stats.premium_subscriptions;
+
   const [loading, setLoading] = useState(true);
 
   const handleGenerateReport = () => {
@@ -27,11 +33,11 @@ export default function AdminDashboard() {
       ["Metric", "Value", "Status"],
       ["Total Users Registered", stats.users, stats.users > 100 ? "Growth" : "Steady"],
       ["Active Exams", stats.exams, "Active"],
-      ["Total Subscriptions", stats.subscriptions, "Revenue"],
-      ["Mock Tests Available", stats.tests, "Content"],
+      ["Total Subscriptions", totalSubscriptions, "Revenue"],
+      ["Mock Tests Available", totalMockTests, "Content"],
       [],
       ["ENGAGEMENT METRICS"],
-      ["Avg Tests per User", (stats.users > 0 ? (stats.tests / stats.users).toFixed(2) : 0), "Ratio"],
+      ["Avg Tests per User", (stats.users > 0 ? (totalMockTests / stats.users).toFixed(2) : 0), "Ratio"],
       ["Avg Exams per User", (stats.users > 0 ? (stats.exams / stats.users).toFixed(2) : 0), "Ratio"],
       [],
       ["DISCLAIMER"],
@@ -55,8 +61,8 @@ export default function AdminDashboard() {
       ["Category", "Platform Metric", "Count", "Last Updated"],
       ["Users", "Identity Cloud", stats.users, new Date().toDateString()],
       ["Exams", "Academic Courses", stats.exams, new Date().toDateString()],
-      ["Sales", "Revenue Stream", stats.subscriptions, new Date().toDateString()],
-      ["Content", "Mock Assessment", stats.tests, new Date().toDateString()],
+      ["Sales", "Revenue Stream", totalSubscriptions, new Date().toDateString()],
+      ["Content", "Mock Assessment", totalMockTests, new Date().toDateString()],
     ];
     const ws_breakdown = XLSX.utils.aoa_to_sheet(breakdownData);
     ws_breakdown['!cols'] = [{wch: 15}, {wch: 25}, {wch: 15}, {wch: 20}];
@@ -66,24 +72,48 @@ export default function AdminDashboard() {
     XLSX.writeFile(wb, `PrepNex_Admin_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
-  const fetchStats = async () => {
-    const [uSnap, eSnap, sSnap, tSnap] = await Promise.all([
-      getDocs(collection(db, 'users')),
-      getDocs(collection(db, 'exams')),
-      getDocs(collection(db, 'subscriptions')),
-      getDocs(collection(db, 'tests'))
-    ]);
-    setStats({
-      users: uSnap.size,
-      exams: eSnap.size,
-      subscriptions: sSnap.size,
-      tests: tSnap.size
-    });
-    setLoading(false);
-  };
-
   useEffect(() => {
-    fetchStats();
+    setLoading(true);
+    
+    // Listen to users
+    const unsubUsers = onSnapshot(collection(db, 'users'), (snap) => {
+      setStats(prev => ({ ...prev, users: snap.size }));
+      setLoading(false);
+    }, (error) => console.error("Users Listener Error:", error));
+
+    // Listen to exams
+    const unsubExams = onSnapshot(collection(db, 'exams'), (snap) => {
+      setStats(prev => ({ ...prev, exams: snap.size }));
+    }, (error) => console.error("Exams Listener Error:", error));
+
+    // Listen to subscriptions
+    const unsubSubs = onSnapshot(collection(db, 'subscriptions'), (snap) => {
+      setStats(prev => ({ ...prev, subscriptions: snap.size }));
+    }, (error) => console.error("Subs Listener Error:", error));
+
+    // Listen to premium subscriptions
+    const unsubPremiumSubs = onSnapshot(collection(db, 'premium_subscriptions'), (snap) => {
+      setStats(prev => ({ ...prev, premium_subscriptions: snap.size }));
+    }, (error) => console.error("Premium Subs Listener Error:", error));
+
+    // Listen to tests
+    const unsubTests = onSnapshot(collection(db, 'tests'), (snap) => {
+      setStats(prev => ({ ...prev, tests: snap.size }));
+    }, (error) => console.error("Tests Listener Error:", error));
+
+    // Listen to live tests
+    const unsubLiveTests = onSnapshot(collection(db, 'liveTests'), (snap) => {
+      setStats(prev => ({ ...prev, liveTests: snap.size }));
+    }, (error) => console.error("Live Tests Listener Error:", error));
+
+    return () => {
+      unsubUsers();
+      unsubExams();
+      unsubSubs();
+      unsubPremiumSubs();
+      unsubTests();
+      unsubLiveTests();
+    };
   }, []);
 
   const StatCard = ({ title, value, icon: Icon, color }: any) => {
@@ -110,8 +140,8 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         <StatCard title="Total Users" value={stats.users} icon={Users} color="blue" />
         <StatCard title="Active Exams" value={stats.exams} icon={BookOpen} color="indigo" />
-        <StatCard title="Subscriptions" value={stats.subscriptions} icon={CreditCard} color="green" />
-        <StatCard title="Mock Tests" value={stats.tests} icon={Award} color="purple" />
+        <StatCard title="Subscriptions" value={totalSubscriptions} icon={CreditCard} color="green" />
+        <StatCard title="Mock Tests" value={totalMockTests} icon={Award} color="purple" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

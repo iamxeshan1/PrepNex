@@ -232,7 +232,7 @@ export default function ExamDetail() {
             </header>
 
             {/* Exam Highlights Section */}
-            {(exam.totalPosts || (exam.postDistribution && exam.postDistribution.length > 0)) && (
+            {exam.type !== 'competitive' && (exam.totalPosts || (exam.postDistribution && exam.postDistribution.length > 0)) && (
               <section className="bg-slate-50 rounded-[2rem] p-8 border border-slate-100 mb-8">
                 <h2 className="text-2xl font-bold text-primary mb-6">Exam Highlights</h2>
                 
@@ -260,7 +260,7 @@ export default function ExamDetail() {
             )}
 
             {/* Syllabus & Weightage Section */}
-            {(exam.syllabus || (exam.subjectsWeightage && exam.subjectsWeightage.length > 0)) && (
+            {exam.type !== 'competitive' && (exam.syllabus || (exam.subjectsWeightage && exam.subjectsWeightage.length > 0)) && (
               <section className="bg-slate-50 rounded-[2rem] p-8 border border-slate-100 mb-8">
                 <h2 className="text-2xl font-bold text-primary mb-6">Exam Syllabus & Marks Distribution</h2>
                 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/AdminLayout';
-import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, setDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, setDoc, writeBatch, limit } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { 
   PlusCircle, 
@@ -33,7 +33,8 @@ import {
   Zap,
   Gamepad2,
   Brush,
-  Variable
+  Variable,
+  RotateCcw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -85,15 +86,21 @@ export default function AdminSubjects() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
+  const [confirmingBulkDelete, setConfirmingBulkDelete] = useState(false);
 
   const fetchSubjects = async () => {
     setFetching(true);
     try {
-      const q = query(collection(db, 'subjects'), orderBy('name', 'asc'));
-      const snapshot = await getDocs(q);
-      setSubjects(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Subject)));
+      // First try to get total count to see if we have documents that might be missing 'name'
+      const allSnap = await getDocs(collection(db, 'subjects'));
+      const allDocs = allSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Subject));
+      
+      // Still sort locally if possible
+      allDocs.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      
+      setSubjects(allDocs);
     } catch (err) {
-      console.error(err);
+      console.error("Fetch error:", err);
     } finally {
       setFetching(false);
     }
@@ -166,11 +173,78 @@ export default function AdminSubjects() {
   return (
     <AdminLayout title="Subject Dashboard">
       <div className="sticky top-0 z-40 pb-6 bg-[#f8fafc]/50 backdrop-blur-md">
-        <div className="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm">
-          <h2 className="text-2xl font-black text-primary tracking-tight">Subject Repositories</h2>
-          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Manage core syllabus categories and their unique identities</p>
+        <div className="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-black text-primary tracking-tight">Subject Repositories</h2>
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Manage core syllabus categories and their unique identities ({subjects.length} detected)</p>
+          </div>
+          <div className="flex items-center gap-4">
+             <button
+              onClick={fetchSubjects}
+              disabled={loading || fetching}
+              className="p-3 bg-slate-50 text-slate-400 border border-slate-100 rounded-2xl hover:bg-slate-100 transition-all"
+              title="Refresh List"
+            >
+              <RotateCcw className={`w-5 h-5 ${fetching ? 'animate-spin' : ''}`} />
+            </button>
+            
+            {confirmingBulkDelete ? (
+              <div className="flex items-center gap-3 bg-red-50 p-2 rounded-2xl border border-red-100 animate-in fade-in slide-in-from-right-4">
+                <span className="text-[10px] font-black text-red-600 uppercase tracking-widest px-2">Purge {subjects.length} subjects?</span>
+                <button
+                  onClick={async () => {
+                    setLoading(true);
+                    try {
+                      let totalDeleted = 0;
+                      while (true) {
+                        const snap = await getDocs(query(collection(db, 'subjects'), limit(500)));
+                        if (snap.empty) break;
+                        
+                        const docsInBatch = snap.docs;
+                        const batch = writeBatch(db);
+                        docsInBatch.forEach((docSnap) => batch.delete(docSnap.ref));
+                        await batch.commit();
+                        
+                        totalDeleted += docsInBatch.length;
+                        if (totalDeleted > 100000) break;
+                      }
+                      
+                      alert(`Successfully purged ${totalDeleted} subjects.`);
+                      setConfirmingBulkDelete(false);
+                      fetchSubjects();
+                    } catch (err: any) {
+                      console.error("Bulk delete failed:", err);
+                      alert("Critical Failure: " + (err.message || "Unknown error during deletion."));
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  disabled={loading}
+                  className="px-4 py-2 bg-red-600 text-white text-[10px] font-black rounded-xl hover:bg-red-700 uppercase tracking-tighter"
+                >
+                  {loading ? 'Deleting...' : 'Yes, Delete All'}
+                </button>
+                <button 
+                  onClick={() => setConfirmingBulkDelete(false)}
+                  disabled={loading}
+                  className="px-4 py-2 bg-white text-slate-400 text-[10px] font-black rounded-xl border border-slate-200 uppercase tracking-tighter"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmingBulkDelete(true)}
+                disabled={loading || subjects.length === 0}
+                className="px-6 py-3 bg-red-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-700 transition-all disabled:opacity-50 shadow-lg shadow-red-200"
+              >
+                Bulk Delete All
+              </button>
+            )}
+          </div>
         </div>
       </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* Registration Form */}
         <div className="lg:col-span-1 space-y-6">

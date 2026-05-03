@@ -66,9 +66,8 @@ const db = {
 };
 
 const sendEmail = async (to: string, subject: string, html: string, fromNameOverride?: string) => {
-  // Check for various possible environment variable names to be helpful
-  let user = process.env.SMTP_EMAIL || process.env.EMAIL_USER || "prepnexedtech@gmail.com";
-  let pass = process.env.SMTP_PASSWORD || process.env.EMAIL_PASS || "";
+  let user = process.env.EMAIL_USER || "prepnexedtech@gmail.com";
+  let pass = process.env.EMAIL_PASS || "";
 
   // Only try to fetch from Firestore if environment variables aren't sufficient
   if (!pass) {
@@ -82,18 +81,16 @@ const sendEmail = async (to: string, subject: string, html: string, fromNameOver
         }
       }
     } catch (err) {
-      console.error("Failed to read SMTP settings from Firestore:", err);
+      console.error("Failed to read SMTP settings from Firestore, relying solely on environment variables:", err);
     }
   }
 
   if (!pass) {
-    throw new Error("SMTP credentials missing: Please add SMTP_EMAIL and SMTP_PASSWORD to Settings > Secrets (App Password required for Gmail).");
+    throw new Error("SMTP credentials missing: EMAIL_PASS environment variable or Firestore settings required.");
   }
 
   const dynamicTransporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true, // true for 465, false for other ports
+    service: "gmail",
     auth: {
       user,
       pass,
@@ -102,7 +99,7 @@ const sendEmail = async (to: string, subject: string, html: string, fromNameOver
 
   const fromName = fromNameOverride || "Team PrepNex Edtech";
   return dynamicTransporter.sendMail({
-    from: `"${fromName}" <${user}>`,
+    from: user,
     to,
     subject,
     html,
@@ -198,31 +195,20 @@ const adminAuth = getAdminAuth(firebaseApp);
   app.post("/api/send-reset-password", async (req, res) => {
     try {
       const { email } = req.body;
-      const appUrl = process.env.VITE_APP_URL || 'https://ais-dev-jiogqd5sd2opeeg53i55h6-95891610099.asia-southeast1.run.app';
       
-      // Check if user exists first
-      try {
-        await adminAuth.getUserByEmail(email);
-      } catch (err: any) {
-        if (err.code === 'auth/user-not-found') {
-          return res.status(404).json({ error: "User not found" });
-        }
-        throw err;
-      }
-
-      // Generate a custom token
-      const token = crypto.randomBytes(32).toString('hex');
-      const expiresAt = Date.now() + 3600000; // 1 hour
-
-      // Save to Firestore
-      await db.collection("password_resets").doc(token).set({
-        email,
-        expiresAt,
-        used: false,
-        createdAt: new Date().toISOString()
+      // Generate the password reset link via admin SDK
+      const appUrl = process.env.VITE_APP_URL || 'https://ais-dev-jiogqd5sd2opeeg53i55h6-95891610099.asia-southeast1.run.app';
+      const resetLink = await adminAuth.generatePasswordResetLink(email, {
+        url: `${appUrl}/login`
       });
 
-      const customResetLink = `${appUrl}/reset-password?customToken=${token}`;
+      // Extract the oobCode from the Firebase generated link
+      const url = new URL(resetLink);
+      const oobCode = url.searchParams.get("oobCode");
+
+      if (!oobCode) throw new Error("Failed to generate reset code");
+
+      const customResetLink = `${appUrl}/reset-password?oobCode=${oobCode}`;
 
       const html = `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; color: #334155; padding: 40px; background-color: #f1f5f9; border-radius: 20px;">
@@ -247,38 +233,9 @@ const adminAuth = getAdminAuth(firebaseApp);
     }
   });
 
-  app.post("/api/complete-reset-password", async (req, res) => {
-    try {
-      const { token, password } = req.body;
-      
-      const resetDoc = await db.collection("password_resets").doc(token).get();
-      if (!resetDoc.exists) {
-        return res.status(400).json({ error: "Invalid or expired reset token" });
-      }
+  // Reverted: Removed /api/complete-reset-password
 
-      const data = resetDoc.data();
-      if (data.used || Date.now() > data.expiresAt) {
-        return res.status(400).json({ error: "Token has expired or already been used" });
-      }
-
-      // Find user
-      const userRecord = await adminAuth.getUserByEmail(data.email);
-      
-      // Update password
-      await adminAuth.updateUser(userRecord.uid, {
-        password: password
-      });
-
-      // Mark token as used
-      await db.collection("password_resets").doc(token).update({ used: true });
-
-      res.json({ success: true });
-    } catch (e: any) {
-      console.error(e);
-      res.status(500).json({ error: e.message || "Failed to reset password" });
-    }
-  });
-
+  // Reverted: Removed /api/admin/delete-all-subjects due to IAM permission issues on named database
 
   app.post("/api/admin/send-promotional", async (req, res) => {
     try {

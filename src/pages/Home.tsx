@@ -408,7 +408,8 @@ const TestimonialsSection = () => {
 };
 
 export default function Home() {
-  const [popularExams, setPopularExams] = useState<any[]>([]);
+  const [recruitmentExams, setRecruitmentExams] = useState<any[]>([]);
+  const [competitiveExams, setCompetitiveExams] = useState<any[]>([]);
   const [agencies, setAgencies] = useState<any[]>([]);
   const [loadingExams, setLoadingExams] = useState(true);
   const [settings, setSettings] = useState<any>(null);
@@ -435,24 +436,25 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const fetchPopularExams = async () => {
+    const fetchExams = async () => {
       try {
         const q = query(
           collection(db, 'exams'), 
-          where('isPopular', '==', true),
-          limit(4)
+          where('isPopular', '==', true)
         );
         const snapshot = await getDocs(q);
-        const fetchedExams = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
-        // Filter out drafts on the client side since Firestore query ignores docs without the field if we queried by !=
-        setPopularExams(fetchedExams.filter(exam => exam.status !== 'draft'));
+        const fetchedExams = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }))
+          .filter(exam => exam.status !== 'draft');
+
+        setRecruitmentExams(fetchedExams.filter(e => e.type !== 'competitive').slice(0, 4));
+        setCompetitiveExams(fetchedExams.filter(e => e.type === 'competitive').slice(0, 4));
       } catch (error) {
-        console.error("Error fetching popular exams:", error);
+        console.error("Error fetching exams:", error);
       } finally {
         setLoadingExams(false);
       }
     };
-    fetchPopularExams();
+    fetchExams();
   }, []);
 
   return (
@@ -523,6 +525,112 @@ export default function Home() {
       {/* Thought of the Day */}
       <ThoughtOfTheDaySection />
 
+      {/* Recruitment Exams Section */}
+      <section className="py-12 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-[0.2em] mb-4">
+                <Target className="w-3.5 h-3.5 fill-primary" /> Career Path
+              </div>
+              <h2 className="text-3xl font-bold text-primary tracking-tight">Recruitment Exams</h2>
+              <p className="text-slate-500 mt-2">Find your next government job with focused mocks.</p>
+            </div>
+            <Link to="/agencies" className="text-sm font-bold text-secondary flex items-center gap-1 group">
+              View All Agencies
+              <div className="group-hover:translate-x-1 transition-transform">→</div>
+            </Link>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            {loadingExams ? (
+              [1, 2, 3, 4].map(i => (
+                <div key={i} className="bg-slate-50 h-48 rounded-3xl animate-pulse" />
+              ))
+            ) : recruitmentExams.length > 0 ? (
+              recruitmentExams.map((exam) => (
+                <Link to={`/exam/${exam.id}`} key={exam.id} className="group cursor-pointer">
+                  <div className="bg-white border border-slate-100 p-6 rounded-3xl h-full flex flex-col items-center text-center group-hover:border-primary group-hover:shadow-xl group-hover:shadow-primary/5 transition-all">
+                    <div className="w-16 h-16 bg-slate-50 rounded-2xl mb-4 overflow-hidden flex items-center justify-center p-2 group-hover:bg-primary/5 transition-colors">
+                      {exam.logoUrl ? (
+                        <img src={exam.logoUrl} alt={exam.name} className="w-full h-full object-contain" />
+                      ) : (
+                        <Award className="w-8 h-8 text-slate-300 group-hover:text-primary transition-colors" />
+                      )}
+                    </div>
+                    <h3 className="font-bold text-primary group-hover:text-secondary transition-colors line-clamp-1">{exam.name}</h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{exam.organization}</p>
+                    <div className="mt-auto pt-4 flex items-center justify-between w-full">
+                      <div className="flex items-center gap-1 text-[10px] font-black text-primary group-hover:translate-x-1 transition-transform uppercase tracking-widest">
+                        {exam.isPaid ? 'Enroll Now' : 'Free Mock'} <ArrowRight className="w-3 h-3" />
+                      </div>
+                      {exam.isPaid && <span className="text-[10px] font-black text-secondary">₹{exam.price}</span>}
+                    </div>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="col-span-full py-12 text-center text-slate-400 font-medium bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+                No recruitment exams featured yet.
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Competitive Exams Section */}
+      <section className="py-12 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-secondary/10 text-secondary px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-[0.2em] mb-4">
+                <Brain className="w-3.5 h-3.5 fill-secondary" /> Entrance & Eligibility
+              </div>
+              <h2 className="text-3xl font-bold text-primary tracking-tight">Competitive Exams</h2>
+              <p className="text-slate-500 mt-2">Excel in national level entrance and eligibility tests.</p>
+            </div>
+            <Link to="/agencies" className="text-sm font-bold text-secondary flex items-center gap-1 group">
+              Explore All Categories
+              <div className="group-hover:translate-x-1 transition-transform">→</div>
+            </Link>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            {loadingExams ? (
+              [1, 2, 3, 4].map(i => (
+                <div key={i} className="bg-slate-50 h-48 rounded-3xl animate-pulse" />
+              ))
+            ) : competitiveExams.length > 0 ? (
+              competitiveExams.map((exam) => (
+                <Link to={`/exam/${exam.id}`} key={exam.id} className="group cursor-pointer">
+                  <div className="bg-white border border-slate-100 p-6 rounded-3xl h-full flex flex-col items-center text-center group-hover:border-primary group-hover:shadow-xl group-hover:shadow-primary/5 transition-all">
+                    <div className="w-16 h-16 bg-slate-50 rounded-2xl mb-4 overflow-hidden flex items-center justify-center p-2 group-hover:bg-primary/5 transition-colors">
+                      {exam.logoUrl ? (
+                        <img src={exam.logoUrl} alt={exam.name} className="w-full h-full object-contain" />
+                      ) : (
+                        <Award className="w-8 h-8 text-slate-300 group-hover:text-primary transition-colors" />
+                      )}
+                    </div>
+                    <h3 className="font-bold text-primary group-hover:text-secondary transition-colors line-clamp-1">{exam.name}</h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{exam.organization}</p>
+                    <div className="mt-auto pt-4 flex items-center justify-between w-full">
+                      <div className="flex items-center gap-1 text-[10px] font-black text-primary group-hover:translate-x-1 transition-transform uppercase tracking-widest">
+                        {exam.isPaid ? 'Enroll Now' : 'Free Mock'} <ArrowRight className="w-3 h-3" />
+                      </div>
+                      {exam.isPaid && <span className="text-[10px] font-black text-secondary">₹{exam.price}</span>}
+                    </div>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="col-span-full py-12 text-center text-slate-400 font-medium bg-white rounded-3xl border-2 border-dashed border-slate-200">
+                No competitive exams featured yet.
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* Topic Mastery Section */}
       <TopicMasterySection />
 
@@ -576,56 +684,6 @@ export default function Home() {
               title="Time Management"
               desc="Integrated timer with section-wise tracking to help you master the art of time allocation."
             />
-          </div>
-        </div>
-      </section>
-
-      {/* Popular Exams Section */}
-      <section className="py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-            <div>
-              <h2 className="text-3xl font-bold text-primary tracking-tight">Popular Exams</h2>
-              <p className="text-slate-500 mt-2">Comprehensive coverage for every topic.</p>
-            </div>
-            <Link to="/agencies" className="text-sm font-bold text-secondary flex items-center gap-1 group">
-              View All Agencies
-              <div className="group-hover:translate-x-1 transition-transform">→</div>
-            </Link>
-          </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            {loadingExams ? (
-              [1, 2, 3, 4].map(i => (
-                <div key={i} className="bg-slate-50 h-48 rounded-3xl animate-pulse" />
-              ))
-            ) : popularExams.length > 0 ? (
-              popularExams.map((exam) => (
-                <Link to={`/exam/${exam.id}`} key={exam.id} className="group cursor-pointer">
-                  <div className="bg-white border border-slate-100 p-6 rounded-3xl h-full flex flex-col items-center text-center group-hover:border-primary group-hover:shadow-xl group-hover:shadow-primary/5 transition-all">
-                    <div className="w-16 h-16 bg-slate-50 rounded-2xl mb-4 overflow-hidden flex items-center justify-center p-2 group-hover:bg-primary/5 transition-colors">
-                      {exam.logoUrl ? (
-                        <img src={exam.logoUrl} alt={exam.name} className="w-full h-full object-contain" />
-                      ) : (
-                        <Award className="w-8 h-8 text-slate-300 group-hover:text-primary transition-colors" />
-                      )}
-                    </div>
-                    <h3 className="font-bold text-primary group-hover:text-secondary transition-colors line-clamp-1">{exam.name}</h3>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{exam.organization}</p>
-                    <div className="mt-auto pt-4 flex items-center justify-between w-full">
-                      <div className="flex items-center gap-1 text-[10px] font-black text-primary group-hover:translate-x-1 transition-transform uppercase tracking-widest">
-                        {exam.isPaid ? 'Enroll Now' : 'Free Mock'} <ArrowRight className="w-3 h-3" />
-                      </div>
-                      {exam.isPaid && <span className="text-[10px] font-black text-secondary">₹{exam.price}</span>}
-                    </div>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="col-span-full py-12 text-center text-slate-400 font-medium bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
-                No popular exams featured yet.
-              </div>
-            )}
           </div>
         </div>
       </section>

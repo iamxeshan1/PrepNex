@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
 import { db } from '../../lib/firebase';
-import { collection, query, getDocs, orderBy, updateDoc, doc } from 'firebase/firestore';
-import { MessageCircle, CheckCircle2, Clock, Send } from 'lucide-react';
+import { collection, query, getDocs, orderBy, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { MessageCircle, CheckCircle2, Clock, Send, Trash2 } from 'lucide-react';
 
 export default function AdminHelpdesk() {
   const [tickets, setTickets] = useState<any[]>([]);
@@ -17,7 +17,18 @@ export default function AdminHelpdesk() {
     try {
       const q = query(collection(db, 'tickets'), orderBy('createdAt', 'desc'));
       const snap = await getDocs(q);
-      setTickets(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const allTickets = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+      
+      // Auto-cleanup any already closed tickets if they somehow persist
+      const closedTickets = allTickets.filter((t: any) => t.status === 'closed');
+      if (closedTickets.length > 0) {
+        for (const t of closedTickets) {
+          await deleteDoc(doc(db, 'tickets', t.id));
+        }
+        setTickets(allTickets.filter((t: any) => t.status !== 'closed'));
+      } else {
+        setTickets(allTickets);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -62,17 +73,15 @@ export default function AdminHelpdesk() {
   };
 
   const handleClose = async (ticketId: string) => {
-    if (!window.confirm('Are you sure you want to close this ticket?')) return;
+    if (!window.confirm('Are you sure you want to CLOSE and PERMANENTLY DELETE this ticket? This action is required by system policy and cannot be undone.')) return;
     
     setClosing(ticketId);
     try {
-      await updateDoc(doc(db, 'tickets', ticketId), {
-        status: 'closed'
-      });
-      alert('Ticket closed successfully');
+      await deleteDoc(doc(db, 'tickets', ticketId));
+      alert('Ticket resolved and deleted successfully');
       fetchTickets();
     } catch (err) {
-      alert('Failed to close ticket');
+      alert('Failed to delete ticket');
     } finally {
       setClosing(null);
     }

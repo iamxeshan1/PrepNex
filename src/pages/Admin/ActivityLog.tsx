@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
-import { collection, query, orderBy, getDocs, limit } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, limit, where, deleteDoc, doc, writeBatch } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Activity, User, BookOpen, CreditCard, RotateCcw } from 'lucide-react';
+import { Activity, User, BookOpen, CreditCard, RotateCcw, Trash2 } from 'lucide-react';
 import { ActivityAction } from '../../services/activityLogger';
 
 const getActivityIcon = (action: string) => {
@@ -30,10 +30,41 @@ const getActivityBg = (action: string) => {
 export default function AdminActivityLog() {
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cleaning, setCleaning] = useState(false);
+
+  const cleanupOldLogs = async () => {
+    try {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const q = query(
+        collection(db, 'activity_logs'), 
+        where('createdAt', '<', thirtyDaysAgo.toISOString())
+      );
+      
+      const snap = await getDocs(q);
+      if (snap.empty) return;
+
+      setCleaning(true);
+      const batch = writeBatch(db);
+      snap.docs.forEach(d => {
+        batch.delete(d.ref);
+      });
+      await batch.commit();
+      console.log(`Cleaned up ${snap.size} old logs`);
+    } catch (error) {
+      console.error('Failed to cleanup logs:', error);
+    } finally {
+      setCleaning(false);
+    }
+  };
 
   const fetchLogs = async () => {
     setLoading(true);
     try {
+      // First run cleanup if needed
+      await cleanupOldLogs();
+      
       const q = query(collection(db, 'activity_logs'), orderBy('createdAt', 'desc'), limit(100));
       const snap = await getDocs(q);
       setLogs(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
