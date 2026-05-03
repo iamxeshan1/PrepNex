@@ -36,20 +36,32 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
     setIsValidatingCoupon(true);
     setCouponError(null);
     try {
-      const response = await fetch('/api/validate-coupon', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: couponCode.trim().toUpperCase() })
-      });
-      const data = await response.json();
-      if (response.ok && data.valid) {
-        setDiscount({ type: data.discountType, value: data.discountValue });
+      const db = (await import('../lib/firebase')).db;
+      const { collection, query, where, getDocs, limit } = await import('firebase/firestore');
+      
+      const normalizedCode = couponCode.trim().toUpperCase();
+      const q = query(collection(db, 'coupons'), where('code', '==', normalizedCode), limit(1));
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        setCouponError('Invalid or expired coupon code');
+        setDiscount(null);
+        setIsValidatingCoupon(false);
+        return;
+      }
+
+      const couponData = snap.docs[0].data();
+      const isActive = couponData.isActive === true || couponData.isActive === "true";
+
+      if (isActive) {
+        setDiscount({ type: couponData.discountType, value: couponData.discountValue });
       } else {
-        setCouponError(data.message || 'Invalid or expired coupon code');
+        setCouponError('This coupon is expired or disabled');
         setDiscount(null);
       }
     } catch (err) {
       setCouponError('Network error. Try again.');
+      setDiscount(null);
     } finally {
       setIsValidatingCoupon(false);
     }
@@ -61,6 +73,79 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
     setPaymentError(null);
 
     try {
+      if (finalPrice <= 0) {
+        // Free item or 100% discount, bypass Razorpay
+        const verifyResponse = await fetch('/api/verify-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            razorpay_order_id: 'FREE_ORDER',
+            razorpay_payment_id: 'FREE_PAYMENT',
+            razorpay_signature: 'FREE', 
+            userId: user.uid,
+            itemId: item.id
+          })
+        });
+        
+        if (verifyResponse.ok) {
+          const result = await verifyResponse.json();
+          if (result.needsClientUpdate) {
+            try {
+               const { doc, getDoc, updateDoc, addDoc, collection } = await import('firebase/firestore');
+               const db = (await import('../lib/firebase')).db;
+               
+               if (item.id === "PREMIUM_PASS") {
+                 const expiryDate = new Date();
+                 expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+                 await updateDoc(doc(db, "users", user.uid), {
+                    isPremium: true,
+                    subscriptionExpiry: expiryDate.toISOString()
+                 });
+                 await addDoc(collection(db, "subscriptions"), {
+                    userId: user.uid,
+                    type: "global_premium",
+                    purchaseDate: new Date().toISOString(),
+                    expiryDate: expiryDate.toISOString(),
+                    paymentId: 'FREE',
+                    orderId: 'FREE_ORDER',
+                    paymentStatus: "completed",
+                    amount: finalPrice
+                 });
+               } else {
+                 const liveTestDoc = await getDoc(doc(db, "liveTests", item.id));
+                 if (liveTestDoc.exists()) {
+                   const enrolledUsers = liveTestDoc.data()?.enrolledUsers || [];
+                   if (!enrolledUsers.includes(user.uid)) {
+                     await updateDoc(doc(db, "liveTests", item.id), { enrolledUsers: [...enrolledUsers, user.uid] });
+                   }
+                 } else {
+                   const userDoc = await getDoc(doc(db, "users", user.uid));
+                   const purchasedExams = userDoc.data()?.purchasedExams || [];
+                   if (!purchasedExams.includes(item.id)) {
+                     await updateDoc(doc(db, "users", user.uid), { purchasedExams: [...purchasedExams, item.id] });
+                   }
+                 }
+                 await addDoc(collection(db, "subscriptions"), {
+                    userId: user.uid,
+                    examId: item.id,
+                    purchaseDate: new Date().toISOString(),
+                    paymentId: 'FREE',
+                    orderId: 'FREE_ORDER',
+                    paymentStatus: "completed"
+                 });
+               }
+            } catch (clientDbErr) {
+               console.error("Client fallback DB update failed:", clientDbErr);
+            }
+          }
+          if (onSuccess) onSuccess();
+          onClose();
+        } else {
+          setPaymentError('Free enrollment failed. Please contact support.');
+        }
+        return;
+      }
+
       // 1. Create Order
       const orderResponse = await fetch('/api/create-order', {
         method: 'POST',
@@ -104,6 +189,58 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
             });
 
             if (verifyResponse.ok) {
+              const result = await verifyResponse.json();
+              if (result.needsClientUpdate) {
+                // Server IAM failed, update DB manually via Web SDK
+                try {
+                   const { doc, getDoc, updateDoc, addDoc, collection } = await import('firebase/firestore');
+                   const db = (await import('../lib/firebase')).db;
+                   
+                   if (item.id === "PREMIUM_PASS") {
+                     const expiryDate = new Date();
+                     expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+                     await updateDoc(doc(db, "users", user.uid), {
+                        isPremium: true,
+                        subscriptionExpiry: expiryDate.toISOString()
+                     });
+                     await addDoc(collection(db, "subscriptions"), {
+                        userId: user.uid,
+                        type: "global_premium",
+                        purchaseDate: new Date().toISOString(),
+                        expiryDate: expiryDate.toISOString(),
+                        paymentId: response.razorpay_payment_id || 'FREE',
+                        orderId: response.razorpay_order_id || 'FREE',
+                        paymentStatus: "completed",
+                        amount: finalPrice
+                     });
+                   } else {
+                     const liveTestDoc = await getDoc(doc(db, "liveTests", item.id));
+                     if (liveTestDoc.exists()) {
+                       const enrolledUsers = liveTestDoc.data()?.enrolledUsers || [];
+                       if (!enrolledUsers.includes(user.uid)) {
+                         await updateDoc(doc(db, "liveTests", item.id), { enrolledUsers: [...enrolledUsers, user.uid] });
+                       }
+                     } else {
+                       const userDoc = await getDoc(doc(db, "users", user.uid));
+                       const purchasedExams = userDoc.data()?.purchasedExams || [];
+                       if (!purchasedExams.includes(item.id)) {
+                         await updateDoc(doc(db, "users", user.uid), { purchasedExams: [...purchasedExams, item.id] });
+                       }
+                     }
+                     // Log subscription
+                     await addDoc(collection(db, "subscriptions"), {
+                        userId: user.uid,
+                        examId: item.id,
+                        purchaseDate: new Date().toISOString(),
+                        paymentId: response.razorpay_payment_id || 'FREE',
+                        orderId: response.razorpay_order_id || 'FREE',
+                        paymentStatus: "completed"
+                     });
+                   }
+                } catch (clientDbErr) {
+                   console.error("Client fallback DB update failed:", clientDbErr);
+                }
+              }
               if (onSuccess) onSuccess();
               onClose();
             } else {

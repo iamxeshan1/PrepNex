@@ -41,7 +41,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
       allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if (isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'phone', 'address', 'district', 'state', 'profileCompleted', 'purchasedExams', 'freeExams', 'testsAttempted', 'averageScore', 'subscriptionExpiry', 'isPremium', 'premiumExpiry', 'lastReviewAt', 'emailVerified'])) || isAdmin();
+      allow update: if (isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'phone', 'address', 'district', 'state', 'profileCompleted', 'purchasedExams', 'freeExams', 'testsAttempted', 'averageScore', 'subscriptionExpiry', 'isPremium', 'premiumExpiry', 'lastReviewAt', 'emailVerified', 'updatedAt'])) || isAdmin();
       allow delete: if isAdmin();
     }
 

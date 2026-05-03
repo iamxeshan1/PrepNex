@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { motion, AnimatePresence } from 'motion/react';
-import { User, Phone, MapPin, Building, Map, CheckCircle2, AlertCircle } from 'lucide-react';
+import { User, Phone, MapPin, Building, Map, CheckCircle2, AlertCircle, X } from 'lucide-react';
 
 const INDIAN_STATES = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
@@ -86,6 +86,12 @@ export default function ProfileCompletionDialog() {
           className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100"
         >
           <div className="bg-indigo-600 p-8 text-center text-white relative">
+            <button
+              onClick={() => setIsOpen(false)}
+              className="absolute top-4 right-4 p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+            >
+              <X size={20} />
+            </button>
             <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
               <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                 <path d="M0 100 C 20 0 50 0 100 100 Z" fill="currentColor" />

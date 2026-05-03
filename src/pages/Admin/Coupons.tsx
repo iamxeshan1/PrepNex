@@ -32,7 +32,7 @@ export default function AdminCoupons() {
     
     try {
       await addDoc(collection(db, 'coupons'), {
-        code: code.toUpperCase(),
+        code: code.trim().toUpperCase(),
         discountType,
         discountValue: Number(discountValue),
         isActive,
