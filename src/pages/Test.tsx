@@ -406,9 +406,16 @@ export default function Test() {
               <div className="w-10 h-10 bg-[#002D62] text-white rounded-lg flex items-center justify-center font-black shrink-0">
                 {currentIdx + 1}
               </div>
-              <h3 className="text-lg md:text-xl font-bold text-slate-800 leading-snug">
-                {currentQ.question}
-              </h3>
+              <div className="flex flex-col gap-3">
+                <h3 className="text-lg md:text-xl font-bold text-slate-800 leading-snug">
+                  {currentQ.question}
+                </h3>
+                {currentQ.previouslyAskedIn && (
+                  <span className="self-start px-2.5 py-1 bg-green-50 text-green-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-green-200">
+                    Asked in: {currentQ.previouslyAskedIn}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="space-y-4">

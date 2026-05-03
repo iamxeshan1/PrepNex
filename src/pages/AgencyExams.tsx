@@ -124,7 +124,7 @@ export default function AgencyExams() {
                     </div>
 
                     <p className="text-sm text-slate-500 font-medium leading-relaxed max-w-2xl line-clamp-3">
-                      {exam.syllabus ? exam.syllabus : "Comprehensive mock test series and study material for thorough preparation. Includes detailed solutions and real-time performance analytics."}
+                      Comprehensive mock test series and study material for thorough preparation. Includes detailed solutions and real-time performance analytics.
                     </p>
                   </div>
                   

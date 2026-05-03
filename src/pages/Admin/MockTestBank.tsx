@@ -207,6 +207,38 @@ export default function MockTestBank() {
     }
   };
 
+  const deleteAllSubjectQuestions = async () => {
+    if (activeSubjectId === 'all') return;
+    if (!window.confirm("Are you sure you want to delete ALL questions for this subject?")) return;
+
+    setLoading(true);
+    try {
+      const qToDelete = questions.filter(q => q.subjectId === activeSubjectId);
+      await Promise.all(qToDelete.map(q => deleteDoc(doc(db, 'questions', q.id))));
+      fetchData();
+      alert(`Successfully deleted ${qToDelete.length} questions from this subject.`);
+    } catch (err: any) {
+      alert("Failed to delete questions: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const clearAllInventory = async () => {
+    if (!window.confirm("CRITICAL WARNING: Are you sure you want to delete ALL questions in the entire inventory? This action cannot be undone.")) return;
+
+    setLoading(true);
+    try {
+      await Promise.all(questions.map(q => deleteDoc(doc(db, 'questions', q.id))));
+      fetchData();
+      alert(`Successfully cleared ${questions.length} questions from inventory.`);
+    } catch (err: any) {
+      alert("Failed to clear inventory: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const subjectCounts = subjects.reduce((acc, sub) => {
     acc[sub.id] = questions.filter(q => q.subjectId === sub.id).length;
     return acc;
@@ -268,9 +300,9 @@ export default function MockTestBank() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest block">Subject & Level</label>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2">
                   <select 
-                    className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none"
                     value={newQ.subjectId}
                     onChange={e => setNewQ({...newQ, subjectId: e.target.value, newSubjectName: ''})}
                   >
@@ -281,7 +313,7 @@ export default function MockTestBank() {
                   {newQ.subjectId === 'new' && (
                     <input 
                       required
-                      className="flex-1 px-4 py-3 bg-primary/5 border border-primary/20 rounded-xl outline-none"
+                      className="w-full px-4 py-3 bg-primary/5 border border-primary/20 rounded-xl outline-none"
                       placeholder="Subject Name"
                       value={newQ.newSubjectName}
                       onChange={e => setNewQ({...newQ, newSubjectName: e.target.value})}
@@ -336,13 +368,22 @@ export default function MockTestBank() {
                 </select>
               </div>
             </div>
-            <textarea 
-              rows={2}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none"
-              placeholder="Explanation (optional)"
-              value={newQ.explanation}
-              onChange={e => setNewQ({...newQ, explanation: e.target.value})}
-            />
+            <div className="space-y-4">
+              <textarea 
+                rows={2}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none"
+                placeholder="Explanation (optional)"
+                value={newQ.explanation}
+                onChange={e => setNewQ({...newQ, explanation: e.target.value})}
+              />
+              <input 
+                type="text"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none"
+                placeholder="Previously Asked In Exam (optional) e.g., SSC CGL 2023"
+                value={newQ.previouslyAskedIn}
+                onChange={e => setNewQ({...newQ, previouslyAskedIn: e.target.value})}
+              />
+            </div>
             <button type="submit" className="w-full py-4 bg-primary text-white rounded-2xl font-bold shadow-lg shadow-primary/20 hover:scale-[1.01] transition-all">
               Commit to Master Bank
             </button>
@@ -373,6 +414,28 @@ export default function MockTestBank() {
         </aside>
 
         <main className="lg:col-span-3 space-y-4">
+          {activeSubjectId !== 'all' && filteredQuestions.length > 0 && (
+            <div className="flex justify-between items-center mb-6">
+               <h3 className="text-lg font-black text-slate-700">{subjects.find(s => s.id === activeSubjectId)?.name} Questions</h3>
+               <button 
+                 onClick={deleteAllSubjectQuestions}
+                 className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-bold border border-red-100 hover:bg-red-100 transition-all flex items-center gap-2"
+               >
+                 <Trash2 className="w-4 h-4" /> Delete All
+               </button>
+            </div>
+          )}
+          {activeSubjectId === 'all' && filteredQuestions.length > 0 && (
+            <div className="flex justify-between items-center mb-6">
+               <h3 className="text-lg font-black text-slate-700">All Inventory Questions</h3>
+               <button 
+                 onClick={clearAllInventory}
+                 className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-bold border border-red-100 hover:bg-red-100 transition-all flex items-center gap-2"
+               >
+                 <Trash2 className="w-4 h-4" /> Clear All Inventory
+               </button>
+            </div>
+          )}
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[2.5rem] border border-slate-100">
               <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />

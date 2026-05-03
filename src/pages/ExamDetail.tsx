@@ -145,30 +145,21 @@ export default function ExamDetail() {
               </section>
             )}
 
-            {/* Syllabus & Weightage Section */}
-            {exam.type !== 'competitive' && (exam.syllabus || (exam.subjectsWeightage && exam.subjectsWeightage.length > 0)) && (
+            {/* Subject Weightage Section */}
+            {exam.subjectsWeightage && exam.subjectsWeightage.length > 0 && (
               <section className="bg-slate-50 rounded-[2rem] p-8 border border-slate-100 mb-8">
-                <h2 className="text-2xl font-bold text-primary mb-6">Exam Syllabus & Marks Distribution</h2>
+                <h2 className="text-2xl font-bold text-primary mb-6">Marks Distribution</h2>
                 
-                {exam.syllabus && (
-                  <div className="mb-8 font-medium text-slate-600 leading-relaxed whitespace-pre-wrap">
-                    {exam.syllabus}
-                  </div>
-                )}
-
-                {exam.subjectsWeightage && exam.subjectsWeightage.length > 0 && (
-                  <div className="space-y-4">
-                     <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest pl-1 mb-2">Subject Weightage</h3>
-                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {exam.subjectsWeightage.map((sw: any, idx: number) => (
-                           <div key={idx} className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                              <span className="text-primary font-black text-sm">{sw.subject}</span>
-                              <span className="bg-primary/10 text-primary px-3 py-1 rounded-lg text-xs font-black">{sw.marks} Marks</span>
-                           </div>
-                        ))}
-                     </div>
-                  </div>
-                )}
+                <div className="space-y-4">
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {exam.subjectsWeightage.map((sw: any, idx: number) => (
+                         <div key={idx} className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <span className="text-primary font-black text-sm">{sw.subject}</span>
+                            <span className="bg-primary/10 text-primary px-3 py-1 rounded-lg text-xs font-black">{sw.marks} Marks</span>
+                         </div>
+                      ))}
+                   </div>
+                </div>
               </section>
             )}
 
