@@ -127,8 +127,10 @@ async function getRazorpay() {
   if (razorpayInstance) return razorpayInstance;
   
   // Try Environment Variables FIRST as they are most reliable in this environment
-  const envKeyId = process.env.VITE_RAZORPAY_KEY_ID || "";
+  const envKeyId = process.env.VITE_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID || "";
   const envKeySecret = process.env.RAZORPAY_KEY_SECRET || "";
+
+  console.log(`Razorpay env check: ID_env=${process.env.VITE_RAZORPAY_KEY_ID ? 'VITE_PRESENT' : (process.env.RAZORPAY_KEY_ID ? 'PLAIN_PRESENT' : 'MISSING')}, SECRET=${envKeySecret ? 'PRESENT' : 'MISSING'}`);
 
   if (envKeyId && envKeySecret) {
     console.log("Initializing Razorpay using environment variables.");
@@ -171,7 +173,7 @@ async function getRazorpay() {
       console.warn("Note: Server lacks IAM permission to read user's Firestore 'settings/razorpay'. Please set VITE_RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in AI Studio Settings (Secrets).");
     }
 
-    throw new Error("Razorpay not configured on server. Please add VITE_RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to Settings > Secrets.");
+    throw new Error(`Razorpay not configured on server. Check Settings > Secrets. Debug: ID_env=${process.env.VITE_RAZORPAY_KEY_ID ? 'VITE_PRESENT' : (process.env.RAZORPAY_KEY_ID ? 'PLAIN_PRESENT' : 'MISSING')}, SECRET=${process.env.RAZORPAY_KEY_SECRET ? 'PRESENT' : 'MISSING'}.`);
   }
 }
 
