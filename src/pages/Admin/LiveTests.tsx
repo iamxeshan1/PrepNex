@@ -9,6 +9,9 @@ export default function AdminLiveTests() {
   const [liveTests, setLiveTests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
+  const [selectedTestForUsers, setSelectedTestForUsers] = useState<any>(null);
+  const [enrolledStudentNames, setEnrolledStudentNames] = useState<string[]>([]);
+  const [loadingEnrolled, setLoadingEnrolled] = useState(false);
 
   // Form State
   const [title, setTitle] = useState('');
@@ -29,6 +32,23 @@ export default function AdminLiveTests() {
     const snapshot = await getDocs(collection(db, 'liveTests'));
     setLiveTests(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     setLoading(false);
+  };
+
+  const fetchEnrolledStudents = async (test: any) => {
+    setSelectedTestForUsers(test);
+    setLoadingEnrolled(true);
+    try {
+      if (test.enrolledUsers && test.enrolledUsers.length > 0) {
+        const usersSnap = await getDocs(query(collection(db, 'users'), where('__name__', 'in', test.enrolledUsers)));
+        setEnrolledStudentNames(usersSnap.docs.map(doc => doc.data().name || 'Anonymous'));
+      } else {
+        setEnrolledStudentNames([]);
+      }
+    } catch (err: any) {
+      alert("Failed to fetch: " + err.message);
+    } finally {
+      setLoadingEnrolled(false);
+    }
   };
 
   const [showCompositionModal, setShowCompositionModal] = useState(false);
@@ -389,9 +409,12 @@ export default function AdminLiveTests() {
                       <Award className="w-3.5 h-3.5" /> {test.totalMarks} MARKS
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                  <button 
+                    onClick={() => fetchEnrolledStudents(test)}
+                    className="flex items-center gap-2 text-xs font-bold text-primary hover:underline"
+                  >
                     <Users className="w-4 h-4" /> {test.enrolledUsers?.length || 0} Registered
-                  </div>
+                  </button>
                 </div>
               </div>
 
@@ -431,6 +454,26 @@ export default function AdminLiveTests() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {selectedTestForUsers && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl p-8">
+            <h3 className="text-xl font-black text-primary mb-6 flex justify-between items-center">
+              Enrolled Students: {selectedTestForUsers.title}
+              <button onClick={() => setSelectedTestForUsers(null)}><X className="w-6 h-6" /></button>
+            </h3>
+            {loadingEnrolled ? (
+              <div className="text-center py-10 font-bold text-slate-400">Loading...</div>
+            ) : (
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {enrolledStudentNames.length > 0 ? enrolledStudentNames.map((name, i) => (
+                        <div key={i} className="p-3 bg-slate-50 rounded-xl font-bold text-sm text-slate-700">{name}</div>
+                    )) : <p className="text-sm font-bold text-slate-400">No students enrolled</p>}
+                </div>
+            )}
+          </div>
         </div>
       )}
     </AdminLayout>
