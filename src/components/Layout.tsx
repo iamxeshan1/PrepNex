@@ -19,6 +19,7 @@ export const Navbar = () => {
   };
 
   const menuItems = [
+    ...(user ? [{ label: 'My Dashboard', path: '/dashboard', icon: UserIcon }] : []),
     { label: 'Home', path: '/', icon: Home },
     { label: 'Agencies', path: '/agencies', icon: Layers },
     { label: 'Material', path: '/study-material', icon: BookOpen },
@@ -26,7 +27,6 @@ export const Navbar = () => {
     { label: 'About Us', path: '/about', icon: Users },
     { label: 'Contact Us', path: '/contact', icon: Bell },
     ...(user ? [{ label: 'Helpdesk', path: '/helpdesk', icon: MessageCircle }] : []),
-    ...(user ? [{ label: 'My Dashboard', path: '/dashboard', icon: UserIcon }] : []),
     ...(isAdmin ? [{ label: 'Admin Panel', path: '/admin', icon: Shield }] : []),
   ];
 
