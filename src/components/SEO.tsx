@@ -12,7 +12,7 @@ interface SEOProps {
 export function SEO({ title, description, canonical, ogType = 'website', ogImage, jsonLd }: SEOProps) {
   const siteName = 'PrepNext';
   const fullTitle = `${title} | ${siteName}`;
-  const baseUrl = 'https://ais-dev-jiogqd5sd2opeeg53i55h6-95891610099.asia-southeast1.run.app';
+  const baseUrl = 'https://www.prepnext.in';
 
   return (
     <Helmet>
