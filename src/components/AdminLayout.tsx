@@ -18,7 +18,8 @@ import {
   Mail,
   Activity,
   Crown,
-  Database
+  Database,
+  Wallet
 } from 'lucide-react';
 
 export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, backTo?: string }> = ({ children, title, backTo }) => {
@@ -50,6 +51,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
                   { label: 'Users', path: '/admin/users', icon: Users },
                   { label: 'Coupons', path: '/admin/coupons', icon: Ticket },
                   { label: 'Subscriptions', path: '/admin/subscriptions', icon: CreditCard },
+                  { label: 'Revenue', path: '/admin/revenue', icon: Wallet },
                   { label: 'Activity Log', path: '/admin/activity', icon: Activity },
                   { label: 'Reviews', path: '/admin/reviews', icon: MessageCircle },
                   { label: 'Materials', path: '/admin/study-material', icon: BookOpen },

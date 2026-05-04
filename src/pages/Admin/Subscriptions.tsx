@@ -183,56 +183,6 @@ export default function AdminSubscriptions() {
     <AdminLayout title="Subscriptions">
       <div className="space-y-8">
         
-        {/* Revenue Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-6">
-            <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center text-green-600">
-              <Wallet className="w-8 h-8" />
-            </div>
-            <div>
-              <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-1">Total Revenue</p>
-              <h3 className="text-3xl font-black text-slate-800 tracking-tight">₹{totalRevenue.toLocaleString()}</h3>
-            </div>
-          </div>
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-6">
-            <div className="w-16 h-16 bg-secondary/10 rounded-2xl flex items-center justify-center text-secondary">
-              <TrendingUp className="w-8 h-8" />
-            </div>
-            <div>
-              <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-1">This Month</p>
-              <h3 className="text-3xl font-black text-slate-800 tracking-tight">₹{thisMonthRevenue.toLocaleString()}</h3>
-            </div>
-          </div>
-        </div>
-
-        {/* Revenue Chart */}
-        {chartData.length > 0 && (
-          <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm">
-            <h3 className="text-lg font-black text-slate-800 tracking-tight mb-6">Revenue Overview</h3>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#818cf8" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 'bold' }} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 'bold' }} tickFormatter={(value) => `₹${value}`} />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                    itemStyle={{ fontWeight: 'bold', color: '#1e293b' }}
-                    formatter={(value: number) => [`₹${value}`, 'Revenue']}
-                  />
-                  <Area type="monotone" dataKey="amount" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
-
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="relative w-full md:max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />

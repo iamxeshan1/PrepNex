@@ -24,6 +24,7 @@ import AdminSettings from './pages/Admin/Settings';
 import AdminNotices from './pages/Admin/Notices';
 import AdminThoughts from './pages/Admin/Thoughts';
 import AdminSubjects from './pages/Admin/Subjects';
+import AdminRevenue from './pages/Admin/Revenue';
 import AdminPremiumPlan from './pages/Admin/PremiumPlan';
 import AdminUsers from './pages/Admin/Users';
 import AdminCoupons from './pages/Admin/Coupons';
@@ -64,7 +65,7 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: React.React
   return <>{children}</>;
 };
 
-export default function AppContent() {
+export function AppContent() {
   return (
     <>
       <SessionTimeoutManager />
@@ -150,6 +151,11 @@ export default function AppContent() {
           <Route path="/admin/subscriptions" element={
             <ProtectedRoute adminOnly>
               <AdminSubscriptions />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/revenue" element={
+            <ProtectedRoute adminOnly>
+              <AdminRevenue />
             </ProtectedRoute>
           } />
           <Route path="/admin/live-tests" element={
