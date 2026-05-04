@@ -44,7 +44,7 @@ export const NotificationManager = () => {
             icon: '/favicon.svg',
             badge: '/favicon.svg',
             data: { url },
-            tag: 'prepnex-broadcast' // Prevents duplicate notifications
+            tag: 'prepnext-broadcast' // Prevents duplicate notifications
           });
         });
       }

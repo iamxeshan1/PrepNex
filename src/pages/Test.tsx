@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { getQuestionsByTestId, saveResult, getResultsByTestId } from '../services/db';
 import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { Logo } from '../components/Logo';
 import { Clock, ChevronRight, ChevronLeft, Send, AlertTriangle, Menu, Bookmark, HelpCircle, XCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -65,7 +66,7 @@ export default function Test() {
           }
         }
 
-        const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnexedtech@gmail.com';
+        const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnextedtech@gmail.com';
         
         if (tData.status === 'draft' && !isAdmin) {
            navigate('/dashboard');
@@ -75,7 +76,7 @@ export default function Test() {
         // Access Check
         if (isLive) {
           const isEnrolled = tData.enrolledUsers?.includes(profile?.userId || profile?.id);
-          const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnexedtech@gmail.com';
+          const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnextedtech@gmail.com';
           if (!isEnrolled && !isAdmin) {
              navigate('/dashboard');
              return;
@@ -96,7 +97,7 @@ export default function Test() {
           const hasExamAccess = tData.examId && isParentPaid && (profile?.purchasedExams?.includes(tData.examId) || profile?.freeExams?.includes(tData.examId));
           const hasSubjectAccess = tData.subjectId && isParentPaid && (profile?.purchasedSubjects?.includes(tData.subjectId) || profile?.freeSubjects?.includes(tData.subjectId));
            
-          const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnexedtech@gmail.com';
+          const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnextedtech@gmail.com';
           const isPremium = profile?.isPremium;
           
           if (!hasExamAccess && !hasSubjectAccess && !isAdmin && !isPremium) {
@@ -349,7 +350,7 @@ export default function Test() {
             <XCircle className="w-6 h-6" />
           </button>
           <div className="flex flex-col">
-            <span className="text-[#002D62] font-black text-xl leading-none">PrepNex</span>
+            <Logo className="text-xl" />
             <span className="text-[10px] font-bold text-slate-400 mt-1 line-clamp-1 max-w-[150px]">{test.title}</span>
           </div>
         </div>
@@ -475,9 +476,9 @@ export default function Test() {
           </div>
 
           {/* Footer inside main column for better Flow on mobile, but simple enough for desktop */}
-          <footer className="pt-12 pb-12 text-center border-t border-slate-100">
-            <h4 className="text-lg font-black text-[#002D62] mb-1">PrepNex</h4>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6">© 2024 PrepNex EdTech. All rights reserved.</p>
+          <footer className="pt-12 pb-12 text-center border-t border-slate-100 flex flex-col items-center">
+            <Logo className="text-xl mb-2" />
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6">© 2024 PrepNext. All rights reserved.</p>
             <div className="flex justify-center gap-6">
               <Link to="/privacy" className="text-xs font-bold text-slate-400 hover:text-[#002D62] transition-colors">Privacy Policy</Link>
               <Link to="/terms" className="text-xs font-bold text-slate-400 hover:text-[#002D62] transition-colors">Terms of Service</Link>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { Logo } from './Logo';
 import { motion, AnimatePresence } from 'motion/react';
 import { User, Phone, MapPin, Building, Map, CheckCircle2, AlertCircle, X } from 'lucide-react';
 
@@ -102,7 +103,7 @@ export default function ProfileCompletionDialog() {
               <User className="text-white" size={40} />
             </div>
             <h2 className="text-2xl font-bold tracking-tight mb-2">Complete Your Profile</h2>
-            <p className="text-indigo-100/80 text-sm">Welcome to PrepNex Edtech! Please provide a few more details to get started.</p>
+            <p className="text-indigo-100/80 text-sm flex items-center justify-center gap-2">Welcome to <Logo className="text-sm" variant="white" />! Please provide a few more details to get started.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="p-8 space-y-5">

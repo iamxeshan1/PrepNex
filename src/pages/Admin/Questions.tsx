@@ -129,7 +129,7 @@ export default function AdminQuestions() {
     
     // Instructions
     const instData = [
-      ["PrepNex - Question Bank Batch Import"],
+      ["PrepNext - Question Bank Batch Import"],
       ["Guidelines for importing questions:"],
       [],
       ["FIELD", "DESCRIPTION"],
@@ -158,7 +158,7 @@ export default function AdminQuestions() {
     ];
     XLSX.utils.book_append_sheet(wb, wsSample, "Question Entry Template");
 
-    XLSX.writeFile(wb, "PrepNex_Questions_Template.xlsx");
+    XLSX.writeFile(wb, "PrepNext_Questions_Template.xlsx");
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

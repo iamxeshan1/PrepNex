@@ -25,7 +25,7 @@ export default function AdminDashboard() {
     
     // 1. Summary Sheet
     const summaryData = [
-      ["PrepNex - Monthly Performance Report"],
+      ["PrepNext - Monthly Performance Report"],
       ["Report Created:", new Date().toLocaleString()],
       [],
       ["OVERVIEW STATS"],
@@ -40,7 +40,7 @@ export default function AdminDashboard() {
       ["Avg Exams per User", (stats.users > 0 ? (stats.exams / stats.users).toFixed(2) : 0), "Ratio"],
       [],
       ["DISCLAIMER"],
-      ["This report is strictly for administrative use only. Generated automatically by PrepNex Core Systems."]
+      ["This report is strictly for administrative use only. Generated automatically by PrepNext Core Systems."]
     ];
     
     const ws_summary = XLSX.utils.aoa_to_sheet(summaryData);
@@ -68,7 +68,7 @@ export default function AdminDashboard() {
     XLSX.utils.book_append_sheet(wb, ws_breakdown, "Detailed Metrics");
 
     // Write file
-    XLSX.writeFile(wb, `PrepNex_Admin_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.writeFile(wb, `PrepNext_Admin_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   useEffect(() => {

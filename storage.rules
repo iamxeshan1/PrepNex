@@ -5,7 +5,7 @@ service firebase.storage {
       allow read: if true;
       allow write: if request.auth != null && (
         request.auth.token.email == 'iamxeshan1@gmail.com' ||
-        request.auth.token.email == 'prepnexedtech@gmail.com' ||
+        request.auth.token.email == 'prepnextedtech@gmail.com' ||
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
       );

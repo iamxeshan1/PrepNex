@@ -195,7 +195,7 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
         key: config.keyId,
         amount: order.amount,
         currency: order.currency,
-        name: "PrepNex Edtech",
+        name: "PrepNext",
         description: `Enrollment for ${item.name}`,
         order_id: order.id,
         handler: async (response: any) => {

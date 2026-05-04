@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
+import { Logo } from './Logo';
 
 export const SplashScreen = () => {
   return (
@@ -16,14 +17,14 @@ export const SplashScreen = () => {
         
 
         {/* Brand Name */}
-        <motion.h1
+        <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="text-white text-6xl font-black font-logo tracking-tighter mb-3"
+          className="mb-6 scale-150 brightness-0 invert"
         >
-          PrepNex
-        </motion.h1>
+          <Logo className="text-4xl" />
+        </motion.div>
 
         {/* Tagline */}
         <motion.div

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Download, X } from 'lucide-react';
+import { Download, X, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Logo } from './Logo';
 
 export const InstallPrompt = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -62,8 +63,8 @@ export const InstallPrompt = () => {
               <Download className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h3 className="font-black text-lg tracking-tight leading-none mb-1">Install PrepNex</h3>
-              <p className="text-xs font-bold text-white/70 uppercase tracking-widest">Get the Native App experience</p>
+              <h3 className="font-black text-lg tracking-tight leading-none mb-1 flex items-center gap-2">Install <Logo className="text-lg" iconOnly /></h3>
+              <p className="text-xs font-bold text-white/70 uppercase tracking-widest leading-none">Get the Native experience</p>
             </div>
           </div>
 

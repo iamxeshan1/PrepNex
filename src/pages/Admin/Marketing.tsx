@@ -5,7 +5,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
 export default function AdminMarketing() {
-  const [fromName, setFromName] = useState('Team PrepNex Edtech');
+  const [fromName, setFromName] = useState('Team PrepNext Edtech');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [loading, setLoading] = useState(false);
@@ -62,7 +62,7 @@ export default function AdminMarketing() {
 
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 max-w-3xl">
         <div className="mb-6 bg-slate-50 p-4 border border-slate-200 rounded-2xl">
-          <p className="text-sm font-bold text-slate-600">This email will be sent from <strong className="text-slate-800">prepnexedtech@gmail.com</strong>.</p>
+          <p className="text-sm font-bold text-slate-600">This email will be sent from <strong className="text-slate-800">prepnextedtech@gmail.com</strong>.</p>
         </div>
 
         {message && (
@@ -78,7 +78,7 @@ export default function AdminMarketing() {
               type="text" required 
               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary font-bold text-slate-800"
               value={fromName} onChange={(e) => setFromName(e.target.value)} 
-              placeholder="e.g. Team PrepNex Edtech"
+              placeholder="e.g. Team PrepNext Edtech"
             />
           </div>
 

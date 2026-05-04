@@ -558,7 +558,7 @@ export default function Dashboard() {
                           ))}
                         </div>
                         <textarea 
-                          placeholder="Tell us what you love about PrepNex..."
+                          placeholder="Tell us what you love about our platform..."
                           className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-primary/10 text-xs font-medium min-h-[100px] resize-none"
                           value={reviewContent}
                           onChange={(e) => setReviewContent(e.target.value)}

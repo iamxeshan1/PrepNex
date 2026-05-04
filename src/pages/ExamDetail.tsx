@@ -31,7 +31,7 @@ export default function ExamDetail() {
       
       if (examSnap.exists()) {
         const examData = examSnap.data();
-        const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnexedtech@gmail.com';
+        const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnextedtech@gmail.com';
         if (examData.status === 'draft' && !isAdmin) {
           navigate('/dashboard');
           return;
@@ -79,7 +79,7 @@ export default function ExamDetail() {
   }, [examId, user]);
 
   const hasAccess = (test: any) => {
-    const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnexedtech@gmail.com';
+    const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnextedtech@gmail.com';
     if (test.status === 'draft' && !isAdmin) return false;
 
     // Premium users get access to everything.

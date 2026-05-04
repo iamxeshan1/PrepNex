@@ -134,7 +134,7 @@ export default function AdminSubscriptions() {
     
     // 1. Summary Sheet
     const summaryData = [
-      ["PrepNex - Subscriptions & Revenue Audit"],
+      ["PrepNext - Subscriptions & Revenue Audit"],
       ["Date Generated:", new Date().toLocaleString()],
       [],
       ["MEMBERSHIP SUMMARY"],
@@ -170,7 +170,7 @@ export default function AdminSubscriptions() {
     ];
     XLSX.utils.book_append_sheet(wb, wsDetail, "Full Subscriber List");
 
-    XLSX.writeFile(wb, `PrepNex_Subscriptions_${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.writeFile(wb, `PrepNext_Subscriptions_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   const filteredUsers = users

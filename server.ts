@@ -75,7 +75,7 @@ const db = {
 };
 
 const sendEmail = async (to: string, subject: string, html: string, fromNameOverride?: string) => {
-  let user = process.env.EMAIL_USER || process.env.SMTP_USER || "prepnexedtech@gmail.com";
+  let user = process.env.EMAIL_USER || process.env.SMTP_USER || "prepnextedtech@gmail.com";
   let pass = process.env.EMAIL_PASS || process.env.SMTP_PASS || "";
 
   // Only try to fetch from Firestore if environment variables aren't sufficient
@@ -110,7 +110,7 @@ const sendEmail = async (to: string, subject: string, html: string, fromNameOver
     },
   });
 
-  const fromName = fromNameOverride || "Team PrepNex Edtech";
+  const fromName = fromNameOverride || "Team PrepNext Edtech";
   console.log(`[Email Service] Sending email to: ${to}, subject: ${subject}`);
   
   return dynamicTransporter.sendMail({
@@ -216,17 +216,17 @@ app.get("/api/health-check", async (req, res) => {
       const html = `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; color: #334155; padding: 40px; background-color: #f1f5f9; border-radius: 20px;">
           <div style="background-color: #ffffff; padding: 30px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
-            <h1 style="color: #4f46e5; margin-bottom: 20px;">Welcome to PrepNex Edtech!</h1>
+            <h1 style="color: #4f46e5; margin-bottom: 20px;">Welcome to PrepNext Edtech!</h1>
             <p style="font-size: 16px; margin-bottom: 15px;">Hi <strong>${name || 'Aspirant'}</strong>,</p>
             <p style="font-size: 16px; margin-bottom: 20px;">We are thrilled to have you join our community! Get ready to supercharge your learning journey.</p>
             <div style="margin: 30px 0;">
               <a href="https://ais-dev-jiogqd5sd2opeeg53i55h6-95891610099.asia-southeast1.run.app" style="display: inline-block; padding: 12px 24px; background-color: #4f46e5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Start Learning</a>
             </div>
-            <p style="font-size: 14px; color: #64748b;">With regards,<br><strong>Team PrepNex Edtech</strong></p>
+            <p style="font-size: 14px; color: #64748b;">With regards,<br><strong>Team PrepNext Edtech</strong></p>
           </div>
         </div>
       `;
-      await sendEmail(email, "Welcome to PrepNex Edtech!", html);
+      await sendEmail(email, "Welcome to PrepNext Edtech!", html);
       res.json({ success: true });
     } catch (e) {
       console.error(e);
@@ -247,7 +247,7 @@ app.get("/api/health-check", async (req, res) => {
             <div style="font-size: 16px; line-height: 1.6; margin-bottom: 25px;">
               ${body.replace(/\n/g, '<br/>')}
             </div>
-            <p style="font-size: 14px; color: #64748b; margin-top: 30px;">With regards,<br><strong>${fromName || "Team PrepNex Edtech"}</strong></p>
+            <p style="font-size: 14px; color: #64748b; margin-top: 30px;">With regards,<br><strong>${fromName || "Team PrepNext Edtech"}</strong></p>
           </div>
         </div>
       `;

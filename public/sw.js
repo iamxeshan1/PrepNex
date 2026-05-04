@@ -1,5 +1,5 @@
 // Basic Service Worker for PWA compliance
-const CACHE_NAME = 'prepnex-cache-v1';
+const CACHE_NAME = 'prepnext-cache-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -29,7 +29,7 @@ self.addEventListener('push', (event) => {
   const data = event.data?.json() || {};
   const title = data.title || 'New Notification';
   const options = {
-    body: data.body || 'You have a new update from PrepNex.',
+    body: data.body || 'You have a new update from PrepNext.',
     icon: '/favicon.svg',
     badge: '/favicon.svg',
     data: {

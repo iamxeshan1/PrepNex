@@ -4,6 +4,7 @@ import { Mail, Phone, MapPin, MessageSquare, Clock } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Layout } from '../components/Layout';
+import { Logo } from '../components/Logo';
 
 export default function Contact() {
   const [settings, setSettings] = useState<any>(null);
@@ -31,8 +32,8 @@ export default function Contact() {
             <MessageSquare className="w-3.5 h-3.5" /> Reach Out
           </div>
           <h1 className="text-4xl md:text-6xl font-black text-primary tracking-tight mb-4">Contact Us</h1>
-          <p className="text-slate-500 font-medium max-w-2xl mx-auto text-lg leading-relaxed">
-            Have questions about PrepNex? We're here to help you on your educational journey.
+          <p className="text-slate-500 font-medium max-w-2xl mx-auto text-lg leading-relaxed flex flex-col items-center gap-2">
+            Have questions about <Logo className="text-xl inline-flex" />? We're here to help you on your educational journey.
           </p>
         </motion.div>
 
@@ -49,7 +50,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Email us</p>
-                    <p className="text-lg font-bold text-primary">{settings?.contactEmail || 'support@prepnex.com'}</p>
+                    <p className="text-lg font-bold text-primary">{settings?.contactEmail || 'support@prepnext.com'}</p>
                   </div>
                 </div>
 
@@ -69,7 +70,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Visit us</p>
-                    <p className="text-lg font-bold text-primary max-w-xs">{settings?.contactAddress || 'PrepNex Headquarters, New Delhi'}</p>
+                    <p className="text-lg font-bold text-primary max-w-xs">{settings?.contactAddress || 'PrepNext HQ, Nirmaan Bhawan'}</p>
                   </div>
                 </div>
               </div>

@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Target, Users, BookOpen, Award } from 'lucide-react';
 import { Layout } from '../components/Layout';
+import { Logo } from '../components/Logo';
 
 export default function About() {
   const values = [
@@ -40,9 +41,11 @@ export default function About() {
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/5 rounded-full text-primary text-[10px] font-black uppercase tracking-widest mb-6">
               <Users className="w-3.5 h-3.5" /> Who we are
             </div>
-            <h1 className="text-4xl md:text-5xl font-black text-slate-800 tracking-tight mb-6">Empowering<br/><span className="text-primary">Next-Gen Aspirants</span></h1>
-            <p className="text-lg text-slate-600 font-medium max-w-2xl mx-auto">
-              PrepNex Edtech was founded with a single mission: to revolutionize how students prepare for competitive exams. We combine cutting-edge technology with expert-curated content.
+            <h1 className="text-4xl md:text-5xl font-black text-slate-800 tracking-tight mb-6 flex flex-col md:flex-row items-center justify-center gap-3">
+              Empowering <Logo className="text-4xl md:text-5xl" />
+            </h1>
+            <p className="text-lg text-slate-600 font-medium max-w-2xl mx-auto flex flex-col items-center gap-2">
+              <Logo className="text-xl inline-flex" /> was founded with a single mission: to revolutionize how students prepare for competitive exams. We combine cutting-edge technology with expert-curated content.
             </p>
           </motion.div>
 

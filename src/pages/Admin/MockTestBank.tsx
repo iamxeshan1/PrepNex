@@ -149,7 +149,7 @@ export default function MockTestBank() {
     ]];
     const ws = XLSX.utils.aoa_to_sheet([...headers, ...sample]);
     XLSX.utils.book_append_sheet(wb, ws, "QuestionBank_Template");
-    XLSX.writeFile(wb, "PrepNex_MasterQuestionBank_Template.xlsx");
+    XLSX.writeFile(wb, "PrepNext_MasterQuestionBank_Template.xlsx");
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

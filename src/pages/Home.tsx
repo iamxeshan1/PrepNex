@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import LiveTestsSection from '../components/LiveTestsSection';
 import { motion } from 'motion/react';
+import { Logo } from '../components/Logo';
 import { 
   CheckCircle, 
   Award, 
@@ -83,7 +84,7 @@ const NoticesSection = () => {
             </div>
             <div>
               <h2 className="text-3xl font-black text-primary tracking-tight">Latest Notices</h2>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Important announcements from <span className="font-logo font-black">PrepNex</span></p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1 flex items-center gap-2">Important announcements from <Logo className="text-[10px]" /></p>
             </div>
           </div>
           <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] p-12 text-center">
@@ -103,7 +104,7 @@ const NoticesSection = () => {
           </div>
           <div>
             <h2 className="text-3xl font-black text-primary tracking-tight">Latest Notices</h2>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Important announcements from <span className="font-logo font-black">PrepNex</span></p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1 flex items-center gap-2">Important announcements from <Logo className="text-[10px]" /></p>
           </div>
         </div>
 
@@ -186,7 +187,7 @@ const ThoughtOfTheDaySection = () => {
           </h2>
           <div className="flex flex-col items-center gap-3 mt-8">
             <div className="w-12 h-1 bg-secondary rounded-full" />
-            <p className="font-bold text-slate-400 uppercase tracking-widest text-[10px]">— <span className="font-logo font-black text-white">PrepNex</span> Core</p>
+            <p className="font-bold text-slate-400 uppercase tracking-widest text-[10px] flex items-center gap-2">— <Logo className="text-[10px]" variant="white" /> Core</p>
           </div>
         </div>
       </section>
@@ -337,7 +338,7 @@ const TestimonialsSection = () => {
   }, []);
 
   const defaultReviews = [
-    { id: 'd1', userName: 'Aamir Hassan', content: 'PrepNex is the best platform for JKSSB preparation.', rating: 5 },
+    { id: 'd1', userName: 'Aamir Hassan', content: 'PrepNext is the best platform for JKSSB preparation.', rating: 5 },
     { id: 'd2', userName: 'Priya Sharma', content: 'The analytics section helped me identify my weak spots.', rating: 5 },
     { id: 'd3', userName: 'Rahul Verma', content: 'Affordable pricing and top-notch quality content.', rating: 5 },
     { id: 'd4', userName: 'Saba Jan', content: 'Changed the way I prepare for exams. Truly smart!', rating: 5 },
@@ -356,7 +357,10 @@ const TestimonialsSection = () => {
           <div className="inline-flex items-center gap-2 bg-secondary/10 text-secondary px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-[0.2em] mb-4">
             <MessageSquare className="w-3.5 h-3.5 fill-secondary" /> Student Voice
           </div>
-          <h2 className="text-4xl font-black text-primary tracking-tight">What Aspirants say about <span className="text-secondary">PrepNex</span></h2>
+          <div className="flex flex-col md:flex-row items-center justify-center gap-3">
+            <h2 className="text-4xl font-black text-primary tracking-tight">What Aspirants say about</h2>
+            <Logo className="text-4xl" />
+          </div>
         </div>
       </div>
 
@@ -487,7 +491,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-5xl md:text-7xl font-extrabold text-primary mb-8 tracking-tighter leading-[0.9]">
+            <h1 className="text-5xl md:text-7xl font-extrabold text-primary mb-8 tracking-tight leading-[0.9]">
               {settings?.heroTagline ? settings.heroTagline.split(' ').slice(0, -2).join(' ') : 'Practice. Improve.'} <br />
               <span className="text-secondary">{settings?.heroTagline ? settings.heroTagline.split(' ').slice(-2).join(' ') : 'Succeed.'}</span>
             </h1>
@@ -671,7 +675,10 @@ export default function Home() {
       <section className="py-12 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-primary mb-4 tracking-tight">Why Choose PrepNex?</h2>
+            <div className="flex flex-col md:flex-row items-center justify-center gap-3 mb-4">
+              <h2 className="text-3xl font-bold text-primary tracking-tight">Why Choose</h2>
+              <Logo className="text-3xl" />
+            </div>
             <div className="w-20 h-1.5 bg-secondary mx-auto rounded-full" />
           </div>
           

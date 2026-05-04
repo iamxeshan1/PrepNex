@@ -47,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           } else {
             // New user profile creation
-            const isAdminEmail = authUser.email === 'iamxeshan1@gmail.com' || authUser.email === 'prepnexedtech@gmail.com';
+            const isAdminEmail = authUser.email === 'iamxeshan1@gmail.com' || authUser.email === 'prepnextedtech@gmail.com';
             const newProfile = {
               userId: authUser.uid,
               name: authUser.displayName || authUser.email?.split('@')[0] || 'User',
@@ -85,7 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     profile,
     loading,
-    isAdmin: profile?.role === 'admin' || user?.email === 'iamxeshan1@gmail.com' || user?.email === 'prepnexedtech@gmail.com'
+    isAdmin: profile?.role === 'admin' || user?.email === 'iamxeshan1@gmail.com' || user?.email === 'prepnextedtech@gmail.com'
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

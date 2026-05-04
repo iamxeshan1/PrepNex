@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout';
+import { Logo } from '../components/Logo';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, addDoc, query, where, getDocs, orderBy, doc, updateDoc } from 'firebase/firestore';
@@ -119,7 +120,7 @@ export default function Helpdesk() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
             <div>
               <h1 className="text-3xl font-black text-secondary tracking-tight mb-2">Helpdesk Support</h1>
-              <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Get help from Team PrepNex</p>
+              <p className="text-slate-500 font-bold uppercase tracking-widest text-xs flex items-center justify-center md:justify-start gap-2">Get help from Team <Logo className="text-xs" /></p>
             </div>
             <button 
               onClick={() => setShowNew(!showNew)}

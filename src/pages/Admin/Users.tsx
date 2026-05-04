@@ -76,7 +76,7 @@ export default function AdminUsers() {
 
     // 1. Executive Summary
     const summaryData = [
-      ["PrepNex - Student Roster & Growth Metrics"],
+      ["PrepNext - Student Roster & Growth Metrics"],
       ["Snapshot Date:", new Date().toLocaleString()],
       [],
       ["ACCOUNTS OVERVIEW"],
@@ -119,7 +119,7 @@ export default function AdminUsers() {
     ];
     XLSX.utils.book_append_sheet(wb, wsUsers, "Student Roster");
 
-    XLSX.writeFile(wb, `PrepNex_Student_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.writeFile(wb, `PrepNext_Student_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   const grantFreeAccess = async (userId: string, examId: string) => {

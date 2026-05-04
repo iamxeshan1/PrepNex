@@ -107,7 +107,7 @@ export const Navbar = () => {
             >
               <div className="flex items-center justify-between mb-12">
                 <div className="flex items-center gap-2">
-                  <Logo className="text-3xl" />
+                  <Logo className="text-4xl" />
                 </div>
                 <button 
                   onClick={() => setIsSidebarOpen(false)}
@@ -136,7 +136,7 @@ export const Navbar = () => {
 
               <div className="absolute bottom-8 left-8 right-8">
                 <div className="flex items-center justify-center gap-6 opacity-30">
-                  <Logo className="h-6 grayscale opacity-50" />
+                  <Logo className="text-2xl" variant="default" />
                 </div>
               </div>
             </motion.aside>
@@ -176,7 +176,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           <div className="grid grid-cols-1 md:grid-cols-12 gap-16 mb-20">
             <div className="md:col-span-5 space-y-8">
               <div className="space-y-6">
-                <Logo className="text-4xl inline-block brightness-0 invert" />
+                <Logo className="text-5xl" variant="white" />
                 <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-sm italic">
                   "Practice. Improve. Succeed."
                 </p>
@@ -247,7 +247,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
           <div className="pt-12 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-8">
             <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-4">
-              <span>© {new Date().getFullYear()} PREPNEX EDTECH</span>
+              <div className="flex items-center gap-2">
+                <span>© {new Date().getFullYear()}</span>
+                <Logo className="text-[10px] opacity-50" variant="white" />
+              </div>
               <span className="w-1 h-1 rounded-full bg-white/20" />
               <span>MADE WITH CONVICTION</span>
             </div>

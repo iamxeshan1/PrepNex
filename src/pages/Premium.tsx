@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Layout } from '../components/Layout';
+import { Logo } from '../components/Logo';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, getDocs, collection, query, where, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -87,7 +88,7 @@ export default function Premium() {
       const snap = await getDoc(doc(db, 'exams', examId!));
       if (snap.exists()) {
         const data = snap.data();
-        const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnexedtech@gmail.com';
+        const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnextedtech@gmail.com';
         if (data.status === 'draft' && !isAdmin) {
           navigate('/dashboard');
           return;
@@ -109,7 +110,7 @@ export default function Premium() {
     {
       icon: Layers,
       title: "Unlock All Exam Packages",
-      description: "Gain full access to every premium mock test and past paper database on PrepNex.",
+      description: "Gain full access to every premium mock test and past paper database.",
       color: "bg-blue-500"
     },
     {
@@ -174,9 +175,13 @@ export default function Premium() {
               className="text-xl text-slate-500 max-w-2xl mx-auto mb-12 font-medium"
             >
               {targetExam ? (
-                <>You're just one step away from unlocking <strong>{targetExam.name}</strong>. Join 50,000+ students who trust PrepNex for their preparation.</>
+                <>You're just one step away from unlocking <strong>{targetExam.name}</strong>. Join 50,000+ students who trust <Logo className="text-xl inline-flex" /> for their preparation.</>
               ) : (
-                "Join 50,000+ students who use PrepNex Premium to clear their competitive exams with top rankings."
+                <div className="flex flex-col items-center gap-2">
+                  <span>Join 50,000+ students who use</span>
+                  <Logo className="text-xl" />
+                  <span>Premium to clear their competitive exams with top rankings.</span>
+                </div>
               )}
             </motion.p>
             
