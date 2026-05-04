@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { collection, query, orderBy, limit, onSnapshot, where, Timestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { collection, query, orderBy, limit, onSnapshot, where, Timestamp, doc, setDoc } from 'firebase/firestore';
+import { db, messaging } from '../lib/firebase';
+import { getToken } from 'firebase/messaging';
 import { useAuth } from '../context/AuthContext';
 import { Bell, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -11,10 +12,27 @@ export const NotificationManager = () => {
   const [toast, setToast] = useState<{ title: string, message: string, url?: string } | null>(null);
 
   useEffect(() => {
-    // Request notification permission on mount if signed in
-    if (user && 'Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
+    // Request notification permission and get token
+    const setupMessaging = async () => {
+      if (user && 'Notification' in window) {
+        try {
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted') {
+            const token = await getToken(messaging, {
+              vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY
+            });
+            if (token) {
+              await setDoc(doc(db, 'users', user.uid, 'pushTokens', token), {
+                createdAt: Timestamp.now(),
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error setting up messaging:', error);
+        }
+      }
+    };
+    setupMessaging();
   }, [user]);
 
   useEffect(() => {

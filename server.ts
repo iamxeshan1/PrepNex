@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import { initializeApp, getApp, getApps } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
+import { getMessaging } from "firebase-admin/messaging";
 import nodemailer from "nodemailer";
 import fs from "fs";
 
@@ -258,6 +259,64 @@ app.get("/api/health-check", async (req, res) => {
     } catch (e) {
       console.error(e);
       res.status(500).json({ error: "Failed to send emails" });
+    }
+  });
+
+  app.post("/api/admin/send-to-user", async (req, res) => {
+    try {
+      const appInst = getFirebaseApp();
+      if (!appInst) throw new Error("Firebase not initialized");
+      const messaging = getMessaging(appInst);
+      
+      const { userId, title, body, data } = req.body;
+      const db = getFirestore(appInst);
+      
+      const tokensSnap = await db.collection('users').doc(userId).collection('pushTokens').get();
+      const tokens = tokensSnap.docs.map(doc => doc.id);
+      
+      if (tokens.length === 0) {
+        res.json({ success: false, message: "No tokens found for user" });
+        return;
+      }
+      
+      const results = await Promise.all(tokens.map(token => {
+        const message = {
+          token: token,
+          notification: { title, body },
+          data: data || {},
+        };
+        return messaging.send(message).catch(e => ({ error: e }));
+      }));
+      
+      res.json({ success: true, results });
+    } catch (e) {
+      console.error(e);
+      res.status(500).json({ error: "Failed to send push notification" });
+    }
+  });
+
+  app.post("/api/admin/send-push", async (req, res) => {
+    try {
+      const appInst = getFirebaseApp();
+      if (!appInst) throw new Error("Firebase not initialized");
+      const messaging = getMessaging(appInst);
+      
+      const { token, title, body, data } = req.body;
+      
+      const message = {
+        token: token,
+        notification: {
+          title: title,
+          body: body,
+        },
+        data: data || {},
+      };
+      
+      const response = await messaging.send(message);
+      res.json({ success: true, messageId: response });
+    } catch (e) {
+      console.error(e);
+      res.status(500).json({ error: "Failed to send push notification" });
     }
   });
 

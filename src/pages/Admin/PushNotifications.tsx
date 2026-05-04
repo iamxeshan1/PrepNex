@@ -21,7 +21,8 @@ export default function PushNotifications() {
   const [form, setForm] = useState({
     title: '',
     message: '',
-    url: ''
+    url: '',
+    userId: ''
   });
 
   useEffect(() => {
@@ -40,13 +41,22 @@ export default function PushNotifications() {
 
     setSending(true);
     try {
-      await addDoc(collection(db, 'notifications'), {
-        ...form,
-        createdAt: serverTimestamp(),
-        sentBy: 'Admin'
-      });
-      setForm({ title: '', message: '', url: '' });
-      alert('Notification sent to all users!');
+      if (form.userId) {
+        await fetch('/api/admin/send-to-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: form.userId, title: form.title, body: form.message })
+        });
+        alert('Notification sent to user!');
+      } else {
+        await addDoc(collection(db, 'notifications'), {
+          ...form,
+          createdAt: serverTimestamp(),
+          sentBy: 'Admin'
+        });
+        alert('Notification sent to all users!');
+      }
+      setForm({ title: '', message: '', url: '', userId: '' });
     } catch (error) {
       console.error(error);
       alert('Failed to send notification');
@@ -101,6 +111,16 @@ export default function PushNotifications() {
                   className="w-full px-5 py-4 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-primary/20 transition-all font-medium resize-none"
                   value={form.message}
                   onChange={e => setForm({ ...form, message: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2 px-1">Target User ID (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="Leave empty for all users"
+                  className="w-full px-5 py-4 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                  value={form.userId}
+                  onChange={e => setForm({ ...form, userId: e.target.value })}
                 />
               </div>
               <div>
