@@ -38,12 +38,15 @@ export const NotificationManager = () => {
 
       // 1. Browser Notification
       if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(title, {
-          body: message,
-          icon: '/favicon.svg'
-        }).onclick = () => {
-          if (url) window.location.href = url;
-        };
+        navigator.serviceWorker.ready.then((registration) => {
+          registration.showNotification(title, {
+            body: message,
+            icon: '/favicon.svg',
+            badge: '/favicon.svg',
+            data: { url },
+            tag: 'prepnex-broadcast' // Prevents duplicate notifications
+          });
+        });
       }
 
       // 2. In-app Toast

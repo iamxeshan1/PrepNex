@@ -7,7 +7,7 @@ export const SplashScreen = () => {
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.8, ease: "easeInOut" }}
-      className="fixed inset-0 z-[10000] bg-[#2563EB] flex flex-col items-center justify-center overflow-hidden"
+      className="fixed inset-0 z-[10000] bg-[#002045] flex flex-col items-center justify-center overflow-hidden"
     >
       {/* Decorative Circles */}
       <motion.div 
@@ -25,7 +25,7 @@ export const SplashScreen = () => {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center shadow-2xl mb-8 relative"
         >
-          <span className="text-[#2563EB] text-5xl font-black italic font-logo">P</span>
+          <span className="text-[#002045] text-5xl font-black italic font-logo">P</span>
           
           {/* Pulse Effect */}
           <motion.div
