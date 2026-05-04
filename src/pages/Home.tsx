@@ -414,6 +414,11 @@ export default function Home() {
   const [loadingExams, setLoadingExams] = useState(true);
   const [settings, setSettings] = useState<any>(null);
 
+  const getAgencyLogo = (organization: string) => {
+    const agency = agencies.find(a => a.name === organization);
+    return agency ? agency.logoUrl : null;
+  };
+
   useEffect(() => {
     const fetchAgencies = async () => {
       const q = query(collection(db, 'agencies'), orderBy('createdAt', 'desc'));
@@ -441,12 +446,12 @@ export default function Home() {
     const fetchExams = async () => {
       try {
         const q = query(
-          collection(db, 'exams'), 
-          where('isPopular', '==', true)
+          collection(db, 'exams')
         );
         const snapshot = await getDocs(q);
         const fetchedExams = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }))
-          .filter(exam => exam.status !== 'draft');
+          .filter(exam => exam.status !== 'draft')
+          .sort((a, b) => (b.isPopular ? 1 : 0) - (a.isPopular ? 1 : 0));
 
         setRecruitmentExams(fetchedExams.filter(e => e.type !== 'competitive').slice(0, 4));
         setCompetitiveExams(fetchedExams.filter(e => e.type === 'competitive').slice(0, 4));
@@ -554,13 +559,13 @@ export default function Home() {
                 <Link to={`/exam/${exam.id}`} key={exam.id} className="group cursor-pointer">
                   <div className="bg-white border border-slate-100 p-6 rounded-3xl h-full flex flex-col items-center text-center group-hover:border-primary group-hover:shadow-xl group-hover:shadow-primary/5 transition-all">
                     <div className="w-16 h-16 bg-slate-50 rounded-2xl mb-4 overflow-hidden flex items-center justify-center p-2 group-hover:bg-primary/5 transition-colors">
-                      {exam.logoUrl ? (
-                        <img src={exam.logoUrl} alt={exam.name} className="w-full h-full object-contain" />
+                      {exam.logoUrl || getAgencyLogo(exam.organization) ? (
+                        <img src={exam.logoUrl || getAgencyLogo(exam.organization)} alt={exam.name} className="w-full h-full object-contain" />
                       ) : (
                         <Award className="w-8 h-8 text-slate-300 group-hover:text-primary transition-colors" />
                       )}
                     </div>
-                    <h3 className="font-bold text-primary group-hover:text-secondary transition-colors line-clamp-1">{exam.name}</h3>
+                    <h3 className="font-bold text-primary group-hover:text-secondary transition-colors">{exam.name}</h3>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{exam.organization}</p>
                     <div className="mt-auto pt-4 flex items-center justify-between w-full">
                       <div className="flex items-center gap-1 text-[10px] font-black text-primary group-hover:translate-x-1 transition-transform uppercase tracking-widest">
@@ -607,13 +612,13 @@ export default function Home() {
                 <Link to={`/exam/${exam.id}`} key={exam.id} className="group cursor-pointer">
                   <div className="bg-white border border-slate-100 p-6 rounded-3xl h-full flex flex-col items-center text-center group-hover:border-primary group-hover:shadow-xl group-hover:shadow-primary/5 transition-all">
                     <div className="w-16 h-16 bg-slate-50 rounded-2xl mb-4 overflow-hidden flex items-center justify-center p-2 group-hover:bg-primary/5 transition-colors">
-                      {exam.logoUrl ? (
-                        <img src={exam.logoUrl} alt={exam.name} className="w-full h-full object-contain" />
+                      {exam.logoUrl || getAgencyLogo(exam.organization) ? (
+                        <img src={exam.logoUrl || getAgencyLogo(exam.organization)} alt={exam.name} className="w-full h-full object-contain" />
                       ) : (
                         <Award className="w-8 h-8 text-slate-300 group-hover:text-primary transition-colors" />
                       )}
                     </div>
-                    <h3 className="font-bold text-primary group-hover:text-secondary transition-colors line-clamp-1">{exam.name}</h3>
+                    <h3 className="font-bold text-primary group-hover:text-secondary transition-colors">{exam.name}</h3>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{exam.organization}</p>
                     <div className="mt-auto pt-4 flex items-center justify-between w-full">
                       <div className="flex items-center gap-1 text-[10px] font-black text-primary group-hover:translate-x-1 transition-transform uppercase tracking-widest">

@@ -50,6 +50,7 @@ export default function Subjects() {
   const [selectedSubject, setSelectedSubject] = useState<any>(null);
   const [tests, setTests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchPortalData = async () => {
@@ -172,13 +173,24 @@ export default function Subjects() {
         {/* Subjects Grid */}
         <section className="py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Search Bar */}
+            <div className="mb-12">
+              <input
+                type="text"
+                placeholder="Search subjects..."
+                className="w-full md:max-w-md mx-auto block px-6 py-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary font-medium shadow-sm"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
             {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-64 bg-white rounded-[2.5rem] animate-pulse" />)}
               </div>
-            ) : subjects.length > 0 ? (
+            ) : subjects.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {subjects.map((subject, index) => {
+                {subjects.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase())).map((subject, index) => {
                   const IconComp = ICON_MAP[subject.icon] || BookOpen;
                   return (
                     <motion.div
@@ -212,8 +224,8 @@ export default function Subjects() {
             ) : (
               <div className="text-center py-40">
                  <Sparkles className="w-16 h-16 text-slate-200 mx-auto mb-6" />
-                 <h2 className="text-2xl font-black text-slate-300 uppercase tracking-widest">Coming Soon</h2>
-                 <p className="text-slate-400 font-medium mt-2">Expert-curated subjects are being added daily.</p>
+                 <h2 className="text-2xl font-black text-slate-300 uppercase tracking-widest">No matching subjects found</h2>
+                 <p className="text-slate-400 font-medium mt-2">Try a different search term.</p>
               </div>
             )}
           </div>

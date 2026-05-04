@@ -9,14 +9,13 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState({
     users: 0,
     exams: 0,
-    subscriptions: 0,
-    premium_subscriptions: 0,
+    activeSubscriptions: 0,
     tests: 0,
     liveTests: 0
   });
 
   const totalMockTests = stats.tests + stats.liveTests;
-  const totalSubscriptions = stats.subscriptions + stats.premium_subscriptions;
+  const totalSubscriptions = stats.activeSubscriptions;
 
   const [loading, setLoading] = useState(true);
 
@@ -75,30 +74,39 @@ export default function AdminDashboard() {
   useEffect(() => {
     setLoading(true);
     
-    // Listen to users
+    // Listen to users and calculate stats
     const unsubUsers = onSnapshot(collection(db, 'users'), (snap) => {
-      setStats(prev => ({ ...prev, users: snap.size }));
+      const usersData = snap.docs.map(doc => doc.data());
+      const now = new Date();
+      
+      const activePremiumCount = usersData.filter(u => 
+        u.subscriptionExpiry && new Date(u.subscriptionExpiry) > now
+      ).length;
+
+      console.log('DEBUG DASHBOARD: Total users:', snap.size, 'Active subs:', activePremiumCount);
+
+      setStats(prev => ({ 
+        ...prev, 
+        users: snap.size,
+        activeSubscriptions: activePremiumCount
+      }));
       setLoading(false);
     }, (error) => console.error("Users Listener Error:", error));
 
-    // Listen to exams
+    // Listen to exams - only active ones
     const unsubExams = onSnapshot(collection(db, 'exams'), (snap) => {
-      setStats(prev => ({ ...prev, exams: snap.size }));
+      const activeExams = snap.docs.filter(doc => doc.data().status === 'live');
+      console.log('DEBUG DASHBOARD: Active exams:', activeExams.length);
+      setStats(prev => ({ ...prev, exams: activeExams.length }));
     }, (error) => console.error("Exams Listener Error:", error));
 
-    // Listen to subscriptions
-    const unsubSubs = onSnapshot(collection(db, 'subscriptions'), (snap) => {
-      setStats(prev => ({ ...prev, subscriptions: snap.size }));
-    }, (error) => console.error("Subs Listener Error:", error));
-
-    // Listen to premium subscriptions
-    const unsubPremiumSubs = onSnapshot(collection(db, 'premium_subscriptions'), (snap) => {
-      setStats(prev => ({ ...prev, premium_subscriptions: snap.size }));
-    }, (error) => console.error("Premium Subs Listener Error:", error));
-
-    // Listen to tests
+    // Listen to tests - only active ones
     const unsubTests = onSnapshot(collection(db, 'tests'), (snap) => {
-      setStats(prev => ({ ...prev, tests: snap.size }));
+      const allDocIds = snap.docs.map(doc => doc.id);
+      const activeTests = snap.docs.filter(doc => !doc.data().status || doc.data().status === 'live');
+      console.log('DEBUG DASHBOARD: All test doc IDs:', allDocIds);
+      console.log('DEBUG DASHBOARD: Active test count:', activeTests.length);
+      setStats(prev => ({ ...prev, tests: activeTests.length }));
     }, (error) => console.error("Tests Listener Error:", error));
 
     // Listen to live tests
@@ -109,8 +117,6 @@ export default function AdminDashboard() {
     return () => {
       unsubUsers();
       unsubExams();
-      unsubSubs();
-      unsubPremiumSubs();
       unsubTests();
       unsubLiveTests();
     };

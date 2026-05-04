@@ -40,7 +40,7 @@ export default function Contact() {
           {/* Info Side */}
           <div className="w-full max-w-2xl space-y-6">
             <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
-              <h2 className="text-3xl font-black text-primary tracking-tight mb-4">Get in touch</h2>
+              <h2 className="text-3xl font-black text-primary tracking-tight mb-4">Contact Support</h2>
               
               <div className="space-y-6">
                 <div className="flex items-center gap-5 group">
