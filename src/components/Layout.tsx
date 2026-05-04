@@ -247,10 +247,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
           <div className="pt-12 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-8">
             <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span>© {new Date().getFullYear()}</span>
-                <Logo className="text-[10px] opacity-50" variant="white" />
-              </div>
+              <span>©2026 PrepNext Edtech</span>
               <span className="w-1 h-1 rounded-full bg-white/20" />
               <span>MADE WITH CONVICTION</span>
             </div>

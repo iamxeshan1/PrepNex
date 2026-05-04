@@ -478,7 +478,7 @@ export default function Test() {
           {/* Footer inside main column for better Flow on mobile, but simple enough for desktop */}
           <footer className="pt-12 pb-12 text-center border-t border-slate-100 flex flex-col items-center">
             <Logo className="text-xl mb-2" />
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6">© 2024 PrepNext. All rights reserved.</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6">©2026 PrepNext Edtech. All rights reserved.</p>
             <div className="flex justify-center gap-6">
               <Link to="/privacy" className="text-xs font-bold text-slate-400 hover:text-[#002D62] transition-colors">Privacy Policy</Link>
               <Link to="/terms" className="text-xs font-bold text-slate-400 hover:text-[#002D62] transition-colors">Terms of Service</Link>
