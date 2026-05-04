@@ -64,21 +64,9 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: React.React
   return <>{children}</>;
 };
 
-function AppContent() {
-  const [showSplash, setShowSplash] = React.useState(true);
-
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 2800); 
-    return () => clearTimeout(timer);
-  }, []);
-
+export default function AppContent() {
   return (
     <>
-      <AnimatePresence mode="wait">
-        {showSplash && <SplashScreen key="splash" />}
-      </AnimatePresence>
       <SessionTimeoutManager />
       <NotificationManager />
       <InstallPrompt />
