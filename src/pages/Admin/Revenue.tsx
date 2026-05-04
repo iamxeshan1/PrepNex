@@ -110,24 +110,23 @@ export default function AdminRevenue() {
   return (
     <AdminLayout title="Revenue Management">
       <div className="space-y-8">
-        {/* Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-6">
-            <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center text-green-600">
-              <Wallet className="w-8 h-8" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4 md:gap-6">
+            <div className="w-12 h-12 md:w-16 md:h-16 bg-green-50 rounded-2xl flex items-center justify-center text-green-600 flex-shrink-0">
+              <Wallet className="w-6 h-6 md:w-8 md:h-8" />
             </div>
             <div>
-              <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-1">Total Revenue</p>
-              <h3 className="text-3xl font-black text-slate-800 tracking-tight">₹{totalRevenue.toLocaleString()}</h3>
+              <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] md:text-xs mb-1">Total Revenue</p>
+              <h3 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">₹{totalRevenue.toLocaleString()}</h3>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-6">
-            <div className="w-16 h-16 bg-secondary/10 rounded-2xl flex items-center justify-center text-secondary">
-              <TrendingUp className="w-8 h-8" />
+          <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4 md:gap-6">
+            <div className="w-12 h-12 md:w-16 md:h-16 bg-secondary/10 rounded-2xl flex items-center justify-center text-secondary flex-shrink-0">
+              <TrendingUp className="w-6 h-6 md:w-8 md:h-8" />
             </div>
             <div>
-              <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-1">This Month</p>
-              <h3 className="text-3xl font-black text-slate-800 tracking-tight">₹{thisMonthRevenue.toLocaleString()}</h3>
+              <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] md:text-xs mb-1">This Month</p>
+              <h3 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">₹{thisMonthRevenue.toLocaleString()}</h3>
             </div>
           </div>
         </div>
@@ -183,11 +182,13 @@ export default function AdminRevenue() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {filteredTransactions.map(t => (
+              {transactions.map(t => (
                   <tr key={t.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-8 py-6 text-sm font-bold text-slate-700">{t.userName}</td>
                     <td className="px-8 py-6 text-sm font-bold text-slate-600">{t.type}</td>
-                    <td className="px-8 py-6 text-sm font-bold text-slate-700">{t.id}</td>
+                    <td className="px-8 py-6 text-sm font-bold text-slate-700">
+                      {t.id.slice(-8).toUpperCase()}
+                    </td>
                     <td className="px-8 py-6 text-sm font-bold text-slate-500">{t.date.toLocaleDateString()}</td>
                     <td className="px-8 py-6 text-sm font-bold text-slate-500">{t.coupon}</td>
                     <td className="px-8 py-6 text-sm font-black text-primary">₹{t.amount.toLocaleString()}</td>
