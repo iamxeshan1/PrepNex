@@ -18,22 +18,7 @@ export const SplashScreen = () => {
       />
       
       <div className="relative flex flex-col items-center">
-        {/* Animated Logo Icon */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center shadow-2xl mb-8 relative"
-        >
-          <span className="text-[#002045] text-5xl font-black italic font-logo">P</span>
-          
-          {/* Pulse Effect */}
-          <motion.div
-            animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="absolute inset-0 border-4 border-white rounded-[2rem]"
-          />
-        </motion.div>
+        
 
         {/* Brand Name */}
         <motion.h1
