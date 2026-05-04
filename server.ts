@@ -282,11 +282,11 @@ app.get("/api/health-check", async (req, res) => {
       const results = await Promise.all(tokens.map(token => {
         const message = {
           token: token,
-          data: {
+          notification: {
             title: title,
             body: body,
-            ...data || {}
-          }
+          },
+          data: data || {}
         };
         return messaging.send(message).catch(e => ({ error: e }));
       }));
@@ -308,11 +308,11 @@ app.get("/api/health-check", async (req, res) => {
       
       const message = {
         token: token,
-        data: {
+        notification: {
           title: title,
           body: body,
-          ...data || {}
-        }
+        },
+        data: data || {},
       };
       
       const response = await messaging.send(message);
