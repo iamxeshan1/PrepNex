@@ -10,12 +10,7 @@ export const SplashScreen = () => {
       className="fixed inset-0 z-[10000] bg-[#002045] flex flex-col items-center justify-center overflow-hidden"
     >
       {/* Decorative Circles */}
-      <motion.div 
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 0.15 }}
-        transition={{ duration: 1.5, ease: "easeOut" }}
-        className="absolute w-[800px] h-[800px] bg-white rounded-full blur-[120px]"
-      />
+      
       
       <div className="relative flex flex-col items-center">
         
