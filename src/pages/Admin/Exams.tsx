@@ -22,7 +22,6 @@ export default function AdminExams() {
   const [isPaid, setIsPaid] = useState(false);
   const [isPopular, setIsPopular] = useState(false);
   const [status, setStatus] = useState('draft');
-  const [subjectsWeightage, setSubjectsWeightage] = useState<{subjectId: string, marks: string}[]>([]);
   const [totalPosts, setTotalPosts] = useState('');
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
   const [postDistribution, setPostDistribution] = useState<{category: string, count: string}[]>([]);
@@ -41,20 +40,6 @@ export default function AdminExams() {
     setAgencies(agenciesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     setSubjects(subjectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     setLoading(false);
-  };
-
-  const addSubject = () => {
-    setSubjectsWeightage([...subjectsWeightage, { subjectId: '', marks: '' }]);
-  };
-
-  const updateSubject = (index: number, field: 'subjectId'|'marks', value: string) => {
-    const newArr = [...subjectsWeightage];
-    newArr[index][field] = value;
-    setSubjectsWeightage(newArr);
-  };
-
-  const removeSubject = (index: number) => {
-    setSubjectsWeightage(subjectsWeightage.filter((_, i) => i !== index));
   };
 
   const addPostCategory = () => {
@@ -80,10 +65,6 @@ export default function AdminExams() {
       category: type === 'recruitment' ? cat : 'Competitive',
       price: Number(price),
       isPaid: isPaid,
-      subjectsWeightage: subjectsWeightage.map(sw => ({
-        ...sw,
-        subject: subjects.find(s => s.id === sw.subjectId)?.name || 'Unknown'
-      })),
       totalPosts: type === 'recruitment' ? Number(totalPosts) : 0,
       postDistribution: type === 'recruitment' ? postDistribution.map(p => ({ category: p.category, count: Number(p.count) })) : [],
       isPopular,
@@ -115,7 +96,6 @@ export default function AdminExams() {
     setCat(exam.category || 'Government Jobs');
     setPrice((exam.price ?? 0).toString());
     setIsPaid(exam.isPaid || false);
-    setSubjectsWeightage(exam.subjectsWeightage || []);
     setTotalPosts((exam.totalPosts ?? '').toString());
     setPostDistribution((exam.postDistribution || []).map((p: any) => ({ category: p.category, count: p.count.toString() })));
     setIsPopular(exam.isPopular || false);
@@ -125,7 +105,7 @@ export default function AdminExams() {
   };
 
   const resetForm = () => {
-    setName(''); setAgencyId(''); setPrice('0'); setIsPaid(false); setSubjectsWeightage([]); setTotalPosts(''); setPostDistribution([]); setIsPopular(false); setStatus('draft'); setType('recruitment');
+    setName(''); setAgencyId(''); setPrice('0'); setIsPaid(false); setTotalPosts(''); setPostDistribution([]); setIsPopular(false); setStatus('draft'); setType('recruitment');
   };
 
   const cancelForm = () => {
@@ -207,41 +187,8 @@ export default function AdminExams() {
               </select>
             </div>
             
-            <div className="space-y-4 md:col-span-2 border-t border-slate-100 pt-4">
-              <div className="flex justify-between items-center">
-                <label className="text-sm font-bold text-slate-700">Subjects & Weightage</label>
-                <button type="button" onClick={addSubject} className="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
-                  <Plus className="w-3 h-3" /> Include Subject
-                </button>
-              </div>
-              <div className="space-y-3">
-                 {subjectsWeightage.map((sw, i) => (
-                   <div key={i} className="flex gap-4 items-center bg-slate-50 p-2 border border-slate-200 rounded-xl">
-                      <select 
-                        required
-                        value={sw.subjectId} onChange={e => updateSubject(i, 'subjectId', e.target.value)}
-                        className="flex-1 px-3 py-2 bg-white rounded-lg border border-slate-200 text-sm outline-none focus:ring-1 focus:ring-primary appearance-none font-bold"
-                      >
-                        <option value="">Select Included Subject</option>
-                        {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                      </select>
-                      <input 
-                        placeholder="Q Count"
-                        title="Number of questions from this subject"
-                        value={sw.marks} onChange={e => updateSubject(i, 'marks', e.target.value)}
-                        className="w-24 px-3 py-2 bg-white rounded-lg border border-slate-200 text-sm outline-none focus:ring-1 focus:ring-primary"
-                      />
-                      <button type="button" onClick={() => removeSubject(i)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                   </div>
-                 ))}
-                 {subjectsWeightage.length === 0 && (
-                   <p className="text-xs text-slate-400 font-medium">No subjects added. Add subjects and their marks weightage.</p>
-                 )}
-              </div>
-            </div>
-
+            <div></div>
+            
             {type === 'recruitment' && (
               <>
 

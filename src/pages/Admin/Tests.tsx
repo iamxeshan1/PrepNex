@@ -49,7 +49,7 @@ export default function AdminTests() {
 
   const [showCompositionModal, setShowCompositionModal] = useState(false);
   const [bankCounts, setBankCounts] = useState<Record<string, Record<string, number>>>({});
-  const [composition, setComposition] = useState<Record<string, {count: number, level: string}>>({});
+  const [composition, setComposition] = useState<Record<string, Record<string, number>>>({});
   const [composing, setComposing] = useState(false);
   const [selectedSub, setSelectedSub] = useState('');
 
@@ -89,27 +89,8 @@ export default function AdminTests() {
       setBankCounts(counts);
 
       const allSubjects = sSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      let availableSubjects = [];
-      const initialComp: Record<string, {count: number, level: string}> = {};
-
-      if (subjectId) {
-        // Mode: Subject-Specific Test
-        availableSubjects = allSubjects.filter(s => s.id === subjectId);
-        initialComp[subjectId] = { count: 10, level: 'Medium' };
-      } else if (examId && pSnap.exists()) {
-        // Mode: Exam Category Test (Auto-fetch subjects from weightage)
-        const data = pSnap.data();
-        const syllabusSubIds = (data.subjectsWeightage || []).map((item: any) => item.subjectId);
-        availableSubjects = allSubjects.filter(s => syllabusSubIds.includes(s.id));
-        
-        // Auto-populate all syllabus subjects into the composition list
-        syllabusSubIds.forEach((sId: string) => {
-          initialComp[sId] = { count: 0, level: 'Medium' };
-        });
-      }
-
-      setSubjects(availableSubjects);
-      setComposition(initialComp);
+      setSubjects(allSubjects);
+      setComposition({}); 
       setShowCompositionModal(true);
     } catch (err: any) {
       alert("Failed to fetch bank data: " + err.message);
@@ -128,11 +109,13 @@ export default function AdminTests() {
     setComposing(true);
     try {
       // 1. Verify availability
-      for (const [subId, config] of Object.entries(composition)) {
-        const c = config as { count: number; level: string };
-        const available = bankCounts[subId]?.[c.level] || 0;
-        if (c.count > available) {
-          throw new Error(`Not enough ${c.level} questions in ${subjects.find(s => s.id === subId)?.name}. Requested: ${c.count}, Available: ${available}`);
+      for (const [subId, levelsObj] of Object.entries(composition)) {
+        for (const [level, count] of Object.entries(levelsObj)) {
+          if (count <= 0) continue;
+          const available = bankCounts[subId]?.[level] || 0;
+          if (count > available) {
+            throw new Error(`Not enough ${level} questions in ${subjects.find(s => s.id === subId)?.name}. Requested: ${count}, Available: ${available}`);
+          }
         }
       }
 
@@ -155,25 +138,26 @@ export default function AdminTests() {
       const batch = writeBatch(db);
       let totalImported = 0;
 
-      for (const [subId, config] of Object.entries(composition)) {
-        const c = config as { count: number; level: string };
-        if (c.count <= 0) continue;
+      for (const [subId, levelsObj] of Object.entries(composition)) {
+        for (const [level, count] of Object.entries(levelsObj)) {
+          if (count <= 0) continue;
 
-        const qSnap = await getDocs(query(
-          collection(db, 'questions'), 
-          where('testId', '==', 'MASTER_BANK'), 
-          where('subjectId', '==', subId),
-          where('level', '==', c.level)
-        ));
-        
-        const selectedDocs = qSnap.docs.slice(0, c.count);
-        selectedDocs.forEach(qDoc => {
-          batch.update(qDoc.ref, { 
-            testId: newTestRef.id,
-            assignedAt: new Date().toISOString() 
+          const qSnap = await getDocs(query(
+            collection(db, 'questions'), 
+            where('testId', '==', 'MASTER_BANK'), 
+            where('subjectId', '==', subId),
+            where('level', '==', level)
+          ));
+          
+          const selectedDocs = qSnap.docs.slice(0, count);
+          selectedDocs.forEach(qDoc => {
+            batch.update(qDoc.ref, { 
+              testId: newTestRef.id,
+              assignedAt: new Date().toISOString() 
+            });
+            totalImported++;
           });
-          totalImported++;
-        });
+        }
       }
 
       await batch.commit();
@@ -279,32 +263,35 @@ export default function AdminTests() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center px-1">
                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Withdrawal Strategy</label>
-                  {!subjectId && !examId && (
-                    <div className="flex items-center gap-3">
-                      <select 
-                        className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none focus:border-secondary transition-all"
-                        value={selectedSub}
-                        onChange={e => setSelectedSub(e.target.value)}
-                      >
-                        <option value="">Select Subject to Add</option>
-                        {subjects.map(s => (
-                          <option key={s.id} value={s.id}>{s.name}</option>
-                        ))}
-                      </select>
-                      <button 
-                        type="button"
-                        onClick={() => {
-                          if (selectedSub && !composition[selectedSub]) {
-                            setComposition({...composition, [selectedSub]: { count: 10, level: 'Medium' }});
-                            setSelectedSub('');
-                          }
-                        }}
-                        className="px-4 py-2 bg-secondary text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all"
-                      >
-                        Add Subject
-                      </button>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-3">
+                    <select 
+                      className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none focus:border-secondary transition-all"
+                      value={selectedSub}
+                      onChange={e => setSelectedSub(e.target.value)}
+                    >
+                      <option value="">Select Subject to Add</option>
+                      {subjects.map(s => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        if (selectedSub && !composition[selectedSub]) {
+                          setComposition({...composition, [selectedSub]: {
+                            'Easy': 0,
+                            'Medium': 0,
+                            'Hard': 0,
+                            'UGC NET': 0
+                          }});
+                          setSelectedSub('');
+                        }
+                      }}
+                      className="px-4 py-2 bg-secondary text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all"
+                    >
+                      Add Subject
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 min-h-[100px]">
@@ -314,51 +301,53 @@ export default function AdminTests() {
                       <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No subjects selected for withdrawal</p>
                     </div>
                   ) : (
-                    Object.entries(composition).map(([subId, config]: [string, any]) => {
+                    Object.entries(composition).map(([subId, levelsConfig]: [string, any]) => {
                       const s = subjects.find(sub => sub.id === subId);
                       if (!s) return null;
                       return (
-                        <div key={subId} className="p-5 bg-white border border-slate-100 rounded-[2rem] flex flex-col md:flex-row md:items-center justify-between gap-4 group hover:border-secondary transition-all shadow-sm relative overflow-visible">
-                          {!subjectId && !examId && (
-                            <button 
-                              type="button" 
-                              onClick={() => {
-                                const newComp = { ...composition };
-                                delete newComp[subId];
-                                setComposition(newComp);
-                              }}
-                              className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg z-30"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          )}
+                        <div key={subId} className="p-6 bg-white border border-slate-100 rounded-[2rem] flex flex-col gap-6 group hover:border-secondary transition-all shadow-sm relative">
+                          <button 
+                            type="button" 
+                            onClick={() => {
+                              const newComp = { ...composition };
+                              delete newComp[subId];
+                              setComposition(newComp);
+                            }}
+                            className="absolute top-4 right-4 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg z-30"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                          
                           <div className="flex-1">
-                            <h4 className="font-extrabold text-primary uppercase text-xs tracking-tight">{s.name}</h4>
-                            <div className="flex gap-2 mt-2">
-                               {levels.map(lvl => (
-                                 <span key={lvl} className={`text-[8px] font-black uppercase ${bankCounts[s.id]?.[lvl] ? 'text-primary' : 'text-slate-300'}`}>
-                                   {lvl.slice(0,1)}: {bankCounts[s.id]?.[lvl] || 0}
-                                 </span>
-                               ))}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <select 
-                              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-black uppercase outline-none focus:bg-white"
-                              value={config.level}
-                              onChange={e => setComposition({...composition, [subId]: { ...config, level: e.target.value }})}
-                            >
-                              {levels.map(l => <option key={l} value={l}>{l}</option>)}
-                            </select>
-                            <div className="flex items-center bg-slate-50 rounded-xl border border-slate-200 px-3">
-                               <input 
-                                type="number" 
-                                min="1"
-                                className="w-16 py-2 bg-transparent text-center font-black text-primary outline-none text-xs"
-                                value={config.count}
-                                onChange={e => setComposition({...composition, [subId]: { ...config, count: parseInt(e.target.value) || 0 }})}
-                              />
-                              <span className="text-[8px] font-black text-slate-400 uppercase">Qty</span>
+                            <h4 className="font-extrabold text-primary uppercase text-sm tracking-tight mb-4 flex items-center gap-2">
+                              {s.name}
+                              <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded tracking-widest">
+                                TOTAL: {bankCounts[s.id]?.['total'] || 0}
+                              </span>
+                            </h4>
+                            
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              {levels.map(lvl => (
+                                <div key={lvl} className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">
+                                    {lvl} ({bankCounts[s.id]?.[lvl] || 0})
+                                  </label>
+                                  <input 
+                                    type="number"
+                                    min="0"
+                                    placeholder="0"
+                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-black text-primary outline-none focus:border-secondary"
+                                    value={levelsConfig[lvl]}
+                                    onChange={e => {
+                                      const val = parseInt(e.target.value) || 0;
+                                      setComposition({
+                                        ...composition,
+                                        [subId]: { ...levelsConfig, [lvl]: val }
+                                      });
+                                    }}
+                                  />
+                                </div>
+                              ))}
                             </div>
                           </div>
                         </div>
