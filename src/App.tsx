@@ -34,6 +34,7 @@ import AdminActivityLog from './pages/Admin/ActivityLog';
 import AdminMarketing from './pages/Admin/Marketing';
 import AdminReviews from './pages/Admin/Reviews';
 import AdminStudyMaterial from './pages/Admin/StudyMaterial';
+import AdminPushNotifications from './pages/Admin/PushNotifications';
 import Premium from './pages/Premium';
 import Subjects from './pages/Subjects';
 import Contact from './pages/Contact';
@@ -48,6 +49,8 @@ import RequestReset from './pages/RequestReset';
 import ScrollToTop from './components/ScrollToTop';
 import ProfileCompletionDialog from './components/ProfileCompletionDialog';
 import { SessionTimeoutManager } from './components/SessionTimeoutManager';
+import { NotificationManager } from './components/NotificationManager';
+import { InstallPrompt } from './components/InstallPrompt';
 
 const ProtectedRoute = ({ children, adminOnly = false }: { children: React.ReactNode, adminOnly?: boolean }) => {
   const { user, profile, loading, isAdmin } = useAuth();
@@ -63,6 +66,8 @@ export default function App() {
   return (
     <AuthProvider>
       <SessionTimeoutManager />
+      <NotificationManager />
+      <InstallPrompt />
       <ProfileCompletionDialog />
       <Router>
         <ScrollToTop />
@@ -201,6 +206,12 @@ export default function App() {
           <Route path="/admin/marketing" element={
             <ProtectedRoute adminOnly>
               <AdminMarketing />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/notifications" element={
+            <ProtectedRoute adminOnly>
+              <AdminPushNotifications />
             </ProtectedRoute>
           } />
 
