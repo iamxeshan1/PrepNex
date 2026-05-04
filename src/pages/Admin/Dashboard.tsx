@@ -83,8 +83,6 @@ export default function AdminDashboard() {
         u.subscriptionExpiry && new Date(u.subscriptionExpiry) > now
       ).length;
 
-      console.log('DEBUG DASHBOARD: Total users:', snap.size, 'Active subs:', activePremiumCount);
-
       setStats(prev => ({ 
         ...prev, 
         users: snap.size,
@@ -96,16 +94,12 @@ export default function AdminDashboard() {
     // Listen to exams - only active ones
     const unsubExams = onSnapshot(collection(db, 'exams'), (snap) => {
       const activeExams = snap.docs.filter(doc => doc.data().status === 'live');
-      console.log('DEBUG DASHBOARD: Active exams:', activeExams.length);
       setStats(prev => ({ ...prev, exams: activeExams.length }));
     }, (error) => console.error("Exams Listener Error:", error));
 
     // Listen to tests - only active ones
     const unsubTests = onSnapshot(collection(db, 'tests'), (snap) => {
-      const allDocIds = snap.docs.map(doc => doc.id);
       const activeTests = snap.docs.filter(doc => !doc.data().status || doc.data().status === 'live');
-      console.log('DEBUG DASHBOARD: All test doc IDs:', allDocIds);
-      console.log('DEBUG DASHBOARD: Active test count:', activeTests.length);
       setStats(prev => ({ ...prev, tests: activeTests.length }));
     }, (error) => console.error("Tests Listener Error:", error));
 

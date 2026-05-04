@@ -47,6 +47,7 @@ import ResetPassword from './pages/ResetPassword';
 import RequestReset from './pages/RequestReset';
 import ScrollToTop from './components/ScrollToTop';
 import ProfileCompletionDialog from './components/ProfileCompletionDialog';
+import { SessionTimeoutManager } from './components/SessionTimeoutManager';
 
 const ProtectedRoute = ({ children, adminOnly = false }: { children: React.ReactNode, adminOnly?: boolean }) => {
   const { user, profile, loading, isAdmin } = useAuth();
@@ -61,6 +62,7 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: React.React
 export default function App() {
   return (
     <AuthProvider>
+      <SessionTimeoutManager />
       <ProfileCompletionDialog />
       <Router>
         <ScrollToTop />
