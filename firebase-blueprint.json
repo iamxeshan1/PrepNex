@@ -226,6 +226,20 @@
         }
       },
       "required": ["userId", "subject", "status", "createdAt", "messages"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Push notification broadcast history.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "url": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "sentBy": { "type": "string" }
+      },
+      "required": ["title", "message", "createdAt"]
     }
   },
   "firestore": {
@@ -241,6 +255,7 @@
     "subscriptions": { "schema": "Subscription", "description": "User subscriptions" },
     "liveTests": { "schema": "LiveTest", "description": "Scheduled live tests" },
     "coupons": { "schema": "Coupon", "description": "Discount coupons" },
-    "tickets": { "schema": "Ticket", "description": "Support tickets" }
+    "tickets": { "schema": "Ticket", "description": "Support tickets" },
+    "notifications": { "schema": "Notification", "description": "Push notifications" }
   }
 }
