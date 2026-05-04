@@ -1,4 +1,3 @@
-// Basic Service Worker for PWA compliance
 const CACHE_NAME = 'prepnext-cache-v1';
 const ASSETS_TO_CACHE = [
   '/',
@@ -16,7 +15,6 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Simple network-first strategy for dynamic content
   event.respondWith(
     fetch(event.request).catch(() => {
       return caches.match(event.request);
@@ -24,16 +22,26 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Push notification listener
+// Improved Push notification listener
 self.addEventListener('push', (event) => {
-  const data = event.data?.json() || {};
-  const title = data.title || 'New Notification';
+  if (!event.data) return;
+
+  const data = event.data.json();
+  console.log('Push received:', data);
+
+  // Handle Firebase FCM payload structure
+  // When 'notification' field is used in admin messaging.send(), 
+  // sometimes Firebase auto-shows it if SW is standard, 
+  // but with custom SW we handle it here:
+  const payload = data.notification || data; // Handle both direct or nested
+  
+  const title = payload.title || 'New Notification';
   const options = {
-    body: data.body || 'You have a new update from PrepNext.',
+    body: payload.body || 'You have a new update.',
     icon: '/favicon.svg',
     badge: '/favicon.svg',
     data: {
-      url: data.url || '/'
+      url: data.data?.url || '/'
     }
   };
 
@@ -44,7 +52,8 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const url = event.notification.data?.url || '/';
   event.waitUntil(
-    clients.openWindow(event.notification.data.url)
+    clients.openWindow(url)
   );
 });
