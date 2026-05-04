@@ -51,6 +51,8 @@ import ProfileCompletionDialog from './components/ProfileCompletionDialog';
 import { SessionTimeoutManager } from './components/SessionTimeoutManager';
 import { NotificationManager } from './components/NotificationManager';
 import { InstallPrompt } from './components/InstallPrompt';
+import { SplashScreen } from './components/SplashScreen';
+import { AnimatePresence } from 'motion/react';
 
 const ProtectedRoute = ({ children, adminOnly = false }: { children: React.ReactNode, adminOnly?: boolean }) => {
   const { user, profile, loading, isAdmin } = useAuth();
@@ -62,9 +64,21 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: React.React
   return <>{children}</>;
 };
 
-export default function App() {
+function AppContent() {
+  const [showSplash, setShowSplash] = React.useState(true);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 2800); 
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <AuthProvider>
+    <>
+      <AnimatePresence mode="wait">
+        {showSplash && <SplashScreen key="splash" />}
+      </AnimatePresence>
       <SessionTimeoutManager />
       <NotificationManager />
       <InstallPrompt />
@@ -238,6 +252,14 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Router>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
     </AuthProvider>
   );
 }

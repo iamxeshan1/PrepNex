@@ -4,8 +4,8 @@
   "description": "Practice. Improve. Succeed. The ultimate exam prep platform.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#4B3F94",
-  "theme_color": "#4B3F94",
+  "background_color": "#2563EB",
+  "theme_color": "#2563EB",
   "icons": [
     {
       "src": "/favicon.svg",
