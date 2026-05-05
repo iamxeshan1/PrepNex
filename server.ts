@@ -18,7 +18,6 @@ let config: any = {};
 if (fs.existsSync(configPath)) {
   config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
 }
-console.log("[Server Boot] VERSION: 1.0.4 - Razorpay Diagnostic Mode");
 console.log("[Config Debug] Loaded Firebase config. Project ID:", config.projectId, "Database ID:", config.firestoreDatabaseId);
 
 // Lazy Initialize Admin SDK
@@ -475,7 +474,7 @@ app.get("/api/health-check", async (req, res) => {
 
       if (errorMessage.toLowerCase().includes("authentication failed")) {
         const config = await getRazorpayConfig() as any;
-        errorMessage = `Razorpay Auth Failed: Invalid keys from ${config?.source?.toUpperCase()}. Key ID checked from env var: ${config?.keyIdVar || 'unknown'}. Value used: ...${config?.keyId?.slice(-4)}. Please check your hosting Env Variables.`;
+        errorMessage = `Razorpay Authentication Failed. Please check your Key ID and Secret in the Hosting Environment Variables or Admin Dashboard. (Key Source: ${config?.source?.toUpperCase()}, Key ID ending in ...${config?.keyId?.slice(-4)})`;
       }
       
       res.status(500).json({ 
