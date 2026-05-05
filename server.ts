@@ -568,6 +568,7 @@ app.get("/api/health-check", async (req, res) => {
       let databaseSyncSuccess = false;
       let amountPaid = 0;
       let couponUsed = "NONE";
+      let userName = "User";
 
       try {
         const database = getDb();
@@ -576,7 +577,7 @@ app.get("/api/health-check", async (req, res) => {
 
         if (userDoc.exists) {
           const userData = userDoc.data();
-          const userName = userData?.displayName || userData?.name || userData?.email?.split('@')[0] || "User";
+          userName = userData?.displayName || userData?.name || userData?.email?.split('@')[0] || "User";
           
           try {
             const razorpay = await getRazorpay();
@@ -613,7 +614,7 @@ app.get("/api/health-check", async (req, res) => {
              // Sync regular exams or live tests
              const liveTestRef = database.collection("liveTests").doc(itemId);
              const liveTestDoc = await liveTestRef.get();
-             let itemTitle = "Exam";
+             let itemTitle = "Exam Purchase";
              
              if (liveTestDoc.exists) {
                 itemTitle = liveTestDoc.data()?.title || "Live Test";
@@ -648,7 +649,7 @@ app.get("/api/health-check", async (req, res) => {
       }
 
       // Final Redirect
-      const finalUrl = `/dashboard?payment_success=true&itemId=${itemId}&userId=${userId}${databaseSyncSuccess ? "" : `&needs_client_update=true&amount=${amountPaid}&orderId=${razorpay_order_id}&paymentId=${razorpay_payment_id}`}`;
+      const finalUrl = `/dashboard?payment_success=true&itemId=${itemId}&userId=${userId}${databaseSyncSuccess ? "" : `&needs_client_update=true&amount=${amountPaid}&orderId=${razorpay_order_id}&paymentId=${razorpay_payment_id}&userName=${encodeURIComponent(userName)}`}`;
       return res.redirect(finalUrl);
 
     } catch (fatal: any) {
@@ -695,72 +696,99 @@ app.get("/api/health-check", async (req, res) => {
       if (isVerified) {
         // PAYMENT SUCCESS -> Update User in Firestore
         let clientFallbackRequired = false;
+        let amountPaid = 0;
+        let couponUsed = "NONE";
+        let userName = "User";
+
         try {
           const database = getDb();
           const userRef = database.collection("users").doc(userId);
           const userDoc = await userRef.get();
 
           if (userDoc.exists) {
+            const userData = userDoc.data();
+            userName = userData?.displayName || userData?.name || userData?.email?.split('@')[0] || "User";
+
+            try {
+              const razorpay = await getRazorpay();
+              if (razorpay && razorpay_order_id !== "FREE_ORDER") {
+                const orderInfo = await razorpay.orders.fetch(razorpay_order_id) as any;
+                amountPaid = (orderInfo.amount || 0) / 100;
+                couponUsed = orderInfo.notes?.couponCode || "NONE";
+              }
+            } catch (rzrErr) {
+              // fallback
+            }
+
             if (itemId === "PREMIUM_PASS") {
-              // Sitewide Premium Activation
               const expiryDate = new Date();
-              expiryDate.setFullYear(expiryDate.getFullYear() + 1); // 1 year validity
+              expiryDate.setFullYear(expiryDate.getFullYear() + 1);
               
               await userRef.update({
                 isPremium: true,
                 subscriptionExpiry: expiryDate.toISOString()
               });
 
-              await database.collection("subscriptions").add({
+              await database.collection("premium_subscriptions").add({
                 userId,
-                type: "global_premium",
+                userName,
+                type: "Premium",
                 purchaseDate: new Date().toISOString(),
                 expiryDate: expiryDate.toISOString(),
                 paymentId: razorpay_payment_id,
                 orderId: razorpay_order_id,
                 paymentStatus: "completed",
-                amount: 599 // Usually the price from create-order
+                amount: amountPaid || 599,
+                couponCode: couponUsed
               });
             } else {
-              // Check if it's a live test or regular exam
+              let itemTitle = "Exam Package";
               const liveTestRef = database.collection("liveTests").doc(itemId);
               const liveTestDoc = await liveTestRef.get();
               
               if (liveTestDoc.exists) {
-                // It's a live test -> Enroll user
+                itemTitle = liveTestDoc.data()?.title || "Live Test";
                 const enrolledUsers = liveTestDoc.data()?.enrolledUsers || [];
                 if (!enrolledUsers.includes(userId)) {
                   enrolledUsers.push(userId);
                   await liveTestRef.update({ enrolledUsers });
                 }
               } else {
-                // It's an exam package
-                const userData = userDoc.data();
-                const purchasedExams = userData?.purchasedExams || [];
+                const examDoc = await database.collection("exams").doc(itemId).get();
+                if (examDoc.exists) itemTitle = examDoc.data()?.title || "Exam";
                 
+                const purchasedExams = userData?.purchasedExams || [];
                 if (!purchasedExams.includes(itemId)) {
                   purchasedExams.push(itemId);
                   await userRef.update({ purchasedExams });
                 }
               }
               
-              // Record generic subscription/purchase log
               await database.collection("subscriptions").add({
                 userId,
-                examId: itemId, // Used for both exam and live test ID here
+                userName,
+                examId: itemId,
+                type: itemTitle,
                 purchaseDate: new Date().toISOString(),
                 paymentId: razorpay_payment_id,
                 orderId: razorpay_order_id,
-                paymentStatus: "completed"
+                paymentStatus: "completed",
+                amount: amountPaid,
+                couponCode: couponUsed
               });
             }
           }
         } catch (dbErr: any) {
-          // Silently trigger client fallback for DB updates because server DB access might be restricted
           clientFallbackRequired = true;
         }
 
-        res.json({ status: "ok", message: "Purchase verified", needsClientUpdate: clientFallbackRequired });
+        res.json({ 
+          status: "ok", 
+          message: "Purchase verified", 
+          needsClientUpdate: clientFallbackRequired,
+          amount: amountPaid,
+          userName: userName 
+        });
       } else {
         res.status(400).json({ status: "failed", message: "Invalid signature" });
       }

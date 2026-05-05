@@ -64,7 +64,8 @@ export default function Dashboard() {
       const processClientUpdate = async () => {
         setSaveMessage({ type: 'success', text: 'PAYMENT SUCCESSFUL! Processing your order...' });
         const amount = params.get('amount') || "0";
-        const userName = profile?.displayName || profile?.name || profile?.email?.split('@')[0] || "User";
+        const urlUserName = params.get('userName');
+        const userName = urlUserName || profile?.displayName || profile?.name || profile?.email?.split('@')[0] || "User";
 
         if (needsClientUpdate === 'true' && profile?.userId && itemId) {
            console.log("Processing client-side fallback record...");
@@ -90,7 +91,7 @@ export default function Dashboard() {
                    purchaseDate: new Date().toISOString(),
                    expiryDate: expiryDate.toISOString(),
                    paymentStatus: "completed",
-                   amount: parseFloat(amount),
+                   amount: parseFloat(amount) || 0,
                    couponCode: "NONE"
                 });
              } else {
@@ -122,7 +123,7 @@ export default function Dashboard() {
                    orderId: orderId,
                    purchaseDate: new Date().toISOString(),
                    paymentStatus: "completed",
-                   amount: parseFloat(amount),
+                   amount: parseFloat(amount) || 0,
                    couponCode: "NONE"
                 });
              }

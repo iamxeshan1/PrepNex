@@ -99,6 +99,8 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
             try {
                const { doc, getDoc, updateDoc, addDoc, collection } = await import('firebase/firestore');
                const db = (await import('../lib/firebase')).db;
+               const userName = result.userName || user.displayName || user.email?.split('@')[0] || "User";
+               const amount = result.amount || finalPrice || 0;
                
                if (item.id === "PREMIUM_PASS") {
                  const expiryDate = new Date();
@@ -107,37 +109,48 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
                     isPremium: true,
                     subscriptionExpiry: expiryDate.toISOString()
                  });
-                 await addDoc(collection(db, "subscriptions"), {
+
+                 await addDoc(collection(db, "premium_subscriptions"), {
                     userId: user.uid,
-                    type: "global_premium",
+                    userName: userName,
+                    type: "Premium",
                     purchaseDate: new Date().toISOString(),
                     expiryDate: expiryDate.toISOString(),
                     paymentId: 'FREE',
                     orderId: 'FREE_ORDER',
                     paymentStatus: "completed",
-                    amount: finalPrice
+                    amount: amount
                  });
                } else {
+                 let itemTitle = item.name || "Exam Purchase";
                  const liveTestDoc = await getDoc(doc(db, "liveTests", item.id));
                  if (liveTestDoc.exists()) {
+                   itemTitle = liveTestDoc.data()?.title || "Live Test";
                    const enrolledUsers = liveTestDoc.data()?.enrolledUsers || [];
                    if (!enrolledUsers.includes(user.uid)) {
                      await updateDoc(doc(db, "liveTests", item.id), { enrolledUsers: [...enrolledUsers, user.uid] });
                    }
                  } else {
+                   const examSnap = await getDoc(doc(db, "exams", item.id));
+                   if (examSnap.exists()) itemTitle = examSnap.data()?.title || "Exam";
+                   
                    const userDoc = await getDoc(doc(db, "users", user.uid));
                    const purchasedExams = userDoc.data()?.purchasedExams || [];
                    if (!purchasedExams.includes(item.id)) {
                      await updateDoc(doc(db, "users", user.uid), { purchasedExams: [...purchasedExams, item.id] });
                    }
                  }
+
                  await addDoc(collection(db, "subscriptions"), {
                     userId: user.uid,
+                    userName: userName,
                     examId: item.id,
+                    type: itemTitle,
                     purchaseDate: new Date().toISOString(),
                     paymentId: 'FREE',
                     orderId: 'FREE_ORDER',
-                    paymentStatus: "completed"
+                    paymentStatus: "completed",
+                    amount: amount
                  });
                }
             } catch (clientDbErr) {
