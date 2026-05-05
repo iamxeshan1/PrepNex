@@ -132,12 +132,18 @@ async function getRazorpay() {
   const envKeySecret = (process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET || process.env.RAZORPAY_SECRET_KEY || "").trim();
 
   if (envKeyId && envKeySecret) {
-    console.log(`[Razorpay Debug] Initializing with env vars: ID=${envKeyId.substring(0, 4)}... (len:${envKeyId.length}), Secret=${envKeySecret.substring(0, 4)}... (len:${envKeySecret.length})`);
-    razorpayInstance = new Razorpay({
-      key_id: envKeyId,
-      key_secret: envKeySecret,
-    });
-    return razorpayInstance;
+    console.log(`[Razorpay Debug] Initializing with env vars: ID=${envKeyId.substring(0, 8)}... (len:${envKeyId.length}), Secret=${envKeySecret.substring(0, 3)}... (len:${envKeySecret.length})`);
+    try {
+      razorpayInstance = new Razorpay({
+        key_id: envKeyId,
+        key_secret: envKeySecret,
+      });
+      return razorpayInstance;
+    } catch (err) {
+      console.error("[Razorpay Debug] Constructor failed:", err);
+    }
+  } else {
+    console.warn(`[Razorpay Debug] Missing env credentials: ID=${envKeyId ? 'FOUND' : 'MISSING'}, Secret=${envKeySecret ? 'FOUND' : 'MISSING'}`);
   }
   
   try {
