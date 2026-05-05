@@ -338,8 +338,11 @@ app.get("/api/health-check", async (req, res) => {
   // API Routes
   app.get("/api/payment-status", async (req, res) => {
     try {
-      const razorpay = await getRazorpay();
-      res.json({ configured: true, keyId: (razorpay as any).key_id });
+      const config = await getRazorpayConfig();
+      if (!config) {
+        return res.status(500).json({ configured: false, error: "Razorpay Not Configured" });
+      }
+      res.json({ configured: true, keyId: config.keyId });
     } catch (error: any) {
       res.status(500).json({ configured: false, error: error.message });
     }
