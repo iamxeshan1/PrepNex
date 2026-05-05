@@ -158,6 +158,10 @@ async function getRazorpayConfig() {
     process.env.RAZORPAY_API_SECRET ||
     ""
   );
+  
+  if (envKeyId || envKeySecret) {
+      console.log(`[Razorpay Debug] Found ENV keys: RAZORPAY_KEY_ID=${!!process.env.RAZORPAY_KEY_ID}, VITE_RAZORPAY_KEY_ID=${!!process.env.VITE_RAZORPAY_KEY_ID}, RAZORPAY_ID=${!!process.env.RAZORPAY_ID}, RAZORPAY_API_KEY=${!!process.env.RAZORPAY_API_KEY}`);
+  }
 
   if (envKeyId && envKeySecret) {
     return { keyId: envKeyId, keySecret: envKeySecret, source: 'env' };
