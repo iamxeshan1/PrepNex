@@ -153,7 +153,8 @@ async function getRazorpay() {
   const envKeySecret = getEnvRazorpaySecret();
 
   if (envKeyId && envKeySecret) {
-    console.log(`[Razorpay Debug] Initializing using env vars. ID=${envKeyId.substring(0, 8)}... Secret=${envKeySecret.substring(0, 3)}...${envKeySecret.substring(Math.max(0, envKeySecret.length - 3))}`);
+    const isTest = envKeyId.startsWith("rzp_test");
+    console.log(`[Razorpay Debug] Initializing using ${isTest ? 'TEST' : 'LIVE'} env vars. ID=${envKeyId.substring(0, 8)}... Secret=${envKeySecret.substring(0, 3)}...${envKeySecret.substring(Math.max(0, envKeySecret.length - 3))}`);
     try {
       razorpayInstance = new Razorpay({
         key_id: envKeyId,
@@ -163,6 +164,10 @@ async function getRazorpay() {
     } catch (err) {
       console.error("[Razorpay Debug] Constructor failed:", err);
     }
+  }
+
+  if (process.env.VITE_RAZORPAY_KEY_SECRET) {
+    console.warn("[Razorpay Debug] WARNING: You have a secret named VITE_RAZORPAY_KEY_SECRET. Secrets should NOT have the VITE_ prefix.");
   }
 
   // Try Database as fallback
