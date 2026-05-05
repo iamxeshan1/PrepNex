@@ -191,6 +191,9 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
 
       if (!config.configured) throw new Error('Payment system is not properly configured by administrator.');
 
+      const callbackParams = new URLSearchParams({ userId: user.uid, itemId: item.id });
+      const callbackUrl = `${window.location.origin}/api/payment-callback?${callbackParams.toString()}`;
+
       const options = {
         key: config.keyId,
         amount: order.amount,
@@ -198,6 +201,8 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
         name: "PrepNext",
         description: `Enrollment for ${item.name}`,
         order_id: order.id,
+        callback_url: callbackUrl,
+        redirect: true,
         handler: async (response: any) => {
           try {
             const verifyResponse = await fetch('/api/verify-payment', {

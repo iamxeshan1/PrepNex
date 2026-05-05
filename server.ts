@@ -122,75 +122,67 @@ const sendEmail = async (to: string, subject: string, html: string, fromNameOver
   });
 };
 
-let razorpayInstance: Razorpay | null = null;
+const stripQuotes = (str: string) => (str || "").trim().replace(/^["'](.+)["']$/, '$1');
 
-async function getRazorpay() {
-  if (razorpayInstance) return razorpayInstance;
-  
-  const stripQuotes = (str: string) => (str || "").trim().replace(/^["'](.+)["']$/, '$1');
+async function getRazorpayConfig() {
+  const envKeyId = stripQuotes(
+    process.env.RAZORPAY_KEY_ID || 
+    process.env.VITE_RAZORPAY_KEY_ID || 
+    process.env.RAZORPAY_ID || 
+    process.env.RAZORPAY_API_KEY ||
+    ""
+  );
 
-  function getEnvRazorpaySecret() {
-    return stripQuotes(
-      process.env.RAZORPAY_KEY_SECRET || 
-      process.env.RAZORPAY_SECRET || 
-      process.env.RAZORPAY_SECRET_KEY || 
-      process.env.RAZORPAY_API_SECRET ||
-      ""
-    );
-  }
-
-  function getEnvRazorpayId() {
-    return stripQuotes(
-      process.env.RAZORPAY_KEY_ID || 
-      process.env.VITE_RAZORPAY_KEY_ID || 
-      process.env.RAZORPAY_ID || 
-      process.env.RAZORPAY_API_KEY ||
-      ""
-    );
-  }
-
-  const envKeyId = getEnvRazorpayId();
-  const envKeySecret = getEnvRazorpaySecret();
+  const envKeySecret = stripQuotes(
+    process.env.RAZORPAY_KEY_SECRET || 
+    process.env.VITE_RAZORPAY_KEY_SECRET ||
+    process.env.RAZORPAY_SECRET || 
+    process.env.RAZORPAY_SECRET_KEY || 
+    process.env.RAZORPAY_API_SECRET ||
+    ""
+  );
 
   if (envKeyId && envKeySecret) {
-    const isTest = envKeyId.startsWith("rzp_test");
-    console.log(`[Razorpay Debug] Initializing using ${isTest ? 'TEST' : 'LIVE'} env vars. ID=${envKeyId.substring(0, 8)}... Secret=${envKeySecret.substring(0, 3)}...${envKeySecret.substring(Math.max(0, envKeySecret.length - 3))}`);
-    try {
-      razorpayInstance = new Razorpay({
-        key_id: envKeyId,
-        key_secret: envKeySecret,
-      });
-      return razorpayInstance;
-    } catch (err) {
-      console.error("[Razorpay Debug] Constructor failed:", err);
-    }
+    return { keyId: envKeyId, keySecret: envKeySecret, source: 'env' };
   }
 
-  if (process.env.VITE_RAZORPAY_KEY_SECRET) {
-    console.warn("[Razorpay Debug] WARNING: You have a secret named VITE_RAZORPAY_KEY_SECRET. Secrets should NOT have the VITE_ prefix.");
-  }
-
-  // Try Database as fallback
   try {
-    console.log("[Razorpay Debug] No valid env keys, checking Firestore...");
     const database = getDb();
     const settingsDoc = await database.collection("settings").doc("razorpay").get();
     if (settingsDoc.exists) {
       const data = settingsDoc.data();
       const dbKeyId = stripQuotes(data?.razorpayKeyId || "");
       const dbKeySecret = stripQuotes(data?.razorpayKeySecret || "");
-      
       if (dbKeyId && dbKeySecret) {
-        console.log(`[Razorpay Debug] Initializing using Firestore. ID=${dbKeyId.substring(0, 8)}... Secret=${dbKeySecret.substring(0, 3)}...`);
-        razorpayInstance = new Razorpay({
-          key_id: dbKeyId,
-          key_secret: dbKeySecret,
-        });
-        return razorpayInstance;
+        return { keyId: dbKeyId, keySecret: dbKeySecret, source: 'db' };
       }
     }
   } catch (error: any) {
-    console.warn("[Razorpay Debug] Could not fetch Razorpay settings from Firestore:", error.message || error);
+    console.warn("[Razorpay Config] Could not fetch from Firestore:", error.message || error);
+  }
+
+  return null;
+}
+
+let razorpayInstance: Razorpay | null = null;
+
+async function getRazorpay() {
+  if (razorpayInstance) return razorpayInstance;
+  
+  const config = await getRazorpayConfig();
+  
+  if (config) {
+    const isTest = config.keyId.startsWith("rzp_test");
+    console.log(`[Razorpay Debug] Initializing using ${isTest ? 'TEST' : 'LIVE'} ${config.source} config. ID=${config.keyId.substring(0, 8)}... Secret=${config.keySecret.substring(0, 3)}...${config.keySecret.substring(Math.max(0, config.keySecret.length - 3))}`);
+    try {
+      razorpayInstance = new Razorpay({
+        key_id: config.keyId,
+        key_secret: config.keySecret,
+      });
+      return razorpayInstance;
+    } catch (err) {
+      console.error("[Razorpay Debug] Constructor failed:", err);
+    }
   }
 
   console.error("[Razorpay Debug] Authentication configuration missing or invalid in both ENV and DB.");
@@ -201,6 +193,7 @@ export const app = express();
 const PORT = 3000;
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Add support for form submissions (Razorpay callback)
 
 app.get("/api/health-check", async (req, res) => {
     try {
@@ -493,6 +486,108 @@ app.get("/api/health-check", async (req, res) => {
     }
   });
 
+  app.post("/api/payment-callback", async (req, res) => {
+    try {
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+      const userId = req.query.userId as string;
+      const itemId = req.query.itemId as string;
+      
+      if (!razorpay_order_id || !razorpay_payment_id || !userId || !itemId) {
+        return res.redirect("/dashboard?payment_error=missing_details");
+      }
+
+      let secret = "";
+      try {
+        const config = await getRazorpayConfig();
+        if (config) {
+          secret = config.keySecret;
+        }
+      } catch (err: any) {}
+
+      if (!secret) {
+        console.error("Payment redirect verification failed: Razorpay secret not found");
+        return res.redirect("/dashboard?payment_error=server_configuration");
+      }
+
+      const body = razorpay_order_id + "|" + razorpay_payment_id;
+      const expectedSignature = crypto.createHmac("sha256", secret).update(body).digest("hex");
+      const isVerified = expectedSignature === razorpay_signature;
+
+      if (isVerified) {
+        let clientFallbackRequired = false;
+        try {
+          const database = getDb();
+          const userRef = database.collection("users").doc(userId);
+          const userDoc = await userRef.get();
+
+          if (userDoc.exists) {
+            if (itemId === "PREMIUM_PASS") {
+              const expiryDate = new Date();
+              expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+              
+              await userRef.update({
+                isPremium: true,
+                subscriptionExpiry: expiryDate.toISOString()
+              });
+
+              await database.collection("subscriptions").add({
+                userId,
+                type: "global_premium",
+                purchaseDate: new Date().toISOString(),
+                expiryDate: expiryDate.toISOString(),
+                paymentId: razorpay_payment_id,
+                orderId: razorpay_order_id,
+                paymentStatus: "completed",
+                amount: 599 
+              });
+            } else {
+              const liveTestRef = database.collection("liveTests").doc(itemId);
+              const liveTestDoc = await liveTestRef.get();
+              
+              if (liveTestDoc.exists) {
+                const enrolledUsers = liveTestDoc.data()?.enrolledUsers || [];
+                if (!enrolledUsers.includes(userId)) {
+                  enrolledUsers.push(userId);
+                  await liveTestRef.update({ enrolledUsers });
+                }
+              } else {
+                const userData = userDoc.data();
+                const purchasedExams = userData?.purchasedExams || [];
+                
+                if (!purchasedExams.includes(itemId)) {
+                  purchasedExams.push(itemId);
+                  await userRef.update({ purchasedExams });
+                }
+              }
+              
+              await database.collection("subscriptions").add({
+                userId,
+                examId: itemId,
+                purchaseDate: new Date().toISOString(),
+                paymentId: razorpay_payment_id,
+                orderId: razorpay_order_id,
+                paymentStatus: "completed"
+              });
+            }
+          }
+        } catch (dbErr: any) {
+          clientFallbackRequired = true;
+        }
+
+        let redirectUrl = `/dashboard?payment_success=true&itemId=${encodeURIComponent(itemId)}&orderId=${encodeURIComponent(razorpay_order_id)}&paymentId=${encodeURIComponent(razorpay_payment_id)}`;
+        if (clientFallbackRequired) {
+           redirectUrl += "&needs_client_update=true";
+        }
+        res.redirect(redirectUrl);
+      } else {
+        res.redirect("/dashboard?payment_error=invalid_signature");
+      }
+    } catch (error: any) {
+      console.error("Payment redirect verification failed:", error);
+      res.redirect("/dashboard?payment_error=verification_error");
+    }
+  });
+
   app.post("/api/verify-payment", async (req, res) => {
     try {
       const { razorpay_order_id, razorpay_payment_id, razorpay_signature, userId, itemId } = req.body;
@@ -510,22 +605,17 @@ app.get("/api/health-check", async (req, res) => {
         
         let secret = "";
         try {
-          // Try to get from env first
-          secret = (
-            process.env.RAZORPAY_KEY_SECRET || 
-            process.env.RAZORPAY_SECRET || 
-            process.env.RAZORPAY_SECRET_KEY || 
-            process.env.RAZORPAY_API_SECRET ||
-            ""
-          ).trim().replace(/^["'](.+)["']$/, '$1');
-
-          if (!secret) {
-            const database = getDb();
-            const settingsDoc = await database.collection("settings").doc("razorpay").get();
-            secret = settingsDoc.data()?.razorpayKeySecret || "";
+          const config = await getRazorpayConfig();
+          if (config) {
+            secret = config.keySecret;
           }
         } catch (err: any) {
           // fallback
+        }
+
+        if (!secret) {
+          console.error("Payment verification failed: Razorpay secret not found");
+          return res.status(500).json({ status: "failed", message: "Server configuration error" });
         }
 
         const body = razorpay_order_id + "|" + razorpay_payment_id;

@@ -54,8 +54,17 @@ export default function Login() {
       }
       navigate('/dashboard');
     } catch (err: any) {
-      console.error(err);
-      setError('Google Sign-In failed');
+      console.error("Google Login Error:", err);
+      // Provide more specific feedback for common Firebase errors
+      if (err.code === 'auth/unauthorized-domain') {
+        setError(`Domain not authorized. Please add this domain (${window.location.hostname}) to Authorized Domains in Firebase Console.`);
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        setError('Sign-in popup closed before completion.');
+      } else if (err.code === 'auth/cancelled-popup-request') {
+        setError('Sign-in request cancelled.');
+      } else {
+        setError(`Google Sign-In failed: ${err.message || 'Unknown error'}`);
+      }
     } finally {
       setLoading(false);
     }

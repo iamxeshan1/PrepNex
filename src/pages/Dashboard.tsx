@@ -45,6 +45,56 @@ export default function Dashboard() {
   const [reviewMessage, setReviewMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   useEffect(() => {
+    // Handle payment redirects
+    const params = new URLSearchParams(window.location.search);
+    const success = params.get('payment_success');
+    const error = params.get('payment_error');
+    const itemId = params.get('itemId');
+
+    if (error) {
+      alert(`Payment Error: ${error.replace('_', ' ')}`);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (success === 'true') {
+      const needsClientUpdate = params.get('needs_client_update');
+      
+      const processClientUpdate = async () => {
+        if (needsClientUpdate === 'true' && profile?.userId && itemId) {
+           console.log("Processing client-side database update for purchase...");
+           try {
+             if (itemId === "PREMIUM_PASS") {
+                const expiryDate = new Date();
+                expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+                await updateDoc(doc(db, "users", profile.userId), {
+                  isPremium: true,
+                  subscriptionExpiry: expiryDate.toISOString()
+                });
+             } else {
+               const liveTestDoc = await getDocs(query(collection(db, "liveTests"), where("__name__", "==", itemId)));
+               if (!liveTestDoc.empty) {
+                  const data = liveTestDoc.docs[0].data();
+                  const enrolledUsers = data.enrolledUsers || [];
+                  if (!enrolledUsers.includes(profile.userId)) {
+                    await updateDoc(doc(db, "liveTests", itemId), { enrolledUsers: [...enrolledUsers, profile.userId] });
+                  }
+               } else {
+                 const purchasedExams = profile.purchasedExams || [];
+                 if (!purchasedExams.includes(itemId)) {
+                   await updateDoc(doc(db, "users", profile.userId), { purchasedExams: [...purchasedExams, itemId] });
+                 }
+               }
+             }
+           } catch(e) {
+             console.error("Client side purchase log update failed", e);
+           }
+        }
+      };
+
+      processClientUpdate().then(() => {
+        alert("Payment successful! Your account has been updated.");
+        window.history.replaceState({}, document.title, window.location.pathname);
+      });
+    }
+
     if (profile) {
       setName(profile.name || '');
       setPhone(profile.phone || '');
