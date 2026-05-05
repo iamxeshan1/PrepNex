@@ -68,6 +68,9 @@ export default function Dashboard() {
 
         if (needsClientUpdate === 'true' && profile?.userId && itemId) {
            console.log("Processing client-side fallback record...");
+           const orderId = params.get('orderId') || "FB_FALLBACK";
+           const paymentId = params.get('paymentId') || "FB_FALLBACK";
+
            try {
              if (itemId === "PREMIUM_PASS") {
                 const expiryDate = new Date();
@@ -76,20 +79,52 @@ export default function Dashboard() {
                   isPremium: true,
                   subscriptionExpiry: expiryDate.toISOString()
                 });
+                
+                // Track for Revenue
+                await addDoc(collection(db, "premium_subscriptions"), {
+                   userId: profile.userId,
+                   userName: userName,
+                   type: "Premium",
+                   paymentId: paymentId,
+                   orderId: orderId,
+                   purchaseDate: new Date().toISOString(),
+                   expiryDate: expiryDate.toISOString(),
+                   paymentStatus: "completed",
+                   amount: parseFloat(amount),
+                   couponCode: "NONE"
+                });
              } else {
-               const liveTestDoc = await getDocs(query(collection(db, "liveTests"), where("__name__", "==", itemId)));
-               if (!liveTestDoc.empty) {
-                  const data = liveTestDoc.docs[0].data();
-                  const enrolledUsers = data.enrolledUsers || [];
-                  if (!enrolledUsers.includes(profile.userId)) {
-                    await updateDoc(doc(db, "liveTests", itemId), { enrolledUsers: [...enrolledUsers, profile.userId] });
+                let itemTitle = "Exam Purchase";
+                const ltSnap = await getDoc(doc(db, "liveTests", itemId));
+                if (ltSnap.exists()) {
+                   itemTitle = ltSnap.data().title || "Live Test";
+                   const enrolledUsers = ltSnap.data().enrolledUsers || [];
+                   if (!enrolledUsers.includes(profile.userId)) {
+                     await updateDoc(doc(db, "liveTests", itemId), { enrolledUsers: [...enrolledUsers, profile.userId] });
+                   }
+                } else {
+                  const examSnap = await getDoc(doc(db, "exams", itemId));
+                  if (examSnap.exists()) itemTitle = examSnap.data().title || "Exam";
+                  
+                  const purchasedExams = profile.purchasedExams || [];
+                  if (!purchasedExams.includes(itemId)) {
+                    await updateDoc(doc(db, "users", profile.userId), { purchasedExams: [...purchasedExams, itemId] });
                   }
-               } else {
-                 const purchasedExams = profile.purchasedExams || [];
-                 if (!purchasedExams.includes(itemId)) {
-                   await updateDoc(doc(db, "users", profile.userId), { purchasedExams: [...purchasedExams, itemId] });
-                 }
-               }
+                }
+
+                // Track for Revenue
+                await addDoc(collection(db, "subscriptions"), {
+                   userId: profile.userId,
+                   userName: userName,
+                   examId: itemId,
+                   type: itemTitle,
+                   paymentId: paymentId,
+                   orderId: orderId,
+                   purchaseDate: new Date().toISOString(),
+                   paymentStatus: "completed",
+                   amount: parseFloat(amount),
+                   couponCode: "NONE"
+                });
              }
            } catch(e) {
              console.error("Client side purchase log update failed", e);

@@ -9,9 +9,8 @@ const app = initializeApp(firebaseConfig);
 
 // Use initializeFirestore with settings that are more resilient to network issues
 export const db = initializeFirestore(app, {
-  databaseId: firebaseConfig.firestoreDatabaseId,
   experimentalForceLongPolling: true, // Often helps in restricted networks or proxy environments
-});
+}, firebaseConfig.firestoreDatabaseId);
 
 export const auth = getAuth(app);
 export const storage = getStorage(app);

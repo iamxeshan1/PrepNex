@@ -648,7 +648,7 @@ app.get("/api/health-check", async (req, res) => {
       }
 
       // Final Redirect
-      const finalUrl = `/dashboard?payment_success=true&itemId=${itemId}&userId=${userId}${databaseSyncSuccess ? "" : `&needs_client_update=true&amount=${amountPaid}`}`;
+      const finalUrl = `/dashboard?payment_success=true&itemId=${itemId}&userId=${userId}${databaseSyncSuccess ? "" : `&needs_client_update=true&amount=${amountPaid}&orderId=${razorpay_order_id}&paymentId=${razorpay_payment_id}`}`;
       return res.redirect(finalUrl);
 
     } catch (fatal: any) {
