@@ -18,6 +18,7 @@ let config: any = {};
 if (fs.existsSync(configPath)) {
   config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
 }
+console.log("[Server Boot] VERSION: 1.0.4 - Razorpay Diagnostic Mode");
 console.log("[Config Debug] Loaded Firebase config. Project ID:", config.projectId, "Database ID:", config.firestoreDatabaseId);
 
 // Lazy Initialize Admin SDK
