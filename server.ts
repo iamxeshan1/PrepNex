@@ -126,26 +126,28 @@ const stripQuotes = (str: string) => (str || "").trim().replace(/^["'](.+)["']$/
 
 async function getRazorpayConfig() {
   // 1. Check Environment Variables First (Standard for production secrets)
-  const envKeyId = stripQuotes(
-    process.env.RAZORPAY_KEY_ID || 
-    process.env.VITE_RAZORPAY_KEY_ID || 
-    process.env.RAZORPAY_ID || 
-    process.env.RAZORPAY_API_KEY ||
-    ""
-  );
+  let keyId = "";
+  let keyIdVar = "";
+  
+  if (process.env.RAZORPAY_KEY_ID) { keyId = process.env.RAZORPAY_KEY_ID; keyIdVar = "RAZORPAY_KEY_ID"; }
+  else if (process.env.VITE_RAZORPAY_KEY_ID) { keyId = process.env.VITE_RAZORPAY_KEY_ID; keyIdVar = "VITE_RAZORPAY_KEY_ID"; }
+  else if (process.env.RAZORPAY_ID) { keyId = process.env.RAZORPAY_ID; keyIdVar = "RAZORPAY_ID"; }
+  else if (process.env.RAZORPAY_API_KEY) { keyId = process.env.RAZORPAY_API_KEY; keyIdVar = "RAZORPAY_API_KEY"; }
 
-  const envKeySecret = stripQuotes(
-    process.env.RAZORPAY_KEY_SECRET || 
-    process.env.VITE_RAZORPAY_KEY_SECRET ||
-    process.env.RAZORPAY_SECRET || 
-    process.env.RAZORPAY_SECRET_KEY || 
-    process.env.RAZORPAY_API_SECRET ||
-    ""
-  );
+  let keySecret = "";
+  let keySecretVar = "";
+  if (process.env.RAZORPAY_KEY_SECRET) { keySecret = process.env.RAZORPAY_KEY_SECRET; keySecretVar = "RAZORPAY_KEY_SECRET"; }
+  else if (process.env.VITE_RAZORPAY_KEY_SECRET) { keySecret = process.env.VITE_RAZORPAY_KEY_SECRET; keySecretVar = "VITE_RAZORPAY_KEY_SECRET"; }
+  else if (process.env.RAZORPAY_SECRET) { keySecret = process.env.RAZORPAY_SECRET; keySecretVar = "RAZORPAY_SECRET"; }
+  else if (process.env.RAZORPAY_SECRET_KEY) { keySecret = process.env.RAZORPAY_SECRET_KEY; keySecretVar = "RAZORPAY_SECRET_KEY"; }
+  else if (process.env.RAZORPAY_API_SECRET) { keySecret = process.env.RAZORPAY_API_SECRET; keySecretVar = "RAZORPAY_API_SECRET"; }
 
-  if (envKeyId && envKeySecret) {
-    console.log(`[Razorpay Debug] Using credentials from Environment Variables (ID ending in ...${envKeyId.slice(-4)})`);
-    return { keyId: envKeyId, keySecret: envKeySecret, source: 'env' };
+  keyId = stripQuotes(keyId);
+  keySecret = stripQuotes(keySecret);
+
+  if (keyId && keySecret) {
+    console.log(`[Razorpay Debug] Using credentials from Environment Variables (ID: ${keyIdVar}=...${keyId.slice(-4)}, Secret: ${keySecretVar})`);
+    return { keyId, keySecret, source: 'env', keyIdVar, keySecretVar };
   }
 
   // 2. Fallback to Database (Admin Settings)
@@ -158,7 +160,7 @@ async function getRazorpayConfig() {
       const dbKeySecret = stripQuotes(data?.razorpayKeySecret || "");
       if (dbKeyId && dbKeySecret) {
         console.log(`[Razorpay Debug] Using credentials from Database/Admin Panel (ID ending in ...${dbKeyId.slice(-4)})`);
-        return { keyId: dbKeyId, keySecret: dbKeySecret, source: 'db' };
+        return { keyId: dbKeyId, keySecret: dbKeySecret, source: 'db', keyIdVar: 'DB_razorpayKeyId', keySecretVar: 'DB_razorpayKeySecret' };
       }
     }
   } catch (error: any) {
@@ -471,8 +473,8 @@ app.get("/api/health-check", async (req, res) => {
       }
 
       if (errorMessage.toLowerCase().includes("authentication failed")) {
-        const config = await getRazorpayConfig();
-        errorMessage = `Razorpay Auth Failed: Invalid keys from ${config?.source?.toUpperCase()}. Key ID used: ...${config?.keyId?.slice(-4)}. Fix this in your hosting Env Variables or Admin Dashboard.`;
+        const config = await getRazorpayConfig() as any;
+        errorMessage = `Razorpay Auth Failed: Invalid keys from ${config?.source?.toUpperCase()}. Key ID checked from env var: ${config?.keyIdVar || 'unknown'}. Value used: ...${config?.keyId?.slice(-4)}. Please check your hosting Env Variables.`;
       }
       
       res.status(500).json({ 
