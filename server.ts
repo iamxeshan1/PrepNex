@@ -486,12 +486,16 @@ app.get("/api/health-check", async (req, res) => {
 
   app.post("/api/payment-callback", async (req, res) => {
     try {
+      console.log("[Payment Callback] Body:", req.body);
+      console.log("[Payment Callback] Query:", req.query);
+
       const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
       const userId = req.query.userId as string;
       const itemId = req.query.itemId as string;
       
       if (!razorpay_order_id || !razorpay_payment_id || !userId || !itemId) {
-        return res.redirect("/dashboard?payment_error=missing_details");
+        console.error("[Payment Callback Error] Missing details. Body keys:", Object.keys(req.body), "Query keys:", Object.keys(req.query));
+        return res.redirect(`/dashboard?payment_error=missing_details&body_keys=${Object.keys(req.body).join(',')}&query_keys=${Object.keys(req.query).join(',')}`);
       }
 
       let secret = "";

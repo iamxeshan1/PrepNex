@@ -201,8 +201,6 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
         name: "PrepNext",
         description: `Enrollment for ${item.name}`,
         order_id: order.id,
-        callback_url: callbackUrl,
-        redirect: true,
         prefill: {
           name: user.displayName || '',
           email: user.email || ''
@@ -212,8 +210,25 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
         },
         modal: {
           ondismiss: () => {
-            setIsProcessing(false);
+             setIsProcessing(false);
           }
+        },
+        handler: function (response: any) {
+             const form = document.createElement('form');
+             form.method = 'POST';
+             form.action = callbackUrl;
+             
+             const fields = ['razorpay_order_id', 'razorpay_payment_id', 'razorpay_signature'];
+             fields.forEach(field => {
+                 const input = document.createElement('input');
+                 input.type = 'hidden';
+                 input.name = field;
+                 input.value = response[field];
+                 form.appendChild(input);
+             });
+             
+             document.body.appendChild(form);
+             form.submit();
         }
       };
 
