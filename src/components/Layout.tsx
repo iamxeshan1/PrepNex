@@ -151,12 +151,25 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const [settings, setSettings] = React.useState<any>(null);
 
   React.useEffect(() => {
+    let retryCount = 0;
+    const maxRetries = 2;
+
     const fetchGeneral = async () => {
       try {
         const snap = await getDoc(doc(db, 'settings', 'general'));
-        if (snap.exists()) setSettings(snap.data());
-      } catch (err) {
-        console.error("Error fetching general settings:", err);
+        if (snap.exists()) {
+          setSettings(snap.data());
+        }
+      } catch (err: any) {
+        // Only log error once to avoid console noise if offline
+        if (retryCount === 0) {
+          console.warn("Could not load general settings from Firestore. Using defaults.", err.message);
+        }
+        
+        if (retryCount < maxRetries) {
+          retryCount++;
+          setTimeout(fetchGeneral, 2000 * retryCount); // Backoff retry
+        }
       }
     };
     fetchGeneral();

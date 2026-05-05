@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Layout } from '../components/Layout';
-import { collection, query, where, getDocs, orderBy, limit, doc, updateDoc, addDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, getDoc, orderBy, limit, doc, updateDoc, addDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { logActivity, ActivityAction } from '../services/activityLogger';
 import { BarChart, Clock, Award, ChevronRight, BookOpen, User as UserIcon, Bell, Calendar, Phone, Mail, Save, AlertCircle, Crown, AlertTriangle, Star, CheckCircle, Send, MessageCircle, Zap, Timer, MapPin, Building, Map } from 'lucide-react';
@@ -63,8 +63,11 @@ export default function Dashboard() {
       
       const processClientUpdate = async () => {
         setSaveMessage({ type: 'success', text: 'PAYMENT SUCCESSFUL! Processing your order...' });
+        const amount = params.get('amount') || "0";
+        const userName = profile?.displayName || profile?.name || profile?.email?.split('@')[0] || "User";
+
         if (needsClientUpdate === 'true' && profile?.userId && itemId) {
-           console.log("Processing client-side database update for purchase...");
+           console.log("Processing client-side fallback record...");
            try {
              if (itemId === "PREMIUM_PASS") {
                 const expiryDate = new Date();
@@ -323,7 +326,7 @@ export default function Dashboard() {
             <motion.div 
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, opacity: 0 }}
+              exit={{ opacity: 0 }}
               className={`mb-8 p-6 rounded-[2rem] border shadow-sm flex items-center justify-between gap-4 ${
                 saveMessage.type === 'success' 
                   ? 'bg-green-50 border-green-100 text-green-800' 

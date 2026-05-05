@@ -253,6 +253,7 @@
     "questions": { "schema": "Question", "description": "Questions within tests" },
     "results": { "schema": "Result", "description": "Test results" },
     "subscriptions": { "schema": "Subscription", "description": "User subscriptions" },
+    "premium_subscriptions": { "schema": "Subscription", "description": "Premium bundle subscriptions" },
     "liveTests": { "schema": "LiveTest", "description": "Scheduled live tests" },
     "coupons": { "schema": "Coupon", "description": "Discount coupons" },
     "tickets": { "schema": "Ticket", "description": "Support tickets" },

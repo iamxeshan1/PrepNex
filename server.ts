@@ -474,7 +474,8 @@ app.get("/api/health-check", async (req, res) => {
         notes: {
           itemId,
           itemName,
-          couponCode: couponCode || "NONE"
+          couponCode: couponCode || "NONE",
+          amount: finalAmount
         }
       };
 
@@ -565,35 +566,78 @@ app.get("/api/health-check", async (req, res) => {
 
       // Verification Success -> Attempt DB Sync
       let databaseSyncSuccess = false;
+      let amountPaid = 0;
+      let couponUsed = "NONE";
+
       try {
         const database = getDb();
         const userRef = database.collection("users").doc(userId);
         const userDoc = await userRef.get();
 
         if (userDoc.exists) {
-          console.log(`[Payment Callback] Syncing DB for ${userId}...`);
+          const userData = userDoc.data();
+          const userName = userData?.displayName || userData?.name || userData?.email?.split('@')[0] || "User";
+          
+          try {
+            const razorpay = await getRazorpay();
+            if (razorpay) {
+              const orderInfo = await razorpay.orders.fetch(razorpay_order_id) as any;
+              amountPaid = (orderInfo.amount || 0) / 100;
+              couponUsed = orderInfo.notes?.couponCode || "NONE";
+            }
+          } catch (rzrErr: any) {
+            console.error("[Payment Callback] Could not fetch order info from Razorpay:", rzrErr.message);
+          }
+
+          console.log(`[Payment Callback] Syncing DB for ${userId} (${userName})...`);
+          
           if (itemId === "PREMIUM_PASS") {
             const expiry = new Date();
             expiry.setFullYear(expiry.getFullYear() + 1);
             await userRef.update({ isPremium: true, subscriptionExpiry: expiry.toISOString() });
-            await database.collection("subscriptions").add({
-              userId, type: "global_premium", paymentId: razorpay_payment_id, orderId: razorpay_order_id,
-              purchaseDate: new Date().toISOString(), expiryDate: expiry.toISOString(), paymentStatus: "completed"
+            
+            // Add to premium_subscriptions for Revenue tab category
+            await database.collection("premium_subscriptions").add({
+              userId,
+              userName,
+              type: "Premium",
+              paymentId: razorpay_payment_id,
+              orderId: razorpay_order_id,
+              purchaseDate: new Date().toISOString(),
+              expiryDate: expiry.toISOString(),
+              paymentStatus: "completed",
+              amount: amountPaid || 599,
+              couponCode: couponUsed
             });
           } else {
              // Sync regular exams or live tests
              const liveTestRef = database.collection("liveTests").doc(itemId);
              const liveTestDoc = await liveTestRef.get();
+             let itemTitle = "Exam";
+             
              if (liveTestDoc.exists) {
+                itemTitle = liveTestDoc.data()?.title || "Live Test";
                 const enrolled = liveTestDoc.data()?.enrolledUsers || [];
                 if (!enrolled.includes(userId)) await liveTestRef.update({ enrolledUsers: [...enrolled, userId] });
              } else {
-                const purchased = userDoc.data()?.purchasedExams || [];
+                const examDoc = await database.collection("exams").doc(itemId).get();
+                if (examDoc.exists) itemTitle = examDoc.data()?.title || "Exam";
+                
+                const purchased = userData?.purchasedExams || [];
                 if (!purchased.includes(itemId)) await userRef.update({ purchasedExams: [...purchased, itemId] });
              }
+             
              await database.collection("subscriptions").add({
-               userId, examId: itemId, paymentId: razorpay_payment_id, orderId: razorpay_order_id,
-               purchaseDate: new Date().toISOString(), paymentStatus: "completed"
+               userId,
+               userName,
+               examId: itemId,
+               type: itemTitle,
+               paymentId: razorpay_payment_id,
+               orderId: razorpay_order_id,
+               purchaseDate: new Date().toISOString(),
+               paymentStatus: "completed",
+               amount: amountPaid,
+               couponCode: couponUsed
              });
           }
           databaseSyncSuccess = true;
@@ -604,7 +648,7 @@ app.get("/api/health-check", async (req, res) => {
       }
 
       // Final Redirect
-      const finalUrl = `/dashboard?payment_success=true&itemId=${itemId}&userId=${userId}${databaseSyncSuccess ? "" : "&needs_client_update=true"}`;
+      const finalUrl = `/dashboard?payment_success=true&itemId=${itemId}&userId=${userId}${databaseSyncSuccess ? "" : `&needs_client_update=true&amount=${amountPaid}`}`;
       return res.redirect(finalUrl);
 
     } catch (fatal: any) {
