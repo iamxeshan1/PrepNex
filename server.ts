@@ -125,6 +125,23 @@ const sendEmail = async (to: string, subject: string, html: string, fromNameOver
 const stripQuotes = (str: string) => (str || "").trim().replace(/^["'](.+)["']$/, '$1');
 
 async function getRazorpayConfig() {
+  // 1. Check Database (Admin Settings) First
+  try {
+    const database = getDb();
+    const settingsDoc = await database.collection("settings").doc("razorpay").get();
+    if (settingsDoc.exists) {
+      const data = settingsDoc.data();
+      const dbKeyId = stripQuotes(data?.razorpayKeyId || "");
+      const dbKeySecret = stripQuotes(data?.razorpayKeySecret || "");
+      if (dbKeyId && dbKeySecret) {
+        return { keyId: dbKeyId, keySecret: dbKeySecret, source: 'db' };
+      }
+    }
+  } catch (error: any) {
+    console.warn("[Razorpay Config] Could not fetch from Firestore:", error.message || error);
+  }
+
+  // 2. Fallback to Environment Variables
   const envKeyId = stripQuotes(
     process.env.RAZORPAY_KEY_ID || 
     process.env.VITE_RAZORPAY_KEY_ID || 
@@ -144,21 +161,6 @@ async function getRazorpayConfig() {
 
   if (envKeyId && envKeySecret) {
     return { keyId: envKeyId, keySecret: envKeySecret, source: 'env' };
-  }
-
-  try {
-    const database = getDb();
-    const settingsDoc = await database.collection("settings").doc("razorpay").get();
-    if (settingsDoc.exists) {
-      const data = settingsDoc.data();
-      const dbKeyId = stripQuotes(data?.razorpayKeyId || "");
-      const dbKeySecret = stripQuotes(data?.razorpayKeySecret || "");
-      if (dbKeyId && dbKeySecret) {
-        return { keyId: dbKeyId, keySecret: dbKeySecret, source: 'db' };
-      }
-    }
-  } catch (error: any) {
-    console.warn("[Razorpay Config] Could not fetch from Firestore:", error.message || error);
   }
 
   return null;
