@@ -127,12 +127,33 @@ let razorpayInstance: Razorpay | null = null;
 async function getRazorpay() {
   if (razorpayInstance) return razorpayInstance;
   
-  // Try Environment Variables FIRST as they are most reliable in this environment
-  const envKeyId = (process.env.RAZORPAY_KEY_ID || process.env.VITE_RAZORPAY_KEY_ID || "").trim();
-  const envKeySecret = (process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET || process.env.RAZORPAY_SECRET_KEY || "").trim();
+  const stripQuotes = (str: string) => (str || "").trim().replace(/^["'](.+)["']$/, '$1');
+
+  function getEnvRazorpaySecret() {
+    return stripQuotes(
+      process.env.RAZORPAY_KEY_SECRET || 
+      process.env.RAZORPAY_SECRET || 
+      process.env.RAZORPAY_SECRET_KEY || 
+      process.env.RAZORPAY_API_SECRET ||
+      ""
+    );
+  }
+
+  function getEnvRazorpayId() {
+    return stripQuotes(
+      process.env.RAZORPAY_KEY_ID || 
+      process.env.VITE_RAZORPAY_KEY_ID || 
+      process.env.RAZORPAY_ID || 
+      process.env.RAZORPAY_API_KEY ||
+      ""
+    );
+  }
+
+  const envKeyId = getEnvRazorpayId();
+  const envKeySecret = getEnvRazorpaySecret();
 
   if (envKeyId && envKeySecret) {
-    console.log(`[Razorpay Debug] Initializing with env vars: ID=${envKeyId.substring(0, 8)}... (len:${envKeyId.length}), Secret=${envKeySecret.substring(0, 3)}... (len:${envKeySecret.length})`);
+    console.log(`[Razorpay Debug] Initializing using env vars. ID=${envKeyId.substring(0, 8)}... Secret=${envKeySecret.substring(0, 3)}...${envKeySecret.substring(Math.max(0, envKeySecret.length - 3))}`);
     try {
       razorpayInstance = new Razorpay({
         key_id: envKeyId,
@@ -142,44 +163,33 @@ async function getRazorpay() {
     } catch (err) {
       console.error("[Razorpay Debug] Constructor failed:", err);
     }
-  } else {
-    console.warn(`[Razorpay Debug] Missing env credentials: ID=${envKeyId ? 'FOUND' : 'MISSING'}, Secret=${envKeySecret ? 'FOUND' : 'MISSING'}`);
   }
-  
+
+  // Try Database as fallback
   try {
-    console.log("Fetching Razorpay settings from Firestore...");
-    let settingsDoc: any = null;
-    try {
-      const database = getDb();
-      settingsDoc = await database.collection("settings").doc("razorpay").get();
-    } catch(dbErr) {
-      // Silently ignore DB errors as we might just not have IAM permissions
+    console.log("[Razorpay Debug] No valid env keys, checking Firestore...");
+    const database = getDb();
+    const settingsDoc = await database.collection("settings").doc("razorpay").get();
+    if (settingsDoc.exists) {
+      const data = settingsDoc.data();
+      const dbKeyId = stripQuotes(data?.razorpayKeyId || "");
+      const dbKeySecret = stripQuotes(data?.razorpayKeySecret || "");
+      
+      if (dbKeyId && dbKeySecret) {
+        console.log(`[Razorpay Debug] Initializing using Firestore. ID=${dbKeyId.substring(0, 8)}... Secret=${dbKeySecret.substring(0, 3)}...`);
+        razorpayInstance = new Razorpay({
+          key_id: dbKeyId,
+          key_secret: dbKeySecret,
+        });
+        return razorpayInstance;
+      }
     }
-    const settings = settingsDoc?.exists ? settingsDoc.data() : null;
-    
-    const keyId = settings?.razorpayKeyId || "";
-    const keySecret = settings?.razorpayKeySecret || "";
-
-    if (!keyId || !keySecret) {
-      console.warn("Razorpay keys missing in both Environment and Firestore.");
-      throw new Error("Razorpay configuration missing");
-    }
-
-    razorpayInstance = new Razorpay({
-      key_id: keyId,
-      key_secret: keySecret,
-    });
-    return razorpayInstance;
   } catch (error: any) {
-    console.warn("Could not fetch Razorpay settings from Firestore:", error.message || error);
-    
-    // If it was a permission error, explain likely cause
-    if (error.message?.includes("PERMISSION_DENIED") || (error.code === 7)) {
-      console.warn("Note: Server lacks IAM permission to read user's Firestore 'settings/razorpay'. Please set VITE_RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in AI Studio Settings (Secrets).");
-    }
-
-    throw new Error(`Razorpay not configured on server. Check Settings > Secrets. Debug: ID_env=${process.env.VITE_RAZORPAY_KEY_ID ? 'VITE_PRESENT' : (process.env.RAZORPAY_KEY_ID ? 'PLAIN_PRESENT' : 'MISSING')}, SECRET=${process.env.RAZORPAY_KEY_SECRET ? 'PRESENT' : 'MISSING'}.`);
+    console.warn("[Razorpay Debug] Could not fetch Razorpay settings from Firestore:", error.message || error);
   }
+
+  console.error("[Razorpay Debug] Authentication configuration missing or invalid in both ENV and DB.");
+  return null;
 }
 
 export const app = express();
@@ -454,6 +464,13 @@ app.get("/api/health-check", async (req, res) => {
     } catch (error: any) {
       console.error("[Order Debug] Razorpay order creation FAILED:", error);
       
+      // If authentication failed, it might be due to an old/cached key.
+      // Clear the instance so it re-reads environment/DB on next attempt.
+      if (error.statusCode === 401 || (error.message && error.message.toLowerCase().includes("auth"))) {
+        console.warn("[Order Debug] Detected authentication failure. Clearing razorpayInstance.");
+        razorpayInstance = null;
+      }
+
       // Provide more specific error info if it's a Razorpay error
       let errorMessage = error.message || "Order creation failed";
       if (error.error && error.error.description) {
@@ -485,15 +502,25 @@ app.get("/api/health-check", async (req, res) => {
         isVerified = true;
       } else {
         if (!razorpay_signature) return res.status(400).json({ status: "failed", message: "Missing required details" });
-        let secret = (process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET || process.env.RAZORPAY_SECRET_KEY || "").trim();
-        if (!secret) {
-          try {
+        
+        let secret = "";
+        try {
+          // Try to get from env first
+          secret = (
+            process.env.RAZORPAY_KEY_SECRET || 
+            process.env.RAZORPAY_SECRET || 
+            process.env.RAZORPAY_SECRET_KEY || 
+            process.env.RAZORPAY_API_SECRET ||
+            ""
+          ).trim().replace(/^["'](.+)["']$/, '$1');
+
+          if (!secret) {
             const database = getDb();
             const settingsDoc = await database.collection("settings").doc("razorpay").get();
             secret = settingsDoc.data()?.razorpayKeySecret || "";
-          } catch (err: any) {
-            // Silently ignore DB errors as we might just not have IAM permissions
           }
+        } catch (err: any) {
+          // fallback
         }
 
         const body = razorpay_order_id + "|" + razorpay_payment_id;
