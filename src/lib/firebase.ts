@@ -7,10 +7,8 @@ import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
 
-// Use initializeFirestore with settings that are more resilient to network issues
-export const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true, // Often helps in restricted networks or proxy environments
-}, firebaseConfig.firestoreDatabaseId);
+// Use default settings but keep databaseId
+export const db = initializeFirestore(app, {}, firebaseConfig.firestoreDatabaseId);
 
 export const auth = getAuth(app);
 export const storage = getStorage(app);

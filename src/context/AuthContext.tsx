@@ -33,8 +33,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (authUser) {
         const userDocRef = doc(db, 'users', authUser.uid);
         
+        // Safety timeout for loading state
+        const loadingTimeout = setTimeout(() => {
+          console.warn("Auth profile loading timeout reached.");
+          setLoading(false);
+        }, 6000);
+
         // Use onSnapshot for real-time profile updates
         profileUnsubscribe = onSnapshot(userDocRef, async (snapshot) => {
+          clearTimeout(loadingTimeout);
           if (snapshot.exists()) {
             const data = snapshot.data();
             if (data.isBlocked) {

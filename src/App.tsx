@@ -71,7 +71,7 @@ export function AppContent() {
   React.useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 2800); 
+    }, 1000); 
     return () => clearTimeout(timer);
   }, []);
 
