@@ -167,15 +167,18 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
       let errData: any = {};
       
       const responseText = await orderResponse.text();
+      let serverErrorMessage = '';
       try {
         errData = JSON.parse(responseText);
         order = errData;
+        serverErrorMessage = errData.error || errData.message;
       } catch (e) {
         console.error("Failed to parse create-order response:", responseText);
+        serverErrorMessage = `Server returned invalid JSON (${orderResponse.status}). ${responseText.substring(0, 100)}`;
       }
 
       if (!orderResponse.ok) {
-        throw new Error(errData.error || 'Order creation failed. Server error.');
+        throw new Error(serverErrorMessage || `Order creation failed with status ${orderResponse.status}`);
       }
 
       // 2. Fetch Razorpay Config

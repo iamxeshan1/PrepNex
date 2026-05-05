@@ -502,12 +502,13 @@ app.get("/api/health-check", async (req, res) => {
       
       res.status(500).json({ 
         error: errorMessage,
-        errorType: error.constructor.name,
+        message: errorMessage,
+        errorType: error?.constructor?.name || 'Error',
         debug: {
           code: error.code,
           statusCode: error.statusCode,
           description: error.description,
-          source: (await getRazorpayConfig() as any)?.source
+          handler: 'order_creation_catch'
         }
       });
     }
