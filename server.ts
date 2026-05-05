@@ -514,36 +514,47 @@ app.get("/api/health-check", async (req, res) => {
     }
   });
 
-  app.post("/api/payment-callback", async (req, res) => {
+  app.all("/api/payment-callback", async (req, res) => {
     try {
+      console.log(`[Payment Callback] Method: ${req.method}`);
       console.log("[Payment Callback] Body:", req.body);
       console.log("[Payment Callback] Query:", req.query);
 
-      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-      const userId = req.query.userId as string;
-      const itemId = req.query.itemId as string;
+      // Razorpay can send these in body (POST) or query (GET redirect)
+      const razorpay_order_id = req.body.razorpay_order_id || req.query.razorpay_order_id;
+      const razorpay_payment_id = req.body.razorpay_payment_id || req.query.razorpay_payment_id;
+      const razorpay_signature = req.body.razorpay_signature || req.query.razorpay_signature;
+      
+      const userId = (req.query.userId || req.body.userId) as string;
+      const itemId = (req.query.itemId || req.body.itemId) as string;
       
       if (!razorpay_order_id || !razorpay_payment_id || !userId || !itemId) {
-        console.error("[Payment Callback Error] Missing details. Body keys:", Object.keys(req.body), "Query keys:", Object.keys(req.query));
-        return res.redirect(`/dashboard?payment_error=missing_details&body_keys=${Object.keys(req.body).join(',')}&query_keys=${Object.keys(req.query).join(',')}`);
+        console.error("[Payment Callback Error] Missing details.");
+        return res.redirect(`/dashboard?payment_error=missing_details&msg=MissingID`);
       }
 
+      // If it's a signature verification failure, we still want to know why
       let secret = "";
       try {
         const config = await getRazorpayConfig();
         if (config) {
           secret = config.keySecret;
         }
-      } catch (err: any) {}
+      } catch (err: any) {
+        console.error("[Payment Callback] Config fetch error:", err.message);
+      }
 
       if (!secret) {
         console.error("Payment redirect verification failed: Razorpay secret not found");
         return res.redirect("/dashboard?payment_error=server_configuration");
       }
 
-      const body = razorpay_order_id + "|" + razorpay_payment_id;
-      const expectedSignature = crypto.createHmac("sha256", secret).update(body).digest("hex");
-      const isVerified = expectedSignature === razorpay_signature;
+      let isVerified = false;
+      if (razorpay_signature) {
+        const body = razorpay_order_id + "|" + razorpay_payment_id;
+        const expectedSignature = crypto.createHmac("sha256", secret).update(body).digest("hex");
+        isVerified = expectedSignature === razorpay_signature;
+      }
 
       if (isVerified) {
         let clientFallbackRequired = false;
@@ -553,6 +564,7 @@ app.get("/api/health-check", async (req, res) => {
           const userDoc = await userRef.get();
 
           if (userDoc.exists) {
+            console.log(`[Payment Callback] Updating user ${userId} for item ${itemId}`);
             if (itemId === "PREMIUM_PASS") {
               const expiryDate = new Date();
               expiryDate.setFullYear(expiryDate.getFullYear() + 1);
@@ -601,8 +613,12 @@ app.get("/api/health-check", async (req, res) => {
                 paymentStatus: "completed"
               });
             }
+          } else {
+            console.warn(`[Payment Callback] User doc ${userId} not found!`);
+            clientFallbackRequired = true;
           }
         } catch (dbErr: any) {
+          console.error(`[Payment Callback] Database update failed:`, dbErr.message);
           clientFallbackRequired = true;
         }
 
@@ -610,13 +626,15 @@ app.get("/api/health-check", async (req, res) => {
         if (clientFallbackRequired) {
            redirectUrl += "&needs_client_update=true";
         }
-        res.redirect(redirectUrl);
+        return res.redirect(redirectUrl);
       } else {
-        res.redirect("/dashboard?payment_error=invalid_signature");
+        console.error("[Payment Callback] Signature verification failed.");
+        return res.redirect("/dashboard?payment_error=invalid_signature");
       }
     } catch (error: any) {
-      console.error("Payment redirect verification failed:", error);
-      res.redirect("/dashboard?payment_error=verification_error");
+      console.error("Payment callback CRASHED:", error);
+      // On Vercel, we want to avoid the default 500 page if possible
+      return res.redirect("/dashboard?payment_error=callback_crash");
     }
   });
 
