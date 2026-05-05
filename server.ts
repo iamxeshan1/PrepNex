@@ -20,13 +20,6 @@ if (fs.existsSync(configPath)) {
 }
 console.log("[Config Debug] Loaded Firebase config. Project ID:", config.projectId, "Database ID:", config.firestoreDatabaseId);
 
-// DEBUG LOG TO FILE
-fs.writeFileSync("server-boot-env.json", JSON.stringify({
-  RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID?.slice(-4),
-  VITE_RAZORPAY_KEY_ID: process.env.VITE_RAZORPAY_KEY_ID?.slice(-4),
-  timestamp: new Date().toISOString()
-}, null, 2));
-
 // Lazy Initialize Admin SDK
 let firebaseApp: any = null;
 
@@ -420,29 +413,6 @@ app.get("/api/health-check", async (req, res) => {
     }
   });
 
-  // Diagnostic route
-  app.get("/api/diag-live", (req, res) => {
-    const rzpVars: any = {};
-    for (const key in process.env) {
-      if (key.includes('RAZORPAY')) {
-        const val = process.env[key] || "";
-        rzpVars[key] = {
-          len: val.length,
-          last4: val.slice(-4),
-          first8: val.slice(0, 8),
-          type: typeof val
-        };
-      }
-    }
-    res.json({
-      rzpVars,
-      nodeEnv: process.env.NODE_ENV,
-      cwd: process.cwd(),
-      timestamp: new Date().toISOString(),
-      version: "1.0.6"
-    });
-  });
-
   app.post("/api/create-order", async (req, res) => {
     console.log("Received create-order request:", req.body);
     try {
@@ -518,10 +488,7 @@ app.get("/api/health-check", async (req, res) => {
 
       if (errorMessage.toLowerCase().includes("authentication failed")) {
         const config = await getRazorpayConfig() as any;
-        const kid = config?.keyId || "";
-        const ksec = config?.keySecret || "";
-        console.error(`[CRITICAL-RZP-DEBUG] Auth Failed. CID: ${kid.slice(0,8)}...${kid.slice(-4)} (len:${kid.length}), SEC: ${ksec.slice(0,3)}...${ksec.slice(-4)} (len:${ksec.length}), Source: ${config?.source}, Var: ${config?.keyIdVar}`);
-        errorMessage = `[AGENT-FIX-V10] Razorpay Authentication Failed. SOURCE=${config?.source?.toUpperCase()}, VAR=${config?.keyIdVar}, KEY_ENDING_IN=${kid.slice(-4)}. If you see this, the server code is updated. Please check your secrets again.`;
+        errorMessage = `Razorpay Authentication Failed. Please verify your RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in your Vercel/Hosting Environment Variables. (Detected Source: ${config?.source?.toUpperCase()})`;
       }
       
       res.status(500).json({ 
