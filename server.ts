@@ -164,22 +164,17 @@ async function getRazorpayConfig() {
   return null;
 }
 
-let razorpayInstance: Razorpay | null = null;
-
 async function getRazorpay() {
-  if (razorpayInstance) return razorpayInstance;
-  
   const config = await getRazorpayConfig();
   
   if (config) {
     const isTest = config.keyId.startsWith("rzp_test");
     console.log(`[Razorpay Debug] Initializing using ${isTest ? 'TEST' : 'LIVE'} ${config.source} config. ID=${config.keyId.substring(0, 8)}... Secret=${config.keySecret.substring(0, 3)}...${config.keySecret.substring(Math.max(0, config.keySecret.length - 3))}`);
     try {
-      razorpayInstance = new Razorpay({
+      return new Razorpay({
         key_id: config.keyId,
         key_secret: config.keySecret,
       });
-      return razorpayInstance;
     } catch (err) {
       console.error("[Razorpay Debug] Constructor failed:", err);
     }
@@ -464,13 +459,6 @@ app.get("/api/health-check", async (req, res) => {
       res.json(order);
     } catch (error: any) {
       console.error("[Order Debug] Razorpay order creation FAILED:", error);
-      
-      // If authentication failed, it might be due to an old/cached key.
-      // Clear the instance so it re-reads environment/DB on next attempt.
-      if (error.statusCode === 401 || (error.message && error.message.toLowerCase().includes("auth"))) {
-        console.warn("[Order Debug] Detected authentication failure. Clearing razorpayInstance.");
-        razorpayInstance = null;
-      }
 
       // Provide more specific error info if it's a Razorpay error
       let errorMessage = error.message || "Order creation failed";
