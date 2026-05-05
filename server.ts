@@ -20,6 +20,13 @@ if (fs.existsSync(configPath)) {
 }
 console.log("[Config Debug] Loaded Firebase config. Project ID:", config.projectId, "Database ID:", config.firestoreDatabaseId);
 
+// DEBUG LOG TO FILE
+fs.writeFileSync("server-boot-env.json", JSON.stringify({
+  RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID?.slice(-4),
+  VITE_RAZORPAY_KEY_ID: process.env.VITE_RAZORPAY_KEY_ID?.slice(-4),
+  timestamp: new Date().toISOString()
+}, null, 2));
+
 // Lazy Initialize Admin SDK
 let firebaseApp: any = null;
 
@@ -129,18 +136,32 @@ async function getRazorpayConfig() {
   let keyId = "";
   let keyIdVar = "";
   
-  if (process.env.RAZORPAY_KEY_ID) { keyId = process.env.RAZORPAY_KEY_ID; keyIdVar = "RAZORPAY_KEY_ID"; }
-  else if (process.env.VITE_RAZORPAY_KEY_ID) { keyId = process.env.VITE_RAZORPAY_KEY_ID; keyIdVar = "VITE_RAZORPAY_KEY_ID"; }
-  else if (process.env.RAZORPAY_ID) { keyId = process.env.RAZORPAY_ID; keyIdVar = "RAZORPAY_ID"; }
-  else if (process.env.RAZORPAY_API_KEY) { keyId = process.env.RAZORPAY_API_KEY; keyIdVar = "RAZORPAY_API_KEY"; }
+  console.log("[Razorpay Config] Scanning Environment Variables...");
+  const searchVars = ["RAZORPAY_KEY_ID", "VITE_RAZORPAY_KEY_ID", "RAZORPAY_ID", "RAZORPAY_API_KEY"];
+  for (const v of searchVars) {
+    const val = process.env[v];
+    if (val) {
+      console.log(`[Razorpay Config] Found ${v}: ...${val.trim().slice(-4)}`);
+      if (!keyId) {
+        keyId = val;
+        keyIdVar = v;
+      }
+    }
+  }
 
   let keySecret = "";
   let keySecretVar = "";
-  if (process.env.RAZORPAY_KEY_SECRET) { keySecret = process.env.RAZORPAY_KEY_SECRET; keySecretVar = "RAZORPAY_KEY_SECRET"; }
-  else if (process.env.VITE_RAZORPAY_KEY_SECRET) { keySecret = process.env.VITE_RAZORPAY_KEY_SECRET; keySecretVar = "VITE_RAZORPAY_KEY_SECRET"; }
-  else if (process.env.RAZORPAY_SECRET) { keySecret = process.env.RAZORPAY_SECRET; keySecretVar = "RAZORPAY_SECRET"; }
-  else if (process.env.RAZORPAY_SECRET_KEY) { keySecret = process.env.RAZORPAY_SECRET_KEY; keySecretVar = "RAZORPAY_SECRET_KEY"; }
-  else if (process.env.RAZORPAY_API_SECRET) { keySecret = process.env.RAZORPAY_API_SECRET; keySecretVar = "RAZORPAY_API_SECRET"; }
+  const secretVars = ["RAZORPAY_KEY_SECRET", "VITE_RAZORPAY_KEY_SECRET", "RAZORPAY_SECRET", "RAZORPAY_SECRET_KEY", "RAZORPAY_API_SECRET"];
+  for (const v of secretVars) {
+    const val = process.env[v];
+    if (val) {
+      console.log(`[Razorpay Config] Found ${v} (length: ${val.trim().length})`);
+      if (!keySecret) {
+        keySecret = val;
+        keySecretVar = v;
+      }
+    }
+  }
 
   keyId = stripQuotes(keyId);
   keySecret = stripQuotes(keySecret);
@@ -499,8 +520,8 @@ app.get("/api/health-check", async (req, res) => {
         const config = await getRazorpayConfig() as any;
         const kid = config?.keyId || "";
         const ksec = config?.keySecret || "";
-        console.error(`[Razorpay Auth Debug] Auth Failed. CID: ${kid.slice(0,8)}...${kid.slice(-4)} (len:${kid.length}), SEC: ${ksec.slice(0,3)}...${ksec.slice(-4)} (len:${ksec.length}), Source: ${config?.source}, Var: ${config?.keyIdVar}`);
-        errorMessage = `Razorpay Authentication Failed. [DIAGNOSTIC]: Source=${config?.source?.toUpperCase()}, Var=${config?.keyIdVar}, KeyID=${kid.slice(0,8)}...${kid.slice(-4)} (len:${kid.length}). Please verify these keys in your Hosting Env Variables.`;
+        console.error(`[CRITICAL-RZP-DEBUG] Auth Failed. CID: ${kid.slice(0,8)}...${kid.slice(-4)} (len:${kid.length}), SEC: ${ksec.slice(0,3)}...${ksec.slice(-4)} (len:${ksec.length}), Source: ${config?.source}, Var: ${config?.keyIdVar}`);
+        errorMessage = `[AGENT-FIX-V10] Razorpay Authentication Failed. SOURCE=${config?.source?.toUpperCase()}, VAR=${config?.keyIdVar}, KEY_ENDING_IN=${kid.slice(-4)}. If you see this, the server code is updated. Please check your secrets again.`;
       }
       
       res.status(500).json({ 
