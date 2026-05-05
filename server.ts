@@ -399,6 +399,29 @@ app.get("/api/health-check", async (req, res) => {
     }
   });
 
+  // Diagnostic route
+  app.get("/api/diag-live", (req, res) => {
+    const rzpVars: any = {};
+    for (const key in process.env) {
+      if (key.includes('RAZORPAY')) {
+        const val = process.env[key] || "";
+        rzpVars[key] = {
+          len: val.length,
+          last4: val.slice(-4),
+          first8: val.slice(0, 8),
+          type: typeof val
+        };
+      }
+    }
+    res.json({
+      rzpVars,
+      nodeEnv: process.env.NODE_ENV,
+      cwd: process.cwd(),
+      timestamp: new Date().toISOString(),
+      version: "1.0.6"
+    });
+  });
+
   app.post("/api/create-order", async (req, res) => {
     console.log("Received create-order request:", req.body);
     try {
@@ -474,7 +497,10 @@ app.get("/api/health-check", async (req, res) => {
 
       if (errorMessage.toLowerCase().includes("authentication failed")) {
         const config = await getRazorpayConfig() as any;
-        errorMessage = `Razorpay Authentication Failed. Please check your Key ID and Secret in the Hosting Environment Variables or Admin Dashboard. (Key Source: ${config?.source?.toUpperCase()}, Key ID ending in ...${config?.keyId?.slice(-4)})`;
+        const kid = config?.keyId || "";
+        const ksec = config?.keySecret || "";
+        console.error(`[Razorpay Auth Debug] Auth Failed. CID: ${kid.slice(0,8)}...${kid.slice(-4)} (len:${kid.length}), SEC: ${ksec.slice(0,3)}...${ksec.slice(-4)} (len:${ksec.length}), Source: ${config?.source}, Var: ${config?.keyIdVar}`);
+        errorMessage = `Razorpay Authentication Failed. [DIAGNOSTIC]: Source=${config?.source?.toUpperCase()}, Var=${config?.keyIdVar}, KeyID=${kid.slice(0,8)}...${kid.slice(-4)} (len:${kid.length}). Please verify these keys in your Hosting Env Variables.`;
       }
       
       res.status(500).json({ 
