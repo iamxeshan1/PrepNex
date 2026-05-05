@@ -125,23 +125,7 @@ const sendEmail = async (to: string, subject: string, html: string, fromNameOver
 const stripQuotes = (str: string) => (str || "").trim().replace(/^["'](.+)["']$/, '$1');
 
 async function getRazorpayConfig() {
-  // 1. Check Database (Admin Settings) First
-  try {
-    const database = getDb();
-    const settingsDoc = await database.collection("settings").doc("razorpay").get();
-    if (settingsDoc.exists) {
-      const data = settingsDoc.data();
-      const dbKeyId = stripQuotes(data?.razorpayKeyId || "");
-      const dbKeySecret = stripQuotes(data?.razorpayKeySecret || "");
-      if (dbKeyId && dbKeySecret) {
-        return { keyId: dbKeyId, keySecret: dbKeySecret, source: 'db' };
-      }
-    }
-  } catch (error: any) {
-    console.warn("[Razorpay Config] Could not fetch from Firestore:", error.message || error);
-  }
-
-  // 2. Fallback to Environment Variables
+  // 1. Check Environment Variables First (Standard for production secrets)
   const envKeyId = stripQuotes(
     process.env.RAZORPAY_KEY_ID || 
     process.env.VITE_RAZORPAY_KEY_ID || 
@@ -158,13 +142,27 @@ async function getRazorpayConfig() {
     process.env.RAZORPAY_API_SECRET ||
     ""
   );
-  
-  if (envKeyId || envKeySecret) {
-      console.log(`[Razorpay Debug] Found ENV keys: ID=${envKeyId.slice(-4)}, SECRET=${envKeySecret.slice(-4)}`);
-  }
 
   if (envKeyId && envKeySecret) {
+    console.log(`[Razorpay Debug] Using credentials from Environment Variables (ID ending in ...${envKeyId.slice(-4)})`);
     return { keyId: envKeyId, keySecret: envKeySecret, source: 'env' };
+  }
+
+  // 2. Fallback to Database (Admin Settings)
+  try {
+    const database = getDb();
+    const settingsDoc = await database.collection("settings").doc("razorpay").get();
+    if (settingsDoc.exists) {
+      const data = settingsDoc.data();
+      const dbKeyId = stripQuotes(data?.razorpayKeyId || "");
+      const dbKeySecret = stripQuotes(data?.razorpayKeySecret || "");
+      if (dbKeyId && dbKeySecret) {
+        console.log(`[Razorpay Debug] Using credentials from Database/Admin Panel (ID ending in ...${dbKeyId.slice(-4)})`);
+        return { keyId: dbKeyId, keySecret: dbKeySecret, source: 'db' };
+      }
+    }
+  } catch (error: any) {
+    console.warn("[Razorpay Config] Could not fetch from Firestore:", error.message || error);
   }
 
   return null;
