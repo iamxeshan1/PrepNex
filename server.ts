@@ -128,13 +128,11 @@ async function getRazorpay() {
   if (razorpayInstance) return razorpayInstance;
   
   // Try Environment Variables FIRST as they are most reliable in this environment
-  const envKeyId = process.env.RAZORPAY_KEY_ID || process.env.VITE_RAZORPAY_KEY_ID || "";
-  const envKeySecret = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET || process.env.RAZORPAY_SECRET_KEY || "";
-
-  console.log(`Razorpay env check: ID_env=${process.env.RAZORPAY_KEY_ID ? 'RAZORPAY_PRESENT' : (process.env.VITE_RAZORPAY_KEY_ID ? 'VITE_PRESENT' : 'MISSING')}, SECRET=${envKeySecret ? 'PRESENT' : 'MISSING'}`);
+  const envKeyId = (process.env.RAZORPAY_KEY_ID || process.env.VITE_RAZORPAY_KEY_ID || "").trim();
+  const envKeySecret = (process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET || process.env.RAZORPAY_SECRET_KEY || "").trim();
 
   if (envKeyId && envKeySecret) {
-    console.log("Initializing Razorpay using environment variables.");
+    console.log(`[Razorpay Debug] Initializing with env vars: ID=${envKeyId.substring(0, 4)}... (len:${envKeyId.length}), Secret=${envKeySecret.substring(0, 4)}... (len:${envKeySecret.length})`);
     razorpayInstance = new Razorpay({
       key_id: envKeyId,
       key_secret: envKeySecret,
@@ -481,7 +479,7 @@ app.get("/api/health-check", async (req, res) => {
         isVerified = true;
       } else {
         if (!razorpay_signature) return res.status(400).json({ status: "failed", message: "Missing required details" });
-        let secret = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET || process.env.RAZORPAY_SECRET_KEY || "";
+        let secret = (process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET || process.env.RAZORPAY_SECRET_KEY || "").trim();
         if (!secret) {
           try {
             const database = getDb();
