@@ -465,6 +465,11 @@ app.get("/api/health-check", async (req, res) => {
       if (error.error && error.error.description) {
         errorMessage = error.error.description;
       }
+
+      if (errorMessage.toLowerCase().includes("authentication failed")) {
+        const config = await getRazorpayConfig();
+        errorMessage = `Razorpay Auth Failed: Invalid keys from ${config?.source?.toUpperCase()}. Key ID used: ...${config?.keyId?.slice(-4)}. Fix this in your hosting Env Variables or Admin Dashboard.`;
+      }
       
       res.status(500).json({ 
         error: errorMessage,
