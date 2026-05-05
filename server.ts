@@ -129,7 +129,7 @@ async function getRazorpay() {
   
   // Try Environment Variables FIRST as they are most reliable in this environment
   const envKeyId = process.env.RAZORPAY_KEY_ID || process.env.VITE_RAZORPAY_KEY_ID || "";
-  const envKeySecret = process.env.RAZORPAY_KEY_SECRET || "";
+  const envKeySecret = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET || process.env.RAZORPAY_SECRET_KEY || "";
 
   console.log(`Razorpay env check: ID_env=${process.env.RAZORPAY_KEY_ID ? 'RAZORPAY_PRESENT' : (process.env.VITE_RAZORPAY_KEY_ID ? 'VITE_PRESENT' : 'MISSING')}, SECRET=${envKeySecret ? 'PRESENT' : 'MISSING'}`);
 
@@ -445,10 +445,25 @@ app.get("/api/health-check", async (req, res) => {
       };
 
       const order = await razorpay.orders.create(options);
+      console.log("[Order Debug] Successfully created Razorpay order:", order.id);
       res.json(order);
     } catch (error: any) {
-      console.error("Order creation failed:", error);
-      res.status(500).json({ error: error.message || "Order creation failed" });
+      console.error("[Order Debug] Razorpay order creation FAILED:", error);
+      
+      // Provide more specific error info if it's a Razorpay error
+      let errorMessage = error.message || "Order creation failed";
+      if (error.error && error.error.description) {
+        errorMessage = error.error.description;
+      }
+      
+      res.status(500).json({ 
+        error: errorMessage,
+        debug: {
+          code: error.code,
+          statusCode: error.statusCode,
+          description: error.description
+        }
+      });
     }
   });
 
@@ -466,7 +481,7 @@ app.get("/api/health-check", async (req, res) => {
         isVerified = true;
       } else {
         if (!razorpay_signature) return res.status(400).json({ status: "failed", message: "Missing required details" });
-        let secret = process.env.RAZORPAY_KEY_SECRET || "";
+        let secret = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET || process.env.RAZORPAY_SECRET_KEY || "";
         if (!secret) {
           try {
             const database = getDb();
