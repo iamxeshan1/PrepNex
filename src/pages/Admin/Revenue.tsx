@@ -60,13 +60,18 @@ export default function AdminRevenue() {
   };
 
   useEffect(() => {
-    if (!subsReady || !premiumReady) return;
+    if (!subsReady || !premiumReady) {
+      console.log("Waiting for collections to be ready...", { subsReady, premiumReady });
+      return;
+    }
 
     const allDocs = [...rawSubData, ...rawPremiumData];
+    console.log(`Processing total of ${allDocs.length} documents from both collections`);
+    
     const allTransactions: any[] = [];
-    // ... rest of processing
     allDocs.forEach((data: any) => {
-      const rawAmount = data.amount ?? data.totalAmount ?? data.price ?? data.val ?? 0;
+      // Try multiple amount field names and ensure it's a number
+      const rawAmount = data.amount ?? data.totalAmount ?? data.price ?? 0;
       const amount = typeof rawAmount === 'number' ? rawAmount : parseFloat(rawAmount) || 0;
       const date = data.purchaseDate || data.createdAt || data.date;
       
@@ -83,6 +88,7 @@ export default function AdminRevenue() {
     });
 
     allTransactions.sort((a, b) => b.date.getTime() - a.date.getTime());
+    console.log(`Successfully parsed ${allTransactions.length} valid transactions`);
 
     let total = 0;
     let monthTotal = 0;
@@ -112,11 +118,11 @@ export default function AdminRevenue() {
     
     setChartData(chartFormatted);
     setLoading(false);
-  }, [rawSubData, rawPremiumData]);
+  }, [rawSubData, rawPremiumData, subsReady, premiumReady]);
 
   const exportTransactions = () => {
     const wb = XLSX.utils.book_new();
-    const exportData = transactions.map(t => ({
+    const exportData = filteredTransactions.map(t => ({
       "Transaction ID": t.id,
       "User Name": t.userName,
       "Amount": t.amount,
@@ -132,7 +138,8 @@ export default function AdminRevenue() {
 
   const filteredTransactions = transactions.filter(t => 
     t.userName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    t.id.toLowerCase().includes(searchTerm.toLowerCase())
+    t.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -145,7 +152,9 @@ export default function AdminRevenue() {
             </div>
             <div>
               <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] md:text-xs mb-1">Total Revenue</p>
-              <h3 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">₹{totalRevenue.toLocaleString()}</h3>
+              <h3 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">
+                INR {totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </h3>
             </div>
           </div>
           <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4 md:gap-6">
@@ -154,7 +163,9 @@ export default function AdminRevenue() {
             </div>
             <div>
               <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] md:text-xs mb-1">This Month</p>
-              <h3 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">₹{thisMonthRevenue.toLocaleString()}</h3>
+              <h3 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">
+                INR {thisMonthRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </h3>
             </div>
           </div>
         </div>
@@ -168,7 +179,7 @@ export default function AdminRevenue() {
                 <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 'bold' }} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 'bold' }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 'bold' }} tickFormatter={(val) => `₹${val}`} />
                   <Tooltip formatter={(value: number) => [`₹${value}`, 'Revenue']} />
                   <Area type="monotone" dataKey="amount" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="#e0e7ff" />
                 </AreaChart>
@@ -190,7 +201,8 @@ export default function AdminRevenue() {
             </div>
             <button 
                 onClick={exportTransactions}
-                className="flex items-center gap-2 px-6 py-4 bg-secondary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-secondary/20 hover:scale-[1.02] transition-all"
+                disabled={filteredTransactions.length === 0}
+                className="flex items-center gap-2 px-6 py-4 bg-secondary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-secondary/20 hover:scale-[1.02] transition-all disabled:opacity-50 disabled:hover:scale-100"
             >
                 <Download className="w-4 h-4" /> Export Excel
             </button>
@@ -210,18 +222,32 @@ export default function AdminRevenue() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-              {transactions.map(t => (
-                  <tr key={t.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-8 py-6 text-sm font-bold text-slate-700">{t.userName}</td>
-                    <td className="px-8 py-6 text-sm font-bold text-slate-600">{t.type}</td>
-                    <td className="px-8 py-6 text-sm font-bold text-slate-700">
-                      {t.id.slice(-8).toUpperCase()}
+              {loading ? (
+                  <tr>
+                    <td colSpan={6} className="px-8 py-12 text-center text-slate-400 font-bold">
+                      Loading data...
                     </td>
-                    <td className="px-8 py-6 text-sm font-bold text-slate-500">{t.date.toLocaleDateString()}</td>
-                    <td className="px-8 py-6 text-sm font-bold text-slate-500">{t.coupon}</td>
-                    <td className="px-8 py-6 text-sm font-black text-primary">₹{t.amount.toLocaleString()}</td>
                   </tr>
-                ))}
+                ) : filteredTransactions.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-8 py-12 text-center text-slate-400 font-bold">
+                      {searchTerm ? "No transactions matching search found." : "No transactions found yet."}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredTransactions.map(t => (
+                    <tr key={t.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-8 py-6 text-sm font-bold text-slate-700">{t.userName}</td>
+                      <td className="px-8 py-6 text-sm font-bold text-slate-600">{t.type}</td>
+                      <td className="px-8 py-6 text-sm font-bold text-slate-700">
+                        {t.id.slice(-12).toUpperCase()}
+                      </td>
+                      <td className="px-8 py-6 text-sm font-bold text-slate-500">{t.date.toLocaleDateString()}</td>
+                      <td className="px-8 py-6 text-sm font-bold text-slate-500">{t.coupon}</td>
+                      <td className="px-8 py-6 text-sm font-black text-primary">₹{(t.amount || 0).toLocaleString()}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
