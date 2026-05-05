@@ -463,6 +463,10 @@ app.get("/api/health-check", async (req, res) => {
       
       const razorpay = await getRazorpay();
       
+      if (!razorpay) {
+        throw new Error("Razorpay could not be initialized. Please check that RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are set in your environment variables on Vercel.");
+      }
+      
       const options = {
         amount: Math.round(finalAmount * 100), // Paise
         currency: "INR",
@@ -482,21 +486,28 @@ app.get("/api/health-check", async (req, res) => {
 
       // Provide more specific error info if it's a Razorpay error
       let errorMessage = error.message || "Order creation failed";
+      let errorDetails = error;
+
       if (error.error && error.error.description) {
         errorMessage = error.error.description;
       }
 
-      if (errorMessage.toLowerCase().includes("authentication failed")) {
+      const lowerMsg = errorMessage.toLowerCase();
+      if (lowerMsg.includes("authentication failed") || lowerMsg.includes("invalid api key")) {
         const config = await getRazorpayConfig() as any;
-        errorMessage = `Razorpay Authentication Failed. Please verify your RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in your Vercel/Hosting Environment Variables. (Detected Source: ${config?.source?.toUpperCase()})`;
+        const source = config?.source?.toUpperCase() || "UNKNOWN";
+        const kid = config?.keyId || "";
+        errorMessage = `Razorpay Authentication Failed. SOURCE=${source}, VAR=${config?.keyIdVar}. The Key ID ending in "...${kid.slice(-4)}" was rejected by Razorpay. Please verify your Key ID and Secret in Vercel environment variables.`;
       }
       
       res.status(500).json({ 
         error: errorMessage,
+        errorType: error.constructor.name,
         debug: {
           code: error.code,
           statusCode: error.statusCode,
-          description: error.description
+          description: error.description,
+          source: (await getRazorpayConfig() as any)?.source
         }
       });
     }
