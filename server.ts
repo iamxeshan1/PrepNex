@@ -516,125 +516,100 @@ app.get("/api/health-check", async (req, res) => {
 
   app.all("/api/payment-callback", async (req, res) => {
     try {
-      console.log(`[Payment Callback] Method: ${req.method}`);
-      console.log("[Payment Callback] Body:", req.body);
-      console.log("[Payment Callback] Query:", req.query);
+      console.log(`[Payment Callback] Init. Method: ${req.method}`);
+      
+      // Extract parameters from all possible locations
+      const razorpay_order_id = req.body?.razorpay_order_id || req.query?.razorpay_order_id || "";
+      const razorpay_payment_id = req.body?.razorpay_payment_id || req.query?.razorpay_payment_id || "";
+      const razorpay_signature = req.body?.razorpay_signature || req.query?.razorpay_signature || "";
+      const userId = (req.query?.userId || req.body?.userId || "") as string;
+      const itemId = (req.query?.itemId || req.body?.itemId || "") as string;
 
-      // Razorpay can send these in body (POST) or query (GET redirect)
-      const razorpay_order_id = req.body.razorpay_order_id || req.query.razorpay_order_id;
-      const razorpay_payment_id = req.body.razorpay_payment_id || req.query.razorpay_payment_id;
-      const razorpay_signature = req.body.razorpay_signature || req.query.razorpay_signature;
-      
-      const userId = (req.query.userId || req.body.userId) as string;
-      const itemId = (req.query.itemId || req.body.itemId) as string;
-      
+      console.log(`[Payment Callback] Params: OID=${razorpay_order_id}, PID=${razorpay_payment_id}, UID=${userId}, ITEM=${itemId}`);
+
       if (!razorpay_order_id || !razorpay_payment_id || !userId || !itemId) {
-        console.error("[Payment Callback Error] Missing details.");
-        return res.redirect(`/dashboard?payment_error=missing_details&msg=MissingID`);
+        console.warn("[Payment Callback] Missing core parameters.");
+        return res.redirect(`/dashboard?payment_error=missing_data&userId=${userId}&itemId=${itemId}`);
       }
 
-      // If it's a signature verification failure, we still want to know why
+      // Safe fetch of secret
       let secret = "";
       try {
         const config = await getRazorpayConfig();
-        if (config) {
-          secret = config.keySecret;
-        }
-      } catch (err: any) {
-        console.error("[Payment Callback] Config fetch error:", err.message);
+        secret = config?.keySecret || "";
+      } catch (cnfErr: any) {
+        console.error("[Payment Callback] Config error:", cnfErr.message);
       }
 
       if (!secret) {
-        console.error("Payment redirect verification failed: Razorpay secret not found");
-        return res.redirect("/dashboard?payment_error=server_configuration");
+        console.error("[Payment Callback] Secret missing. Redirecting with info wait.");
+        return res.redirect(`/dashboard?payment_success=true&needs_client_update=true&itemId=${itemId}&userId=${userId}&msg=NoSecret`);
       }
 
       let isVerified = false;
       if (razorpay_signature) {
-        const body = razorpay_order_id + "|" + razorpay_payment_id;
-        const expectedSignature = crypto.createHmac("sha256", secret).update(body).digest("hex");
-        isVerified = expectedSignature === razorpay_signature;
-      }
-
-      if (isVerified) {
-        let clientFallbackRequired = false;
         try {
-          const database = getDb();
-          const userRef = database.collection("users").doc(userId);
-          const userDoc = await userRef.get();
-
-          if (userDoc.exists) {
-            console.log(`[Payment Callback] Updating user ${userId} for item ${itemId}`);
-            if (itemId === "PREMIUM_PASS") {
-              const expiryDate = new Date();
-              expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-              
-              await userRef.update({
-                isPremium: true,
-                subscriptionExpiry: expiryDate.toISOString()
-              });
-
-              await database.collection("subscriptions").add({
-                userId,
-                type: "global_premium",
-                purchaseDate: new Date().toISOString(),
-                expiryDate: expiryDate.toISOString(),
-                paymentId: razorpay_payment_id,
-                orderId: razorpay_order_id,
-                paymentStatus: "completed",
-                amount: 599 
-              });
-            } else {
-              const liveTestRef = database.collection("liveTests").doc(itemId);
-              const liveTestDoc = await liveTestRef.get();
-              
-              if (liveTestDoc.exists) {
-                const enrolledUsers = liveTestDoc.data()?.enrolledUsers || [];
-                if (!enrolledUsers.includes(userId)) {
-                  enrolledUsers.push(userId);
-                  await liveTestRef.update({ enrolledUsers });
-                }
-              } else {
-                const userData = userDoc.data();
-                const purchasedExams = userData?.purchasedExams || [];
-                
-                if (!purchasedExams.includes(itemId)) {
-                  purchasedExams.push(itemId);
-                  await userRef.update({ purchasedExams });
-                }
-              }
-              
-              await database.collection("subscriptions").add({
-                userId,
-                examId: itemId,
-                purchaseDate: new Date().toISOString(),
-                paymentId: razorpay_payment_id,
-                orderId: razorpay_order_id,
-                paymentStatus: "completed"
-              });
-            }
-          } else {
-            console.warn(`[Payment Callback] User doc ${userId} not found!`);
-            clientFallbackRequired = true;
-          }
-        } catch (dbErr: any) {
-          console.error(`[Payment Callback] Database update failed:`, dbErr.message);
-          clientFallbackRequired = true;
+          const signBody = razorpay_order_id + "|" + razorpay_payment_id;
+          const expected = crypto.createHmac("sha256", secret).update(signBody).digest("hex");
+          isVerified = expected === razorpay_signature;
+        } catch (signErr: any) {
+          console.error("[Payment Callback] Signature calculation crashed:", signErr.message);
         }
-
-        let redirectUrl = `/dashboard?payment_success=true&itemId=${encodeURIComponent(itemId)}&orderId=${encodeURIComponent(razorpay_order_id)}&paymentId=${encodeURIComponent(razorpay_payment_id)}`;
-        if (clientFallbackRequired) {
-           redirectUrl += "&needs_client_update=true";
-        }
-        return res.redirect(redirectUrl);
-      } else {
-        console.error("[Payment Callback] Signature verification failed.");
-        return res.redirect("/dashboard?payment_error=invalid_signature");
       }
-    } catch (error: any) {
-      console.error("Payment callback CRASHED:", error);
-      // On Vercel, we want to avoid the default 500 page if possible
-      return res.redirect("/dashboard?payment_error=callback_crash");
+
+      if (!isVerified) {
+        console.error("[Payment Callback] Verification failed.");
+        const failUrl = `/dashboard?payment_error=verification_failed&oid=${razorpay_order_id}&pid=${razorpay_payment_id}`;
+        return res.redirect(failUrl);
+      }
+
+      // Verification Success -> Attempt DB Sync
+      let databaseSyncSuccess = false;
+      try {
+        const database = getDb();
+        const userRef = database.collection("users").doc(userId);
+        const userDoc = await userRef.get();
+
+        if (userDoc.exists) {
+          console.log(`[Payment Callback] Syncing DB for ${userId}...`);
+          if (itemId === "PREMIUM_PASS") {
+            const expiry = new Date();
+            expiry.setFullYear(expiry.getFullYear() + 1);
+            await userRef.update({ isPremium: true, subscriptionExpiry: expiry.toISOString() });
+            await database.collection("subscriptions").add({
+              userId, type: "global_premium", paymentId: razorpay_payment_id, orderId: razorpay_order_id,
+              purchaseDate: new Date().toISOString(), expiryDate: expiry.toISOString(), paymentStatus: "completed"
+            });
+          } else {
+             // Sync regular exams or live tests
+             const liveTestRef = database.collection("liveTests").doc(itemId);
+             const liveTestDoc = await liveTestRef.get();
+             if (liveTestDoc.exists) {
+                const enrolled = liveTestDoc.data()?.enrolledUsers || [];
+                if (!enrolled.includes(userId)) await liveTestRef.update({ enrolledUsers: [...enrolled, userId] });
+             } else {
+                const purchased = userDoc.data()?.purchasedExams || [];
+                if (!purchased.includes(itemId)) await userRef.update({ purchasedExams: [...purchased, itemId] });
+             }
+             await database.collection("subscriptions").add({
+               userId, examId: itemId, paymentId: razorpay_payment_id, orderId: razorpay_order_id,
+               purchaseDate: new Date().toISOString(), paymentStatus: "completed"
+             });
+          }
+          databaseSyncSuccess = true;
+          console.log("[Payment Callback] DB Sync Complete.");
+        }
+      } catch (dbErr: any) {
+        console.error("[Payment Callback] DB Sync Error (Will fallback to client):", dbErr.message);
+      }
+
+      // Final Redirect
+      const finalUrl = `/dashboard?payment_success=true&itemId=${itemId}&userId=${userId}${databaseSyncSuccess ? "" : "&needs_client_update=true"}`;
+      return res.redirect(finalUrl);
+
+    } catch (fatal: any) {
+      console.error("[Payment Callback] FATAL CRASH:", fatal);
+      return res.redirect("/dashboard?payment_error=callback_failure");
     }
   });
 

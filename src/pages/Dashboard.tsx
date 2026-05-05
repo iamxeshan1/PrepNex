@@ -52,12 +52,17 @@ export default function Dashboard() {
     const itemId = params.get('itemId');
 
     if (error) {
-      alert(`Payment Error: ${error.replace('_', ' ')}`);
+      const errorMsg = error.replace(/_/g, ' ').toUpperCase();
+      setSaveMessage({ 
+        type: 'error', 
+        text: `PAYMENT FAILED: ${errorMsg}. Please try again or contact support if the amount was debited.` 
+      });
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (success === 'true') {
       const needsClientUpdate = params.get('needs_client_update');
       
       const processClientUpdate = async () => {
+        setSaveMessage({ type: 'success', text: 'PAYMENT SUCCESSFUL! Processing your order...' });
         if (needsClientUpdate === 'true' && profile?.userId && itemId) {
            console.log("Processing client-side database update for purchase...");
            try {
@@ -90,7 +95,7 @@ export default function Dashboard() {
       };
 
       processClientUpdate().then(() => {
-        alert("Payment successful! Your account has been updated.");
+        setSaveMessage({ type: 'success', text: 'PAYMENT SUCCESSFUL! Your account is now active.' });
         window.history.replaceState({}, document.title, window.location.pathname);
       });
     }
@@ -311,6 +316,42 @@ export default function Dashboard() {
             </button>
           </div>
         </header>
+        
+        {/* Payment and Profile Status Messages */}
+        <AnimatePresence>
+          {saveMessage && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, opacity: 0 }}
+              className={`mb-8 p-6 rounded-[2rem] border shadow-sm flex items-center justify-between gap-4 ${
+                saveMessage.type === 'success' 
+                  ? 'bg-green-50 border-green-100 text-green-800' 
+                  : 'bg-red-50 border-red-100 text-red-800'
+              }`}
+            >
+              <div className="flex items-center gap-4">
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
+                  saveMessage.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                }`}>
+                  {saveMessage.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
+                </div>
+                <div>
+                  <h4 className="font-black uppercase tracking-tight text-sm">
+                    {saveMessage.type === 'success' ? 'Success Notification' : 'System Alert'}
+                  </h4>
+                  <p className="text-xs font-bold opacity-80 mt-0.5">{saveMessage.text}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setSaveMessage(null)}
+                className="text-[10px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity"
+              >
+                Dismiss
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <AnimatePresence mode="wait">
           {activeTab === 'overview' ? (
