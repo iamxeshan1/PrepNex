@@ -66,9 +66,10 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: React.React
 };
 
 export function AppContent() {
-  const [showSplash, setShowSplash] = React.useState(true);
+  const [showSplash, setShowSplash] = React.useState(window.location.pathname === '/');
 
   React.useEffect(() => {
+    if (!showSplash) return;
     const timer = setTimeout(() => {
       setShowSplash(false);
     }, 1000); 
