@@ -41,10 +41,14 @@ export default function AdminSubscriptions() {
       const addTransactions = (snap: any) => {
         snap.docs.forEach((doc: any) => {
           const data = doc.data();
-          if (data.purchaseDate) {
+          const rawAmount = data.amount ?? data.totalAmount ?? data.price ?? 0;
+          const amount = typeof rawAmount === 'number' ? rawAmount : parseFloat(rawAmount) || 0;
+          const date = data.purchaseDate || data.createdAt || data.date;
+          
+          if (date) {
             allTransactions.push({
-              amount: data.amount || 0,
-              date: new Date(data.purchaseDate)
+              amount: amount,
+              date: new Date(date)
             });
           }
         });

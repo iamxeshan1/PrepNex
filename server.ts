@@ -618,11 +618,16 @@ app.get("/api/health-check", async (req, res) => {
              
              if (liveTestDoc.exists) {
                 itemTitle = liveTestDoc.data()?.title || "Live Test";
+                if (!amountPaid) amountPaid = liveTestDoc.data()?.price || 0;
                 const enrolled = liveTestDoc.data()?.enrolledUsers || [];
                 if (!enrolled.includes(userId)) await liveTestRef.update({ enrolledUsers: [...enrolled, userId] });
              } else {
                 const examDoc = await database.collection("exams").doc(itemId).get();
-                if (examDoc.exists) itemTitle = examDoc.data()?.title || "Exam";
+                if (examDoc.exists) {
+                   itemTitle = examDoc.data()?.title || "Exam";
+                   // Fallback amount if razorpay fetch fails
+                   if (!amountPaid) amountPaid = examDoc.data()?.price || 0;
+                }
                 
                 const purchased = userData?.purchasedExams || [];
                 if (!purchased.includes(itemId)) await userRef.update({ purchasedExams: [...purchased, itemId] });
@@ -748,6 +753,7 @@ app.get("/api/health-check", async (req, res) => {
               
               if (liveTestDoc.exists) {
                 itemTitle = liveTestDoc.data()?.title || "Live Test";
+                if (!amountPaid) amountPaid = liveTestDoc.data()?.price || 0;
                 const enrolledUsers = liveTestDoc.data()?.enrolledUsers || [];
                 if (!enrolledUsers.includes(userId)) {
                   enrolledUsers.push(userId);
@@ -755,7 +761,10 @@ app.get("/api/health-check", async (req, res) => {
                 }
               } else {
                 const examDoc = await database.collection("exams").doc(itemId).get();
-                if (examDoc.exists) itemTitle = examDoc.data()?.title || "Exam";
+                if (examDoc.exists) {
+                  itemTitle = examDoc.data()?.title || "Exam";
+                  if (!amountPaid) amountPaid = examDoc.data()?.price || 0;
+                }
                 
                 const purchasedExams = userData?.purchasedExams || [];
                 if (!purchasedExams.includes(itemId)) {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
-import { collection, query, getDocs } from 'firebase/firestore';
+import { collection, query, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { 
   Download, 
@@ -21,70 +21,98 @@ export default function AdminRevenue() {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    fetchRevenueData();
+    console.log("Setting up real-time revenue listeners...");
+    const unsubSubs = onSnapshot(collection(db, 'subscriptions'), (snap) => {
+      console.log(`Subscriptions update: ${snap.size} docs`);
+      updateStats(snap, 'subscriptions');
+    });
+
+    const unsubPremium = onSnapshot(collection(db, 'premium_subscriptions'), (snap) => {
+      console.log(`Premium subs update: ${snap.size} docs`);
+      updateStats(snap, 'premium');
+    });
+
+    return () => {
+      unsubSubs();
+      unsubPremium();
+    };
   }, []);
 
-  const fetchRevenueData = async () => {
-    try {
-      const subsSnap = await getDocs(query(collection(db, 'subscriptions')));
-      const premiumSnap = await getDocs(query(collection(db, 'premium_subscriptions')));
-      
-      const allTransactions: any[] = [];
-      const addTransactions = (snap: any, type: string) => {
-        snap.docs.forEach((doc: any) => {
-          const data = doc.data();
-          if (data.purchaseDate) {
-            allTransactions.push({
-              id: doc.id,
-              amount: data.amount || 0,
-              date: new Date(data.purchaseDate),
-              type: type,
-              coupon: data.couponCode || 'N/A',
-              userName: data.userName || 'Anonymous'
-            });
-          }
-        });
-      };
-      
-      addTransactions(subsSnap, 'Standard');
-      addTransactions(premiumSnap, 'Premium');
-      
-      allTransactions.sort((a, b) => b.date.getTime() - a.date.getTime());
+  const [rawSubData, setRawSubData] = useState<any[]>([]);
+  const [rawPremiumData, setRawPremiumData] = useState<any[]>([]);
+  const [subsReady, setSubsReady] = useState(false);
+  const [premiumReady, setPremiumReady] = useState(false);
 
-      let total = 0;
-      let monthTotal = 0;
-      const now = new Date();
-      
-      const monthlyData: Record<string, number> = {};
+  const updateStats = (snap: any, collectionType: string) => {
+    const docs = snap.docs.map((doc: any) => ({
+      id: doc.id,
+      ...doc.data(),
+      collectionType
+    }));
 
-      allTransactions.forEach(tx => {
-        const amt = tx.amount || 0;
-        total += amt;
-        
-        if (tx.date.getMonth() === now.getMonth() && tx.date.getFullYear() === now.getFullYear()) {
-          monthTotal += amt;
-        }
-
-        const monthKey = tx.date.toLocaleString('default', { month: 'short', year: 'numeric' });
-        monthlyData[monthKey] = (monthlyData[monthKey] || 0) + amt;
-      });
-
-      setTotalRevenue(total);
-      setThisMonthRevenue(monthTotal);
-      setTransactions(allTransactions);
-
-      const chartFormatted = Object.entries(monthlyData).map(([name, amount]) => ({
-        name,
-        amount
-      })).sort((a, b) => new Date(a.name).getTime() - new Date(b.name).getTime());
-      
-      setChartData(chartFormatted);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching revenue:", error);
-      setLoading(false);
+    if (collectionType === 'subscriptions') {
+      setRawSubData(docs);
+      setSubsReady(true);
+    } else {
+      setRawPremiumData(docs);
+      setPremiumReady(true);
     }
   };
+
+  useEffect(() => {
+    if (!subsReady || !premiumReady) return;
+
+    const allDocs = [...rawSubData, ...rawPremiumData];
+    const allTransactions: any[] = [];
+    // ... rest of processing
+    allDocs.forEach((data: any) => {
+      const rawAmount = data.amount ?? data.totalAmount ?? data.price ?? data.val ?? 0;
+      const amount = typeof rawAmount === 'number' ? rawAmount : parseFloat(rawAmount) || 0;
+      const date = data.purchaseDate || data.createdAt || data.date;
+      
+      if (date) {
+        allTransactions.push({
+          id: data.id,
+          amount: amount,
+          date: new Date(date),
+          type: data.collectionType === 'premium' ? 'Premium' : 'Standard',
+          coupon: data.couponCode || 'NONE',
+          userName: data.userName || data.name || data.displayName || 'User'
+        });
+      }
+    });
+
+    allTransactions.sort((a, b) => b.date.getTime() - a.date.getTime());
+
+    let total = 0;
+    let monthTotal = 0;
+    const now = new Date();
+    const monthlyData: Record<string, number> = {};
+
+    allTransactions.forEach(tx => {
+      const amt = tx.amount || 0;
+      total += amt;
+      
+      if (tx.date.getMonth() === now.getMonth() && tx.date.getFullYear() === now.getFullYear()) {
+        monthTotal += amt;
+      }
+
+      const monthKey = tx.date.toLocaleString('default', { month: 'short', year: 'numeric' });
+      monthlyData[monthKey] = (monthlyData[monthKey] || 0) + amt;
+    });
+
+    setTotalRevenue(total);
+    setThisMonthRevenue(monthTotal);
+    setTransactions(allTransactions);
+
+    const chartFormatted = Object.entries(monthlyData).map(([name, amount]) => ({
+      name,
+      amount
+    })).sort((a, b) => new Date(a.name).getTime() - new Date(b.name).getTime());
+    
+    setChartData(chartFormatted);
+    setLoading(false);
+  }, [rawSubData, rawPremiumData]);
 
   const exportTransactions = () => {
     const wb = XLSX.utils.book_new();
