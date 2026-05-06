@@ -35,7 +35,7 @@ export default function Dashboard() {
                 </div>
              </button>
              <span className="font-logo font-black text-xl tracking-tight text-[#0f172a]">Prep<span className="text-teal-600">Next</span></span>
-             <div className="w-10"></div> {/* Spacer for alignment */}
+             <div className="w-10"></div> {/* Placeholder to center logo if hamburger is on left */}
           </div>
           <DashboardTopHeader user={profile} />
           <main className="p-4 lg:p-8 overflow-y-auto">
