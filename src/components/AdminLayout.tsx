@@ -1,108 +1,229 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Layout } from './Layout';
+import { useAuth } from '../context/AuthContext';
+import { auth } from '../lib/firebase';
 import { 
   LayoutDashboard, 
-  BookOpen, 
   Users, 
   Settings, 
-  PlusCircle, 
-  ArrowLeft,
-  ShieldCheck,
+  LogOut,
   Bell,
-  Sparkles,
-  Layers,
-  CreditCard,
   Ticket,
-  MessageCircle,
-  Mail,
+  Search,
+  HelpCircle,
+  ChevronDown,
+  ClipboardList,
+  GraduationCap,
+  Banknote,
+  Grid,
+  Building,
+  Target,
+  FileBox,
+  MessageSquare,
+  FileQuestion,
   Activity,
-  Crown,
-  Database,
-  Wallet
+  Megaphone,
+  Sparkles,
+  Briefcase,
+  ArrowLeft
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
-export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, backTo?: string }> = ({ children, title, backTo }) => {
+export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, backTo?: string | -1 }> = ({ children, title, backTo }) => {
+  const { profile } = useAuth();
   const location = useLocation();
-  const isActive = (path: string) => location.pathname === path;
+  const navigate = useNavigate();
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
+    'management': true,
+    'content': true,
+    'business': true,
+    'system': false
+  });
+
+  const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
+
+  const handleLogout = async () => {
+    await auth.signOut();
+    navigate('/login');
+  };
+
+  const toggleGroup = (group: string) => {
+    setOpenGroups(prev => ({ ...prev, [group]: !prev[group] }));
+  };
+
+  const NavGroup = ({ id, label, items }: { id: string, label: string, items: any[] }) => (
+    <div className="mb-2">
+      <button 
+        onClick={() => toggleGroup(id)}
+        className="w-full flex items-center justify-between px-6 py-2 text-xs font-bold text-slate-500 uppercase tracking-widest hover:text-slate-300 transition-colors"
+      >
+        <span>{label}</span>
+        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${openGroups[id] ? 'rotate-180' : ''}`} />
+      </button>
+      <AnimatePresence initial={false}>
+        {openGroups[id] && (
+          <motion.div
+             initial={{ height: 0, opacity: 0 }}
+             animate={{ height: 'auto', opacity: 1 }}
+             exit={{ height: 0, opacity: 0 }}
+             className="overflow-hidden space-y-1 block"
+          >
+            {items.map((item) => {
+              const active = location.pathname === item.path || (location.pathname.startsWith(item.path + '/') && item.path !== '/admin');
+              return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex items-center gap-3 px-6 py-2.5 text-sm font-semibold transition-all relative outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-teal-500 mx-2 ${
+                  active
+                    ? 'text-white bg-slate-800'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                {active && (
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-teal-500"></div>
+                )}
+                <item.icon className={`w-4 h-4 flex-shrink-0 ${active ? 'text-teal-400' : ''}`} />
+                <span>{item.label}</span>
+              </Link>
+            )})}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+
+  const managementItems = [
+    { label: 'Dashboard', path: '/admin', icon: LayoutDashboard },
+    { label: 'User Directory', path: '/admin/users', icon: Users },
+    { label: 'Exam Catalog', path: '/admin/exams', icon: ClipboardList },
+    { label: 'Live Test Sessions', path: '/admin/live-tests', icon: Activity },
+    { label: 'Mock Test Bank', path: '/admin/mock-tests', icon: FileBox },
+  ];
+
+  const contentItems = [
+    { label: 'Subjects & Topics', path: '/admin/subjects', icon: Briefcase },
+    { label: 'Agencies / Boards', path: '/admin/agencies', icon: Building },
+    { label: 'Study Material', path: '/admin/study-material', icon: GraduationCap },
+    { label: 'Platform Reviews', path: '/admin/reviews', icon: MessageSquare },
+  ];
+
+  const businessItems = [
+    { label: 'Revenue & Finance', path: '/admin/revenue', icon: Banknote },
+    { label: 'Coupons / Offers', path: '/admin/coupons', icon: Ticket },
+  ];
+
+  const systemItems = [
+    { label: 'Notices Board', path: '/admin/notices', icon: Megaphone },
+    { label: 'Daily Thoughts', path: '/admin/thoughts', icon: Sparkles },
+    { label: 'Settings', path: '/admin/settings', icon: Settings },
+  ];
 
   return (
-    <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="flex flex-col lg:flex-row gap-10">
-          {/* Admin Sidebar */}
-          <aside className="w-full lg:w-64 shrink-0">
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-4 lg:p-6 lg:sticky lg:top-24 overflow-hidden">
-              <div className="hidden lg:flex items-center gap-2 mb-8 px-2">
-                <ShieldCheck className="w-5 h-5 text-orange-600" />
-                <span className="text-xs font-black text-orange-600 uppercase tracking-[0.2em]">Management</span>
-              </div>
-              
-              <nav className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 scrollbar-hide">
-                {[
-                  { label: 'Dashboard', path: '/admin', icon: LayoutDashboard },
-                  { label: 'Notices', path: '/admin/notices', icon: Bell },
-                  { label: 'Thoughts', path: '/admin/thoughts', icon: Sparkles },
-                  { label: 'Agencies', path: '/admin/agencies', icon: Layers },
-                  { label: 'Subjects', path: '/admin/subjects', icon: Layers },
-                  { label: 'Exams', path: '/admin/exams', icon: BookOpen },
-                  { label: 'Master Bank', path: '/admin/mock-tests', icon: Database },
-                  { label: 'Live Tests', path: '/admin/live-tests', icon: CreditCard },
-                  { label: 'Users', path: '/admin/users', icon: Users },
-                  { label: 'Coupons', path: '/admin/coupons', icon: Ticket },
-                  { label: 'Subscriptions', path: '/admin/subscriptions', icon: CreditCard },
-                  { label: 'Revenue', path: '/admin/revenue', icon: Wallet },
-                  { label: 'Activity Log', path: '/admin/activity', icon: Activity },
-                  { label: 'Reviews', path: '/admin/reviews', icon: MessageCircle },
-                  { label: 'Materials', path: '/admin/study-material', icon: BookOpen },
-                  { label: 'Helpdesk', path: '/admin/helpdesk', icon: MessageCircle },
-                  { label: 'Marketing', path: '/admin/marketing', icon: Mail },
-                  { label: 'Push Notifications', path: '/admin/notifications', icon: Bell },
-                  { label: 'Premium Plan', path: '/admin/premium', icon: Crown },
-                  { label: 'Settings', path: '/admin/settings', icon: Settings },
-                ].map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all shrink-0 lg:shrink-1 ${
-                      isActive(item.path) 
-                        ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]' 
-                        : 'text-slate-500 hover:bg-slate-50 hover:text-primary bg-slate-50 lg:bg-transparent'
-                    }`}
-                  >
-                    <item.icon className="w-4 h-4" />
-                    <span className="text-sm">{item.label}</span>
-                  </Link>
-                ))}
-              </nav>
-
-              <div className="hidden lg:block mt-12 p-4 bg-orange-50 rounded-2xl border border-orange-100">
-                <p className="text-[10px] font-bold text-orange-700 uppercase tracking-widest mb-1">Warning</p>
-                <p className="text-[10px] text-orange-600 leading-tight">Admin actions directly affect live production data. Exercise caution.</p>
-              </div>
+    <div className="min-h-screen bg-slate-50 flex font-sans text-slate-800">
+      {/* Sidebar */}
+      <aside className="w-[280px] bg-[#111827] flex flex-col shrink-0 relative z-40 text-slate-300 shadow-2xl">
+        <header className="p-6 pb-4">
+          <Link to="/admin" className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center text-white shadow-lg shadow-teal-900/50">
+              <GraduationCap className="w-6 h-6" />
             </div>
-          </aside>
+            <div>
+              <h1 className="text-white font-bold text-xl leading-none">PrepNext</h1>
+              <p className="text-[10px] font-bold text-teal-400 mt-1 uppercase tracking-widest">Administrator</p>
+            </div>
+          </Link>
+        </header>
 
-          {/* Main Admin Content */}
-          <div className="flex-1">
-            <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                {backTo && (
-                  <Link to={backTo} className="p-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
-                    <ArrowLeft className="w-4 h-4 text-slate-600" />
-                  </Link>
-                )}
-                <h1 className="text-2xl font-black text-primary tracking-tight">{title}</h1>
-              </div>
-              <div id="admin-actions" />
-            </header>
+        <nav className="flex-1 overflow-y-auto py-4 custom-scrollbar">
+          <NavGroup id="management" label="App Management" items={managementItems} />
+          <div className="my-4 border-t border-slate-800 mx-6"></div>
+          <NavGroup id="content" label="Database & Content" items={contentItems} />
+          <div className="my-4 border-t border-slate-800 mx-6"></div>
+          <NavGroup id="business" label="Business & Ops" items={businessItems} />
+          <div className="my-4 border-t border-slate-800 mx-6"></div>
+          <NavGroup id="system" label="System Controls" items={systemItems} />
+        </nav>
+
+        <footer className="p-4 border-t border-slate-800 bg-slate-900/50">
+           <Link 
+             to="/admin/helpdesk"
+             className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+           >
+             <HelpCircle className="w-4 h-4" />
+             <span>Support Tickets</span>
+           </Link>
+           <button 
+             onClick={handleLogout}
+             className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors mt-1"
+           >
+             <LogOut className="w-4 h-4" />
+             <span>Safe Disconnect</span>
+           </button>
+        </footer>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col h-screen overflow-hidden">
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+          <div className="flex-1 max-w-xl relative">
+             <Search className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+             <input 
+                type="text" 
+                placeholder="Search global registries..." 
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all font-medium text-slate-700 placeholder:text-slate-400"
+             />
+          </div>
+
+          <div className="flex items-center gap-6 ml-4">
+            <button className="text-slate-400 hover:text-slate-600 transition-colors relative">
+              <Bell className="w-5 h-5" />
+              <span className="absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
+            </button>
+            <button className="text-slate-400 hover:text-slate-600 transition-colors">
+              <Grid className="w-5 h-5" />
+            </button>
             
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              {children}
+            <div className="flex items-center gap-3 pl-6 border-l border-slate-200">
+               <div className="text-right hidden sm:block">
+                  <p className="text-sm font-bold text-slate-700 leading-tight">{profile?.fullName || 'Admin User'}</p>
+                  <p className="text-[10px] font-bold text-slate-500">Super Admin</p>
+               </div>
+               <div className="w-9 h-9 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden">
+                  {profile?.profilePicture ? (
+                    <img src={profile.profilePicture} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <img src={`https://ui-avatars.com/api/?name=${profile?.fullName || 'Admin'}&background=0f766e&color=fff`} alt="Avatar" className="w-full h-full object-cover" />
+                  )}
+               </div>
             </div>
           </div>
+        </header>
+
+        {/* Dynamic Page Content */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50 relative">
+           <div className="max-w-[1600px] mx-auto p-6 md:p-8 relative min-h-screen pb-20">
+              <motion.div 
+               initial={{ opacity: 0, y: 10 }}
+               animate={{ opacity: 1, y: 0 }}
+               key={location.pathname}
+              >
+                <div className="mb-8 flex items-center gap-4">
+                  {backTo && (
+                    <button 
+                      onClick={() => backTo === -1 ? navigate(-1) : navigate(backTo as string)}
+                      className="p-2 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                    </button>
+                  )}
+                  {title && <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">{title}</h2>}
+                </div>
+                {children}
+              </motion.div>
+           </div>
         </div>
-      </div>
-    </Layout>
+      </main>
+    </div>
   );
 };

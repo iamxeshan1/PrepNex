@@ -9,8 +9,6 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
-import Agencies from './pages/Agencies';
-import AgencyExams from './pages/AgencyExams';
 import ExamDetail from './pages/ExamDetail';
 import Test from './pages/Test';
 import Result from './pages/Result';
@@ -32,7 +30,10 @@ import AdminSubscriptions from './pages/Admin/Subscriptions';
 import AdminLiveTests from './pages/Admin/LiveTests';
 import AdminHelpdesk from './pages/Admin/Helpdesk';
 import AdminActivityLog from './pages/Admin/ActivityLog';
-import AdminMarketing from './pages/Admin/Marketing';
+import AdminExamManagement from './pages/Admin/ExamManagement';
+import AdminTestManagement from './pages/Admin/TestManagement';
+import AdminManageLiveTest from './pages/Admin/ManageLiveTest';
+import AdminEditLiveTest from './pages/Admin/EditLiveTest';
 import AdminReviews from './pages/Admin/Reviews';
 import AdminStudyMaterial from './pages/Admin/StudyMaterial';
 import AdminPushNotifications from './pages/Admin/PushNotifications';
@@ -43,6 +44,7 @@ import StudyMaterial from './pages/StudyMaterial';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import LiveTestDetail from './pages/LiveTestDetail';
 import Helpdesk from './pages/Helpdesk';
+import Exams from './pages/Exams';
 
 import About from './pages/About';
 import ResetPassword from './pages/ResetPassword';
@@ -100,8 +102,7 @@ export function AppContent() {
             </ProtectedRoute>
           } />
           
-          <Route path="/agencies" element={<Agencies />} />
-          <Route path="/agency/:agencyId" element={<AgencyExams />} />
+          <Route path="/exams" element={<Exams />} />
           <Route path="/subjects" element={<Subjects />} />
           <Route path="/premium" element={<Premium />} />
           <Route path="/about" element={<About />} />
@@ -191,6 +192,26 @@ export function AppContent() {
               <AdminExams />
             </ProtectedRoute>
           } />
+          <Route path="/admin/exam/management/:examId" element={
+            <ProtectedRoute adminOnly>
+              <AdminExamManagement />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/test/management/:testId" element={
+            <ProtectedRoute adminOnly>
+              <AdminTestManagement />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/live-test/manage/:testId" element={
+            <ProtectedRoute adminOnly>
+              <AdminManageLiveTest />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/live-test/edit/:testId" element={
+            <ProtectedRoute adminOnly>
+              <AdminEditLiveTest />
+            </ProtectedRoute>
+          } />
           <Route path="/admin/mock-tests" element={
             <ProtectedRoute adminOnly>
               <AdminMockTestBank />
@@ -224,12 +245,6 @@ export function AppContent() {
             </ProtectedRoute>
           } />
           
-          <Route path="/admin/marketing" element={
-            <ProtectedRoute adminOnly>
-              <AdminMarketing />
-            </ProtectedRoute>
-          } />
-
           <Route path="/admin/notifications" element={
             <ProtectedRoute adminOnly>
               <AdminPushNotifications />

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
 import { db } from '../../lib/firebase';
 import { collection, query, getDocs, orderBy, updateDoc, doc, deleteDoc } from 'firebase/firestore';
-import { MessageCircle, CheckCircle2, Clock, Send, Trash2 } from 'lucide-react';
+import { MessageCircle, CheckCircle2, Clock, Send, Trash2, X, MessageSquare, User, Info, Loader2, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function AdminHelpdesk() {
   const [tickets, setTickets] = useState<any[]>([]);
@@ -19,7 +20,6 @@ export default function AdminHelpdesk() {
       const snap = await getDocs(q);
       const allTickets = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
       
-      // Auto-cleanup any already closed tickets if they somehow persist
       const closedTickets = allTickets.filter((t: any) => t.status === 'closed');
       if (closedTickets.length > 0) {
         for (const t of closedTickets) {
@@ -36,9 +36,7 @@ export default function AdminHelpdesk() {
     }
   };
 
-  useEffect(() => {
-    fetchTickets();
-  }, []);
+  useEffect(() => { fetchTickets(); }, []);
 
   const handleReply = async (ticketId: string) => {
     const text = replyText[ticketId];
@@ -63,7 +61,6 @@ export default function AdminHelpdesk() {
       });
       
       setReplyText({ ...replyText, [ticketId]: '' });
-      alert('Reply sent successfully!');
       fetchTickets();
     } catch (err) {
       alert('Failed to send reply');
@@ -73,169 +70,158 @@ export default function AdminHelpdesk() {
   };
 
   const handleClose = async (ticketId: string) => {
-    if (!window.confirm('Are you sure you want to CLOSE and PERMANENTLY DELETE this ticket? This action is required by system policy and cannot be undone.')) return;
+    if (!window.confirm('Mark this query as resolved?')) return;
     
     setClosing(ticketId);
     try {
       await deleteDoc(doc(db, 'tickets', ticketId));
-      alert('Ticket resolved and deleted successfully');
       fetchTickets();
     } catch (err) {
-      alert('Failed to delete ticket');
+      alert('Failed to resolve ticket');
     } finally {
       setClosing(null);
     }
   };
 
   return (
-    <AdminLayout title="Helpdesk">
-      <div className="mb-8 flex justify-between items-center bg-white p-6 rounded-3xl border border-slate-100 shadow-sm animate-in">
+    <AdminLayout title="Resolve Hub">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
         <div>
-          <h2 className="text-xl font-black text-secondary tracking-tight">Support Tickets</h2>
-          <p className="text-sm font-bold text-slate-400 mt-1 uppercase tracking-widest">Manage user queries (Multi-message enabled)</p>
+           <h2 className="text-3xl font-black text-slate-900 tracking-tight font-display">Student Support Ledger</h2>
+           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 italic">Real-time triage for institutional queries</p>
         </div>
-        <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
-          <MessageCircle className="w-6 h-6" />
+        <div className="flex items-center gap-4">
+           <div className="px-6 py-4 bg-white border border-slate-100 rounded-[1.5rem] shadow-sm flex flex-col items-center">
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Open Cases</span>
+              <span className="text-lg font-black text-[#0f172a] font-display">{tickets.length}</span>
+           </div>
         </div>
       </div>
 
       {loading ? (
-        <div className="flex justify-center p-12">
-          <div className="w-8 h-8 rounded-full border-4 border-primary/20 border-t-primary animate-spin"></div>
+        <div className="py-24 text-center">
+           <Loader2 className="w-12 h-12 text-secondary animate-spin mx-auto mb-6" />
+           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Synchronizing Resolve Channel...</p>
         </div>
       ) : tickets.length === 0 ? (
-        <div className="text-center p-12 bg-white rounded-3xl border border-slate-100 shadow-sm">
-           <MessageCircle className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-           <h3 className="text-lg font-bold text-slate-800">No support tickets</h3>
-           <p className="text-slate-500 font-bold mt-1 text-sm">All caught up!</p>
+        <div className="py-32 text-center bg-white rounded-[4rem] border-4 border-dashed border-slate-50">
+           <MessageSquare className="w-16 h-16 text-slate-100 mx-auto mb-4" />
+           <p className="text-sm font-black text-slate-400 uppercase tracking-widest">Query Repository Empty • Case Files Closed</p>
         </div>
       ) : (
-        <div className="space-y-6">
-          {tickets.map((ticket) => (
-            <div key={ticket.id} className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden">
-              <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4 pb-4 border-b border-slate-100">
-                <div>
-                  <h3 className="text-lg font-black text-slate-800 tracking-tight mb-1">{ticket.subject}</h3>
-                  <p className="text-xs font-bold text-slate-500 flex items-center gap-2">
-                    <span className="text-primary font-black uppercase tracking-widest">{ticket.userName}</span> 
-                    <span className="text-slate-300">|</span>
-                    {ticket.userEmail}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                    ticket.status === 'open' ? 'bg-orange-50 text-orange-600' : 
-                    ticket.status === 'replied' ? 'bg-blue-50 text-blue-600' :
-                    'bg-green-50 text-green-600'
-                  }`}>
-                    {ticket.status === 'open' ? <Clock className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                    {ticket.status}
-                  </span>
-                  {ticket.status !== 'closed' && (
-                    <button 
-                      onClick={() => handleClose(ticket.id)}
-                      disabled={closing === ticket.id}
-                      className="text-[10px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors flex items-center gap-1"
-                    >
-                      {closing === ticket.id ? 'Closing...' : 'Close Ticket'}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Chat Window */}
-              <div className="flex flex-col mb-6 bg-slate-50/50 p-4 rounded-2xl border border-slate-100 max-h-[400px] overflow-y-auto">
-                {/* Legacy message */}
-                {ticket.message && (
-                  <div className="flex justify-start mb-4">
-                    <div className="max-w-[85%] bg-white p-4 rounded-2xl rounded-tl-none border border-slate-200">
-                      <p className="text-sm font-bold text-slate-700">{ticket.message}</p>
-                      <p className="text-[10px] text-slate-400 mt-2 uppercase font-black">Initial Issue</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Thread messages */}
-                {(ticket.messages || []).map((msg: any, idx: number, arr: any[]) => {
-                  const isFirstInGroup = idx === 0 || arr[idx - 1].sender !== msg.sender;
-                  const isLastInGroup = idx === arr.length - 1 || arr[idx + 1].sender !== msg.sender;
-
-                  return (
-                    <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-start' : 'justify-end'} ${!isLastInGroup ? 'mb-1' : 'mb-4'}`}>
-                      <div className={`max-w-[85%] px-4 py-3 rounded-2xl border ${
-                        msg.sender === 'user' 
-                          ? `bg-white border-slate-200 ${isFirstInGroup ? 'rounded-tl-none' : 'rounded-tl-md rounded-bl-md'}` 
-                          : `bg-primary text-white border-primary ${isFirstInGroup ? 'rounded-tr-none' : 'rounded-tr-md rounded-br-md'}`
-                      }`}>
-                        {isFirstInGroup && (
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className={`text-[10px] font-black uppercase tracking-widest ${msg.sender === 'user' ? 'text-slate-400' : 'text-white/70'}`}>
-                              {msg.sender === 'user' ? 'User' : 'You (Admin)'}
-                            </span>
+        <div className="grid grid-cols-1 gap-10 pb-40">
+          <AnimatePresence>
+            {tickets.map((ticket, idx) => (
+              <motion.div 
+                key={ticket.id} 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl transition-all duration-700 relative group overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 w-64 h-64 bg-slate-50 -translate-y-1/2 translate-x-1/2 rounded-full opacity-50 pointer-events-none group-hover:scale-110 transition-transform duration-1000" />
+                
+                <div className="relative">
+                  <header className="flex flex-col md:flex-row justify-between items-start mb-8 gap-6 pb-6 border-b border-slate-50">
+                    <div className="space-y-4">
+                       <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-center text-indigo-600">
+                             <User className="w-5 h-5" />
                           </div>
-                        )}
-                        <p className={`text-sm font-bold ${msg.sender === 'user' ? 'text-slate-800' : 'text-white'}`}>{msg.text}</p>
-                        {isLastInGroup && (
-                          <p className={`text-[10px] mt-2 ${msg.sender === 'user' ? 'text-slate-400' : 'text-white/50'}`}>
-                            {new Date(msg.createdAt).toLocaleString()}
-                          </p>
-                        )}
+                          <div>
+                             <h3 className="text-xl font-black text-slate-900 tracking-tight font-display uppercase">{ticket.subject}</h3>
+                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{ticket.userName} • {ticket.userEmail}</p>
+                          </div>
+                       </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border flex items-center gap-2 ${
+                        ticket.status === 'open' ? 'bg-amber-50 border-amber-100 text-amber-600' : 
+                        ticket.status === 'replied' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' :
+                        'bg-emerald-50 border-emerald-100 text-emerald-600'
+                      }`}>
+                        <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                          ticket.status === 'open' ? 'bg-amber-500' : 'bg-indigo-500'
+                        }`} />
+                        {ticket.status} Dispatch
+                      </span>
+                      <button 
+                        onClick={() => handleClose(ticket.id)}
+                        disabled={closing === ticket.id}
+                        className="p-3 bg-white border border-slate-100 text-slate-300 hover:text-rose-600 hover:border-rose-100 rounded-xl transition-all shadow-sm hover:scale-110 active:scale-95"
+                        title="Archive Case"
+                      >
+                         <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </header>
+
+                  <div className="space-y-6 mb-10 bg-slate-50/50 p-8 rounded-[2.5rem] border border-slate-100/50 max-h-[500px] overflow-y-auto custom-scrollbar">
+                    {/* Initial Message */}
+                    {ticket.message && (
+                      <div className="flex justify-start">
+                        <div className="max-w-[85%] bg-white p-6 rounded-[2rem] rounded-tl-none border border-slate-100 shadow-sm">
+                          <p className="text-sm font-bold text-slate-700 leading-relaxed italic pr-4">"{ticket.message}"</p>
+                          <div className="mt-3 flex items-center gap-2">
+                             <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Inaugural Query Node</span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    )}
 
-                {/* Legacy reply */}
-                {ticket.reply && !(ticket.messages || []).some((m: any) => m.sender === 'admin' && m.text === ticket.reply) && (
-                  <div className="flex justify-end mb-4">
-                    <div className="max-w-[85%] bg-primary text-white p-4 rounded-2xl rounded-tr-none border border-primary">
-                      <p className="text-sm font-bold">{ticket.reply}</p>
-                      <p className="text-[10px] text-white/50 mt-2 uppercase font-black">Legacy Reply</p>
-                    </div>
+                    {/* Interaction Thread */}
+                    {(ticket.messages || []).map((msg: any, mIdx: number) => (
+                      <div key={mIdx} className={`flex ${msg.sender === 'user' ? 'justify-start' : 'justify-end'}`}>
+                        <div className={`max-w-[85%] p-6 rounded-[2rem] border-2 shadow-sm ${
+                          msg.sender === 'user' 
+                            ? 'bg-white border-slate-100 rounded-tl-none' 
+                            : 'bg-[#0f172a] border-[#0f172a] text-white rounded-tr-none'
+                        }`}>
+                          <div className="flex items-center gap-2 mb-2">
+                             <div className={`w-1.5 h-1.5 rounded-full ${msg.sender === 'user' ? 'bg-indigo-500' : 'bg-emerald-500'}`} />
+                             <span className={`text-[8px] font-black uppercase tracking-widest ${msg.sender === 'user' ? 'text-slate-400' : 'text-slate-500'}`}>
+                                {msg.sender === 'user' ? 'Aspirant Response' : 'Institutional Protocol'}
+                             </span>
+                          </div>
+                          <p className={`text-sm font-bold leading-relaxed ${msg.sender === 'user' ? 'text-slate-800' : 'text-white'}`}>{msg.text}</p>
+                          <div className="mt-3 flex items-center gap-2">
+                             <span className={`text-[8px] font-bold ${msg.sender === 'user' ? 'text-slate-300' : 'text-white/40'}`}>
+                                {new Date(msg.createdAt).toLocaleString()}
+                             </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                )}
-              </div>
 
-              {ticket.status !== 'closed' && (
-                <div className="mt-4 space-y-4">
-                  <div className="flex gap-2">
+                  <div className="relative group/reply">
                     <textarea 
-                      className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary font-bold text-sm resize-none"
-                      placeholder="Type your response..."
-                      rows={2}
+                      className="w-full px-8 py-6 bg-white border border-slate-200 rounded-[2rem] outline-none focus:ring-4 focus:ring-indigo-500/5 font-bold text-slate-800 shadow-xl transition-all h-28 resize-none"
+                      placeholder="Input resolving protocol message..."
                       value={replyText[ticket.id] || ''}
                       onChange={(e) => setReplyText({ ...replyText, [ticket.id]: e.target.value })}
                     />
                     <button 
                       onClick={() => handleReply(ticket.id)}
                       disabled={submitting === ticket.id || !replyText[ticket.id]}
-                      className="bg-primary text-white p-4 rounded-xl hover:bg-primary/90 transition-all disabled:opacity-50 self-end"
+                      className="absolute right-4 bottom-4 p-5 bg-[#0f172a] text-white rounded-2xl hover:bg-black transition-all disabled:opacity-30 shadow-2xl active:scale-95 transform hover:-translate-x-1"
                     >
-                      {submitting === ticket.id ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : <Send className="w-5 h-5" />}
+                      {submitting === ticket.id ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
                     </button>
                   </div>
-                  
-                  {ticket.status === 'replied' && (
-                    <div className="flex justify-end">
-                      <button 
-                        onClick={() => handleClose(ticket.id)}
-                        disabled={closing === ticket.id}
-                        className="text-xs font-black text-slate-400 hover:text-red-500 uppercase tracking-widest flex items-center gap-1.5 transition-colors"
-                      >
-                        <CheckCircle2 className="w-4 h-4" /> Force Close Ticket
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
 
-              {ticket.status === 'closed' && (
-                <div className="text-center p-4 bg-slate-50 rounded-xl border border-slate-100">
-                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Ticket Closed & Resolved</p>
+                  <div className="mt-8 flex items-center justify-between">
+                     <div className="flex items-center gap-2 text-[9px] font-black text-slate-300 uppercase tracking-widest">
+                        <Sparkles className="w-3.5 h-3.5" /> Direct Channel Protocol v2.4
+                     </div>
+                     <button onClick={() => handleClose(ticket.id)} className="flex items-center gap-2 text-[9px] font-black text-emerald-600 uppercase tracking-widest hover:underline">
+                        <CheckCircle2 className="w-4 h-4" /> Move to Archive
+                     </button>
+                  </div>
                 </div>
-              )}
-            </div>
-          ))}
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
     </AdminLayout>

@@ -58,6 +58,8 @@ export default function Login() {
       // Provide more specific feedback for common Firebase errors
       if (err.code === 'auth/unauthorized-domain') {
         setError(`Domain not authorized. Please add this domain (${window.location.hostname}) to Authorized Domains in Firebase Console.`);
+      } else if (err.code === 'auth/popup-blocked') {
+        setError('Sign-in popup was blocked by your browser. Please try opening the app in a new tab to sign in.');
       } else if (err.code === 'auth/popup-closed-by-user') {
         setError('Sign-in popup closed before completion.');
       } else if (err.code === 'auth/cancelled-popup-request') {

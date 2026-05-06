@@ -1,59 +1,53 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/AdminLayout';
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Plus, Trash2, ChevronRight, Settings2, Upload, X, Loader2, Edit3 } from 'lucide-react';
+import { 
+  Plus, 
+  Trash2, 
+  Settings2, 
+  X, 
+  Loader2, 
+  Edit3, 
+  MoreVertical,
+  Activity,
+  FileText
+} from 'lucide-react';
 
 export default function AdminExams() {
   const [exams, setExams] = useState<any[]>([]);
   const [agencies, setAgencies] = useState<any[]>([]);
-  const [subjects, setSubjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [type, setType] = useState<'recruitment' | 'competitive'>('recruitment');
   
   // Form State
   const [name, setName] = useState('');
   const [agencyId, setAgencyId] = useState('');
-  const [cat, setCat] = useState('Government Jobs');
+  const [cat, setCat] = useState('GOVERNMENT');
   const [price, setPrice] = useState('0');
   const [isPaid, setIsPaid] = useState(false);
-  const [isPopular, setIsPopular] = useState(false);
-  const [status, setStatus] = useState('draft');
-  const [totalPosts, setTotalPosts] = useState('');
-  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
-  const [postDistribution, setPostDistribution] = useState<{category: string, count: string}[]>([]);
+  const [status, setStatus] = useState('live');
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchExamsAndAgencies();
   }, []);
 
   const fetchExamsAndAgencies = async () => {
-    const [examsSnap, agenciesSnap, subjectsSnap] = await Promise.all([
-      getDocs(collection(db, 'exams')),
-      getDocs(collection(db, 'agencies')),
-      getDocs(collection(db, 'subjects'))
-    ]);
-    setExams(examsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    setAgencies(agenciesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    setSubjects(subjectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    setLoading(false);
-  };
-
-  const addPostCategory = () => {
-    setPostDistribution([...postDistribution, { category: '', count: '' }]);
-  };
-
-  const updatePostCategory = (index: number, field: 'category'|'count', value: string) => {
-    const newArr = [...postDistribution];
-    newArr[index][field] = value;
-    setPostDistribution(newArr);
-  };
-
-  const removePostCategory = (index: number) => {
-    setPostDistribution(postDistribution.filter((_, i) => i !== index));
+    try {
+      const [examsSnap, agenciesSnap] = await Promise.all([
+        getDocs(collection(db, 'exams')),
+        getDocs(collection(db, 'agencies'))
+      ]);
+      setExams(examsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setAgencies(agenciesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      setLoading(false);
+    }
   };
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -61,13 +55,9 @@ export default function AdminExams() {
     const examData = {
       name,
       agencyId,
-      type,
-      category: type === 'recruitment' ? cat : 'Competitive',
+      category: cat,
       price: Number(price),
       isPaid: isPaid,
-      totalPosts: type === 'recruitment' ? Number(totalPosts) : 0,
-      postDistribution: type === 'recruitment' ? postDistribution.map(p => ({ category: p.category, count: Number(p.count) })) : [],
-      isPopular,
       status,
       updatedAt: new Date().toISOString()
     };
@@ -84,7 +74,6 @@ export default function AdminExams() {
     setShowAddForm(false);
     setEditingId(null);
     fetchExamsAndAgencies();
-    // Reset form
     resetForm();
   };
 
@@ -92,286 +81,202 @@ export default function AdminExams() {
     setEditingId(exam.id);
     setName(exam.name);
     setAgencyId(exam.agencyId || '');
-    setType(exam.type || 'recruitment');
-    setCat(exam.category || 'Government Jobs');
+    setCat(exam.category || 'GOVERNMENT');
     setPrice((exam.price ?? 0).toString());
     setIsPaid(exam.isPaid || false);
-    setTotalPosts((exam.totalPosts ?? '').toString());
-    setPostDistribution((exam.postDistribution || []).map((p: any) => ({ category: p.category, count: p.count.toString() })));
-    setIsPopular(exam.isPopular || false);
-    setStatus(exam.status || 'draft');
+    setStatus(exam.status || 'live');
     setShowAddForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const resetForm = () => {
-    setName(''); setAgencyId(''); setPrice('0'); setIsPaid(false); setTotalPosts(''); setPostDistribution([]); setIsPopular(false); setStatus('draft'); setType('recruitment');
+    setName(''); setAgencyId(''); setPrice('0'); setIsPaid(false); setStatus('live');
   };
 
-  const cancelForm = () => {
-    setShowAddForm(false);
-    setEditingId(null);
-    resetForm();
-  };
-
-  const handleDelete = async (id: string, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    
-    try {
-      await deleteDoc(doc(db, 'exams', id));
-      alert("Exam deleted successfully!");
-      setConfirmingDeleteId(null);
-      fetchExamsAndAgencies();
-    } catch (error: any) {
-      console.error("Delete error:", error);
-      alert(`Failed to delete exam: ${error.message || "Unknown error"}`);
+  const handleDelete = async (id: string) => {
+    if (confirm("Are you sure you want to delete this exam?")) {
+      try {
+        await deleteDoc(doc(db, 'exams', id));
+        fetchExamsAndAgencies();
+      } catch (error) {
+        alert("Failed to delete exam");
+      }
     }
   };
 
+  const StatCard = ({ title, value, span, trend, colorClass = "text-slate-900" }: any) => (
+    <div className="bg-white p-6 rounded-xl border border-slate-200">
+      <p className="text-sm font-medium text-slate-500 mb-2">{title}</p>
+      <h3 className={`text-4xl font-bold tracking-tight mb-2 ${colorClass}`}>{value}</h3>
+      {trend && <p className="text-xs font-semibold text-emerald-600">{trend}</p>}
+      {span && <p className="text-xs font-semibold text-slate-400 mt-2">{span}</p>}
+    </div>
+  );
+
   return (
-    <AdminLayout title="Manage Exams">
-      <div className="sticky top-0 z-40 pb-6 bg-[#f8fafc]/50 backdrop-blur-md">
-        <div className="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
-          <div>
-            <h2 className="text-2xl font-black text-primary tracking-tight">Exam Categories</h2>
-            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Configure syllabus and subject weightage for various competitive exams</p>
-          </div>
-          <button 
-            onClick={() => { if(showAddForm) cancelForm(); else setShowAddForm(true); }}
-            className="bg-primary text-white px-8 py-4 rounded-xl font-bold flex items-center gap-3 shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all active:scale-95 whitespace-nowrap"
-          >
-            <Plus className="w-5 h-5" /> {showAddForm ? 'Cancel' : 'Register New Exam Category'}
-          </button>
+    <AdminLayout title="Exam Catalog">
+      <div className="flex justify-between items-center mb-6">
+        <p className="text-slate-500 font-medium">Manage and monitor high-stakes recruitment and entrance examinations.</p>
+        <button 
+          onClick={() => { if(showAddForm) { resetForm(); setShowAddForm(false); } else { setShowAddForm(true); } }}
+          className="bg-teal-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-teal-800 transition-colors"
+        >
+          {showAddForm ? <X className="w-4 h-4" /> : <Plus className="w-5 h-5" />}
+          {showAddForm ? 'Cancel Form' : 'Create New Exam'}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <StatCard title="Total Exams" value={exams.length} trend="~12% this month" />
+        <StatCard title="Active Candidates" value="8.4k" trend="~4.2k active now" />
+        <StatCard title="Avg. Revenue/Exam" value="₹4.2k" span="Last 30 days" />
+        <div className="bg-[#111827] text-white p-6 rounded-xl relative overflow-hidden flex flex-col justify-between">
+           <div>
+             <p className="text-sm font-medium text-slate-400 mb-2">System Health</p>
+             <h3 className="text-4xl font-bold tracking-tight mb-2">99.9% Uptime</h3>
+           </div>
+           <p className="text-xs text-slate-300 relative z-10 w-2/3 leading-relaxed">
+             All regional servers operating at peak performance for current active test sessions.
+           </p>
+           <Activity className="absolute bottom-4 right-4 w-24 h-24 text-slate-800" />
         </div>
       </div>
 
       {showAddForm && (
-        <form onSubmit={handleAdd} className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm mb-10 space-y-6 animate-in zoom-in-95 duration-300">
-          <h3 className="text-xl font-bold text-primary">{editingId ? 'Edit Exam' : 'Create New Exam'}</h3>
-          
-          <div className="flex gap-4 p-1 bg-slate-100 rounded-2xl w-fit">
-            <button
-              type="button"
-              onClick={() => setType('recruitment')}
-              className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${type === 'recruitment' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              Recruitment Exam
-            </button>
-            <button
-              type="button"
-              onClick={() => setType('competitive')}
-              className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${type === 'competitive' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              Competitive Exam
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Exam Name</label>
-              <input 
-                required 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
-                value={name} onChange={(e) => setName(e.target.value)} 
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Agency</label>
-              <select 
-                required 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
-                value={agencyId} onChange={(e) => setAgencyId(e.target.value)} 
-              >
-                <option value="">Select Agency</option>
-                {agencies.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-              </select>
-            </div>
-            
-            <div></div>
-            
-            {type === 'recruitment' && (
-              <>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700">Category</label>
-                  <select 
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
-                    value={cat} onChange={(e) => setCat(e.target.value)}
-                  >
-                    {['Government Jobs', 'Medical', 'Engineering', 'Banking', 'Police'].map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+        <form onSubmit={handleAdd} className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm mb-8">
+            <h3 className="text-xl font-bold text-slate-900 mb-6">{editingId ? 'Edit Exam' : 'Add New Exam'}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Exam Name</label>
+                <input required placeholder="e.g. JKSSB Sub-Inspector" className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" value={name} onChange={(e) => setName(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Organization</label>
+                <select required className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white" value={agencyId} onChange={(e) => setAgencyId(e.target.value)}>
+                  <option value="">Select Governing Body</option>
+                  {agencies.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                </select>
+              </div>
+              <div>
+                 <label className="block text-sm font-semibold text-slate-700 mb-2">Category</label>
+                 <select className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white uppercase" value={cat} onChange={(e) => setCat(e.target.value)}>
+                    <option value="GOVERNMENT">Government</option>
+                    <option value="MEDICAL">Medical</option>
+                    <option value="STAFF SELECTION">Staff Selection</option>
+                    <option value="CIVIL SERVICES">Civil Services</option>
+                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Access Type</label>
+                <select className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white" value={isPaid ? 'paid' : 'free'} onChange={(e) => setIsPaid(e.target.value === 'paid')}>
+                  <option value="free">Free Access</option>
+                  <option value="paid">Paid Premium</option>
+                </select>
+              </div>
+              {isPaid && (
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Price (INR)</label>
+                  <input type="number" className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" value={price} onChange={(e) => setPrice(e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700">Total Posts Advertised</label>
-                  <input 
-                    type="number"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
-                    value={totalPosts} onChange={(e) => setTotalPosts(e.target.value)} 
-                  />
-                </div>
-
-                <div className="space-y-4 md:col-span-2 border-t border-slate-100 pt-4">
-                  <div className="flex justify-between items-center">
-                    <label className="text-sm font-bold text-slate-700">Category-wise Post Distribution</label>
-                    <button type="button" onClick={addPostCategory} className="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
-                      <Plus className="w-3 h-3" /> Add Category
-                    </button>
-                  </div>
-                  <div className="space-y-3">
-                     {postDistribution.map((pd, i) => (
-                       <div key={i} className="flex gap-4 items-center bg-slate-50 p-2 border border-slate-200 rounded-xl">
-                          <input 
-                            placeholder="Category (e.g. Gen, RBA, OBC)"
-                            value={pd.category} onChange={e => updatePostCategory(i, 'category', e.target.value)}
-                            className="flex-1 px-3 py-2 bg-white rounded-lg border border-slate-200 text-sm outline-none focus:ring-1 focus:ring-primary"
-                          />
-                          <input 
-                            type="number"
-                            placeholder="Count"
-                            value={pd.count} onChange={e => updatePostCategory(i, 'count', e.target.value)}
-                            className="w-24 px-3 py-2 bg-white rounded-lg border border-slate-200 text-sm outline-none focus:ring-1 focus:ring-primary"
-                          />
-                          <button type="button" onClick={() => removePostCategory(i)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                       </div>
-                     ))}
-                     {postDistribution.length === 0 && (
-                       <p className="text-xs text-slate-400 font-medium">No distribution added. Add categories if required.</p>
-                     )}
-                  </div>
-                </div>
-              </>
-            )}
-            
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Status</label>
-              <select 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
-                value={status} onChange={(e) => setStatus(e.target.value)}
-              >
-                <option value="draft">Draft (Hidden)</option>
-                <option value="live">Live (Published)</option>
-              </select>
-            </div>
-            <div className="space-y-2 flex items-end">
-              <button 
-                type="button"
-                onClick={() => setIsPopular(!isPopular)}
-                className={`w-full py-3 rounded-xl font-bold border-2 transition-all ${isPopular ? 'border-secondary bg-secondary/5 text-secondary' : 'border-slate-100 text-slate-400'}`}
-              >
-                {isPopular ? 'Popular Exam (Featured)' : 'Not Featured'}
-              </button>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Pricing Model</label>
-              <div className="flex items-center gap-4">
-                <button 
-                  type="button"
-                  onClick={() => setIsPaid(false)}
-                  className={`flex-1 py-3 rounded-xl font-bold border-2 transition-all ${!isPaid ? 'border-primary bg-primary/5 text-primary' : 'border-slate-100 text-slate-400'}`}
-                >
-                  Free
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => setIsPaid(true)}
-                  className={`flex-1 py-3 rounded-xl font-bold border-2 transition-all ${isPaid ? 'border-primary bg-primary/5 text-primary' : 'border-slate-100 text-slate-400'}`}
-                >
-                  Paid
-                </button>
+              )}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Status</label>
+                <select className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white" value={status} onChange={(e) => setStatus(e.target.value)}>
+                  <option value="draft">Draft</option>
+                  <option value="live">Published</option>
+                </select>
               </div>
             </div>
-            {isPaid && (
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">Price (INR)</label>
-                <input 
-                  type="number" 
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
-                  value={price} onChange={(e) => setPrice(e.target.value)} 
-                />
-              </div>
-            )}
-          </div>
-          <button type="submit" className="w-full py-4 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all">
-            {editingId ? 'Update Exam Details' : 'Save Exam Category'}
-          </button>
+            <div className="mt-8 flex gap-3">
+               <button type="submit" className="bg-teal-700 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-teal-800 transition-colors">
+                 {editingId ? 'Save Changes' : 'Create Exam'}
+               </button>
+            </div>
         </form>
       )}
 
-      <div className="grid grid-cols-1 gap-4">
-        {exams.map((exam) => (
-          <div key={exam.id} className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group shadow-sm hover:shadow-md transition-all">
-            <div className="flex items-center gap-4 sm:gap-6">
-              <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center overflow-hidden text-slate-400 group-hover:bg-primary/5 group-hover:text-primary transition-colors shrink-0">
-                {(() => {
-                  const agency = agencies.find(a => a.id === exam.agencyId);
-                  if (agency?.logoUrl) return <img src={agency.logoUrl} alt={agency.name} className="w-full h-full object-cover" />;
-                  if (exam.logoUrl) return <img src={exam.logoUrl} alt={exam.name} className="w-full h-full object-cover" />;
-                  return <Settings2 className="w-6 h-6" />;
-                })()}
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h4 className="font-extrabold text-primary tracking-tight truncate">{exam.name}</h4>
-                  <span className={`px-2 py-0.5 text-[8px] font-black uppercase rounded-full tracking-wider ${
-                    (!exam.status || exam.status === 'live') ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-600'
-                  }`}>
-                    {exam.status || 'live'}
-                  </span>
-                  {exam.isPopular && (
-                    <span className="px-2 py-0.5 bg-secondary/10 text-secondary text-[8px] font-black uppercase rounded-full tracking-wider">Popular</span>
-                  )}
-                  {exam.type === 'competitive' && (
-                    <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[8px] font-black uppercase rounded-full tracking-wider">Competitive</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 sm:gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-                  <span className="truncate">{agencies.find(a => a.id === exam.agencyId)?.name || 'No Agency'}</span>
-                  <span className="w-1 h-1 rounded-full bg-slate-200 shrink-0" />
-                  <span className="truncate">{exam.type === 'competitive' ? 'Competitive Program' : exam.category}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 sm:gap-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest flex-wrap justify-end">
-              <button 
-                onClick={() => startEdit(exam)}
-                className="flex-1 sm:flex-none justify-center px-4 py-2 bg-slate-50 text-slate-600 rounded-lg hover:bg-secondary hover:text-white transition-all flex items-center gap-2"
-              >
-                Edit <Edit3 className="w-3.5 h-3.5" />
-              </button>
-              <Link to={`/admin/tests/${exam.id}`} className="flex-1 sm:flex-none justify-center px-4 py-2 bg-slate-50 text-slate-600 rounded-lg hover:bg-primary hover:text-white transition-all flex items-center gap-2">
-                Manage <ChevronRight className="w-4 h-4" />
-              </Link>
-              {confirmingDeleteId === exam.id ? (
-                <div className="flex items-center gap-2 bg-red-50 p-1.5 rounded-xl border border-red-100 animate-in fade-in slide-in-from-right-2">
-                  <span className="text-[7px] font-black text-red-600 uppercase tracking-tighter px-1 whitespace-nowrap">Delete permanently?</span>
-                  <button 
-                    onClick={(e) => handleDelete(exam.id, e)}
-                    className="px-2 py-1 bg-red-600 text-white text-[9px] font-black rounded-lg hover:bg-red-700 uppercase"
-                  >
-                    Yes
-                  </button>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); setConfirmingDeleteId(null); }}
-                    className="px-2 py-1 bg-white text-slate-400 text-[9px] font-black rounded-lg border border-slate-200"
-                  >
-                    X
-                  </button>
-                </div>
-              ) : (
-                <button 
-                  onClick={(e) => { e.stopPropagation(); setConfirmingDeleteId(exam.id); }} 
-                  className="p-2 text-slate-300 hover:text-red-500 transition-colors"
-                  title="Delete Exam"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+           <div className="flex gap-4">
+             <button className="px-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium text-slate-700 bg-white shadow-sm flex items-center gap-2">
+                <Settings2 className="w-4 h-4" /> Filter By Category
+             </button>
+             <button className="px-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium text-slate-700 bg-white shadow-sm flex items-center gap-2">
+                Organization: All
+             </button>
+           </div>
+           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Showing 1 - {exams.length} of {exams.length} EXAMS</p>
+        </div>
+        
+        {loading ? (
+           <div className="py-20 flex justify-center"><Loader2 className="animate-spin text-teal-600 w-8 h-8" /></div>
+        ) : (
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 text-xs font-bold text-slate-400 uppercase tracking-wider bg-slate-50">
+                <th className="p-4 pl-6 font-semibold">Exam Details</th>
+                <th className="p-4 font-semibold">Organization</th>
+                <th className="p-4 font-semibold">Category</th>
+                <th className="p-4 font-semibold">Pricing</th>
+                <th className="p-4 font-semibold">Status</th>
+                <th className="p-4 pr-6 text-right font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {exams.map((exam) => {
+                const org = agencies.find(a => a.id === exam.agencyId)?.name || 'Unknown';
+                return (
+                  <tr key={exam.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
+                    <td className="p-4 pl-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center text-teal-600">
+                           <FileText className="w-5 h-5" />
+                        </div>
+                        <div>
+                           <Link to={`/admin/tests/${exam.id}`} className="font-bold text-slate-900 group-hover:text-teal-700 transition-colors">
+                             {exam.name}
+                           </Link>
+                           <p className="text-xs font-medium text-slate-400 mt-0.5">ID: {exam.id.slice(0,12).toUpperCase()}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 font-bold text-slate-800">{org}</td>
+                    <td className="p-4">
+                      <span className="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider">
+                        {exam.category || 'GOVERNMENT'}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <p className="font-bold text-slate-900">{exam.isPaid ? `₹${exam.price}` : '₹0'}</p>
+                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded flex w-fit mt-1 ${exam.isPaid ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                        {exam.isPaid ? 'PAID' : 'FREE'}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <span className="flex items-center gap-2 text-sm font-medium text-slate-700 capitalize">
+                         <span className={`w-2 h-2 rounded-full ${exam.status === 'draft' ? 'bg-slate-300' : 'bg-emerald-500'}`}></span>
+                         {exam.status === 'live' ? 'Published' : 'Draft'}
+                      </span>
+                    </td>
+                    <td className="p-4 pr-6 text-right">
+                       <div className="flex items-center justify-end gap-2 text-slate-400">
+                          <button onClick={() => startEdit(exam)} className="p-2 hover:bg-slate-200 rounded text-slate-600 transition-colors">
+                             <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleDelete(exam.id)} className="p-2 hover:bg-red-50 rounded text-red-500 transition-colors">
+                             <Trash2 className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => navigate(`/admin/exam/management/${exam.id}`)} className="p-2 hover:bg-slate-200 rounded transition-colors" title="Manage Exam">
+                             <MoreVertical className="w-4 h-4" />
+                          </button>
+                       </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
     </AdminLayout>
   );

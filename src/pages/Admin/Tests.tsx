@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/AdminLayout';
 import { collection, addDoc, getDocs, deleteDoc, doc, query, where, getDoc, writeBatch, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Plus, Trash2, ChevronRight, FileText, Clock, Award, Upload, Download, Info, X, Shield, Edit3, Database, Loader2 } from 'lucide-react';
+import { Plus, Trash2, ChevronRight, FileText, Clock, Award, Upload, Download, Info, X, Shield, Edit3, Database, Loader2, Search } from 'lucide-react';
 
 export default function AdminTests() {
   const { examId, subjectId } = useParams();
@@ -11,12 +11,7 @@ export default function AdminTests() {
   const [tests, setTests] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [title, setTitle] = useState('');
-  const [duration, setDuration] = useState('60');
-  const [totalMarks, setTotalMarks] = useState('100');
-  const [isFree, setIsFree] = useState(true);
-  const [price, setPrice] = useState('0');
-  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -111,9 +106,9 @@ export default function AdminTests() {
       // 1. Verify availability
       for (const [subId, levelsObj] of Object.entries(composition)) {
         for (const [level, count] of Object.entries(levelsObj)) {
-          if (count <= 0) continue;
+          if ((count as number) <= 0) continue;
           const available = bankCounts[subId]?.[level] || 0;
-          if (count > available) {
+          if ((count as number) > available) {
             throw new Error(`Not enough ${level} questions in ${subjects.find(s => s.id === subId)?.name}. Requested: ${count}, Available: ${available}`);
           }
         }
@@ -140,7 +135,7 @@ export default function AdminTests() {
 
       for (const [subId, levelsObj] of Object.entries(composition)) {
         for (const [level, count] of Object.entries(levelsObj)) {
-          if (count <= 0) continue;
+          if ((count as number) <= 0) continue;
 
           const qSnap = await getDocs(query(
             collection(db, 'questions'), 
@@ -149,7 +144,7 @@ export default function AdminTests() {
             where('level', '==', level)
           ));
           
-          const selectedDocs = qSnap.docs.slice(0, count);
+          const selectedDocs = qSnap.docs.slice(0, (count as number));
           selectedDocs.forEach(qDoc => {
             batch.update(qDoc.ref, { 
               testId: newTestRef.id,
@@ -173,139 +168,150 @@ export default function AdminTests() {
 
   const handleDelete = async (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    
-    try {
-      await deleteDoc(doc(db, 'tests', id));
-      alert("Test deleted successfully!");
-      setConfirmingDeleteId(null);
-      setTests(tests.filter(t => t.id !== id));
-    } catch (error: any) {
-      console.error("Delete error:", error);
-      alert(`Failed to delete test: ${error.message || "Unknown error"}`);
+    if (window.confirm("Are you sure you want to delete this test?")) {
+      try {
+        await deleteDoc(doc(db, 'tests', id));
+        setTests(tests.filter(t => t.id !== id));
+      } catch (error: any) {
+        console.error("Delete error:", error);
+        alert(`Failed to delete test`);
+      }
     }
   };
 
+  const filtered = tests.filter(t => t.title?.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  const StatCard = ({ title, value, span, colorClass = "text-slate-900" }: any) => (
+    <div className="bg-white p-6 rounded-xl border border-slate-200">
+      <p className="text-sm font-medium text-slate-500 mb-2">{title}</p>
+      <h3 className={`text-4xl font-bold tracking-tight mb-2 ${colorClass}`}>{value}</h3>
+      {span && <p className="text-xs font-semibold text-slate-400 mt-2">{span}</p>}
+    </div>
+  );
+
   return (
     <AdminLayout title={`Tests: ${parent?.name || 'Loading...'}`} backTo={examId ? "/admin/exams" : "/admin/subjects"}>
-      <div className="sticky top-0 z-40 pb-6 bg-[#f8fafc]/50 backdrop-blur-md">
-        <div className="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
-          <div>
-            <h2 className="text-2xl font-black text-primary tracking-tight">Withdraw & Compose Mock Tests</h2>
-            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">
-              {examId ? 'Composed from specific syllabus subjects' : `Withdrawing questions from repo`}
-            </p>
-          </div>
-          <div className="flex gap-4">
-            <button 
-              onClick={fetchBankData}
-              className="px-8 py-4 bg-primary text-white rounded-2xl font-bold flex items-center gap-3 shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all active:scale-95 whitespace-nowrap"
-            >
-              <Database className="w-5 h-5" /> Withdraw from Master Bank
-            </button>
-          </div>
-        </div>
+      <div className="flex justify-between items-center mb-6">
+        <p className="text-slate-500 font-medium">Manage and compose mock tests for this registry.</p>
+        <button 
+          onClick={fetchBankData}
+          className="bg-teal-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-teal-800 transition-colors"
+        >
+          <Database className="w-5 h-5" /> Withdraw Questions (Compose Mock Test)
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <StatCard title="Total Mock Tests" value={tests.length} span="In this registry" colorClass="text-teal-600" />
+        <StatCard title="Live Mode" value={tests.filter(t => t.status === 'live' || !t.status).length} span="Available to users" colorClass="text-emerald-600" />
+        <StatCard title="Scheduled" value={tests.filter(t => t.status === 'scheduled').length} span="Future activation" colorClass="text-blue-600" />
+        <StatCard title="Premium Only" value={tests.filter(t => !t.isFree).length} span="Paid access" colorClass="text-amber-600" />
       </div>
 
       {showCompositionModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-4xl max-h-[90vh] shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col overflow-hidden">
-            <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-white z-20 shrink-0">
+        <form onSubmit={handleCompose} className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm mb-8 relative">
+           <button type="button" onClick={() => setShowCompositionModal(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-rose-600 transition-colors">
+              <X className="w-5 h-5" />
+           </button>
+
+           <h3 className="text-xl font-bold text-slate-900 mb-6">Compose Mock Test</h3>
+
+           <div className="space-y-6">
               <div>
-                <h3 className="text-2xl font-black text-primary uppercase tracking-tight">Compose Mock Test from Bank</h3>
-                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Inventory restricted to {examId ? `Exam Syllabus` : `Subject Repo`}</p>
-              </div>
-              <button 
-                onClick={() => setShowCompositionModal(false)} 
-                className="p-3 hover:bg-slate-50 rounded-2xl text-slate-400 transition-colors"
-                type="button"
-              >
-                <X className="w-8 h-8" />
-              </button>
-            </div>
-            
-            <form id="compose-mock-form" onSubmit={handleCompose} className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                <div className="md:col-span-2 space-y-2">
-                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 block">Test Name (e.g. Mock Set 05)</label>
-                   <input required className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl outline-none font-bold text-primary focus:border-primary transition-all" value={compData.title} onChange={e => setCompData({...compData, title: e.target.value})} />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-1">Duration (Min)</label>
-                    <input type="number" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none font-bold" value={compData.duration} onChange={e => setCompData({...compData, duration: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-1">Total Marks</label>
-                    <input type="number" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none font-bold" value={compData.totalMarks} onChange={e => setCompData({...compData, totalMarks: e.target.value})} />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-1">Marks/Q</label>
-                    <input type="number" step="0.1" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none font-bold" value={compData.marksPerQuestion} onChange={e => setCompData({...compData, marksPerQuestion: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-1">Negative/Q</label>
-                    <input type="number" step="0.1" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none font-bold" value={compData.negativeMarks} onChange={e => setCompData({...compData, negativeMarks: e.target.value})} />
-                  </div>
-                </div>
-
-                <div className="md:col-span-2 flex items-center gap-4 pt-2">
-                  <button type="button" onClick={() => setCompData({...compData, isFree: !compData.isFree})} className={`px-5 py-3 rounded-xl border font-black text-[10px] uppercase tracking-widest transition-all ${compData.isFree ? 'bg-secondary text-white border-secondary' : 'bg-white text-slate-400 border-slate-200'}`}>
-                    {compData.isFree ? 'FREE ACCESS' : 'PAID ACCESS'}
-                  </button>
-                  {!compData.isFree && <input type="number" placeholder="₹" className="w-24 px-3 py-3 rounded-xl border border-slate-200 font-black text-primary" value={compData.price} onChange={e => setCompData({...compData, price: e.target.value})} />}
-                </div>
+                 <label className="block text-sm font-semibold text-slate-700 mb-2">Test Name</label>
+                 <input 
+                    required 
+                    placeholder="e.g. Mock Set 05"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 font-medium bg-slate-50"
+                    value={compData.title} onChange={e => setCompData({...compData, title: e.target.value})} 
+                 />
               </div>
 
-              <div className="space-y-4">
-                <div className="flex justify-between items-center px-1">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Withdrawal Strategy</label>
-                  <div className="flex items-center gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                 <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Duration (Min)</label>
+                    <input type="number" className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" value={compData.duration} onChange={e => setCompData({...compData, duration: e.target.value})} />
+                 </div>
+                 <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Total Marks</label>
+                    <input type="number" className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" value={compData.totalMarks} onChange={e => setCompData({...compData, totalMarks: e.target.value})} />
+                 </div>
+                 <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Marks/Q</label>
+                    <input type="number" step="0.1" className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" value={compData.marksPerQuestion} onChange={e => setCompData({...compData, marksPerQuestion: e.target.value})} />
+                 </div>
+                 <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Negative/Q</label>
+                    <input type="number" step="0.1" className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" value={compData.negativeMarks} onChange={e => setCompData({...compData, negativeMarks: e.target.value})} />
+                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                 <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Access Type</label>
                     <select 
-                      className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none focus:border-secondary transition-all"
-                      value={selectedSub}
-                      onChange={e => setSelectedSub(e.target.value)}
+                       className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white"
+                       value={compData.isFree ? "free" : "paid"}
+                       onChange={e => setCompData({...compData, isFree: e.target.value === 'free', price: e.target.value === 'free' ? '0' : compData.price})}
                     >
-                      <option value="">Select Subject to Add</option>
-                      {subjects.map(s => (
-                        <option key={s.id} value={s.id}>{s.name}</option>
-                      ))}
+                       <option value="free">Free Access</option>
+                       <option value="paid">Paid (Premium) Access</option>
                     </select>
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        if (selectedSub && !composition[selectedSub]) {
-                          setComposition({...composition, [selectedSub]: {
-                            'Easy': 0,
-                            'Medium': 0,
-                            'Hard': 0,
-                            'UGC NET': 0
-                          }});
-                          setSelectedSub('');
-                        }
-                      }}
-                      className="px-4 py-2 bg-secondary text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all"
-                    >
-                      Add Subject
-                    </button>
-                  </div>
-                </div>
+                 </div>
+                 {!compData.isFree && (
+                   <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Price (₹)</label>
+                      <input type="number" className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" value={compData.price} onChange={e => setCompData({...compData, price: e.target.value})} />
+                   </div>
+                 )}
+              </div>
+           </div>
 
-                <div className="grid grid-cols-1 gap-4 min-h-[100px]">
+           <div className="mt-8 pt-8 border-t border-slate-200">
+              <div className="flex justify-between items-center mb-6">
+                <label className="block text-sm font-semibold text-slate-700">Withdrawal Strategy (Add Subjects)</label>
+                <div className="flex items-center gap-3">
+                  <select 
+                    className="px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm font-semibold outline-none focus:border-teal-500 transition-all"
+                    value={selectedSub}
+                    onChange={e => setSelectedSub(e.target.value)}
+                  >
+                    <option value="">Select Subject</option>
+                    {subjects.map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      if (selectedSub && !composition[selectedSub]) {
+                        setComposition({...composition, [selectedSub]: {
+                          'Easy': 0,
+                          'Medium': 0,
+                          'Hard': 0,
+                          'UGC NET': 0
+                        }});
+                        setSelectedSub('');
+                      }
+                    }}
+                    className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-200 transition-all"
+                  >
+                    Add to Composition
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
                   {Object.keys(composition).length === 0 ? (
-                    <div className="h-32 border-2 border-dashed border-slate-100 rounded-3xl flex flex-col items-center justify-center bg-slate-50/50">
-                      <Database className="w-8 h-8 text-slate-200 mb-2" />
-                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No subjects selected for withdrawal</p>
+                    <div className="py-12 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center bg-slate-50 text-slate-400 font-medium">
+                       Select a subject to include its questions.
                     </div>
                   ) : (
                     Object.entries(composition).map(([subId, levelsConfig]: [string, any]) => {
                       const s = subjects.find(sub => sub.id === subId);
                       if (!s) return null;
                       return (
-                        <div key={subId} className="p-6 bg-white border border-slate-100 rounded-[2rem] flex flex-col gap-6 group hover:border-secondary transition-all shadow-sm relative">
+                        <div key={subId} className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-4 relative">
                           <button 
                             type="button" 
                             onClick={() => {
@@ -313,30 +319,24 @@ export default function AdminTests() {
                               delete newComp[subId];
                               setComposition(newComp);
                             }}
-                            className="absolute top-4 right-4 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg z-30"
+                            className="absolute top-4 right-4 p-1 text-slate-400 hover:text-rose-500 transition-colors"
                           >
                             <X className="w-4 h-4" />
                           </button>
                           
-                          <div className="flex-1">
-                            <h4 className="font-extrabold text-primary uppercase text-sm tracking-tight mb-4 flex items-center gap-2">
-                              {s.name}
-                              <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded tracking-widest">
-                                TOTAL: {bankCounts[s.id]?.['total'] || 0}
-                              </span>
-                            </h4>
+                          <div>
+                            <p className="font-bold text-slate-700 mb-4">{s.name} <span className="text-xs font-semibold text-slate-400 bg-slate-200 px-2 rounded-full ml-2">Bank total: {bankCounts[s.id]?.['total'] || 0}</span></p>
                             
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                               {levels.map(lvl => (
-                                <div key={lvl} className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">
-                                    {lvl} ({bankCounts[s.id]?.[lvl] || 0})
+                                <div key={lvl}>
+                                  <label className="text-xs font-bold text-slate-500 mb-1 block">
+                                    {lvl} ({bankCounts[s.id]?.[lvl] || 0} avail)
                                   </label>
                                   <input 
                                     type="number"
                                     min="0"
-                                    placeholder="0"
-                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-black text-primary outline-none focus:border-secondary"
+                                    className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 focus:outline-none focus:border-teal-500"
                                     value={levelsConfig[lvl]}
                                     onChange={e => {
                                       const val = parseInt(e.target.value) || 0;
@@ -354,98 +354,104 @@ export default function AdminTests() {
                       );
                     })
                   )}
-                </div>
               </div>
-            </form>
+           </div>
 
-            <div className="p-8 border-t border-slate-100 bg-slate-50/50 rounded-b-[2.5rem] shrink-0 z-20">
+           <div className="mt-8 pt-8 border-t border-slate-200">
               <button 
-                form="compose-mock-form"
                 type="submit" 
-                disabled={composing}
-                className="w-full py-5 bg-secondary text-white rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-2xl shadow-secondary/20 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 flex items-center justify-center gap-3"
+                disabled={composing || Object.keys(composition).length === 0}
+                className="w-full py-3 bg-teal-700 text-white rounded-lg font-bold hover:bg-teal-800 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {composing ? <Loader2 className="w-6 h-6 animate-spin text-white" /> : <Database className="w-6 h-6" />}
-                {composing ? 'Withdrawing Questions...' : 'Create Mock & Finalize Withdrawal'}
+                {composing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Database className="w-5 h-5" />}
+                {composing ? 'Withdrawing...' : 'Execute Withdrawal & Create Mock'}
               </button>
-              <p className="text-center text-[9px] font-black text-slate-400 mt-4 uppercase tracking-widest">Questions will be migrated from the Global Registry to this Mock Test</p>
-            </div>
-          </div>
-        </div>
+           </div>
+        </form>
       )}
 
-      <div className="space-y-4">
-        {tests.length === 0 && !loading && (
-          <div className="text-center py-20 bg-white rounded-3xl border border-slate-100">
-            <Database className="w-16 h-16 text-slate-100 mx-auto mb-4" />
-            <p className="font-bold text-slate-400 uppercase tracking-widest">No tests in this registry</p>
-          </div>
-        )}
-        {tests.map((test) => (
-          <div key={test.id} className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group shadow-sm transition-all hover:border-primary">
-            <div className="flex items-center gap-4 sm:gap-6">
-              <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-primary/5 group-hover:text-primary transition-colors shrink-0">
-                <FileText className="w-6 h-6" />
-              </div>
-              <div className="min-w-0">
-                <h4 className="font-extrabold text-primary tracking-tight truncate">{test.title}</h4>
-                <div className="flex items-center gap-2 sm:gap-4 mt-1 flex-wrap">
-                  <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest"><Clock className="w-3 h-3" /> {test.duration}m</span>
-                  <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest"><Award className="w-3 h-3" /> {test.totalMarks}M</span>
-                  {test.marksPerQuestion && (
-                    <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">+{test.marksPerQuestion} / -{test.negativeMarks || 0}</span>
-                  )}
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded tracking-tighter ${(!test.status || test.status === 'live') ? 'text-green-600 bg-green-50' : 'text-slate-600 bg-slate-200'}`}>
-                    {test.status || 'live'}
-                  </span>
-                  {test.isFree ? (
-                    <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded tracking-tighter">FREE</span>
-                  ) : (
-                    <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded tracking-tighter">₹{test.price || 0}</span>
-                  )}
-                  {test.sections?.length > 0 && (
-                    <span className="text-[10px] font-bold text-secondary bg-secondary/5 px-2 py-0.5 rounded tracking-tighter">
-                      {test.sections.length} SECTIONS
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+           <div className="flex gap-4">
+             <div className="relative w-64">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input 
+                  type="text" 
+                  placeholder="Search tests..." 
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium focus:ring-teal-500 focus:border-teal-500 bg-white shadow-sm"
+                />
+             </div>
+           </div>
+           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Showing {filtered.length} TESTS</p>
+        </div>
 
-            <div className="flex items-center gap-2 sm:gap-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest">
-              <Link to={`/admin/questions/${test.id}`} className="flex-1 sm:flex-none justify-center px-4 py-2 bg-slate-50 text-slate-600 rounded-lg font-bold hover:bg-primary hover:text-white transition-all flex items-center gap-2">
-                Questions <ChevronRight className="w-4 h-4" />
-              </Link>
-              {confirmingDeleteId === test.id ? (
-                <div className="flex items-center gap-2 bg-red-50 p-1.5 rounded-xl border border-red-100 animate-in fade-in slide-in-from-right-2">
-                  <span className="text-[7px] font-black text-red-600 uppercase tracking-tighter px-1 whitespace-nowrap leading-none">Delete All Content?</span>
-                  <button 
-                    onClick={(e) => handleDelete(test.id, e)}
-                    className="px-2 py-1 bg-red-600 text-white text-[9px] font-black rounded-lg hover:bg-red-700 uppercase"
-                  >
-                    Confirm
-                  </button>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); setConfirmingDeleteId(null); }}
-                    className="px-2 py-1 bg-white text-slate-400 text-[9px] font-black rounded-lg border border-slate-200"
-                  >
-                    X
-                  </button>
-                </div>
-              ) : (
-                <button 
-                  onClick={(e) => { e.stopPropagation(); setConfirmingDeleteId(test.id); }} 
-                  className="p-2 text-slate-300 hover:text-red-500 transition-colors bg-slate-50 rounded-lg hover:bg-red-50"
-                  title="Delete Test Registry"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
+        {loading ? (
+           <div className="py-20 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin" /></div>
+        ) : (
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 text-xs font-bold text-slate-400 uppercase tracking-wider bg-slate-50">
+                <th className="p-4 pl-6 font-semibold">Test Name</th>
+                <th className="p-4 font-semibold">Details</th>
+                <th className="p-4 font-semibold">Access</th>
+                <th className="p-4 pr-6 text-right font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((test) => (
+                <tr key={test.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
+                  <td className="p-4 pl-6">
+                    <div className="flex items-center gap-4">
+                       <div className="w-10 h-10 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600">
+                          <FileText className="w-5 h-5" />
+                       </div>
+                       <div>
+                         <p className="font-bold text-slate-900 group-hover:text-teal-700 transition-colors">
+                           {test.title}
+                         </p>
+                         <p className="text-xs font-semibold text-slate-500 uppercase mt-0.5">{test.status || 'live'}</p>
+                       </div>
+                    </div>
+                  </td>
+                  <td className="p-4">
+                     <div className="flex flex-col gap-1 text-sm font-medium text-slate-600">
+                        <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-slate-400" /> {test.duration} Minutes</span>
+                        <span className="flex items-center gap-1.5"><Award className="w-3.5 h-3.5 text-slate-400" /> {test.totalMarks} Marks</span>
+                     </div>
+                  </td>
+                  <td className="p-4">
+                     {test.isFree ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-700">Free</span>
+                     ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-700">Premium - ₹{test.price}</span>
+                     )}
+                  </td>
+                  <td className="p-4 pr-6 text-right">
+                     <div className="flex items-center justify-end gap-2 text-slate-400">
+                        <Link 
+                           to={`/admin/questions/${test.id}`}
+                           className="px-3 py-1.5 bg-slate-100 hover:bg-teal-50 text-slate-600 hover:text-teal-700 rounded text-xs font-bold transition-colors"
+                        >
+                           Questions
+                        </Link>
+                        <button onClick={(e) => handleDelete(test.id, e)} className="p-2 hover:bg-red-50 rounded text-red-500 transition-colors" title="Delete Test">
+                           <Trash2 className="w-4 h-4" />
+                        </button>
+                     </div>
+                  </td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr>
+                   <td colSpan={4} className="p-8 text-center text-slate-500">No tests found in this registry.</td>
+                </tr>
               )}
-            </div>
-          </div>
-        ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </AdminLayout>
   );
 }
-

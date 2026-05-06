@@ -2,7 +2,25 @@ import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Save, AlertCircle, CheckCircle2, ShieldCheck, Share2, Mail, Instagram, Facebook, Youtube, MapPin, BarChart3 } from 'lucide-react';
+import { 
+  Save, 
+  AlertCircle, 
+  CheckCircle2, 
+  ShieldCheck, 
+  Share2, 
+  Mail, 
+  Instagram, 
+  Facebook, 
+  Youtube, 
+  MapPin, 
+  BarChart3, 
+  Globe, 
+  Lock, 
+  Server,
+  Zap,
+  Layout,
+  MousePointer2
+} from 'lucide-react';
 
 export default function AdminSettings() {
   const [razorpayKeyId, setRazorpayKeyId] = useState('');
@@ -30,9 +48,7 @@ export default function AdminSettings() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-  useEffect(() => {
-    fetchSettings();
-  }, []);
+  useEffect(() => { fetchSettings(); }, []);
 
   const fetchSettings = async () => {
     try {
@@ -110,244 +126,207 @@ export default function AdminSettings() {
           updatedAt: new Date().toISOString()
         })
       ]);
-      setMessage({ type: 'success', text: 'All settings updated successfully!' });
+      setMessage({ type: 'success', text: 'System configuration globally updated!' });
+      setTimeout(() => setMessage(null), 5000);
     } catch (error) {
-      console.error("Error saving settings:", error);
-      setMessage({ type: 'error', text: 'Failed to save settings. Check permissions.' });
+      setMessage({ type: 'error', text: 'Synchronization failed. Check permissions.' });
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <AdminLayout title="System Settings"><div className="p-8 text-center">Loading settings...</div></AdminLayout>;
+  if (loading) return <AdminLayout title="System Configuration"><div className="py-20 text-center font-black text-slate-400 animate-pulse">Sourcing Node Preferences...</div></AdminLayout>;
 
   return (
-    <AdminLayout title="System Settings">
-      <form onSubmit={handleSave} className="max-w-4xl space-y-8 pb-20">
-        {/* Payment Settings */}
-        <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm space-y-8">
-          <div className="flex items-center gap-4 pb-6 border-b border-slate-50">
-            <div className="w-12 h-12 bg-secondary/10 rounded-2xl flex items-center justify-center text-secondary">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-xl font-extrabold text-primary tracking-tight">Payment Configuration</h3>
-              <p className="text-slate-500 text-sm">Manage your Razorpay API credentials. Recommended: Also set these in the <b>Settings &gt; Secrets</b> panel in AI Studio for maximum reliability.</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Razorpay Key ID</label>
-              <input 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
-                value={razorpayKeyId} onChange={(e) => setRazorpayKeyId(e.target.value)} 
-                placeholder="rzp_test_..."
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Razorpay Key Secret</label>
-              <input 
-                type="password"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
-                value={razorpayKeySecret} onChange={(e) => setRazorpayKeySecret(e.target.value)} 
-                placeholder="••••••••••••••••"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Social Links */}
-        <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm space-y-8">
-          <div className="flex items-center gap-4 pb-6 border-b border-slate-50">
-            <div className="w-12 h-12 bg-pink-50 rounded-2xl flex items-center justify-center text-pink-600">
-              <Share2 className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-xl font-extrabold text-primary tracking-tight">Social Presence</h3>
-              <p className="text-slate-500 text-sm">Update your social media links for the footer.</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Instagram className="w-4 h-4 text-pink-500" /> Instagram URL</label>
-              <input 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-pink-500 text-sm"
-                value={socialInstagram} onChange={(e) => setSocialInstagram(e.target.value)} 
-                placeholder="https://instagram.com/..."
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Facebook className="w-4 h-4 text-blue-600" /> Facebook URL</label>
-              <input 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 text-sm"
-                value={socialFacebook} onChange={(e) => setSocialFacebook(e.target.value)} 
-                placeholder="https://facebook.com/..."
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><Youtube className="w-4 h-4 text-red-600" /> YouTube URL</label>
-              <input 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-red-600 text-sm"
-                value={socialYoutube} onChange={(e) => setSocialYoutube(e.target.value)} 
-                placeholder="https://youtube.com/..."
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Platform Statistics */}
-        <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm space-y-8">
-          <div className="flex items-center gap-4 pb-6 border-b border-slate-50">
-            <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-green-600">
-              <BarChart3 className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-xl font-extrabold text-primary tracking-tight">Platform Statistics</h3>
-              <p className="text-slate-500 text-sm">Manage numbers shown on the homepage.</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="md:col-span-2 lg:col-span-3 space-y-2">
-              <label className="text-sm font-bold text-slate-700">Hero Tagline</label>
-              <input 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
-                value={heroTagline} onChange={(e) => setHeroTagline(e.target.value)} 
-                placeholder="Crack exams with smart practice"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Aspirant Count (Header)</label>
-              <input 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
-                value={aspirantCount} onChange={(e) => setAspirantCount(e.target.value)} 
-                placeholder="10,000+"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Total Tests</label>
-              <input 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
-                value={totalTests} onChange={(e) => setTotalTests(e.target.value)} 
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Exams Covered</label>
-              <input 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
-                value={examsCovered} onChange={(e) => setExamsCovered(e.target.value)} 
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Active Users</label>
-              <input 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
-                value={activeUsers} onChange={(e) => setActiveUsers(e.target.value)} 
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Success Rate</label>
-              <input 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
-                value={successRate} onChange={(e) => setSuccessRate(e.target.value)} 
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Email & System Configuration */}
-        <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm space-y-8">
-          <div className="flex items-center gap-4 pb-6 border-b border-slate-50">
-            <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600">
-              <Mail className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-xl font-extrabold text-primary tracking-tight">Email & System</h3>
-              <p className="text-slate-500 text-sm">SMTP details and pricing configuration.</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">SMTP Email</label>
-              <input 
-                type="email"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
-                value={smtpEmail} onChange={(e) => setSmtpEmail(e.target.value)} 
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">SMTP Password</label>
-              <input 
-                type="password"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
-                value={smtpPassword} onChange={(e) => setSmtpPassword(e.target.value)} 
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Support Email</label>
-              <input 
-                type="email"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
-                value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} 
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Contact Info */}
-        <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm space-y-8">
-          <div className="flex items-center gap-4 pb-6 border-b border-slate-50">
-            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-600">
-              <MapPin className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-xl font-extrabold text-primary tracking-tight">Contact & Location</h3>
-              <p className="text-slate-500 text-sm">Update your office address and contact phone.</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Phone Number</label>
-              <input 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
-                value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} 
-              />
-            </div>
-            <div className="md:col-span-2 space-y-2">
-              <label className="text-sm font-bold text-slate-700">Office Address</label>
-              <textarea 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm min-h-[80px]"
-                value={contactAddress} onChange={(e) => setContactAddress(e.target.value)} 
-              />
-            </div>
-            <div className="md:col-span-2 space-y-2">
-              <label className="text-sm font-bold text-slate-700 flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" /> Google Maps Embed URL</label>
-              <input 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm"
-                value={contactMapUrl} onChange={(e) => setContactMapUrl(e.target.value)} 
-              />
-            </div>
-          </div>
-        </div>
+    <AdminLayout title="System Configuration">
+      <form onSubmit={handleSave} className="max-w-5xl space-y-12 pb-32">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+           <div>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight font-display">Core Infrastructure</h2>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 italic">Propagating global settings across PrepNext ecosystem</p>
+           </div>
+           <button 
+              type="submit" 
+              disabled={saving}
+              className="px-10 py-5 bg-[#0f172a] text-white rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-2xl hover:bg-black transition-all active:scale-95 flex items-center justify-center gap-3"
+            >
+              <Save className="w-5 h-5" /> {saving ? 'Indexing...' : 'Commit All Settings'}
+            </button>
+        </header>
 
         {message && (
-          <div className={`p-4 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2 ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>
-            {message.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-            <p className="text-sm font-bold">{message.text}</p>
+          <div className={`p-6 rounded-[2rem] flex items-center gap-4 animate-in slide-in-from-top-4 ${message.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-xl shadow-emerald-100/50' : 'bg-rose-50 text-rose-700 border border-rose-100 shadow-xl shadow-rose-100/50'}`}>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${message.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
+               {message.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+            </div>
+            <p className="text-sm font-black uppercase tracking-widest">{message.text}</p>
           </div>
         )}
 
-        <div className="sticky bottom-8 left-0 right-0">
-          <button 
-            type="submit" 
-            disabled={saving}
-            className="w-full py-5 bg-primary text-white rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-50 shadow-2xl shadow-primary/40 uppercase tracking-widest font-logo"
-          >
-            {saving ? 'Updating System...' : <><Save className="w-6 h-6" /> Save All Settings</>}
-          </button>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+           <div className="lg:col-span-2 space-y-10">
+              {/* General Platform Controls */}
+              <section className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-10 relative overflow-hidden group">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm">
+                    <Globe className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-slate-900 tracking-tight font-display">Identity & Messaging</h3>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Platform-wide content descriptors</p>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                   <div className="space-y-3">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Hero Tagline Statement</label>
+                      <input 
+                        className="w-full px-8 py-4 bg-slate-50 border border-slate-200 rounded-[2rem] outline-none focus:ring-4 focus:ring-indigo-500/5 font-bold text-slate-700 text-lg shadow-inner"
+                        value={heroTagline} onChange={(e) => setHeroTagline(e.target.value)} 
+                      />
+                   </div>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Active Aspirant Count</label>
+                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/5 font-bold" value={aspirantCount} onChange={(e) => setAspirantCount(e.target.value)} />
+                      </div>
+                      <div className="space-y-3">
+                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Total Mock Tests</label>
+                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/5 font-bold" value={totalTests} onChange={(e) => setTotalTests(e.target.value)} />
+                      </div>
+                      <div className="space-y-3">
+                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Exams Indexed</label>
+                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/5 font-bold" value={examsCovered} onChange={(e) => setExamsCovered(e.target.value)} />
+                      </div>
+                      <div className="space-y-3">
+                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Institutional Success Rate</label>
+                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/5 font-bold" value={successRate} onChange={(e) => setSuccessRate(e.target.value)} />
+                      </div>
+                   </div>
+                </div>
+              </section>
+
+              {/* Payment Bridge */}
+              <section className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-10">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-amber-50 border border-amber-100 rounded-2xl flex items-center justify-center text-amber-600 shadow-sm">
+                    <Lock className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-slate-900 tracking-tight font-display">Revenue Gateway</h3>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Razorpay Secure Bridge Configuration</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Gateway ID</label>
+                    <input 
+                      className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-amber-500/5 font-mono text-xs font-bold"
+                      value={razorpayKeyId} onChange={(e) => setRazorpayKeyId(e.target.value)} 
+                      placeholder="rzp_live_..."
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Access Secret Token</label>
+                    <div className="relative">
+                       <input 
+                        type="password"
+                        className="w-full pl-6 pr-14 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-amber-500/5 font-mono text-xs font-bold"
+                        value={razorpayKeySecret} onChange={(e) => setRazorpayKeySecret(e.target.value)} 
+                        placeholder="••••••••••••••••"
+                      />
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white rounded-lg border border-slate-100 transition-hover group-hover:block hidden">
+                         <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-6 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-relaxed italic">PRO TIP: Ensure test mode keys are only used during sandbox cycles. Global production node requires live environment certificates.</p>
+                </div>
+              </section>
+
+              {/* SMTP Pipeline */}
+              <section className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-10">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center text-blue-600 shadow-sm">
+                    <Server className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-slate-900 tracking-tight font-display">Communication Stack</h3>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Transactional Email Relay (SMTP)</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div className="space-y-3">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Primary SMTP Address</label>
+                      <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/5 font-bold" value={smtpEmail} onChange={(e) => setSmtpEmail(e.target.value)} />
+                   </div>
+                   <div className="space-y-3">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Relay Key/Password</label>
+                      <input type="password" className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/5 font-bold" value={smtpPassword} onChange={(e) => setSmtpPassword(e.target.value)} />
+                   </div>
+                </div>
+              </section>
+           </div>
+
+           <aside className="space-y-8">
+              {/* Contact Node */}
+              <div className="bg-[#0f172a] text-white p-8 rounded-[3rem] shadow-2xl relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-125 transition-transform duration-700" />
+                  <div className="relative space-y-8">
+                     <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
+                           <MapPin className="w-6 h-6 text-secondary" />
+                        </div>
+                        <h4 className="text-lg font-black font-display tracking-tight">Support Node</h4>
+                     </div>
+                     <div className="space-y-6">
+                        <div className="space-y-2">
+                           <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Public Phone</label>
+                           <input className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-secondary transition-all font-bold text-slate-300" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                           <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Support Core Email</label>
+                           <input className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-secondary transition-all font-bold text-slate-300" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                           <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Physical HQ Address</label>
+                           <textarea className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-secondary transition-all font-bold text-slate-300 h-24 resize-none" value={contactAddress} onChange={(e) => setContactAddress(e.target.value)} />
+                        </div>
+                     </div>
+                  </div>
+              </div>
+
+              {/* Social Sync */}
+              <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm space-y-8 relative overflow-hidden group">
+                 <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-secondary/10 rounded-2xl flex items-center justify-center text-secondary">
+                       <Share2 className="w-6 h-6" />
+                    </div>
+                    <h4 className="text-lg font-black font-display tracking-tight text-slate-900">Social Sync</h4>
+                 </div>
+                 <div className="space-y-4">
+                    <div className="relative group/input">
+                       <Instagram className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-pink-500/40 group-focus-within/input:text-pink-500 transition-colors" />
+                       <input className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-pink-500/20 font-bold text-slate-600 text-xs" placeholder="Instagram URL" value={socialInstagram} onChange={(e) => setSocialInstagram(e.target.value)} />
+                    </div>
+                    <div className="relative group/input">
+                       <Facebook className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-600/40 group-focus-within/input:text-blue-600 transition-colors" />
+                       <input className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-600 text-xs" placeholder="Facebook URL" value={socialFacebook} onChange={(e) => setSocialFacebook(e.target.value)} />
+                    </div>
+                    <div className="relative group/input">
+                       <Youtube className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-rose-600/40 group-focus-within/input:text-rose-600 transition-colors" />
+                       <input className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-rose-500/20 font-bold text-slate-600 text-xs" placeholder="YouTube URL" value={socialYoutube} onChange={(e) => setSocialYoutube(e.target.value)} />
+                    </div>
+                 </div>
+                 <div className="pt-2">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Syncing with Platform Footer</p>
+                 </div>
+              </div>
+           </aside>
         </div>
       </form>
     </AdminLayout>

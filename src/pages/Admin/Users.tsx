@@ -1,34 +1,77 @@
 import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
-import { collection, query, getDocs, doc, updateDoc, writeBatch, deleteDoc, orderBy } from 'firebase/firestore';
+import { collection, query, getDocs, doc, updateDoc, deleteDoc, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { 
   Search, 
-  User, 
-  Mail, 
   Ban, 
-  ShieldCheck, 
-  Trophy, 
-  Plus,
-  Trash2,
-  Calendar,
   CheckCircle2,
   XCircle,
   Download,
   MoreVertical,
-  Star,
-  Clock
+  Filter,
+  Users as UsersIcon,
+  Crown,
+  Trophy,
+  User,
+  Activity,
+  ShieldCheck,
+  Plus,
+  Trash2,
+  Clock,
+  FileText
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import { Link } from 'react-router-dom';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<any[]>([]);
   const [exams, setExams] = useState<any[]>([]);
+  const [agencies, setAgencies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [showPrivilegeModal, setShowPrivilegeModal] = useState(false);
-  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [editFormData, setEditFormData] = useState<any>({});
+
+  const handleDelete = async (userId: string) => {
+    setSelectedUser(users.find(u => u.id === userId));
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedUser) return;
+    try {
+        await deleteDoc(doc(db, 'users', selectedUser.id));
+        setUsers(users.filter(u => u.id !== selectedUser.id));
+        alert("User deleted successfully");
+        setShowDeleteModal(false);
+        setSelectedUser(null);
+    } catch (error) {
+        console.error("Error deleting user:", error);
+        alert("Failed to delete user");
+    }
+  };
+
+  const handleEditUser = async (e: React.FormEvent) => {
+      e.preventDefault();
+      try {
+         await updateDoc(doc(db, 'users', selectedUser.id), {
+             name: editFormData.name,
+             email: editFormData.email,
+             phone: editFormData.phone,
+             address: editFormData.address,
+             state: editFormData.state
+         });
+         setUsers(users.map(u => u.id === selectedUser.id ? {...u, ...editFormData} : u));
+         alert("User updated successfully");
+         setShowEditModal(false);
+      } catch (error) {
+          console.error("Error updating user:", error);
+          alert("Failed to update user");
+      }
+  };
 
   useEffect(() => {
     fetchData();
@@ -36,90 +79,30 @@ export default function AdminUsers() {
 
   const fetchData = async () => {
     try {
-      const [uSnap, eSnap] = await Promise.all([
+      const [uSnap, eSnap, aSnap] = await Promise.all([
         getDocs(query(collection(db, 'users'), orderBy('name', 'asc'))),
-        getDocs(collection(db, 'exams'))
+        getDocs(collection(db, 'exams')),
+        getDocs(collection(db, 'agencies'))
       ]);
       setUsers(uSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setExams(eSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setAgencies(aSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
     } catch (error) {
       console.error("Error fetching admin users:", error);
-    }
-  };
-
-  const handleDeleteUser = async (userId: string) => {
-    try {
-      await deleteDoc(doc(db, 'users', userId));
-      setUsers(users.filter(u => u.id !== userId));
-      setConfirmingDeleteId(null);
-      alert("User deleted permanently.");
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      alert("Failed to delete user record.");
+      setLoading(false);
     }
   };
 
   const handleToggleBlock = async (userId: string, currentStatus: boolean) => {
     try {
-      await updateDoc(doc(db, 'users', userId), {
-        isBlocked: !currentStatus
-      });
-      setUsers(users.map(u => u.id === userId ? { ...u, isBlocked: !currentStatus } : u));
+      if (confirm(`Are you sure you want to ${currentStatus ? 'unblock' : 'block'} this user?`)) {
+        await updateDoc(doc(db, 'users', userId), { isBlocked: !currentStatus });
+        setUsers(users.map(u => u.id === userId ? { ...u, isBlocked: !currentStatus } : u));
+      }
     } catch (error) {
-      alert("Failed to update block status");
+      alert("Failed to update status");
     }
-  };
-
-  const handleExportUsers = () => {
-    const wb = XLSX.utils.book_new();
-
-    // 1. Executive Summary
-    const summaryData = [
-      ["PrepNext - Student Roster & Growth Metrics"],
-      ["Snapshot Date:", new Date().toLocaleString()],
-      [],
-      ["ACCOUNTS OVERVIEW"],
-      ["Total Registered Students", users.length],
-      ["Verified Accounts", users.filter(u => u.emailVerified).length],
-      ["Blocked Accounts", users.filter(u => u.isBlocked).length],
-      [],
-      ["MEMBERSHIP TIERS"],
-      ["Premium Plan Subscribers", users.filter(u => u.isPremium).length],
-      ["Basic Plan Students", users.filter(u => !u.isPremium).length],
-      [],
-      ["ENGAGEMENT SUMMARY"],
-      ["Total Mock Tests Taken", users.reduce((acc, curr) => acc + (curr.testsAttempted || 0), 0)],
-      ["Avg. Student Score (Overall)", `${Math.round(users.reduce((acc, curr) => acc + (curr.averageScore || 0), 0) / (users.length || 1))}%`],
-    ];
-    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
-    wsSummary['!cols'] = [{wch: 30}, {wch: 25}];
-    XLSX.utils.book_append_sheet(wb, wsSummary, "Growth Summary");
-
-    // 2. Student Master List
-    const data = users.map(u => ({
-      'Legal Name': u.name || 'N/A',
-      'Email Identity': u.email,
-      'Phone': u.phone || 'N/A',
-      'Address': u.address || 'N/A',
-      'District': u.district || 'N/A',
-      'State': u.state || 'N/A',
-      'System Role': u.role?.toUpperCase() || 'STUDENT',
-      'Account Health': u.isBlocked ? 'SUSPENDED' : 'OPERATIONAL',
-      'Access Type': u.subscriptionExpiry ? 'PREMIUM' : 'BASIC',
-      'Proficiency %': `${Math.round(u.averageScore || 0)}%`,
-      'Mock Tests Done': u.testsAttempted || 0,
-      'Account Created': u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A',
-      'Email Verified': u.emailVerified ? 'YES' : 'NO'
-    }));
-
-    const wsUsers = XLSX.utils.json_to_sheet(data);
-    wsUsers['!cols'] = [
-      {wch: 25}, {wch: 30}, {wch: 15}, {wch: 30}, {wch: 15}, {wch: 20}, {wch: 15}, {wch: 18}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 20}, {wch: 15}
-    ];
-    XLSX.utils.book_append_sheet(wb, wsUsers, "Student Roster");
-
-    XLSX.writeFile(wb, `PrepNext_Student_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   const grantFreeAccess = async (userId: string, examId: string) => {
@@ -129,9 +112,7 @@ export default function AdminUsers() {
 
     const newFreeExams = [...freeExams, examId];
     try {
-      await updateDoc(doc(db, 'users', userId), {
-        freeExams: newFreeExams
-      });
+      await updateDoc(doc(db, 'users', userId), { freeExams: newFreeExams });
       setUsers(users.map(u => u.id === userId ? { ...u, freeExams: newFreeExams } : u));
       if (selectedUser?.id === userId) setSelectedUser({ ...selectedUser, freeExams: newFreeExams });
     } catch (error) {
@@ -139,35 +120,32 @@ export default function AdminUsers() {
     }
   };
 
-  const handleTogglePremium = async (userId: string, currentStatus: boolean) => {
-    try {
-      const expiry = new Date();
-      expiry.setFullYear(expiry.getFullYear() + 1); // 1 year by default
-      
-      await updateDoc(doc(db, 'users', userId), {
-        isPremium: !currentStatus,
-        premiumExpiry: !currentStatus ? expiry.toISOString() : null
-      });
-      
-      setUsers(users.map(u => u.id === userId ? { ...u, isPremium: !currentStatus, premiumExpiry: !currentStatus ? expiry.toISOString() : null } : u));
-      if (selectedUser?.id === userId) setSelectedUser({ ...selectedUser, isPremium: !currentStatus, premiumExpiry: !currentStatus ? expiry.toISOString() : null });
-    } catch (error) {
-      alert("Failed to update premium status");
-    }
-  };
-
   const revokeFreeAccess = async (userId: string, examId: string) => {
     const user = users.find(u => u.id === userId);
     const newFreeExams = (user.freeExams || []).filter((id: string) => id !== examId);
-    
     try {
-      await updateDoc(doc(db, 'users', userId), {
-        freeExams: newFreeExams
-      });
+      await updateDoc(doc(db, 'users', userId), { freeExams: newFreeExams });
       setUsers(users.map(u => u.id === userId ? { ...u, freeExams: newFreeExams } : u));
       if (selectedUser?.id === userId) setSelectedUser({ ...selectedUser, freeExams: newFreeExams });
     } catch (error) {
       alert("Failed to revoke access");
+    }
+  };
+
+  const handleTogglePremium = async (userId: string, currentStatus: boolean) => {
+    try {
+      if (confirm(`Are you sure you want to ${currentStatus ? 'revoke' : 'grant'} premium access?`)) {
+        const expiry = new Date();
+        expiry.setFullYear(expiry.getFullYear() + 1);
+        await updateDoc(doc(db, 'users', userId), {
+          isPremium: !currentStatus,
+          premiumExpiry: !currentStatus ? expiry.toISOString() : null
+        });
+        setUsers(users.map(u => u.id === userId ? { ...u, isPremium: !currentStatus, premiumExpiry: !currentStatus ? expiry.toISOString() : null } : u));
+        if (selectedUser?.id === userId) setSelectedUser({ ...selectedUser, isPremium: !currentStatus, premiumExpiry: !currentStatus ? expiry.toISOString() : null });
+      }
+    } catch (error) {
+      alert("Failed to update premium");
     }
   };
 
@@ -176,268 +154,268 @@ export default function AdminUsers() {
     u.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const StatCard = ({ title, value, span, trend, colorClass = "text-slate-900" }: any) => (
+    <div className="bg-white p-6 rounded-xl border border-slate-200">
+      <p className="text-sm font-medium text-slate-500 mb-2">{title}</p>
+      <h3 className={`text-4xl font-bold tracking-tight mb-2 ${colorClass}`}>{value}</h3>
+      {trend && <p className="text-xs font-semibold text-emerald-600">{trend}</p>}
+      {span && <p className="text-xs font-semibold text-slate-400 mt-2">{span}</p>}
+    </div>
+  );
+
   return (
     <AdminLayout title="User Management">
-      <div className="space-y-8">
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="relative w-full md:max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 font-bold" />
-            <input 
-              className="w-full pl-12 pr-4 py-4 bg-white border border-slate-100 rounded-2xl outline-none shadow-sm focus:ring-2 focus:ring-primary font-medium"
-              placeholder="Search students..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <button 
-              onClick={handleExportUsers}
-              className="w-full md:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-secondary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-secondary/20 hover:scale-[1.02] active:scale-95 transition-all"
-            >
-              <Download className="w-5 h-5" /> Export Student Data
-            </button>
-          </div>
+      <div className="flex justify-between items-center mb-6">
+        <p className="text-slate-500 font-medium">Manage student accounts, premium access, and learning progress.</p>
+        <button className="bg-teal-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-teal-800 transition-colors">
+           <Download className="w-5 h-5" /> Export Data
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <StatCard title="Total Students" value={users.length} trend="+124 this week" />
+        <StatCard title="Premium Users" value={users.filter(u => u.isPremium).length} span="Paid subscribers" />
+        <StatCard title="Active Today" value={users.filter(u => u.lastLogin).length} span="Logged in last 24h" colorClass="text-emerald-600" />
+        <StatCard title="Suspended" value={users.filter(u => u.isBlocked).length} span="Account violations" colorClass="text-rose-600" />
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+           <div className="flex gap-4">
+             <div className="relative w-64">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input 
+                  type="text" 
+                  placeholder="Search students..." 
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium focus:ring-teal-500 focus:border-teal-500 bg-white shadow-sm"
+                />
+             </div>
+             <button className="px-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium text-slate-700 bg-white shadow-sm flex items-center gap-2 hover:bg-slate-50">
+                <Filter className="w-4 h-4" /> Filter By Plan
+             </button>
+           </div>
+           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Showing 1 - {filteredUsers.length} of {filteredUsers.length} USERS</p>
         </div>
+        
+        {loading ? (
+           <div className="py-20 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin" /></div>
+        ) : (
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 text-xs font-bold text-slate-400 uppercase tracking-wider bg-slate-50">
+                <th className="p-4 pl-6 font-semibold">Student Information</th>
+                <th className="p-4 font-semibold">Subscription</th>
+                <th className="p-4 font-semibold">Address</th>
+                <th className="p-4 font-semibold">Last Active Date/Time</th>
+                <th className="p-4 pr-6 text-right font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.map((user) => {
+                // Subscription Logic
+                const freeExamsCount = (user.freeExams || []).length;
+                let subType = 'Trial';
+                if (user.isPremium) subType = 'Premium';
+                else if (freeExamsCount === 1) subType = 'Basic';
+                else if (freeExamsCount >= 2) subType = 'Standard';
 
-        <div className="bg-white border border-slate-100 rounded-[2.5rem] shadow-sm overflow-hidden">
-          <div className="overflow-x-auto scrollbar-hide">
-            <table className="w-full min-w-[800px]">
-              <thead>
-                  <tr className="border-b border-slate-50">
-                   <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Profile</th>
-                   <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Subscription</th>
-                   <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Performance</th>
-                   <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
-                   <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Activity</th>
-                   <th className="px-8 py-6 text-right text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
-                 </tr>
-               </thead>
-               <tbody className="divide-y divide-slate-50">
-                 {filteredUsers.map(user => {
-                   const status = user.isPremium ? 'Premium' : (user.purchasedExams?.length > 0 || user.freeExams?.length > 0 ? 'Basic' : 'Free');
-                   const lastActive = user.lastLogin || user.lastActive || user.createdAt;
-                   return (
-                     <tr key={user.id} className={`hover:bg-slate-50/50 transition-colors ${user.isBlocked ? 'bg-red-50/20' : ''}`}>
-                       <td className="px-8 py-6">
-                         <div className="flex items-center gap-4">
-                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-black ${user.role === 'admin' ? 'bg-orange-500' : 'bg-primary'}`}>
-                             {user.role === 'admin' ? <ShieldCheck className="w-5 h-5" /> : user.name?.[0].toUpperCase()}
-                           </div>
-                           <div>
-                             <p className="font-bold text-primary flex items-center gap-2">
-                               {user.name}
-                               {user.role === 'admin' && <span className="text-[8px] px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded">ADMIN</span>}
-                             </p>
-                             <p className="text-[10px] text-slate-400 font-medium">{user.email}</p>
-                              {user.phone && <p className="text-[10px] text-secondary font-black">{user.phone}</p>}
-                              {user.district && <p className="text-[10px] text-slate-400">{user.district}, {user.state}</p>}
-                           </div>
-                         </div>
-                       </td>
-                       <td className="px-8 py-6">
-                         <div className="flex flex-col gap-2">
-                           <span className={`w-fit inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
-                             status === 'Premium' ? 'bg-purple-50 text-purple-600 border-purple-100 shadow-sm shadow-purple-100' :
-                             status === 'Basic' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                             'bg-slate-50 text-slate-400 border-slate-100'
-                           }`}>
-                             {status} Access
-                           </span>
-                           {user.isPremium && user.premiumExpiry && (
-                             <p className="text-[9px] font-bold text-purple-400 uppercase flex items-center gap-1">
-                               <Calendar className="w-2.5 h-2.5" /> Expires {new Date(user.premiumExpiry).toLocaleDateString()}
-                             </p>
-                           )}
-                           {!user.isPremium && (user.freeExams?.length > 0 || user.purchasedExams?.length > 0) && (
-                             <p className="text-[9px] font-bold text-blue-400 uppercase">
-                               {(user.freeExams?.length || 0) + (user.purchasedExams?.length || 0)} Exams Unlocked
-                             </p>
-                           )}
-                         </div>
-                       </td>
-                       <td className="px-8 py-6">
-                         <div className="w-48 space-y-3">
-                           <div className="space-y-1">
-                             <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-slate-400">
-                               <span>Performance Rank</span>
-                               <span className="text-primary">{Math.round(user.averageScore || 0)}%</span>
-                             </div>
-                             <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-50">
-                               <div 
-                                 className="h-full bg-primary transition-all duration-1000" 
-                                 style={{ width: `${Math.min(100, user.averageScore || 0)}%` }} 
-                               />
-                             </div>
-                           </div>
-                           <div className="space-y-1">
-                             <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-slate-400">
-                               <span>Exam Stamina</span>
-                               <span className="text-secondary">{user.testsAttempted || 0} Tests</span>
-                             </div>
-                             <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-50">
-                               <div 
-                                 className="h-full bg-secondary transition-all duration-1000" 
-                                 style={{ width: `${Math.min(100, ((user.testsAttempted || 0) / 50) * 100)}%` }} 
-                               />
-                             </div>
-                           </div>
-                         </div>
-                       </td>
-                       <td className="px-8 py-6">
-                     {user.isBlocked ? (
-                       <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-tighter border border-red-100">
-                         <Ban className="w-3 h-3" /> Blocked
-                       </span>
-                     ) : (
-                       <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-600 rounded-full text-[10px] font-black uppercase tracking-tighter border border-green-100">
-                         <CheckCircle2 className="w-3 h-3" /> Active
-                       </span>
-                     )}
-                   </td>
-                   <td className="px-8 py-6">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[10px] font-black text-slate-700 uppercase tracking-tight flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-secondary" /> {lastActive ? new Date(lastActive).toLocaleDateString() : 'Never'}
-                        </span>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                          {lastActive ? new Date(lastActive).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                        </span>
+                return (
+                  <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
+                    <td className="p-4 pl-6">
+                      <div className="flex items-center gap-4">
+                        {user.photoURL ? (
+                          <img src={user.photoURL} alt={user.name} className="w-10 h-10 rounded-lg" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center text-teal-600 font-bold uppercase">
+                             {user.name?.[0] || 'U'}
+                          </div>
+                        )}
+                        <div>
+                           <p className="font-bold text-slate-900 group-hover:text-teal-700 transition-colors flex items-center gap-2">
+                             {user.name || 'Anonymous User'}
+                             {user.role === 'admin' && <span className="bg-rose-100 text-rose-700 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">Admin</span>}
+                           </p>
+                           <p className="text-xs font-medium text-slate-400 mt-0.5">{user.email}</p>
+                           <p className="text-xs font-medium text-slate-400 mt-0.5">{user.phone || 'No Phone'}</p>
+                        </div>
                       </div>
-                   </td>
-                   <td className="px-8 py-6 text-right">
-                     <div className="flex items-center justify-end gap-2">
-                       <button 
-                         onClick={() => { setSelectedUser(user); setShowPrivilegeModal(true); }}
-                         className="p-2.5 bg-slate-50 text-slate-400 hover:text-amber-600 rounded-xl transition-all"
-                         title="Manage Privileges"
-                       >
-                         <Trophy className="w-5 h-5" />
-                       </button>
-                       <button 
-                         onClick={() => handleToggleBlock(user.id, !!user.isBlocked)}
-                         className={`p-2.5 rounded-xl transition-all ${user.isBlocked ? 'bg-red-50 text-red-600' : 'bg-slate-50 text-slate-400 hover:text-red-500'}`}
-                         title={user.isBlocked ? 'Unblock' : 'Block'}
-                       >
-                         <Ban className="w-5 h-5" />
-                       </button>
-
-                       {confirmingDeleteId === user.id ? (
-                         <div className="flex items-center gap-1 bg-red-100 p-1 rounded-xl animate-in slide-in-from-right-2">
-                           <button 
-                             onClick={() => handleDeleteUser(user.id)}
-                             className="px-3 py-1.5 bg-red-600 text-white text-[9px] font-black rounded-lg uppercase"
-                           >
-                             Confirm
-                           </button>
-                           <button 
-                             onClick={() => setConfirmingDeleteId(null)}
-                             className="px-3 py-1.5 bg-white text-slate-400 text-[9px] font-black rounded-lg border border-red-200 uppercase"
-                           >
-                             X
-                           </button>
-                         </div>
-                       ) : (
-                         <button 
-                           onClick={() => setConfirmingDeleteId(user.id)}
-                           className="p-2.5 bg-slate-50 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                           title="Delete User"
-                         >
-                           <Trash2 className="w-5 h-5" />
-                         </button>
-                       )}
-                     </div>
-                   </td>
-                </tr>
+                    </td>
+                    <td className="p-4">
+                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded flex w-fit ${subType === 'Premium' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
+                        {subType}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <p className="text-slate-800">{user.address || 'No Address'}, {user.state || 'No State'}</p>
+                    </td>
+                    <td className="p-4">
+                      <p className="text-xs font-medium text-slate-600">{user.lastLogin || user.lastActive ? new Date(user.lastLogin || user.lastActive).toLocaleString() : 'Never'}</p>
+                    </td>
+                    <td className="p-4 pr-6 text-right">
+                       <div className="flex items-center justify-end gap-2 text-slate-400">
+                        <button onClick={() => { setSelectedUser(user); setEditFormData(user); setShowEditModal(true); }} className="p-2 hover:bg-slate-200 rounded text-slate-600 transition-colors" title="Edit User">
+                             <User className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => { setSelectedUser(user); setShowPrivilegeModal(true); }} className="p-2 hover:bg-slate-200 rounded text-slate-600 transition-colors" title="Manage Permissions">
+                             <ShieldCheck className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleDelete(user.id)} className="p-2 hover:bg-red-50 rounded text-red-500 transition-colors" title="Delete User">
+                             <Trash2 className="w-4 h-4" />
+                          </button>
+                       </div>
+                    </td>
+                  </tr>
                 );
               })}
+              {filteredUsers.length === 0 && (
+                <tr>
+                   <td colSpan={5} className="p-8 text-center text-slate-500">No users found.</td>
+                </tr>
+              )}
             </tbody>
           </table>
-        </div>
+        )}
       </div>
-    </div>
 
-      {/* Privilege Modal */}
-      {showPrivilegeModal && selectedUser && (
-        <div className="fixed inset-0 bg-primary/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-2xl rounded-[2.5rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
-            <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <div>
-                <h2 className="text-2xl font-black text-primary tracking-tight">Access & Privileges</h2>
-                <p className="text-slate-500 font-bold text-sm">Managing account: {selectedUser.name}</p>
-              </div>
-              <button onClick={() => setShowPrivilegeModal(false)} className="p-3 hover:bg-white rounded-2xl transition-colors">
-                <XCircle className="w-6 h-6 text-slate-400" />
-              </button>
+      {showEditModal && selectedUser && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-200">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+               <div>
+                  <h2 className="text-xl font-bold text-slate-900">Edit Student Details</h2>
+                  <p className="text-sm text-slate-500">Update information for {selectedUser.name}</p>
+               </div>
+               <button onClick={() => setShowEditModal(false)} className="p-2 bg-white border border-slate-200 rounded-md text-slate-400 hover:text-slate-600 transition-all">
+                 <XCircle className="w-5 h-5" />
+               </button>
             </div>
-
-            <div className="p-8 space-y-10 max-h-[60vh] overflow-y-auto">
-              {/* Premium Section */}
-              <div className="p-6 bg-purple-50 rounded-[2rem] border border-purple-100 shadow-sm">
-                <div className="flex items-center justify-between gap-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-purple-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-purple-200">
-                      <Star className="w-7 h-7 fill-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-black text-purple-900 tracking-tight leading-none mb-1">Global Premium Pass</h3>
-                      <p className="text-xs font-bold text-purple-500 uppercase tracking-widest italic">All Exams • No Limits • Lifetime Access</p>
-                    </div>
+            <form onSubmit={handleEditUser} className="p-6 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold mb-1 text-slate-700">Full Name</label>
+                    <input className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" value={editFormData.name || ''} onChange={e => setEditFormData({...editFormData, name: e.target.value})} />
                   </div>
-                  <button 
-                    onClick={() => handleTogglePremium(selectedUser.id, !!selectedUser.isPremium)}
-                    className={`px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg ${
-                      selectedUser.isPremium 
-                        ? 'bg-white text-purple-600 border border-purple-100 hover:bg-red-50 hover:text-red-600 hover:border-red-100'
-                        : 'bg-purple-600 text-white shadow-purple-300 hover:scale-[1.05]'
-                    }`}
-                  >
-                    {selectedUser.isPremium ? 'Revoke Premium' : 'Activate Premium'}
-                  </button>
+                  <div>
+                    <label className="block text-sm font-semibold mb-1 text-slate-700">Phone</label>
+                    <input className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" value={editFormData.phone || ''} onChange={e => setEditFormData({...editFormData, phone: e.target.value})} />
+                  </div>
                 </div>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-primary" /> Exam Specific Access
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {exams.map(exam => {
-                    const isGranted = (selectedUser.freeExams || []).includes(exam.id);
-                    return (
-                      <div key={exam.id} className={`p-4 rounded-2xl border flex items-center justify-between transition-all ${isGranted ? 'bg-green-50 border-green-200' : 'bg-white border-slate-100 hover:border-primary/20'}`}>
-                        <div className="flex-1 pr-4">
-                          <p className="text-sm font-black text-primary leading-tight">{exam.name}</p>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{exam.organization}</p>
-                        </div>
-                        {isGranted ? (
-                          <button 
-                            onClick={() => revokeFreeAccess(selectedUser.id, exam.id)}
-                            className="p-2 bg-red-50 text-red-500 rounded-xl border border-red-100 shadow-sm hover:bg-red-500 hover:text-white transition-all"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        ) : (
-                          <button 
-                            onClick={() => grantFreeAccess(selectedUser.id, exam.id)}
-                            className="p-2 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 hover:scale-110 active:scale-95 transition-all"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
+                <div>
+                   <label className="block text-sm font-semibold mb-1 text-slate-700">Email Address</label>
+                   <input className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" value={editFormData.email || ''} onChange={e => setEditFormData({...editFormData, email: e.target.value})} />
                 </div>
-              </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                     <label className="block text-sm font-semibold mb-1 text-slate-700">Address</label>
+                     <input className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" value={editFormData.address || ''} onChange={e => setEditFormData({...editFormData, address: e.target.value})} />
+                  </div>
+                  <div>
+                     <label className="block text-sm font-semibold mb-1 text-slate-700">State</label>
+                     <input className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" value={editFormData.state || ''} onChange={e => setEditFormData({...editFormData, state: e.target.value})} />
+                  </div>
+                </div>
+                <div className="pt-6 flex justify-end gap-3 border-t border-slate-100">
+                   <button type="button" onClick={() => setShowEditModal(false)} className="px-6 py-2.5 bg-slate-100 rounded-lg text-slate-700 font-semibold hover:bg-slate-200 transition-colors">Cancel</button>
+                   <button type="submit" className="px-6 py-2.5 bg-teal-700 text-white rounded-lg font-semibold hover:bg-teal-800 transition-colors">Save Changes</button>
+                </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {showPrivilegeModal && selectedUser && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-200">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+               <div>
+                  <h2 className="text-xl font-bold text-slate-900">{selectedUser.name}</h2>
+                  <p className="text-sm font-medium text-slate-500">{selectedUser.email}</p>
+               </div>
+               <button onClick={() => setShowPrivilegeModal(false)} className="p-2 bg-white border border-slate-200 rounded-md text-slate-400 hover:text-slate-600 transition-all">
+                 <XCircle className="w-5 h-5" />
+               </button>
             </div>
 
-            <div className="p-8 bg-slate-50 border-t border-slate-100 flex items-center justify-center">
+            <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
+              <div className="p-6 bg-slate-900 rounded-xl text-white">
+                 <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-4">
+                       <Crown className="w-8 h-8 text-amber-400" />
+                       <div>
+                          <h4 className="text-lg font-bold">Premium Pass</h4>
+                          <span className="text-xs text-slate-400">Unlock all tests & reporting</span>
+                       </div>
+                    </div>
+                    <button 
+                      onClick={() => handleTogglePremium(selectedUser.id, !!selectedUser.isPremium)}
+                      className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                        selectedUser.isPremium 
+                          ? 'bg-rose-500 text-white hover:bg-rose-600' 
+                          : 'bg-teal-600 text-white hover:bg-teal-700'
+                      }`}
+                    >
+                      {selectedUser.isPremium ? 'Revoke Pass' : 'Activate Pass'}
+                    </button>
+                 </div>
+              </div>
+
+              <div>
+                 <h3 className="text-sm font-bold text-slate-700 uppercase tracking-widest mb-4">Exam Specific Access</h3>
+                 <div className="space-y-3">
+                   {exams.map(exam => {
+                     const isGranted = (selectedUser.freeExams || []).includes(exam.id);
+                     return (
+                       <div key={exam.id} className="p-4 rounded-xl border border-slate-200 flex items-center justify-between bg-white hover:border-teal-200 transition-colors">
+                         <div>
+                           <p className="text-sm font-bold text-slate-900">{exam.name}</p>
+                           <p className="text-xs font-semibold text-slate-500 mt-1">{agencies.find((a: any) => a.id === exam.agencyId)?.name || 'General'}</p>
+                         </div>
+                         {isGranted ? (
+                           <button onClick={() => revokeFreeAccess(selectedUser.id, exam.id)} className="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg text-xs font-bold hover:bg-rose-100 transition-colors">
+                             Revoke Access
+                           </button>
+                         ) : (
+                           <button onClick={() => grantFreeAccess(selectedUser.id, exam.id)} className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-200 transition-colors">
+                             Grant Access
+                           </button>
+                         )}
+                       </div>
+                     );
+                   })}
+                 </div>
+              </div>
+            </div>
+            
+            <div className="p-6 border-t border-slate-200 bg-slate-50 flex justify-end">
+               <button onClick={() => setShowPrivilegeModal(false)} className="px-6 py-2.5 bg-slate-900 text-white rounded-lg font-semibold hover:bg-slate-800 transition-colors">
+                  Close
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteModal && selectedUser && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white max-w-sm w-full rounded-2xl p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center mb-4">
+              <Trash2 className="w-6 h-6 text-rose-600" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Delete User</h3>
+            <p className="text-slate-500 text-sm mb-6">Are you sure you want to delete <span className="font-bold text-slate-900">{selectedUser.name}</span>? This action cannot be undone.</p>
+            <div className="flex gap-3">
               <button 
-                onClick={() => setShowPrivilegeModal(false)}
-                className="px-16 py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-primary/40 hover:scale-[1.01] active:scale-95 transition-all"
+                onClick={() => { setShowDeleteModal(false); setSelectedUser(null); }}
+                className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-700 font-semibold transition-colors"
               >
-                Done Managing
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDelete}
+                className="flex-1 px-4 py-2 bg-rose-600 hover:bg-rose-700 rounded text-white font-semibold transition-colors"
+              >
+                Confirm Delete
               </button>
             </div>
           </div>
@@ -446,4 +424,3 @@ export default function AdminUsers() {
     </AdminLayout>
   );
 }
-

@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
-import { collection, query, getDocs, onSnapshot } from 'firebase/firestore';
+import { collection, query, getDocs, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { 
   Download, 
   Search, 
   TrendingUp,
   Wallet,
-  Calendar
+  Calendar,
+  Filter,
+  ArrowUpRight,
+  CreditCard,
+  CheckCircle2,
+  XCircle,
+  AlertCircle
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -21,236 +27,178 @@ export default function AdminRevenue() {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    console.log("Setting up real-time revenue listeners...");
-    const unsubSubs = onSnapshot(collection(db, 'subscriptions'), (snap) => {
-      console.log(`Subscriptions update: ${snap.size} docs`);
-      updateStats(snap, 'subscriptions');
-    });
-
-    const unsubPremium = onSnapshot(collection(db, 'premium_subscriptions'), (snap) => {
-      console.log(`Premium subs update: ${snap.size} docs`);
-      updateStats(snap, 'premium');
-    });
-
-    return () => {
-      unsubSubs();
-      unsubPremium();
-    };
+    const unsubSubs = onSnapshot(collection(db, 'subscriptions'), () => processData());
+    const unsubPremium = onSnapshot(collection(db, 'premium_subscriptions'), () => processData());
+    return () => { unsubSubs(); unsubPremium(); };
   }, []);
 
-  const [rawSubData, setRawSubData] = useState<any[]>([]);
-  const [rawPremiumData, setRawPremiumData] = useState<any[]>([]);
-  const [subsReady, setSubsReady] = useState(false);
-  const [premiumReady, setPremiumReady] = useState(false);
+  const processData = async () => {
+    try {
+      const [subsSnap, premiumSnap] = await Promise.all([
+        getDocs(collection(db, 'subscriptions')),
+        getDocs(collection(db, 'premium_subscriptions'))
+      ]);
 
-  const updateStats = (snap: any, collectionType: string) => {
-    const docs = snap.docs.map((doc: any) => ({
-      id: doc.id,
-      ...doc.data(),
-      collectionType
-    }));
+      const allDocs = [
+        ...subsSnap.docs.map(d => ({ ...d.data(), id: d.id, source: 'Standard' })),
+        ...premiumSnap.docs.map(d => ({ ...d.data(), id: d.id, source: 'Premium' }))
+      ];
 
-    if (collectionType === 'subscriptions') {
-      setRawSubData(docs);
-      setSubsReady(true);
-    } else {
-      setRawPremiumData(docs);
-      setPremiumReady(true);
-    }
-  };
+      const allTransactions: any[] = [];
+      let total = 0;
+      let monthTotal = 0;
+      const now = new Date();
+      const monthlyStats: Record<string, number> = {};
 
-  useEffect(() => {
-    if (!subsReady || !premiumReady) {
-      console.log("Waiting for collections to be ready...", { subsReady, premiumReady });
-      return;
-    }
-
-    const allDocs = [...rawSubData, ...rawPremiumData];
-    console.log(`Processing total of ${allDocs.length} documents from both collections`);
-    
-    const allTransactions: any[] = [];
-    allDocs.forEach((data: any) => {
-      // Try multiple amount field names and ensure it's a number
-      const rawAmount = data.amount ?? data.totalAmount ?? data.price ?? 0;
-      const amount = typeof rawAmount === 'number' ? rawAmount : parseFloat(rawAmount) || 0;
-      const date = data.purchaseDate || data.createdAt || data.date;
-      
-      if (date) {
+      allDocs.forEach((data: any) => {
+        const amount = Number(data.amount || data.totalAmount || data.price || data.total_amount || 0);
+        const rawDate = data.purchaseDate || data.createdAt || data.date || data.timestamp;
+        const date = rawDate?.seconds ? new Date(rawDate.seconds * 1000) : new Date(rawDate || Date.now());
+        
         allTransactions.push({
           id: data.id,
-          amount: amount,
-          date: new Date(date),
-          type: data.collectionType === 'premium' ? 'Premium' : 'Standard',
-          coupon: data.couponCode || 'NONE',
-          userName: data.userName || data.name || data.displayName || 'User'
+          amount,
+          date,
+          type: data.planName || data.type || data.source,
+          status: data.paymentStatus || data.status || 'Success',
+          userName: data.userName || data.userEmail?.split('@')[0] || 'Student',
+          coupon: data.couponCode || 'None',
+          userId: data.userId || 'N/A'
         });
-      }
-    });
 
-    allTransactions.sort((a, b) => b.date.getTime() - a.date.getTime());
-    console.log(`Successfully parsed ${allTransactions.length} valid transactions`);
+        if (data.paymentStatus === 'completed' || data.status === 'Success' || !data.paymentStatus) {
+           total += amount;
+           if (date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()) {
+             monthTotal += amount;
+           }
+           const monthKey = date.toLocaleString('default', { month: 'short' });
+           monthlyStats[monthKey] = (monthlyStats[monthKey] || 0) + amount;
+        }
+      });
 
-    let total = 0;
-    let monthTotal = 0;
-    const now = new Date();
-    const monthlyData: Record<string, number> = {};
-
-    allTransactions.forEach(tx => {
-      const amt = tx.amount || 0;
-      total += amt;
+      allTransactions.sort((a, b) => b.date.getTime() - a.date.getTime());
       
-      if (tx.date.getMonth() === now.getMonth() && tx.date.getFullYear() === now.getFullYear()) {
-        monthTotal += amt;
-      }
+      setTransactions(allTransactions);
+      setTotalRevenue(total);
+      setThisMonthRevenue(monthTotal);
 
-      const monthKey = tx.date.toLocaleString('default', { month: 'short', year: 'numeric' });
-      monthlyData[monthKey] = (monthlyData[monthKey] || 0) + amt;
-    });
+      const chartFormatted = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map(month => ({
+        name: month,
+        amount: monthlyStats[month] || 0
+      }));
 
-    setTotalRevenue(total);
-    setThisMonthRevenue(monthTotal);
-    setTransactions(allTransactions);
-
-    const chartFormatted = Object.entries(monthlyData).map(([name, amount]) => ({
-      name,
-      amount
-    })).sort((a, b) => new Date(a.name).getTime() - new Date(b.name).getTime());
-    
-    setChartData(chartFormatted);
-    setLoading(false);
-  }, [rawSubData, rawPremiumData, subsReady, premiumReady]);
+      setChartData(chartFormatted);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error processing revenue data:", error);
+      setLoading(false);
+    }
+  };
 
   const exportTransactions = () => {
     const wb = XLSX.utils.book_new();
     const exportData = filteredTransactions.map(t => ({
       "Transaction ID": t.id,
-      "User Name": t.userName,
+      "User": t.userName,
       "Amount": t.amount,
       "Date": t.date.toLocaleDateString(),
-      "Type": t.type,
-      "Coupon": t.coupon
+      "Coupon": t.coupon,
+      "Status": t.status
     }));
     
     const ws = XLSX.utils.json_to_sheet(exportData);
-    XLSX.utils.book_append_sheet(wb, ws, "Transactions");
-    XLSX.writeFile(wb, `PrepNext_Transactions_${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, "Revenue Report");
+    XLSX.writeFile(wb, `PrepNext_Revenue_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   const filteredTransactions = transactions.filter(t => 
     t.userName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    t.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.type.toLowerCase().includes(searchTerm.toLowerCase())
+    t.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const StatCard = ({ title, value, color, icon: Icon }: any) => (
+    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+      <div className="flex items-center gap-4 mb-4">
+        <div className={`p-3 rounded-xl ${color}`}>
+          <Icon className="w-6 h-6" />
+        </div>
+        <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">{title}</p>
+      </div>
+      <h3 className="text-3xl font-black text-slate-900 tracking-tight">₹{value.toLocaleString()}</h3>
+    </div>
   );
 
   return (
-    <AdminLayout title="Revenue Management">
-      <div className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-          <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4 md:gap-6">
-            <div className="w-12 h-12 md:w-16 md:h-16 bg-green-50 rounded-2xl flex items-center justify-center text-green-600 flex-shrink-0">
-              <Wallet className="w-6 h-6 md:w-8 md:h-8" />
-            </div>
-            <div>
-              <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] md:text-xs mb-1">Total Revenue</p>
-              <h3 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">
-                INR {totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </h3>
-            </div>
-          </div>
-          <div className="bg-white p-4 md:p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4 md:gap-6">
-            <div className="w-12 h-12 md:w-16 md:h-16 bg-secondary/10 rounded-2xl flex items-center justify-center text-secondary flex-shrink-0">
-              <TrendingUp className="w-6 h-6 md:w-8 md:h-8" />
-            </div>
-            <div>
-              <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] md:text-xs mb-1">This Month</p>
-              <h3 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">
-                INR {thisMonthRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </h3>
-            </div>
+    <AdminLayout title="Revenue & Finance">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+        <StatCard title="Total Gross Revenue" value={totalRevenue} color="bg-emerald-50 text-emerald-600" icon={Wallet} />
+        <StatCard title="Monthly Recurring Revenue" value={thisMonthRevenue} color="bg-blue-50 text-blue-600" icon={TrendingUp} />
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm mb-10">
+        <div className="p-8 border-b border-slate-100 flex items-center justify-between">
+          <h3 className="text-xl font-black text-slate-900">Revenue Trends</h3>
+          <button onClick={exportTransactions} className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-800">
+            <Download className="w-4 h-4" /> Export Data
+          </button>
+        </div>
+        <div className="h-[300px] p-6">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData}>
+              <defs><linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.2}/><stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/></linearGradient></defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} />
+              <YAxis axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v/1000}k`} />
+              <Tooltip formatter={(v: number) => [`₹${v.toLocaleString()}`, 'Revenue']} />
+              <Area type="monotone" dataKey="amount" stroke="#0ea5e9" fill="url(#colorRev)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
+        <div className="p-8 border-b border-slate-100 flex items-center justify-between">
+          <h3 className="text-xl font-black text-slate-900">Recent Transactions</h3>
+          <div className="relative w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input 
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            />
           </div>
         </div>
-
-        {/* Revenue Chart */}
-        {chartData.length > 0 && (
-          <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm">
-            <h3 className="text-lg font-black text-slate-800 tracking-tight mb-6">Revenue Trend</h3>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 'bold' }} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 'bold' }} tickFormatter={(val) => `₹${val}`} />
-                  <Tooltip formatter={(value: number) => [`₹${value}`, 'Revenue']} />
-                  <Area type="monotone" dataKey="amount" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="#e0e7ff" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
-
-        {/* Transaction Table */}
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="relative w-full md:max-w-md">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input 
-                className="w-full pl-12 pr-4 py-4 bg-white border border-slate-100 rounded-2xl outline-none shadow-sm focus:ring-2 focus:ring-primary font-medium"
-                placeholder="Search transactions..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <button 
-                onClick={exportTransactions}
-                disabled={filteredTransactions.length === 0}
-                className="flex items-center gap-2 px-6 py-4 bg-secondary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-secondary/20 hover:scale-[1.02] transition-all disabled:opacity-50 disabled:hover:scale-100"
-            >
-                <Download className="w-4 h-4" /> Export Excel
-            </button>
-        </div>
-        
-        <div className="bg-white border border-slate-100 rounded-[2.5rem] shadow-sm overflow-hidden">
-          <div className="overflow-x-auto scrollbar-hide">
-            <table className="w-full min-w-[800px] text-left">
-              <thead>
-                <tr className="border-b border-slate-50">
-                  <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">User</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Plan Bought</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Transaction ID</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Date</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Coupon Used</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Amount Paid</th>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="text-left text-xs text-slate-400 uppercase tracking-widest">
+                <th className="px-8 py-4">User</th>
+                <th className="px-8 py-4">Transaction ID</th>
+                <th className="px-8 py-4">Date</th>
+                <th className="px-8 py-4">Amount</th>
+                <th className="px-8 py-4">Coupon</th>
+                <th className="px-8 py-4">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredTransactions.map(tx => (
+                <tr key={tx.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-8 py-4 font-bold text-slate-900">{tx.userName}</td>
+                  <td className="px-8 py-4 text-sm text-slate-500 font-mono">#{tx.id.slice(-8).toUpperCase()}</td>
+                  <td className="px-8 py-4 text-sm text-slate-600">{tx.date.toLocaleDateString()}</td>
+                  <td className="px-8 py-4 font-bold text-slate-900">₹{tx.amount.toLocaleString()}</td>
+                  <td className="px-8 py-4 text-sm font-medium text-slate-500">{tx.coupon}</td>
+                  <td className="px-8 py-4">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${tx.status === 'Success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+                      {tx.status === 'Success' ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                      {tx.status}
+                    </span>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-              {loading ? (
-                  <tr>
-                    <td colSpan={6} className="px-8 py-12 text-center text-slate-400 font-bold">
-                      Loading data...
-                    </td>
-                  </tr>
-                ) : filteredTransactions.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-8 py-12 text-center text-slate-400 font-bold">
-                      {searchTerm ? "No transactions matching search found." : "No transactions found yet."}
-                    </td>
-                  </tr>
-                ) : (
-                  filteredTransactions.map(t => (
-                    <tr key={t.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-8 py-6 text-sm font-bold text-slate-700">{t.userName}</td>
-                      <td className="px-8 py-6 text-sm font-bold text-slate-600">{t.type}</td>
-                      <td className="px-8 py-6 text-sm font-bold text-slate-700">
-                        {t.id.slice(-12).toUpperCase()}
-                      </td>
-                      <td className="px-8 py-6 text-sm font-bold text-slate-500">{t.date.toLocaleDateString()}</td>
-                      <td className="px-8 py-6 text-sm font-bold text-slate-500">{t.coupon}</td>
-                      <td className="px-8 py-6 text-sm font-black text-primary">₹{(t.amount || 0).toLocaleString()}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </AdminLayout>

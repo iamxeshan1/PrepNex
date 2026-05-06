@@ -1,42 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/AdminLayout';
-import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, setDoc, writeBatch, limit } from 'firebase/firestore';
+import { collection, addDoc, getDocs, deleteDoc, doc, setDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { 
-  PlusCircle, 
+  Plus, 
   Trash2, 
-  BookOpen, 
-  Calculator, 
-  Brain, 
-  Globe, 
-  Microscope, 
-  History, 
-  Map, 
-  Cpu, 
-  FileText, 
-  Palette,
-  Atom,
-  Search,
-  MessageSquare,
-  Languages,
-  FlaskConical,
-  Dna,
-  Binary,
-  Code,
-  Music,
-  HeartPulse,
-  Scale,
-  Briefcase,
-  Church,
-  Sigma,
-  Zap,
-  Gamepad2,
-  Brush,
-  Variable,
-  RotateCcw
+  Edit3, 
+  X, 
+  Loader2, 
+  Search, 
+  Database, 
+  Sparkles,
+  ArrowRight,
+  BookOpen, Brain, Calculator, Globe, Microscope, History, Map, Cpu, FileText, Palette, Atom, MessageSquare, Languages, FlaskConical, Dna, Binary, Code, Music, HeartPulse, Scale, Briefcase, Church, Sigma, Zap, Gamepad2, Brush, Variable
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
 
 const ICON_OPTIONS = [
   { name: 'Brain', icon: Brain },
@@ -85,19 +63,16 @@ export default function AdminSubjects() {
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
-  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
-  const [confirmingBulkDelete, setConfirmingBulkDelete] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  const [showForm, setShowForm] = useState(false);
 
   const fetchSubjects = async () => {
     setFetching(true);
     try {
-      // First try to get total count to see if we have documents that might be missing 'name'
       const allSnap = await getDocs(collection(db, 'subjects'));
       const allDocs = allSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Subject));
-      
-      // Still sort locally if possible
       allDocs.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-      
       setSubjects(allDocs);
     } catch (err) {
       console.error("Fetch error:", err);
@@ -106,9 +81,7 @@ export default function AdminSubjects() {
     }
   };
 
-  useEffect(() => {
-    fetchSubjects();
-  }, []);
+  useEffect(() => { fetchSubjects(); }, []);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,7 +89,6 @@ export default function AdminSubjects() {
     setLoading(true);
     try {
       if (newSubjectName) {
-        // Check for duplicate
         const exists = subjects.find(s => s.name?.toLowerCase() === newSubjectName.trim().toLowerCase());
         if (exists) {
           alert("Subject already exists!");
@@ -130,7 +102,6 @@ export default function AdminSubjects() {
           description,
           createdAt: new Date().toISOString()
         });
-        alert("New Subject Created!");
       } else {
         const subRef = doc(db, 'subjects', selectedSubjectId);
         await setDoc(subRef, {
@@ -138,13 +109,9 @@ export default function AdminSubjects() {
           description,
           updatedAt: new Date().toISOString()
         }, { merge: true });
-        alert("Subject Metadata Updated!");
       }
       
-      setSelectedSubjectId('');
-      setNewSubjectName('');
-      setDescription('');
-      setIcon('BookOpen');
+      resetForm();
       fetchSubjects();
     } catch (error) {
       console.error(error);
@@ -153,281 +120,213 @@ export default function AdminSubjects() {
     }
   };
 
+  const resetForm = () => {
+    setSelectedSubjectId('');
+    setNewSubjectName('');
+    setDescription('');
+    setIcon('BookOpen');
+    setShowForm(false);
+  };
+
+  const startEdit = (subject: Subject) => {
+    setSelectedSubjectId(subject.id);
+    setNewSubjectName('');
+    setDescription(subject.description || '');
+    setIcon(subject.icon || 'BookOpen');
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const startCreate = () => {
+    setSelectedSubjectId('');
+    setNewSubjectName('');
+    setDescription('');
+    setIcon('BookOpen');
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleDelete = async (id: string) => {
-    try {
+    if (window.confirm("Are you sure you want to delete this subject?")) {
       setLoading(true);
       await deleteDoc(doc(db, 'subjects', id));
-      setConfirmingDeleteId(null);
       fetchSubjects();
-    } catch (error) {
-      console.error("Delete error:", error);
-      alert("Failed to delete subject. It might have linked data.");
-    } finally {
       setLoading(false);
     }
   };
 
-  // Find subjects that have questions or were auto-created but not yet "decorated" with description/icon
-  const subjectList = subjects;
+  const StatCard = ({ title, value, span, icon: Icon, colorClass = "text-slate-900" }: any) => (
+    <div className="bg-white p-4">
+      <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
+      <h3 className={`text-3xl font-bold tracking-tight ${colorClass}`}>{value}</h3>
+      {span && <p className="text-xs font-semibold text-slate-400 mt-1">{span}</p>}
+    </div>
+  );
+
+  const filtered = subjects.filter(s => s.name?.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
-    <AdminLayout title="Subject Dashboard">
-      <div className="sticky top-0 z-40 pb-6 bg-[#f8fafc]/50 backdrop-blur-md">
-        <div className="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-black text-primary tracking-tight">Subject Repositories</h2>
-            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Manage core syllabus categories and their unique identities ({subjects.length} detected)</p>
-          </div>
-          <div className="flex items-center gap-4">
-             <button
-              onClick={fetchSubjects}
-              disabled={loading || fetching}
-              className="p-3 bg-slate-50 text-slate-400 border border-slate-100 rounded-2xl hover:bg-slate-100 transition-all"
-              title="Refresh List"
-            >
-              <RotateCcw className={`w-5 h-5 ${fetching ? 'animate-spin' : ''}`} />
-            </button>
-            
-            {confirmingBulkDelete ? (
-              <div className="flex items-center gap-3 bg-red-50 p-2 rounded-2xl border border-red-100 animate-in fade-in slide-in-from-right-4">
-                <span className="text-[10px] font-black text-red-600 uppercase tracking-widest px-2">Purge {subjects.length} subjects?</span>
-                <button
-                  onClick={async () => {
-                    setLoading(true);
-                    try {
-                      let totalDeleted = 0;
-                      while (true) {
-                        const snap = await getDocs(query(collection(db, 'subjects'), limit(500)));
-                        if (snap.empty) break;
-                        
-                        const docsInBatch = snap.docs;
-                        const batch = writeBatch(db);
-                        docsInBatch.forEach((docSnap) => batch.delete(docSnap.ref));
-                        await batch.commit();
-                        
-                        totalDeleted += docsInBatch.length;
-                        if (totalDeleted > 100000) break;
-                      }
-                      
-                      alert(`Successfully purged ${totalDeleted} subjects.`);
-                      setConfirmingBulkDelete(false);
-                      fetchSubjects();
-                    } catch (err: any) {
-                      console.error("Bulk delete failed:", err);
-                      alert("Critical Failure: " + (err.message || "Unknown error during deletion."));
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  disabled={loading}
-                  className="px-4 py-2 bg-red-600 text-white text-[10px] font-black rounded-xl hover:bg-red-700 uppercase tracking-tighter"
-                >
-                  {loading ? 'Deleting...' : 'Yes, Delete All'}
-                </button>
-                <button 
-                  onClick={() => setConfirmingBulkDelete(false)}
-                  disabled={loading}
-                  className="px-4 py-2 bg-white text-slate-400 text-[10px] font-black rounded-xl border border-slate-200 uppercase tracking-tighter"
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setConfirmingBulkDelete(true)}
-                disabled={loading || subjects.length === 0}
-                className="px-6 py-3 bg-red-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-700 transition-all disabled:opacity-50 shadow-lg shadow-red-200"
-              >
-                Bulk Delete All
-              </button>
-            )}
-          </div>
-        </div>
+    <AdminLayout title="Subjects (Domains)">
+      <div className="flex justify-between items-center mb-6">
+        <p className="text-slate-500 font-medium">Manage academic domains and study materials.</p>
+        <button 
+          onClick={() => showForm ? resetForm() : startCreate()}
+          className="bg-teal-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-teal-800 transition-colors"
+        >
+           {showForm ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+           {showForm ? 'Cancel Entry' : 'Add Subject'}
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        {/* Registration Form */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm sticky top-24">
-            <h3 className="text-xl font-black text-primary mb-6 flex items-center gap-2 uppercase tracking-tight">
-              {newSubjectName ? 'Create New Subject' : 'Subject Configuration'}
-            </h3>
-            
-            <form onSubmit={handleRegister} className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Mode</label>
-                <div className="flex gap-2 p-1 bg-slate-50 rounded-2xl border border-slate-100">
-                  <button 
-                    type="button" 
-                    onClick={() => { setSelectedSubjectId(''); setNewSubjectName(''); }}
-                    className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${!selectedSubjectId && !newSubjectName ? 'bg-white shadow-sm text-primary' : 'text-slate-400'}`}
-                  >
-                    Add New
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => { if(subjects[0]) setSelectedSubjectId(subjects[0].id); setNewSubjectName(''); }}
-                    className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${selectedSubjectId ? 'bg-white shadow-sm text-primary' : 'text-slate-400'}`}
-                  >
-                    Update Existing
-                  </button>
-                </div>
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <StatCard title="Total Subjects" value={subjects.length} span="Academic domains" colorClass="text-teal-600" />
+        <StatCard title="Recently Added" value={subjects.filter(s => new Date(s.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length} span="Last 7 days" colorClass="text-amber-600" />
+        <StatCard title="Active Materials" value="-" span="Under development" colorClass="text-indigo-600" />
+      </div>
 
-              {selectedSubjectId ? (
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Choose Subject</label>
-                  <select 
-                    required
-                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all font-bold text-primary appearance-none"
-                    value={selectedSubjectId} 
-                    onChange={(e) => {
-                      const id = e.target.value;
-                      setSelectedSubjectId(id);
-                      const sub = subjects.find(s => s.id === id);
-                      if (sub) {
-                        setIcon(sub.icon || 'BookOpen');
-                        setDescription(sub.description || '');
-                      }
-                    }}
-                  >
-                    <option value="">Select Target Subject</option>
-                    {subjectList.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
-                </div>
-              ) : (
-                <div className="space-y-2 animate-in slide-in-from-left-4">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">New Subject Name</label>
-                  <input 
-                    required
-                    placeholder="E.g. Computer Science"
-                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all font-bold text-primary"
-                    value={newSubjectName}
-                    onChange={(e) => setNewSubjectName(e.target.value)}
-                  />
-                </div>
-              )}
+      {showForm && (
+        <form onSubmit={handleRegister} className="bg-white p-8 mb-8 border-b border-slate-200">
+          <h3 className="text-xl font-bold text-slate-900 mb-6">{selectedSubjectId ? 'Edit Subject' : 'New Subject'}</h3>
+          
+          <div className="space-y-6">
+             <div className="grid grid-cols-1 gap-6">
+                {selectedSubjectId ? (
+                   <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Subject Name (Locked)</label>
+                      <input 
+                        type="text" 
+                        disabled
+                        className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-lg font-medium text-slate-500"
+                        value={subjects.find(s => s.id === selectedSubjectId)?.name || ''} 
+                      />
+                   </div>
+                ) : (
+                   <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Subject Name</label>
+                      <input 
+                        required
+                        placeholder="e.g. Constitutional Law"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 font-medium text-slate-900"
+                        value={newSubjectName}
+                        onChange={(e) => setNewSubjectName(e.target.value)}
+                      />
+                   </div>
+                )}
+             </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Detailed Description</label>
+             <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Description</label>
                 <textarea 
-                  placeholder="What is covered in this subject?"
-                  className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all font-bold text-primary min-h-[100px] resize-none"
-                  value={description} onChange={(e) => setDescription(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 font-medium min-h-[100px]"
+                  placeholder="Details about the domain boundaries..."
+                  value={description} onChange={(e) => setDescription(e.target.value)} 
                 />
-              </div>
+             </div>
 
-              <div className="space-y-3">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 text-center block">Syllabus Icon</label>
-                <div className="grid grid-cols-4 gap-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+             <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Visual Icon</label>
+                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-4 bg-slate-50 rounded-lg border border-slate-200">
                   {ICON_OPTIONS.map((item) => (
                     <button
                       key={item.name}
                       type="button"
                       onClick={() => setIcon(item.name)}
-                      className={`p-4 rounded-xl flex items-center justify-center transition-all ${icon === item.name ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-110' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
-                      title={item.name}
+                      className={`p-3 rounded-lg transition-colors border ${icon === item.name ? 'bg-teal-50 border-teal-500 text-teal-700' : 'bg-white border-slate-200 text-slate-400 hover:border-teal-300 hover:text-teal-600'}`}
                     >
-                      <item.icon className="w-5 h-5" />
+                      <item.icon className="w-6 h-6" />
                     </button>
                   ))}
                 </div>
-              </div>
-
-              <button 
-                type="submit" 
-                disabled={loading || (!selectedSubjectId && !newSubjectName)}
-                className="w-full py-5 bg-primary text-white rounded-2xl font-black tracking-widest uppercase text-xs shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all disabled:opacity-50"
-              >
-                {loading ? 'Processing...' : (newSubjectName ? 'Create Subject' : 'Update Metadata')}
-              </button>
-            </form>
+             </div>
           </div>
+          <div className="mt-8 flex gap-3">
+             <button type="submit" disabled={loading} className="bg-teal-700 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-teal-800 transition-colors disabled:opacity-50">
+               {loading ? 'Saving...' : (selectedSubjectId ? 'Save Changes' : 'Create Subject')}
+             </button>
+          </div>
+        </form>
+      )}
+
+      <div className="bg-white overflow-hidden">
+        <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+           <div className="flex gap-4">
+             <div className="relative w-64">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input 
+                  type="text" 
+                  placeholder="Search subjects..." 
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium focus:ring-teal-500 focus:border-teal-500 bg-white shadow-sm"
+                />
+             </div>
+           </div>
+           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Showing {filtered.length} SUBJECTS</p>
         </div>
 
-        {/* List */}
-        <div className="lg:col-span-2">
-          {fetching ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-slate-50 rounded-3xl animate-pulse" />)}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <AnimatePresence>
-                {subjects.map((sub) => {
-                  const IconComp = ICON_OPTIONS.find(i => i.name === sub.icon)?.icon || BookOpen;
-                  return (
-                    <motion.div 
-                      layout
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      key={sub.id} 
-                      className="p-6 bg-white rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group relative"
-                    >
-                      <div className="flex items-center gap-5">
-                        <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500">
-                          <IconComp className="w-8 h-8" />
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="text-lg font-black text-primary tracking-tight">{sub.name}</h4>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Topic Mastery</p>
-                        </div>
+        {fetching ? (
+           <div className="py-20 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin" /></div>
+        ) : (
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 text-xs font-bold text-slate-400 uppercase tracking-wider bg-slate-50">
+                <th className="p-4 pl-6 font-semibold">Subject Domain</th>
+                <th className="p-4 font-semibold">Description</th>
+                <th className="p-4 font-semibold">Created Date</th>
+                <th className="p-4 pr-6 text-right font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((sub) => {
+                const IconComp = ICON_OPTIONS.find(i => i.name === sub.icon)?.icon || BookOpen;
+                return (
+                  <tr key={sub.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
+                    <td className="p-4 pl-6">
+                      <div className="flex items-center gap-4">
+                         <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold overflow-hidden">
+                            <IconComp className="w-5 h-5" />
+                         </div>
+                         <div>
+                           <p className="font-bold text-slate-900 group-hover:text-teal-700 transition-colors uppercase">
+                             {sub.name}
+                           </p>
+                         </div>
                       </div>
-                      <p className="text-xs text-slate-500 font-medium mt-4 line-clamp-2 leading-relaxed">
-                        {sub.description || 'Practice specific mock tests focused on this subject to improve your accuracy.'}
-                      </p>
-                       <div className="mt-6 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">
-                              {new Date(sub.createdAt).toLocaleDateString()}
-                            </span>
-                            <Link 
-                              to={`/admin/subject-tests/${sub.id}`}
-                              className="text-[10px] font-black text-secondary hover:underline uppercase tracking-widest bg-secondary/5 px-2 py-1 rounded-md"
-                            >
-                              Manage Tests
-                            </Link>
-                          </div>
-                          {confirmingDeleteId === sub.id ? (
-                            <div className="flex items-center gap-2 bg-red-50 p-1.5 rounded-xl border border-red-100 animate-in fade-in slide-in-from-right-2">
-                              <span className="text-[7px] font-black text-red-600 uppercase tracking-tighter px-1 whitespace-nowrap leading-none">Sure? Undo not possible</span>
-                              <button 
-                                onClick={() => handleDelete(sub.id)}
-                                disabled={loading}
-                                className="px-2 py-1 bg-red-600 text-white text-[9px] font-black rounded-lg hover:bg-red-700 uppercase"
-                              >
-                                {loading ? '...' : 'Yes'}
-                              </button>
-                              <button 
-                                onClick={() => setConfirmingDeleteId(null)}
-                                className="px-2 py-1 bg-white text-slate-400 text-[9px] font-black rounded-lg border border-slate-200"
-                              >
-                                X
-                              </button>
-                            </div>
-                          ) : (
-                            <button 
-                              onClick={() => setConfirmingDeleteId(sub.id)}
-                              className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                              title="Delete Subject"
-                            >
-                               <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
+                    </td>
+                    <td className="p-4">
+                       <p className="text-xs font-medium text-slate-500 line-clamp-2 max-w-sm">{sub.description || 'Global domain for targeted academic training.'}</p>
+                    </td>
+                    <td className="p-4">
+                      <span className="text-xs font-medium text-slate-600">{new Date(sub.createdAt).toLocaleDateString()}</span>
+                    </td>
+                    <td className="p-4 pr-6 text-right">
+                       <div className="flex items-center justify-end gap-2 text-slate-400">
+                          <Link 
+                             to={`/admin/subject-tests/${sub.id}`} 
+                             className="p-2 hover:bg-slate-200 rounded text-slate-600 transition-colors flex items-center gap-1"
+                             title="View Materials/Tests"
+                          >
+                             <Database className="w-4 h-4" />
+                          </Link>
+                          <button onClick={() => startEdit(sub)} className="p-2 hover:bg-slate-200 rounded text-slate-600 transition-colors" title="Edit Subject">
+                             <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleDelete(sub.id)} className="p-2 hover:bg-red-50 rounded text-red-500 transition-colors" title="Delete Subject">
+                             <Trash2 className="w-4 h-4" />
+                          </button>
                        </div>
-                    </motion.div>
-                  )
-                })}
-              </AnimatePresence>
-              {subjects.length === 0 && (
-                <div className="col-span-2 py-20 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[3rem] text-center">
-                   <p className="text-slate-400 font-black uppercase tracking-widest text-xs">No subjects created yet.</p>
-                </div>
+                    </td>
+                  </tr>
+                )}
               )}
-            </div>
-          )}
-        </div>
+              {filtered.length === 0 && (
+                <tr>
+                   <td colSpan={4} className="p-8 text-center text-slate-500">No subjects found.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
     </AdminLayout>
   );

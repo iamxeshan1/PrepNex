@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { getTestsByExamId, createSubscription, getResultsByTestId } from '../services/db';
 import { doc, getDoc, getDocs, query, collection, documentId, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { ChevronLeft, Lock, Play, Clock, FileText, CheckCircle2, ShoppingBag, Award, History, Building2 } from 'lucide-react';
+import { ChevronLeft, Lock, Play, Clock, FileText, CheckCircle2, ShoppingBag, Award, History, Building2, Shield } from 'lucide-react';
 import CheckoutModal from '../components/CheckoutModal';
 
 export default function ExamDetail() {
@@ -116,155 +116,78 @@ export default function ExamDetail() {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Link to={agency?.id ? `/agency/${agency.id}` : "/agencies"} className="inline-flex items-center gap-1 text-sm font-bold text-slate-400 hover:text-primary mb-8 transition-colors">
-          <ChevronLeft className="w-4 h-4" /> Back to {agency?.name || 'Agencies'}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <Link to="/exams" className="inline-flex items-center gap-1 text-sm font-bold text-slate-400 hover:text-[#008770] mb-8 transition-colors">
+          <ChevronLeft className="w-4 h-4" /> Back to Catalog
         </Link>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {/* Main Info */}
+          {/* Main Info - Left Column */}
           <div className="lg:col-span-2 space-y-12">
             <header>
-              <div className="flex items-center gap-3 text-xs font-bold text-secondary uppercase tracking-widest mb-4">
-                {agency?.logoUrl ? (
-                  <img src={agency.logoUrl} alt={agency.name} className="w-6 h-6 object-contain rounded" />
-                ) : (
-                  <Building2 className="w-4 h-4" />
-                )}
-                <span>{agency?.name || exam.organization}</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
-                <span>{exam.category}</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
-                <span className={`px-2 py-0.5 rounded-md ${exam.difficulty === 'Easy' ? 'bg-green-100 text-green-700' : exam.difficulty === 'Hard' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>{exam.difficulty || 'Medium'}</span>
+              <div className="flex items-center gap-2 text-xs font-bold text-[#008770] bg-[#e6fcf9] px-3 py-1 rounded-full mb-6 w-fit">
+                <Shield className="w-3.5 h-3.5" />
+                <span>{agency?.name || exam.organization || 'OFFICIAL SERIES'}</span>
               </div>
-              <h1 className="text-4xl md:text-5xl font-extrabold text-primary tracking-tight mb-6">{exam.name}</h1>
-              <p className="text-lg text-slate-600 leading-relaxed max-w-2xl">{exam.description || 'Comprehensive test series designed to mimic the actual exam environment and pattern.'}</p>
+              <h1 className="text-4xl md:text-5xl font-display font-black text-slate-900 tracking-tighter mb-6">{exam.name}</h1>
+              <p className="text-lg text-slate-600 leading-relaxed font-medium">{exam.description || 'Comprehensive test series designed by regional experts to mirror the latest exam pattern.'}</p>
             </header>
 
-            {/* Exam Highlights Section */}
-            {exam.type !== 'competitive' && (exam.totalPosts || (exam.postDistribution && exam.postDistribution.length > 0)) && (
-              <section className="bg-slate-50 rounded-[2rem] p-8 border border-slate-100 mb-8">
-                <h2 className="text-2xl font-bold text-primary mb-6">Exam Highlights</h2>
-                
-                {exam.totalPosts && (
-                  <div className="mb-8 p-6 bg-white rounded-2xl border border-slate-200 flex items-center justify-between">
-                    <span className="text-primary font-black">Total Posts Advertised</span>
-                    <span className="text-3xl font-black text-secondary">{exam.totalPosts}</span>
-                  </div>
-                )}
+            {/* Stats row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+               {[
+                 { label: 'TOTAL TESTS', value: `${exam.mockCount || 0} Mock Tests` },
+                 { label: 'DURATION', value: `${exam.duration || 0} Minutes` },
+                 { label: 'ENROLLED', value: `${exam.enrollCount || '0'} Students` },
+                 { label: 'LANGUAGE', value: exam.language || 'English / Urdu' }
+               ].map((stat, i) => (
+                 <div key={i} className="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                    <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mb-1">{stat.label}</p>
+                    <p className="text-sm font-black text-slate-900">{stat.value}</p>
+                 </div>
+               ))}
+            </div>
 
-                {exam.postDistribution && exam.postDistribution.length > 0 && (
-                  <div className="space-y-4">
-                     <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest pl-1 mb-2">Category-wise Distribution</h3>
-                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {exam.postDistribution.map((pd: any, idx: number) => (
-                           <div key={idx} className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                              <span className="text-primary font-black text-sm">{pd.category}</span>
-                              <span className="bg-primary/10 text-primary px-3 py-1 rounded-lg text-xs font-black">{pd.count} Posts</span>
-                           </div>
-                        ))}
-                     </div>
-                  </div>
-                )}
-              </section>
-            )}
-
-            {/* Subject Weightage Section */}
-            {exam.subjectsWeightage && exam.subjectsWeightage.length > 0 && (
-              <section className="bg-slate-50 rounded-[2rem] p-8 border border-slate-100 mb-8">
-                <h2 className="text-2xl font-bold text-primary mb-6">Marks Distribution</h2>
-                
-                <div className="space-y-4">
-                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {exam.subjectsWeightage.map((sw: any, idx: number) => (
-                         <div key={idx} className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                            <span className="text-primary font-black text-sm">
-                              {sw.subject || subjects.find(s => s.id === sw.subjectId)?.name || 'Unknown'}
-                            </span>
-                            <span className="bg-primary/10 text-primary px-3 py-1 rounded-lg text-xs font-black">{sw.marks} Marks</span>
-                         </div>
-                      ))}
-                   </div>
-                </div>
-              </section>
-            )}
-
+            {/* Mock Tests Section */}
             <section>
               <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold text-primary">Mock Tests ({tests.length})</h2>
-                {!(profile?.purchasedExams?.includes(examId) || profile?.freeExams?.includes(examId)) && exam.isPaid && (
-                  <span className="text-xs font-bold text-orange-600 bg-orange-50 px-3 py-1 rounded-full border border-orange-100 flex items-center gap-1">
-                    <Lock className="w-3 h-3" /> Subscription Required for Premium Mocks
-                  </span>
-                )}
+                <h2 className="text-2xl font-display font-black text-slate-900 tracking-tighter">Available Mock Tests</h2>
+                <div className="flex bg-slate-100 p-1 rounded-full text-[12px] font-bold tracking-widest">
+                   <button className="px-5 py-2 bg-white rounded-full text-[#0f172a] shadow-sm">All Tests</button>
+                   <button className="px-5 py-2 text-slate-500 hover:text-slate-700">Sectional</button>
+                </div>
               </div>
 
               <div className="space-y-4">
                 {tests.map((test) => {
                   const unlocked = hasAccess(test);
-                  const results = testResults[test.id] || [];
-                  const latestResult = results[0]; // Ordered by date desc
-                  const bestScore = results.length > 0 ? Math.max(...results.map(r => r.score)) : null;
-
                   return (
                     <div 
                       key={test.id}
-                      className={`p-6 bg-white border rounded-[2rem] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-6 ${unlocked ? 'border-slate-100 hover:border-primary shadow-sm' : 'border-slate-50 bg-slate-50/50 grayscale'}`}
+                      className="p-6 bg-white border border-slate-100 rounded-2xl shadow-sm flex items-center justify-between gap-6"
                     >
-                      <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-4">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${unlocked ? 'bg-primary/5 text-primary' : 'bg-slate-200 text-slate-400'}`}>
-                          {unlocked ? <FileText className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">
+                          <FileText className="w-6 h-6" />
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                             <h4 className="font-bold text-primary">{test.title}</h4>
-                             {test.status === 'draft' && (
-                               <span className="text-[10px] font-black bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full uppercase tracking-tighter">
-                                 Draft
-                               </span>
-                             )}
-                             {results.length > 0 && (
-                               <span className="text-[10px] font-black bg-primary/10 text-primary px-2 py-0.5 rounded-full uppercase tracking-tighter">
-                                 {results.length} Attempt{results.length > 1 ? 's' : ''}
-                               </span>
-                             )}
-                          </div>
-                          <div className="flex items-center gap-4 mt-1">
-                            <span className="flex items-center gap-1 text-xs text-slate-400 font-medium"><Clock className="w-3 h-3" /> {test.duration} mins</span>
-                            <span className="flex items-center gap-1 text-xs text-slate-400 font-medium"><Award className="w-3 h-3" /> {test.totalMarks} Marks</span>
-                            {bestScore !== null && (
-                              <span className="flex items-center gap-1 text-xs text-green-600 font-bold"><History className="w-3 h-3" /> Best: {bestScore}%</span>
-                            )}
-                          </div>
+                        <div>
+                           <h4 className="font-display font-bold text-[#0f172a] mb-1">{test.title}</h4>
+                           <div className="flex items-center gap-4 text-slate-500 text-[10px] uppercase font-bold tracking-widest">
+                              <span>{test.questionCount || 120} Questions</span>
+                              <span>{test.duration || 120} Mins</span>
+                              <span>{test.difficulty || 'Easy'}</span>
+                           </div>
                         </div>
                       </div>
-
-                      <div className="flex items-center gap-2">
-                        {unlocked ? (
-                          <>
-                            {results.length > 0 && (
-                              <Link 
-                                to={`/result/${latestResult.id}`}
-                                className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 text-slate-600 text-sm font-bold rounded-xl hover:bg-slate-50 transition-all shadow-sm"
-                              >
-                                Last Result
-                              </Link>
-                            )}
-                            <Link 
-                              to={`/test/${test.id}`}
-                              className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary/90 transition-all active:scale-95 shadow-md whitespace-nowrap"
-                            >
-                              <Play className="w-4 h-4 fill-white" /> {results.length > 0 ? 'Retake Mock' : 'Start Mock'}
-                            </Link>
-                          </>
-                        ) : (
-                          <button 
-                            onClick={handlePurchaseClick}
-                            className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-200 text-slate-600 text-sm font-bold rounded-xl hover:bg-slate-300 transition-all"
-                          >
-                            <Lock className="w-4 h-4" /> Unlock Exam
-                          </button>
-                        )}
+                      
+                      <div className="flex items-center gap-4">
+                         {test.isFree && !unlocked && <span className="text-[10px] font-black uppercase text-teal-600 bg-teal-50 px-2 py-1 rounded">Free</span>}
+                         {!test.isFree && !unlocked && <span className="text-[10px] font-black uppercase text-amber-600 bg-amber-50 px-2 py-1 rounded">Premium</span>}
+                         
+                         {unlocked ? (
+                           <button onClick={() => navigate(`/test/${test.id}`)} className="px-6 py-3 bg-[#008770] text-white font-black rounded-lg text-sm hover:bg-[#006e5d] transition-all">Start</button>
+                         ) : (
+                           <button className="px-6 py-3 bg-slate-50 text-slate-500 font-bold rounded-lg text-sm border border-slate-200 flex items-center gap-2"><Lock className="w-3 h-3" /> Locked</button>
+                         )}
                       </div>
                     </div>
                   );
@@ -273,51 +196,44 @@ export default function ExamDetail() {
             </section>
           </div>
 
-          {/* Sticky Sidebar */}
-          <div className="lg:block">
-            <div className={`sticky top-24 p-8 rounded-[2rem] border-2 shadow-xl shadow-primary/5 flex flex-col justify-between ${(profile?.purchasedExams?.includes(examId) || profile?.freeExams?.includes(examId)) ? 'bg-green-50 border-green-100' : 'bg-white border-slate-100'}`}>
-              <div>
-                <h3 className="text-xl font-bold text-primary mb-2">Package Details</h3>
-                <div className="space-y-4 my-8">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    <span className="text-sm font-medium text-slate-600">Full Syllabus Coverage</span>
+          {/* Right Sidebar */}
+          <div className="lg:col-span-1">
+             <div className="sticky top-24 space-y-8">
+               {/* Premium Access Card */}
+               <div className="bg-[#0f172a] rounded-3xl p-8 text-white">
+                  <div className="flex items-center gap-2 text-[#f59e0b] text-[10px] font-black uppercase tracking-widest mb-4">
+                     <Award className="w-4 h-4" />
+                     <span>Premium Access</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    <span className="text-sm font-medium text-slate-600">Detailed Explanations</span>
+                  <h3 className="text-2xl font-display font-black tracking-tight mb-4">Unlock Full Test Series</h3>
+                  <p className="text-slate-400 text-sm font-medium mb-6">Get access to 35+ Full Length Mocks, Subject-wise tests, and Detailed Analytics for the {exam.name}.</p>
+                  <div className="flex items-baseline gap-2 mb-6">
+                     <span className="text-4xl font-black text-white">₹{exam.price || '499'}</span>
+                     <span className="text-slate-500 line-through">₹1,999</span>
+                     <span className="bg-[#10b981] text-white text-[10px] font-black px-2 py-1 rounded uppercase tracking-widest">75% Off</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    <span className="text-sm font-medium text-slate-600">Performance Analytics</span>
-                  </div>
-                </div>
-              </div>
+                  <button onClick={handlePurchaseClick} className="w-full py-4 bg-[#008770] text-white font-black rounded-xl hover:bg-[#006e5d] transition-all flex items-center justify-center gap-2">{exam.isPaid ? 'Enroll Now' : 'Enroll Free'} <ChevronLeft className="w-4 h-4 rotate-180" /></button>
+                  <p className="text-[10px] text-center text-slate-600 mt-4">Secure 256-bit SSL encrypted payment</p>
+               </div>
+               
+               {/* Included Card */}
+               <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm">
+                  <h3 className="text-xl font-display font-black text-[#0f172a] mb-6">What's Included</h3>
+                  <ul className="space-y-4">
+                    {[
+                      '45 Full Length Mock Tests',
+                      'Performance Analysis',
+                      'Solved Previous Year Papers',
+                      'Sectional Practice Sets'
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-center gap-3 text-sm font-medium text-slate-600">
+                        <CheckCircle2 className="w-5 h-5 text-teal-600" /> {item}
+                      </li>
+                    ))}
+                  </ul>
+               </div>
 
-              {(profile?.purchasedExams?.includes(examId) || profile?.freeExams?.includes(examId)) ? (
-                <div className="text-center py-4">
-                  <span className="text-green-700 font-bold flex items-center justify-center gap-2">
-                    <Award className="w-5 h-5" /> {profile?.freeExams?.includes(examId) ? 'Premium Access Privileged' : 'Unlimited Access Granted'}
-                  </span>
-                </div>
-              ) : (
-                <div className="space-y-6 pt-6 border-t border-slate-50">
-                  <div className="flex justify-between items-end">
-                    <span className="text-sm font-bold text-slate-400">TOTAL PRICE</span>
-                    <span className="text-3xl font-extrabold text-primary">₹{exam.price || 'Free'}</span>
-                  </div>
-                  <button 
-                    onClick={handlePurchaseClick}
-                    className="w-full py-4 bg-secondary text-white rounded-2xl font-bold text-lg shadow-lg shadow-secondary/20 hover:bg-secondary/90 transition-all flex items-center justify-center gap-2"
-                  >
-                    <ShoppingBag className="w-5 h-5" /> Buy Now
-                  </button>
-                  <p className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest">
-                    One-time payment • Valid for 1 Year
-                  </p>
-                </div>
-              )}
-            </div>
+
           </div>
         </div>
       </div>
@@ -335,6 +251,7 @@ export default function ExamDetail() {
           window.location.reload();
         }}
       />
+      </div>
     </Layout>
   );
 }

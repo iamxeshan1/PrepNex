@@ -12,10 +12,15 @@ import {
   ArrowRight,
   CheckCircle2,
   TrendingUp,
-  Wallet
+  Wallet,
+  X,
+  FileText,
+  Shield,
+  Loader2,
+  Users
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function AdminSubscriptions() {
   const [users, setUsers] = useState<any[]>([]);
@@ -25,7 +30,6 @@ export default function AdminSubscriptions() {
   
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [thisMonthRevenue, setThisMonthRevenue] = useState(0);
-  const [chartData, setChartData] = useState<any[]>([]);
 
   useEffect(() => {
     fetchUsers();
@@ -44,13 +48,7 @@ export default function AdminSubscriptions() {
           const rawAmount = data.amount ?? data.totalAmount ?? data.price ?? 0;
           const amount = typeof rawAmount === 'number' ? rawAmount : parseFloat(rawAmount) || 0;
           const date = data.purchaseDate || data.createdAt || data.date;
-          
-          if (date) {
-            allTransactions.push({
-              amount: amount,
-              date: new Date(date)
-            });
-          }
+          if (date) { allTransactions.push({ amount, date: new Date(date) }); }
         });
       };
       
@@ -61,54 +59,33 @@ export default function AdminSubscriptions() {
       let monthTotal = 0;
       const now = new Date();
       
-      const monthlyData: Record<string, number> = {};
-
       allTransactions.forEach(tx => {
-        const amt = tx.amount || 0;
-        total += amt;
-        
+        total += tx.amount || 0;
         if (tx.date.getMonth() === now.getMonth() && tx.date.getFullYear() === now.getFullYear()) {
-          monthTotal += amt;
+          monthTotal += tx.amount || 0;
         }
-
-        const monthKey = tx.date.toLocaleString('default', { month: 'short', year: 'numeric' });
-        monthlyData[monthKey] = (monthlyData[monthKey] || 0) + amt;
       });
 
       setTotalRevenue(total);
       setThisMonthRevenue(monthTotal);
-
-      const chartFormatted = Object.entries(monthlyData).map(([name, amount]) => ({
-        name,
-        amount
-      }));
-      
-      // Sort chronologically (assuming keys represent month/year correctly)
-      chartFormatted.sort((a, b) => {
-        return new Date(a.name).getTime() - new Date(b.name).getTime();
-      });
-
-      setChartData(chartFormatted);
     } catch (error) {
-      console.error("Error fetching revenue:", error);
+       console.error(error);
     }
   };
 
   const fetchUsers = async () => {
     try {
-      const q = query(collection(db, 'users'));
-      const snap = await getDocs(q);
+      const snap = await getDocs(collection(db, 'users'));
       setUsers(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching subscriptions:", error);
+       console.error(error);
     }
   };
 
   const setSubscription = async (userId: string, months: number) => {
     const expiryDate = new Date();
     expiryDate.setMonth(expiryDate.getMonth() + months);
-    
     try {
       await updateDoc(doc(db, 'users', userId), {
         subscriptionExpiry: expiryDate.toISOString(),
@@ -116,12 +93,12 @@ export default function AdminSubscriptions() {
       });
       fetchUsers();
     } catch (error) {
-      alert("Failed to update subscription");
+       console.error(error);
     }
   };
 
   const revokeAccess = async (userId: string) => {
-    if (!window.confirm("Are you sure you want to revoke premium access?")) return;
+    if (!window.confirm("Verify: Revoke premium access for this entity?")) return;
     try {
       await updateDoc(doc(db, 'users', userId), {
         subscriptionExpiry: null,
@@ -129,188 +106,215 @@ export default function AdminSubscriptions() {
       });
       fetchUsers();
     } catch (error) {
-      alert("Failed to revoke subscription");
+       console.error(error);
     }
   };
 
   const exportSubscriptions = () => {
     const wb = XLSX.utils.book_new();
-    
-    // 1. Summary Sheet
     const summaryData = [
-      ["PrepNext - Subscriptions & Revenue Audit"],
+      ["PrepNext - Global Subscriptions Ledger"],
       ["Date Generated:", new Date().toLocaleString()],
       [],
-      ["MEMBERSHIP SUMMARY"],
-      ["Total Database Users", users.length],
-      ["Premium Subscribers", users.filter(u => !!u.subscriptionExpiry).length],
-      ["Basic/Free Users", users.filter(u => !u.subscriptionExpiry).length],
-      ["Total Lifecycle Revenue", `₹${totalRevenue.toLocaleString()}`],
+      ["MEMBERSHIP AUDIT"],
+      ["Total Entities", users.length],
+      ["Premium Nodes", users.filter(u => !!u.subscriptionExpiry).length],
+      ["Basic Nodes", users.filter(u => !u.subscriptionExpiry).length],
+      ["Lifecycle Revenue", `₹${totalRevenue.toLocaleString()}`],
       [],
       ["MONTHLY PERFORMANCE"],
-      ["Revenue (Current Month)", `₹${thisMonthRevenue.toLocaleString()}`],
-      [],
-      ["SYSTEM COMPLIANCE"],
-      ["All membership dates are validated against server time."]
+      ["Cycle Yield", `₹${thisMonthRevenue.toLocaleString()}`]
     ];
     const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
-    wsSummary['!cols'] = [{wch: 30}, {wch: 25}];
     XLSX.utils.book_append_sheet(wb, wsSummary, "Audit Summary");
 
-    // 2. Subscriber Detail Sheet
     const detailData = users.map(u => ({
-      "Subscriber Name": u.name || 'Anonymous',
-      "Email Identifier": u.email,
+      "Entity Name": u.name || 'Anonymous',
+      "Alias Email": u.email,
       "Membership Tier": u.subscriptionExpiry ? 'PREMIUM' : 'BASIC',
-      "Expiry Threshold": u.subscriptionExpiry ? new Date(u.subscriptionExpiry).toLocaleDateString() : 'N/A',
-      "Tests Completed": u.testsAttempted || 0,
-      "Avg Performance": `${Math.round(u.averageScore || 0)}%`,
-      "Verified Status": u.emailVerified ? 'YES' : 'NO'
+      "Expiry Offset": u.subscriptionExpiry ? new Date(u.subscriptionExpiry).toLocaleDateString() : 'N/A',
+      "Assessment History": u.testsAttempted || 0,
+      "Network Integrity": u.emailVerified ? 'VERIFIED' : 'PENDING'
     }));
-
     const wsDetail = XLSX.utils.json_to_sheet(detailData);
-    wsDetail['!cols'] = [
-      {wch: 25}, {wch: 30}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}
-    ];
-    XLSX.utils.book_append_sheet(wb, wsDetail, "Full Subscriber List");
+    XLSX.utils.book_append_sheet(wb, wsDetail, "Entity Register");
 
-    XLSX.writeFile(wb, `PrepNext_Subscriptions_${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.writeFile(wb, `Dispatch_Ledger_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
-  const filteredUsers = users
-    .filter(u => 
-      (u.name?.toLowerCase().includes(searchTerm.toLowerCase()) || u.email?.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (filterType === 'all' || (filterType === 'premium' ? !!u.subscriptionExpiry : !u.subscriptionExpiry))
-    );
+  const filteredUsers = users.filter(u => 
+    (u.name?.toLowerCase().includes(searchTerm.toLowerCase()) || u.email?.toLowerCase().includes(searchTerm.toLowerCase())) &&
+    (filterType === 'all' || (filterType === 'premium' ? !!u.subscriptionExpiry : !u.subscriptionExpiry))
+  );
 
   return (
-    <AdminLayout title="Subscriptions">
-      <div className="space-y-8">
-        
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="relative w-full md:max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <input 
-              className="w-full pl-12 pr-4 py-4 bg-white border border-slate-100 rounded-2xl outline-none shadow-sm focus:ring-2 focus:ring-primary font-medium"
-              placeholder="Find a subscriber..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          <div className="flex items-center gap-4 w-full md:w-auto">
-            <div className="flex items-center gap-1 p-1 bg-white border border-slate-100 rounded-2xl shadow-sm">
-              {(['all', 'premium', 'basic'] as const).map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setFilterType(type)}
-                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterType === type ? 'bg-primary text-white' : 'text-slate-400 hover:text-primary'}`}
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
-            <button 
-              onClick={exportSubscriptions}
-              className="flex items-center gap-2 px-6 py-4 bg-secondary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-secondary/20 hover:scale-[1.02] transition-all"
-            >
-              <Download className="w-4 h-4" /> Export Excel
-            </button>
-          </div>
+    <AdminLayout title="Membership Control">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+        <div>
+           <h2 className="text-3xl font-black text-slate-900 tracking-tight font-display">Subscription Registry</h2>
+           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 italic">Monitor and authorize global membership permissions</p>
         </div>
+        <button 
+          onClick={exportSubscriptions}
+          className="px-8 py-4 bg-[#0f172a] text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:bg-black transition-all transform hover:-translate-y-1 active:scale-95 flex items-center gap-3"
+        >
+          <Download className="w-5 h-5 flex-shrink-0" /> Extract Ledger
+        </button>
+      </div>
 
-        <div className="bg-white border border-slate-100 rounded-[2.5rem] shadow-sm overflow-hidden">
-          <div className="overflow-x-auto scrollbar-hide">
-            <table className="w-full min-w-[800px] text-left">
-              <thead>
-              <tr className="border-b border-slate-50">
-                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Student Details</th>
-                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Membership</th>
-                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
-                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {filteredUsers.map(user => {
-                const isPremium = !!user.subscriptionExpiry;
-                const expiry = isPremium ? new Date(user.subscriptionExpiry) : null;
-                const isExpired = expiry && expiry < new Date();
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-12">
+         {[
+           { label: 'Total Revenue', value: `₹${totalRevenue.toLocaleString()}`, icon: Wallet, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+           { label: 'Cycle Yield', value: `₹${thisMonthRevenue.toLocaleString()}`, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+           { label: 'Premium Nodes', value: users.filter(u => !!u.subscriptionExpiry).length, icon: CreditCard, color: 'text-amber-600', bg: 'bg-amber-50' }
+         ].map((stat, i) => (
+           <motion.div 
+             key={stat.label} 
+             initial={{ opacity: 0, y: 20 }}
+             animate={{ opacity: 1, y: 0 }}
+             transition={{ delay: i * 0.1 }}
+             className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden group"
+           >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 -translate-y-1/2 translate-x-1/2 rounded-full group-hover:scale-150 transition-transform duration-700" />
+              <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center mb-6 shadow-sm`}>
+                 <stat.icon className="w-6 h-6" />
+              </div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
+              <h4 className="text-3xl font-black text-slate-900 tracking-tight font-display">{stat.value}</h4>
+           </motion.div>
+         ))}
+      </div>
 
-                return (
-                  <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-primary/5 rounded-xl flex items-center justify-center text-primary font-black">
-                          {user.name?.[0].toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="font-bold text-primary">{user.name}</p>
-                          <p className="text-xs text-slate-400 font-medium">{user.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-slate-300" />
-                        <span className="text-sm font-bold text-slate-600">
-                          {expiry ? expiry.toLocaleDateString() : 'Lifetime Free Tier'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      {isPremium ? (
-                        isExpired ? (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-tighter border border-red-100">
-                            <Clock className="w-3 h-3" /> Expired
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-600 rounded-full text-[10px] font-black uppercase tracking-tighter border border-green-100">
-                            <CheckCircle2 className="w-3 h-3" /> Active Premium
-                          </span>
-                        )
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-black uppercase tracking-tighter">
-                          Basic User
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-2">
-                        {[1, 3, 12].map(m => (
-                          <button
-                            key={m}
-                            onClick={() => setSubscription(user.id, m)}
-                            className="px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-primary hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
-                            title={`Grant ${m} month(s)`}
-                          >
-                            +{m}M
-                          </button>
-                        ))}
-                        {isPremium && (
-                          <button
-                            onClick={() => revokeAccess(user.id)}
-                            className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
-                            title={`Revoke Access`}
-                          >
-                            Revoke
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          
-          {filteredUsers.length === 0 && (
-            <div className="p-12 text-center text-slate-400 font-bold italic">
-              No subscribers found matching your search.
-            </div>
-          )}
+      <div className="flex flex-col md:flex-row gap-6 items-center justify-between mb-10">
+        <div className="relative w-full md:max-w-md">
+          <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
+          <input 
+            className="w-full pl-16 pr-6 py-5 bg-white border border-slate-100 rounded-[2rem] outline-none shadow-sm focus:ring-4 focus:ring-indigo-500/5 font-bold text-slate-700"
+            placeholder="Search entity registry..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        
+        <div className="flex items-center gap-2 p-2 bg-white border border-slate-100 rounded-[2rem] shadow-sm">
+          {(['all', 'premium', 'basic'] as const).map((type) => (
+            <button
+              key={type}
+              onClick={() => setFilterType(type)}
+              className={`px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all ${filterType === type ? 'bg-[#0f172a] text-white shadow-lg' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-50'}`}
+            >
+              {type} Nodes
+            </button>
+          ))}
         </div>
       </div>
-    </div>
+
+      <div className="bg-white border border-slate-100 rounded-[3.5rem] shadow-sm overflow-hidden mb-40">
+        {loading ? (
+          <div className="py-24 text-center">
+             <Loader2 className="w-12 h-12 text-secondary animate-spin mx-auto mb-4" />
+             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Synchronizing Registry Nodes...</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto scrollbar-hide">
+            <table className="w-full min-w-[800px] text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/50">
+                  <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Entity Identity</th>
+                  <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Threshold Offset</th>
+                  <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Candidacy Status</th>
+                  <th className="px-10 py-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Protocol Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {filteredUsers.map(user => {
+                  const isPremium = !!user.subscriptionExpiry;
+                  const expiry = isPremium ? new Date(user.subscriptionExpiry) : null;
+                  const isExpired = expiry && expiry < new Date();
+
+                  return (
+                    <tr key={user.id} className="hover:bg-indigo-50/20 transition-colors group">
+                      <td className="px-10 py-8">
+                        <div className="flex items-center gap-5">
+                          <div className="w-12 h-12 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 font-black relative overflow-hidden group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500 shadow-inner">
+                            {user.name?.[0].toUpperCase() || '?'}
+                          </div>
+                          <div>
+                            <p className="font-black text-slate-800 uppercase tracking-tight text-sm leading-none mb-1.5">{user.name || 'Anonymous Node'}</p>
+                            <p className="text-[10px] text-slate-400 font-bold tracking-tight italic">{user.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-10 py-8">
+                        <div className="flex items-center gap-3">
+                          <Clock className="w-4 h-4 text-slate-200" />
+                          <span className="text-xs font-black text-slate-600">
+                            {expiry ? expiry.toLocaleDateString() : 'Baseline Tier'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-10 py-8">
+                        {isPremium ? (
+                          isExpired ? (
+                            <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-rose-50 text-rose-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-rose-100">
+                               <X className="w-3.5 h-3.5" /> Expired Access
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-50 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-100 shadow-sm">
+                               <CheckCircle2 className="w-3.5 h-3.5" /> Premium Verified
+                            </span>
+                          )
+                        ) : (
+                          <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-100 text-slate-400 rounded-full text-[9px] font-black uppercase tracking-widest">
+                             Basic Access
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-10 py-8">
+                        <div className="flex items-center gap-3">
+                          {[1, 3, 12].map(m => (
+                            <button
+                              key={m}
+                              onClick={() => setSubscription(user.id, m)}
+                              className="px-4 py-2 bg-white border border-slate-100 text-slate-400 hover:text-indigo-600 hover:border-indigo-100 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all shadow-sm active:scale-95"
+                              title={`Grant ${m} Month Access`}
+                            >
+                              +{m}M
+                            </button>
+                          ))}
+                          {isPremium && (
+                            <button
+                              onClick={() => revokeAccess(user.id)}
+                              className="w-10 h-10 bg-white border border-slate-100 text-slate-300 hover:text-rose-600 hover:border-rose-100 rounded-xl flex items-center justify-center transition-all shadow-sm active:scale-95"
+                              title={`Revoke Permissions`}
+                            >
+                              <X className="w-5 h-5" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            
+            {filteredUsers.length === 0 && (
+              <div className="py-40 text-center">
+                 <Users className="w-20 h-20 text-slate-50 mx-auto mb-6" />
+                 <p className="text-sm font-black text-slate-300 uppercase tracking-widest">Target Node Not Found in Current Segment</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-[#0f172a] py-4 px-8 rounded-full shadow-2xl flex items-center gap-6 z-40 border border-slate-800">
+         <div className="flex items-center gap-3">
+            <Shield className="w-4 h-4 text-emerald-400" />
+            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Institutional Privacy Enforced</span>
+         </div>
+      </div>
     </AdminLayout>
   );
 }
