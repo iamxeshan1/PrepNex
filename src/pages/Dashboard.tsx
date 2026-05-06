@@ -116,7 +116,11 @@ export default function Dashboard() {
                       <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm">
                           <h3 className="text-lg font-black text-[#0f172a] mb-6">Discover New</h3>
                           <div className="space-y-4">
-                              <p className="text-sm font-medium text-slate-500">Suggested mock tests and batches.</p>
+                              <div className="p-4 border rounded-2xl flex items-center justify-between hover:bg-slate-50 cursor-pointer">
+                                  <p className="text-sm font-bold text-slate-700">SSC CGL Tier II</p>
+                                  <span className="text-xs text-slate-400">→</span>
+                              </div>
+                              <button className="w-full py-3 bg-teal-50 text-teal-700 font-bold rounded-2xl text-sm">Browse Categories</button>
                           </div>
                       </div>
                   </div>
@@ -126,12 +130,18 @@ export default function Dashboard() {
                     <h3 className="text-lg font-black text-[#0f172a] mb-6">Subject Performance Analysis</h3>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div className="border rounded-2xl p-6">
-                             <p className="text-sm font-bold text-slate-500 mb-2">History of J&K</p>
+                             <div className="flex justify-between items-center mb-2">
+                                <p className="text-sm font-bold text-slate-500">History of J&K</p>
+                                <span className="text-[10px] bg-teal-50 text-teal-700 font-black px-2 py-1 rounded-lg">TOP PERFORMER</span>
+                             </div>
                              <div className="h-2 bg-slate-100 rounded-full w-full"><div className="h-full bg-teal-500 rounded-full w-[92%]"/></div>
                              <p className="text-xs font-black text-teal-600 mt-2">92% Accuracy</p>
                         </div>
                         <div className="border rounded-2xl p-6">
-                             <p className="text-sm font-bold text-slate-500 mb-2">General Science</p>
+                             <div className="flex justify-between items-center mb-2">
+                                <p className="text-sm font-bold text-slate-500">General Science</p>
+                                <span className="text-[10px] bg-teal-50 text-teal-700 font-black px-2 py-1 rounded-lg">TOP PERFORMER</span>
+                             </div>
                              <div className="h-2 bg-slate-100 rounded-full w-full"><div className="h-full bg-teal-500 rounded-full w-[88%]"/></div>
                              <p className="text-xs font-black text-teal-600 mt-2">88% Accuracy</p>
                         </div>
