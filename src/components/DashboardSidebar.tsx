@@ -9,7 +9,7 @@ export const DashboardSidebar = () => {
 
   const navItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-    { name: 'Mock Tests', icon: BookOpenText, path: '/mock-tests' },
+    { name: 'Mock Tests', icon: BookOpenText, path: '/exams' },
     { name: 'Study Material', icon: Book, path: '/study-material' },
     { name: 'Performance', icon: BarChart3, path: '/performance' },
     { name: 'My Profile', icon: User, path: '/profile' },
@@ -51,9 +51,9 @@ export const DashboardSidebar = () => {
       <div className="bg-orange-50 p-4 lg:p-6 rounded-3xl border border-orange-100">
         <h4 className="text-[10px] lg:text-sm font-black text-orange-900 mb-1">GO PREMIUM</h4>
         <p className="text-[10px] lg:text-xs text-orange-700 font-medium mb-3 lg:mb-4">Access All Mock Tests</p>
-        <button className="w-full bg-orange-600 text-white py-2 lg:py-3 rounded-xl font-black text-[10px] lg:text-xs uppercase tracking-widest hover:bg-orange-700 transition-all">
+        <Link to="/premium" className="block w-full bg-orange-600 text-white py-2 lg:py-3 rounded-xl font-black text-[10px] lg:text-xs uppercase tracking-widest hover:bg-orange-700 transition-all text-center">
           Upgrade
-        </button>
+        </Link>
       </div>
     </div>
   );

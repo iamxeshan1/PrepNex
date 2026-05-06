@@ -45,7 +45,8 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import LiveTestDetail from './pages/LiveTestDetail';
 import Helpdesk from './pages/Helpdesk';
 import Exams from './pages/Exams';
-
+import Performance from './pages/Performance';
+import Profile from './pages/Profile';
 import About from './pages/About';
 import ResetPassword from './pages/ResetPassword';
 import RequestReset from './pages/RequestReset';
@@ -103,6 +104,8 @@ export function AppContent() {
           } />
           
           <Route path="/exams" element={<Exams />} />
+          <Route path="/performance" element={<ProtectedRoute><Performance /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/subjects" element={<Subjects />} />
           <Route path="/premium" element={<Premium />} />
           <Route path="/about" element={<About />} />
