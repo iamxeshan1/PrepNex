@@ -3,13 +3,58 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { DashboardSidebar } from '../components/DashboardSidebar';
 import { DashboardTopHeader } from '../components/DashboardTopHeader';
-import { BarChart, Award, Zap, HelpCircle } from 'lucide-react';
+import { Award, Zap, HelpCircle, BookOpenText, TrendingUp } from 'lucide-react';
 import { motion } from 'motion/react';
 import { DOUBT_LINK } from '../constants';
 
 export default function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { profile } = useAuth();
+
+  // Mock progress calculation
+  const userProgress = {
+      mockTestsAttempted: 15,
+      averageAccuracy: 88,
+      studyHours: 45,
+  };
+  
+  // Calculate PrepScore out of 1000 based on progress
+  const calculatePrepScore = () => {
+       const baseScore = 400;
+       const testBonus = userProgress.mockTestsAttempted * 10; // max 200
+       const accuracyBonus = userProgress.averageAccuracy * 3; // max 300
+       const studyBonus = userProgress.studyHours * 2; // max 100
+       return Math.min(1000, baseScore + testBonus + accuracyBonus + studyBonus);
+  };
+
+  const prepScore = calculatePrepScore();
+  
+  // Estimate Global Rank based on PrepScore
+  const calculateGlobalRank = (score: number) => {
+      // Dummy logic: Lower rank is better. Higher score = lower rank.
+      const maxUsers = 45200;
+      const rank = Math.max(1, Math.floor(maxUsers - (score / 1000) * maxUsers));
+      return rank;
+  };
+
+  const globalRank = calculateGlobalRank(prepScore);
+
+  // Live Test countdown timer mock
+  const [timeLeft, setTimeLeft] = useState(2535); // 00:42:15 in seconds
+  
+  useEffect(() => {
+    const timer = setInterval(() => {
+        setTimeLeft(prev => prev > 0 ? prev - 1 : 0);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
 
   const handleDoubtClick = () => {
     window.open(DOUBT_LINK, '_blank');
@@ -49,16 +94,16 @@ export default function Dashboard() {
                         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between">
                             <div>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">PREPSCORE</p>
-                                <h3 className="text-2xl font-black text-[#0f172a]">842<span className="text-sm text-slate-400 ml-1">/1000</span></h3>
+                                <h3 className="text-2xl font-black text-[#0f172a]">{prepScore}<span className="text-sm text-slate-400 ml-1">/1000</span></h3>
                             </div>
-                            <div className="w-12 h-12 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center">
-                                <BarChart className="w-6 h-6" />
+                            <div className="w-12 h-12 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center">
+                                <TrendingUp className="w-6 h-6" />
                             </div>
                         </div>
                         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between">
                             <div>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">GLOBAL RANK</p>
-                                <h3 className="text-2xl font-black text-[#0f172a]">#124<span className="text-sm text-slate-400 ml-1">/45.2k</span></h3>
+                                <h3 className="text-2xl font-black text-[#0f172a]">#{globalRank.toLocaleString()}<span className="text-sm text-slate-400 ml-1">/45.2k</span></h3>
                             </div>
                             <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
                                 <Award className="w-6 h-6" />
@@ -69,19 +114,64 @@ export default function Dashboard() {
                   
                   {/* Live Tests & Subscriptions Row */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                     <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm">
-                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-black text-[#0f172a]">Upcoming Live Tests</h3>
-                            <Link to="/mock-tests" className="text-teal-600 text-sm font-bold">View All</Link>
-                         </div>
-                         <p className="text-slate-400 text-sm font-medium">No live tests scheduled.</p>
+                     <div className="flex flex-col gap-4">
+                        <div className="flex justify-between items-center mb-2">
+                           <h3 className="text-lg font-black text-[#0f172a]">Upcoming Live Tests</h3>
+                           <Link to="/exams" className="text-teal-600 text-[10px] font-black uppercase tracking-wider">View All</Link>
+                        </div>
+                        <div className="bg-white p-6 rounded-[2rem] border-2 border-teal-50 shadow-sm relative overflow-hidden">
+                            <div className="flex justify-between items-start mb-4">
+                                <span className="bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded tracking-wider uppercase flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span> LIVE SOON
+                                </span>
+                                <div className="text-right">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Starts In</p>
+                                    <p className="text-lg font-black text-teal-700 font-mono tracking-tight">{formatTime(timeLeft)}</p>
+                                </div>
+                            </div>
+                            <h4 className="font-bold text-slate-800 text-base mb-1">JKPSC KAS Prelims Mock #14</h4>
+                            <p className="text-sm text-slate-500 mb-6">Syllabus: General Studies & CSAT Sectional</p>
+                            <button className="w-full bg-teal-700 text-white font-bold py-3 text-sm rounded-2xl hover:bg-teal-800 transition-colors">
+                                Join Test Room
+                            </button>
+                        </div>
                      </div>
-                     <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm">
-                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-black text-[#0f172a]">Active Subscriptions</h3>
-                            <Link to="/premium" className="text-teal-600 text-sm font-bold">Manage</Link>
-                         </div>
-                         <p className="text-slate-400 text-sm font-medium">No active packages.</p>
+                     <div className="flex flex-col gap-4">
+                        <div className="flex justify-between items-center mb-2">
+                           <h3 className="text-lg font-black text-[#0f172a]">Active Subscriptions</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="bg-white p-5 rounded-3xl border border-slate-100 flex flex-col justify-between">
+                                <div className="flex items-start gap-3 mb-6">
+                                    <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
+                                        <Award className="w-5 h-5 text-indigo-500" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-bold text-slate-800 leading-tight mb-1">JKP SI Full Test Series</h4>
+                                        <p className="text-[10px] text-slate-500 font-medium">Subscription Active</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                                    <span className="text-xs font-bold text-red-600">Expires in 4 days</span>
+                                    <Link to="/premium" className="text-[10px] font-black text-teal-700 tracking-wider">RENEW</Link>
+                                </div>
+                            </div>
+                            <div className="bg-white p-5 rounded-3xl border border-slate-100 flex flex-col justify-between">
+                                <div className="flex items-start gap-3 mb-6">
+                                    <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center shrink-0">
+                                        <BookOpenText className="w-5 h-5 text-teal-600" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-bold text-slate-800 leading-tight mb-1">JKSSB VLW Practice Kit</h4>
+                                        <p className="text-[10px] text-slate-500 font-medium">Subscription Active</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                                    <span className="text-xs font-bold text-slate-700">Expires in 28 days</span>
+                                    <Link to="/premium" className="text-[10px] font-black text-teal-700 tracking-wider">MANAGE</Link>
+                                </div>
+                            </div>
+                        </div>
                      </div>
                   </div>
 
@@ -155,6 +245,13 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </motion.div>
+                
+                {/* Footer */}
+                <footer className="mt-12 py-8 border-t border-slate-100/60 pb-4 lg:pb-0">
+                  <p className="text-center text-xs text-slate-500 font-medium pb-4">
+                    © {new Date().getFullYear()} PrepNext. Built for Excellence in Regional Aspirations.
+                  </p>
+                </footer>
           </main>
       </div>
     </div>
