@@ -26,18 +26,7 @@ export default function Dashboard() {
       </div>
       
       <div className="flex-1 flex flex-col w-full overflow-hidden">
-          <div className="p-4 lg:hidden flex items-center justify-between bg-white border-b">
-             <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2">
-                <div className="space-y-1">
-                    <div className="w-6 h-0.5 bg-slate-800"></div>
-                    <div className="w-6 h-0.5 bg-slate-800"></div>
-                    <div className="w-6 h-0.5 bg-slate-800"></div>
-                </div>
-             </button>
-             <span className="font-logo font-black text-xl tracking-tight text-[#0f172a]">Prep<span className="text-teal-600">Next</span></span>
-             <div className="w-10"></div> {/* Placeholder to center logo if hamburger is on left */}
-          </div>
-          <DashboardTopHeader user={profile} />
+          <DashboardTopHeader user={profile} onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
           <main className="p-4 lg:p-8 overflow-y-auto">
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
                   {/* Welcome Panel */}

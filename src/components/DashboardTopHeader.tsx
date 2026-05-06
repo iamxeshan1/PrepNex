@@ -1,19 +1,30 @@
 import React from 'react';
-import { Search, Bell, LogOut } from 'lucide-react';
+import { Bell, LogOut, Menu } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-export const DashboardTopHeader = ({ user }: { user: any }) => {
+export const DashboardTopHeader = ({ user, onMenuClick }: { user: any, onMenuClick?: () => void }) => {
+  const { logout } = useAuth();
+  
   return (
-    <header className="bg-white border-b border-slate-100 flex items-center justify-between px-4 lg:px-8 py-5">
-      <div className="flex items-center">
-        <span className="font-logo font-black text-xl tracking-tight text-[#0f172a] lg:hidden">Prep<span className="text-teal-600">Next</span></span>
+    <header className="bg-white border-b border-slate-100 flex items-center justify-between px-4 lg:px-8 py-4 lg:py-5 min-h-[64px]">
+      {/* Mobile View: Hamburger on Left */}
+      <div className="flex items-center lg:hidden flex-1">
+         <button onClick={onMenuClick} className="p-2 -ml-2 text-slate-600">
+            <Menu className="w-6 h-6" />
+         </button>
       </div>
+
+      {/* Mobile View: Logo Centered and Bigger */}
+      <div className="flex justify-center flex-1 lg:hidden">
+        <span className="font-logo font-black text-3xl tracking-tight text-[#0f172a]">Prep<span className="text-teal-600">Next</span></span>
+      </div>
+
+      {/* Desktop Left (Empty space to push items to right on desktop) */}
+      <div className="hidden lg:block flex-1"></div>
       
-      <div className="flex items-center gap-4 lg:gap-6">
-        <button className="p-2 text-slate-500 hover:text-red-500">
-            <LogOut className="w-5 h-5" />
-        </button>
-        
+      {/* Right Side: Logout and Desktop Icons */}
+      <div className="flex items-center justify-end gap-4 lg:gap-6 flex-1">
         {/* Desktop View: Keep Bell and Profile */}
         <div className="hidden lg:flex items-center gap-6">
             <button className="relative p-2 hover:bg-slate-50 rounded-full">
@@ -24,6 +35,11 @@ export const DashboardTopHeader = ({ user }: { user: any }) => {
                  <img src={`https://ui-avatars.com/api/?name=${user?.email || 'User'}&background=0D8ABC&color=fff`} className="w-full h-full" alt="User" />
             </div>
         </div>
+
+        {/* Both Views: Logout Button */}
+        <button onClick={() => logout()} className="p-2 text-slate-500 hover:text-red-500">
+            <LogOut className="w-5 h-5" />
+        </button>
       </div>
     </header>
   );
