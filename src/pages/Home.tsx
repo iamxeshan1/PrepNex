@@ -44,7 +44,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { db } from '../lib/firebase';
-import { collection, query, getDocs, onSnapshot, limit, orderBy } from 'firebase/firestore';
+import { collection, query, getDocs, onSnapshot, limit, orderBy, doc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 
 const ICON_MAP: Record<string, any> = {
@@ -101,6 +101,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [liveClasses, setLiveClasses] = useState<any[]>([]);
   const [realSubjects, setRealSubjects] = useState<any[]>([]);
+  const [settings, setSettings] = useState<any>({});
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -117,6 +118,10 @@ export default function Home() {
         setLoading(false);
       }
     };
+
+    const unsubSettings = onSnapshot(doc(db, 'settings', 'general'), (snap) => {
+      if (snap.exists()) setSettings(snap.data());
+    });
 
     const unsubLive = onSnapshot(collection(db, 'liveTests'), (snap) => {
         setLiveClasses(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -137,6 +142,7 @@ export default function Home() {
     return () => {
       unsubLive();
       unsubSubjects();
+      unsubSettings();
     };
   }, []);
 
@@ -451,12 +457,9 @@ export default function Home() {
                      <p className="text-slate-500 text-lg font-medium leading-relaxed max-w-md tracking-tight">Join thousands of successful candidates who started their journey with PrepNext.</p>
                   </div>
                   <div className="flex flex-col sm:flex-row items-center gap-4 lg:justify-end">
-                     <button className="w-full sm:w-auto bg-[#006e5d] text-white px-12 py-5 rounded-2xl font-black text-sm hover:bg-[#005a4d] transition-all shadow-xl shadow-[#008770]/20 active:scale-95 uppercase tracking-widest">
+                     <Link to="/signup" className="w-full sm:w-auto bg-[#006e5d] text-white px-12 py-5 rounded-2xl font-black text-sm hover:bg-[#005a4d] transition-all shadow-xl shadow-[#008770]/20 active:scale-95 uppercase tracking-widest text-center">
                         Claim Your Free Mock
-                     </button>
-                     <button className="w-full sm:w-auto bg-[#1e293b] text-white px-12 py-5 rounded-2xl font-black text-sm hover:bg-[#0f172a] transition-all active:scale-95 uppercase tracking-widest">
-                        Talk to Mentor
-                     </button>
+                     </Link>
                   </div>
                </div>
             </div>
@@ -468,15 +471,15 @@ export default function Home() {
          <div className="max-w-7xl mx-auto px-4 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-16 text-center divide-y md:divide-y-0 md:divide-x divide-white/10">
                <div className="py-8 md:py-0">
-                  <h3 className="text-6xl font-sans font-[800] text-white mb-2 tracking-tighter">50k+</h3>
+                  <h3 className="text-6xl font-sans font-[800] text-white mb-2 tracking-tighter">{settings.aspirantCount || '50k+'}</h3>
                   <p className="text-[#2dd4bf] font-black text-xs uppercase tracking-[0.4em]">Aspirants Enrolled</p>
                </div>
                <div className="py-8 md:py-0">
-                  <h3 className="text-6xl font-sans font-[800] text-white mb-2 tracking-tighter">1.2k+</h3>
+                  <h3 className="text-6xl font-sans font-[800] text-white mb-2 tracking-tighter">{settings.totalTests || '1.2k+'}</h3>
                   <p className="text-[#2dd4bf] font-black text-xs uppercase tracking-[0.4em]">Full Mock Tests</p>
                </div>
                <div className="py-8 md:py-0">
-                  <h3 className="text-6xl font-sans font-[800] text-white mb-2 tracking-tighter">98%</h3>
+                  <h3 className="text-6xl font-sans font-[800] text-white mb-2 tracking-tighter">{settings.successRate || '98%'}</h3>
                   <p className="text-[#2dd4bf] font-black text-xs uppercase tracking-[0.4em]">Success Rate</p>
                </div>
             </div>
