@@ -24,7 +24,23 @@ import {
   Award,
   Lock,
   Zap,
-  ArrowLeft
+  ArrowLeft,
+  Languages,
+  FlaskConical,
+  Dna,
+  Binary,
+  Code,
+  Music,
+  HeartPulse,
+  Scale,
+  Briefcase,
+  Church,
+  Sigma,
+  Gamepad2,
+  Brush,
+  Variable,
+  Compass,
+  LayoutGrid
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -41,7 +57,24 @@ const ICON_MAP: Record<string, any> = {
   BookOpen,
   Atom,
   Search,
-  MessageSquare
+  MessageSquare,
+  Compass,
+  LayoutGrid,
+  Languages,
+  FlaskConical,
+  Dna,
+  Binary,
+  Code,
+  Music,
+  HeartPulse,
+  Scale,
+  Briefcase,
+  Church,
+  Sigma,
+  Zap,
+  Gamepad2,
+  Brush,
+  Variable
 };
 
 export default function Subjects() {
@@ -66,9 +99,14 @@ export default function Subjects() {
           const fetchedTests = tSnap.docs.map(d => ({ id: d.id, ...d.data() as any }));
           setTests(fetchedTests.filter(t => t.status !== 'draft'));
         } else {
-          const q = query(collection(db, 'subjects'), orderBy('createdAt', 'desc'));
-          const snap = await getDocs(q);
-          setSubjects(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+          const snap = await getDocs(collection(db, 'subjects'));
+          const fetchedSubjects = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          fetchedSubjects.sort((a: any, b: any) => {
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateB - dateA;
+          });
+          setSubjects(fetchedSubjects);
         }
       } catch (err) {
         console.error(err);

@@ -15,23 +15,82 @@ import {
   Compass,
   LayoutGrid,
   FileText,
-  CheckCircle2
+  CheckCircle2,
+  Calculator,
+  Brain,
+  Globe,
+  Microscope,
+  History,
+  Map,
+  Cpu,
+  Palette,
+  Atom,
+  MessageSquare,
+  Languages,
+  FlaskConical,
+  Dna,
+  Binary,
+  Code,
+  Music,
+  HeartPulse,
+  Scale,
+  Briefcase,
+  Church,
+  Sigma,
+  Gamepad2,
+  Brush,
+  Variable
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { db } from '../lib/firebase';
-import { collection, query, getDocs, onSnapshot, limit } from 'firebase/firestore';
+import { collection, query, getDocs, onSnapshot, limit, orderBy } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 
-const tabs = ['All', 'JKSSB', 'JKPSC', 'UPSC', 'NEET', 'IBPS'];
+const ICON_MAP: Record<string, any> = {
+  Brain,
+  Calculator,
+  Globe,
+  Microscope,
+  History,
+  Map,
+  Cpu,
+  FileText,
+  Palette,
+  BookOpen,
+  Atom,
+  Search,
+  MessageSquare,
+  Compass,
+  LayoutGrid,
+  Languages,
+  FlaskConical,
+  Dna,
+  Binary,
+  Code,
+  Music,
+  HeartPulse,
+  Scale,
+  Briefcase,
+  Church,
+  Sigma,
+  Zap,
+  Gamepad2,
+  Brush,
+  Variable
+};
 
-const subjects = [
-  { name: 'J&K History', count: '3,200+ Questions', icon: Compass, color: 'bg-emerald-50 text-emerald-500' },
-  { name: 'Quant Aptitude', count: '1,500+ Practice Sets', icon: LayoutGrid, color: 'bg-amber-50 text-amber-500' },
-  { name: 'General Science', count: 'Concept Maps & PDFs', icon: BookOpen, color: 'bg-blue-50 text-blue-500' },
-  { name: 'English Grammar', count: '2,000+ Practice MCQs', icon: FileText, color: 'bg-teal-50 text-teal-500' },
-  { name: 'Current Affairs', count: 'Daily & Monthly Sets', icon: Zap, color: 'bg-orange-50 text-orange-500' },
-  { name: 'Computer Apps', count: 'Focus on JKSSB', icon: Shield, color: 'bg-indigo-50 text-indigo-500' },
+const COLOR_VARIANTS = [
+  'bg-emerald-50 text-emerald-500',
+  'bg-amber-50 text-amber-500',
+  'bg-blue-50 text-blue-500',
+  'bg-teal-50 text-teal-500',
+  'bg-orange-50 text-orange-500',
+  'bg-indigo-50 text-indigo-500',
+  'bg-rose-50 text-rose-500',
+  'bg-purple-50 text-purple-500',
 ];
+
+const tabs = ['All', 'JKSSB', 'JKPSC', 'UPSC', 'NEET', 'IBPS'];
 
 export default function Home() {
   const { profile } = useAuth();
@@ -40,6 +99,7 @@ export default function Home() {
   const [agencies, setAgencies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [liveClasses, setLiveClasses] = useState<any[]>([]);
+  const [realSubjects, setRealSubjects] = useState<any[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -50,6 +110,17 @@ export default function Home() {
         
         const agencySnapshot = await getDocs(collection(db, 'agencies'));
         setAgencies([{ name: 'All', id: 'All' }, ...agencySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))]);
+
+        // Fetch Subjects
+        const subjectsSnapshot = await getDocs(collection(db, 'subjects'));
+        const fetchedSubjects = subjectsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Sort by createdAt desc on client
+        fetchedSubjects.sort((a: any, b: any) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        });
+        setRealSubjects(fetchedSubjects.slice(0, 6));
       } catch (err) {
         console.error(err);
       } finally {
@@ -223,21 +294,36 @@ export default function Home() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                  {subjects.map((sub) => (
-                    <div key={sub.name} className="flex flex-col items-center text-center p-8 bg-white border border-slate-100 rounded-[1.5rem] hover:shadow-xl transition-all cursor-pointer group shadow-sm">
-                      <div className={`w-14 h-14 ${sub.color} rounded-[1rem] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                        <sub.icon className="w-7 h-7" />
+                  {loading ? (
+                    [1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-48 bg-slate-100 rounded-[1.5rem] animate-pulse" />)
+                  ) : realSubjects.map((sub, idx) => {
+                    const IconComp = ICON_MAP[sub.icon] || BookOpen;
+                    const colorClass = COLOR_VARIANTS[idx % COLOR_VARIANTS.length];
+                    return (
+                      <div 
+                        key={sub.id} 
+                        onClick={() => navigate(`/subject-tests/${sub.id}`)}
+                        className="flex flex-col items-center text-center p-8 bg-white border border-slate-100 rounded-[1.5rem] hover:shadow-xl transition-all cursor-pointer group shadow-sm"
+                      >
+                        <div className={`w-14 h-14 ${colorClass} rounded-[1rem] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                          <IconComp className="w-7 h-7" />
+                        </div>
+                        <h4 className="text-base font-sans font-[800] text-[#0f172a] mb-2 tracking-tight">{sub.name}</h4>
+                        <p className="text-[11px] font-medium text-slate-400 line-clamp-2">
+                          {sub.description || 'Master the concepts and shortcuts.'}
+                        </p>
                       </div>
-                      <h4 className="text-base font-sans font-[800] text-[#0f172a] mb-2 tracking-tight">{sub.name}</h4>
-                      <p className="text-[11px] font-medium text-slate-400">{sub.count}</p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 
                 <div className="mt-12 text-center md:text-left">
-                   <button className="px-8 py-3 bg-white border border-slate-200 text-[#0f172a] rounded-full text-xs font-[700] tracking-tight hover:border-slate-400 transition-all">
+                   <Link 
+                    to="/subjects"
+                    className="inline-block px-8 py-3 bg-white border border-slate-200 text-[#0f172a] rounded-full text-xs font-[700] tracking-tight hover:border-slate-400 transition-all uppercase"
+                   >
                       VIEW ALL SUBJECTS
-                   </button>
+                   </Link>
                 </div>
               </div>
 
