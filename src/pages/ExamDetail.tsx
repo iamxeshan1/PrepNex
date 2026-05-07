@@ -207,10 +207,10 @@ export default function ExamDetail() {
                   </div>
                   <h3 className="text-2xl font-display font-black tracking-tight mb-4">Unlock Full Test Series</h3>
                   <p className="text-slate-400 text-sm font-medium mb-6">Get access to 35+ Full Length Mocks, Subject-wise tests, and Detailed Analytics for the {exam.name}.</p>
-                  <div className="flex items-baseline gap-2 mb-6">
-                     <span className="text-4xl font-black text-white">₹{exam.price || '499'}</span>
-                     <span className="text-slate-500 line-through">₹1,999</span>
-                     <span className="bg-[#10b981] text-white text-[10px] font-black px-2 py-1 rounded uppercase tracking-widest">75% Off</span>
+                   <div className="flex items-baseline gap-2 mb-6">
+                     <span className="text-4xl font-black text-white">{exam.isPaid ? `₹${exam.price || '499'}` : 'FREE'}</span>
+                     {exam.isPaid && <span className="text-slate-500 line-through">₹{Number(exam.price || 499) + 500}</span>}
+                     {exam.isPaid && <span className="bg-[#10b981] text-white text-[10px] font-black px-2 py-1 rounded uppercase tracking-widest">Off</span>}
                   </div>
                   <button onClick={handlePurchaseClick} className="w-full py-4 bg-[#008770] text-white font-black rounded-xl hover:bg-[#006e5d] transition-all flex items-center justify-center gap-2">{exam.isPaid ? 'Enroll Now' : 'Enroll Free'} <ChevronLeft className="w-4 h-4 rotate-180" /></button>
                   <p className="text-[10px] text-center text-slate-600 mt-4">Secure 256-bit SSL encrypted payment</p>
@@ -243,7 +243,7 @@ export default function ExamDetail() {
         item={{
           id: exam.id,
           name: exam.name,
-          price: exam.price || 0,
+          price: exam.isPaid ? (Number(exam.price) || 499) : 0,
           description: exam.description
         }}
         onSuccess={() => {

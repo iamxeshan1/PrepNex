@@ -51,7 +51,6 @@ import About from './pages/About';
 import ResetPassword from './pages/ResetPassword';
 import RequestReset from './pages/RequestReset';
 import ScrollToTop from './components/ScrollToTop';
-import ProfileCompletionDialog from './components/ProfileCompletionDialog';
 import { SessionTimeoutManager } from './components/SessionTimeoutManager';
 import { NotificationManager } from './components/NotificationManager';
 import { InstallPrompt } from './components/InstallPrompt';
@@ -87,7 +86,6 @@ export function AppContent() {
       <SessionTimeoutManager />
       <NotificationManager />
       <InstallPrompt />
-      <ProfileCompletionDialog />
       <Router>
         <ScrollToTop />
         <Routes>

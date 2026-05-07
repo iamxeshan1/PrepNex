@@ -194,13 +194,18 @@ export default function Premium() {
               <div className="flex flex-col items-center gap-4">
                 <button
                   onClick={handlePurchase}
-                  className="inline-flex items-center justify-center gap-3 px-12 py-6 bg-primary text-white rounded-[2rem] font-black text-xl shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all"
+                  disabled={purchaseLoading}
+                  className="inline-flex items-center justify-center gap-3 px-12 py-6 bg-primary text-white rounded-[2rem] font-black text-xl shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-75 disabled:pointer-events-none"
                 >
-                  {targetExam ? `Unlock ${targetExam.name} Now` : `Get ${premiumTitle} Access`} <Zap className="w-5 h-5 fill-white" />
+                  {purchaseLoading ? 'Processing...' : (targetExam ? `Unlock ${targetExam.name} Now` : `Get ${premiumTitle} Access`)} <Zap className="w-5 h-5 fill-white" />
                 </button>
                 <div className="flex items-center gap-3 mt-2">
-                  <span className="text-lg font-black text-slate-400 line-through">₹{targetExam ? targetExam.price : premiumOriginalPrice}</span>
-                  <span className="text-3xl font-black text-slate-900">₹{targetExam ? targetExam.price : premiumPrice}</span>
+                  <span className="text-lg font-black text-slate-400 line-through">
+                    ₹{targetExam ? (targetExam.isPaid ? (Number(targetExam.price || 499) + 500) : 499) : premiumOriginalPrice}
+                  </span>
+                  <span className="text-3xl font-black text-slate-900">
+                    {targetExam ? (targetExam.isPaid ? `₹${targetExam.price || 499}` : 'FREE') : `₹${premiumPrice}`}
+                  </span>
                 </div>
                 <Link to="/exams" className="text-secondary font-black text-xs uppercase tracking-widest hover:underline mt-4">Or explore other exams</Link>
               </div>
@@ -311,7 +316,7 @@ export default function Premium() {
         item={{
           id: targetExam ? targetExam.id : "PREMIUM_PASS",
           name: targetExam ? targetExam.name : premiumTitle,
-          price: targetExam ? (targetExam.price || 499) : parseInt(premiumPrice),
+          price: targetExam ? (targetExam.isPaid ? (Number(targetExam.price) || 499) : 0) : parseInt(premiumPrice),
         }}
         onSuccess={() => {
           alert('Purchase successful!');
