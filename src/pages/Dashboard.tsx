@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { DashboardSidebar } from '../components/DashboardSidebar';
 import { DashboardTopHeader } from '../components/DashboardTopHeader';
-import { Award, Zap, HelpCircle, BookOpenText, TrendingUp } from 'lucide-react';
+import { Award, Zap, HelpCircle, BookOpenText, TrendingUp, CheckCircle2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { DOUBT_LINK } from '../constants';
 import { collection, getDocs, query, where, documentId, orderBy, limit } from 'firebase/firestore';
@@ -49,18 +49,20 @@ export default function Dashboard() {
              if (purchasedIds.length > 0) {
                  const active = examsWithAgencyLogos.filter(ex => purchasedIds.includes(ex.id));
                  setActiveExams(active);
-
-                 // Fetch tests for these exams
-                 const testsSnap = await getDocs(collection(db, 'tests'));
-                 const allTests = testsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
-                 const myTests = allTests.filter(t => purchasedIds.includes(t.examId));
-                 
-                 // Fake live status/date for now or use actual if present
-                 setUpcomingTests(myTests.slice(0, 3)); 
              } else {
                  setActiveExams([]);
-                 setUpcomingTests([]);
              }
+
+             // Fetch live tests
+             const liveTestsSnap = await getDocs(collection(db, 'liveTests'));
+             const allLiveTests = liveTestsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+             
+             // Sort approaching live tests, show only upcoming or currently active ones
+             const now = new Date().getTime();
+             const validLiveTests = allLiveTests.filter(t => new Date(t.endTime).getTime() > now);
+             validLiveTests.sort((a,b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+             
+             setUpcomingTests(validLiveTests.slice(0, 3));
 
              // Discover New
              const newExams = examsWithAgencyLogos.filter(ex => !purchasedIds.includes(ex.id)).slice(0, 3);
@@ -216,26 +218,59 @@ export default function Dashboard() {
                            <h3 className="text-lg font-black text-[#0f172a]">Upcoming Live Tests</h3>
                            <Link to="/exams" className="text-teal-600 text-[10px] font-black uppercase tracking-wider">View All</Link>
                         </div>
-                        {upcomingTests.length > 0 ? upcomingTests.map((t) => (
+                        {upcomingTests.length > 0 ? upcomingTests.map((t) => {
+                            const now = new Date().getTime();
+                            const testStart = new Date(t.startTime || t.scheduledStartTime).getTime();
+                            const testEnd = new Date(t.endTime || new Date(testStart + (t.duration || 60) * 60000)).getTime();
+                            const isTestActive = now >= testStart && now <= testEnd;
+                            const isEnrolled = profile && t.enrolledUsers?.includes(profile.userId);
+                            const timeLeftSec = Math.max(0, Math.floor((testStart - now) / 1000));
+                            
+                            return (
                            <div key={t.id} className="bg-white p-6 rounded-[2rem] border-2 border-teal-50 shadow-sm relative overflow-hidden">
                               <div className="flex justify-between items-start mb-4">
-                                  <span className="bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded tracking-wider uppercase flex items-center gap-1">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span> LIVE SOON
-                                  </span>
+                                  {isTestActive ? (
+                                      <span className="bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded tracking-wider uppercase flex items-center gap-1 shadow-sm">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span> LIVE NOW
+                                      </span>
+                                  ) : (
+                                      <span className="bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded tracking-wider uppercase flex items-center gap-1 shadow-sm">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span> LIVE SOON
+                                      </span>
+                                  )}
                                   <div className="text-right">
-                                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Starts In</p>
-                                      <p className="text-lg font-black text-teal-700 font-mono tracking-tight">{formatTime(timeLeft)}</p>
+                                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{isTestActive ? 'Ends In' : 'Starts In'}</p>
+                                      <p className="text-lg font-black text-teal-700 font-mono tracking-tight">
+                                          {isTestActive ? Math.floor(Math.max(0, testEnd - now) / 60000) + 'm left' : (
+                                              timeLeftSec > 86400 
+                                              ? `${Math.floor(timeLeftSec/86400)}d ${Math.floor((timeLeftSec%86400)/3600)}h` 
+                                              : formatTime(timeLeftSec)
+                                          )}
+                                      </p>
                                   </div>
                               </div>
                               <h4 className="font-bold text-slate-800 text-base mb-1">{t.title}</h4>
-                              <p className="text-sm text-slate-500 mb-6 line-clamp-1">{t.description || 'General Mock Test'}</p>
-                              <button onClick={() => navigate(`/live-test/${t.id}`)} className="w-full bg-teal-700 text-white font-bold py-3 text-sm rounded-2xl hover:bg-teal-800 transition-colors">
-                                  Join Test Room
-                              </button>
+                              <p className="text-sm text-slate-500 mb-6 line-clamp-1">{t.description || 'General Live Test'}</p>
+                              
+                              {isEnrolled ? (
+                                  isTestActive ? (
+                                      <button onClick={() => navigate(`/test/${t.id}`)} className="w-full bg-teal-700 text-white font-black py-3 text-sm rounded-2xl hover:bg-teal-800 transition-colors uppercase tracking-widest">
+                                          Enter Test 
+                                      </button>
+                                  ) : (
+                                      <button disabled className="w-full bg-slate-100 border-2 border-emerald-500 text-emerald-600 font-black py-3 text-[10px] rounded-2xl cursor-not-allowed text-center uppercase tracking-widest flex items-center justify-center gap-2">
+                                          <CheckCircle2 className="w-4 h-4" /> Participation Confirmed
+                                      </button>
+                                  )
+                              ) : (
+                                  <button onClick={() => navigate(`/live-test/${t.id}`)} className="w-full border-2 border-teal-700 text-teal-700 font-black py-3 text-[10px] rounded-2xl hover:bg-teal-50 transition-colors uppercase tracking-widest">
+                                      Details & Enroll
+                                  </button>
+                              )}
                            </div>
-                        )) : (
+                        )}) : (
                             <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-center text-slate-400 font-medium text-sm">
-                               No upcoming tests.
+                               No upcoming live tests.
                             </div>
                         )}
                      </div>
