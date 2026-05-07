@@ -48,6 +48,7 @@ import Exams from './pages/Exams';
 import Performance from './pages/Performance';
 import Profile from './pages/Profile';
 import About from './pages/About';
+import LiveTests from './pages/LiveTests';
 import ResetPassword from './pages/ResetPassword';
 import RequestReset from './pages/RequestReset';
 import ScrollToTop from './components/ScrollToTop';
@@ -126,6 +127,7 @@ export function AppContent() {
           <Route path="/live-test/:id" element={
             <LiveTestDetail />
           } />
+          <Route path="/live-tests" element={<LiveTests />} />
           
           {/* Admin Routes */}
           <Route path="/admin" element={

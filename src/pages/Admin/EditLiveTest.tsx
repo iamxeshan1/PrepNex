@@ -32,6 +32,7 @@ export default function AdminEditLiveTest() {
       await updateDoc(doc(db, 'liveTests', testId), {
         title: test.title,
         description: test.description,
+        category: test.category || 'General',
         duration: Number(test.duration),
         startTime: test.startTime,
         endTime: test.endTime,
@@ -61,6 +62,10 @@ export default function AdminEditLiveTest() {
           <div>
             <label className="block text-sm font-semibold mb-1">Description</label>
             <textarea className="w-full px-4 py-2 border rounded" value={test.description} onChange={e => setTest({...test, description: e.target.value})} />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold mb-1">Category</label>
+            <input className="w-full px-4 py-2 border rounded" placeholder="e.g. Quantitative Aptitude" value={test.category || ''} onChange={e => setTest({...test, category: e.target.value})} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>

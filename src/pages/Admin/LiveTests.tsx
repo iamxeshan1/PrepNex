@@ -28,6 +28,7 @@ export default function AdminLiveTests() {
     totalMarks: '100',
     positiveMarks: '1',
     negativeMarks: '0.25',
+    category: '',
     startTime: '',
     endTime: '',
     enrollmentStartTime: '',
@@ -98,7 +99,9 @@ export default function AdminLiveTests() {
       }
 
       const newTestRef = await addDoc(collection(db, 'liveTests'), {
-        title: compData.title, description: compData.description,
+        title: compData.title, 
+        description: compData.description,
+        category: compData.category || 'General',
         duration: Number(compData.duration), totalMarks: Number(compData.totalMarks),
         positiveMarks: Number(compData.positiveMarks), negativeMarks: Number(compData.negativeMarks),
         startTime: compData.startTime, endTime: compData.endTime,
@@ -193,6 +196,15 @@ export default function AdminLiveTests() {
                     placeholder="Briefing for candidates..."
                     className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 font-medium min-h-[80px]"
                     value={compData.description} onChange={e => setCompData({...compData, description: e.target.value})} 
+                 />
+              </div>
+
+              <div>
+                 <label className="block text-sm font-semibold text-slate-700 mb-2">Category</label>
+                 <input 
+                    placeholder="e.g. Quantitative Aptitude"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 font-medium bg-slate-50"
+                    value={compData.category} onChange={e => setCompData({...compData, category: e.target.value})} 
                  />
               </div>
 

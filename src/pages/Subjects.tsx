@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Layout } from '../components/Layout';
-import { collection, getDocs, query, orderBy, where, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, where, doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { 
   BookOpen, 
@@ -86,6 +86,8 @@ export default function Subjects() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
+    let unsub: (() => void) | undefined;
+
     const fetchPortalData = async () => {
       setLoading(true);
       try {
@@ -98,23 +100,29 @@ export default function Subjects() {
           
           const fetchedTests = tSnap.docs.map(d => ({ id: d.id, ...d.data() as any }));
           setTests(fetchedTests.filter(t => t.status !== 'draft'));
+          setLoading(false);
         } else {
-          const snap = await getDocs(collection(db, 'subjects'));
-          const fetchedSubjects = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          fetchedSubjects.sort((a: any, b: any) => {
-            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return dateB - dateA;
+          unsub = onSnapshot(collection(db, 'subjects'), (snap) => {
+            const fetchedSubjects = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            fetchedSubjects.sort((a: any, b: any) => {
+              const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+              const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+              return dateB - dateA;
+            });
+            setSubjects(fetchedSubjects);
+            setLoading(false);
           });
-          setSubjects(fetchedSubjects);
         }
       } catch (err) {
         console.error(err);
-      } finally {
         setLoading(false);
       }
     };
+
     fetchPortalData();
+    return () => {
+      if (unsub) unsub();
+    };
   }, [subjectId]);
 
   if (subjectId) {

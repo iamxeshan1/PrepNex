@@ -110,17 +110,6 @@ export default function Home() {
         
         const agencySnapshot = await getDocs(collection(db, 'agencies'));
         setAgencies([{ name: 'All', id: 'All' }, ...agencySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))]);
-
-        // Fetch Subjects
-        const subjectsSnapshot = await getDocs(collection(db, 'subjects'));
-        const fetchedSubjects = subjectsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        // Sort by createdAt desc on client
-        fetchedSubjects.sort((a: any, b: any) => {
-          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return dateB - dateA;
-        });
-        setRealSubjects(fetchedSubjects.slice(0, 6));
       } catch (err) {
         console.error(err);
       } finally {
@@ -132,8 +121,22 @@ export default function Home() {
         setLiveClasses(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
+    const unsubSubjects = onSnapshot(collection(db, 'subjects'), (snap) => {
+        const fetchedSubjects = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Sort by createdAt desc on client
+        fetchedSubjects.sort((a: any, b: any) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        });
+        setRealSubjects(fetchedSubjects.slice(0, 6));
+    });
+
     fetchData();
-    return () => unsubLive();
+    return () => {
+      unsubLive();
+      unsubSubjects();
+    };
   }, []);
 
   const filteredExams = activeTab === 'All' 
@@ -318,12 +321,12 @@ export default function Home() {
                 </div>
                 
                 <div className="mt-12 text-center md:text-left">
-                   <Link 
-                    to="/subjects"
+                   <button 
+                    onClick={() => navigate('/subjects')}
                     className="inline-block px-8 py-3 bg-white border border-slate-200 text-[#0f172a] rounded-full text-xs font-[700] tracking-tight hover:border-slate-400 transition-all uppercase"
                    >
                       VIEW ALL SUBJECTS
-                   </Link>
+                   </button>
                 </div>
               </div>
 
@@ -334,39 +337,53 @@ export default function Home() {
                        <h3 className="text-2xl font-sans font-[800] text-white tracking-tight">Live Now</h3>
                        <div className="flex items-center gap-2 bg-red-600/10 text-red-500 px-4 py-1.5 rounded-full border border-red-500/20">
                           <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                          <span className="text-[10px] font-black uppercase tracking-widest">LIVE</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest">LIVE NOW</span>
                        </div>
                     </div>
 
                     <div className="space-y-6 mb-10">
-                       {[
-                         { subject: 'QUANTITATIVE APTITUDE', title: 'Advanced Trigonometry for JKPSC', teacher: 'Prof. Sameer Ahmed', watching: '840 Watching' },
-                         { subject: 'CURRENT AFFAIRS', title: 'J&K Weekly Roundup - June 1st Week', teacher: 'By Dr. Zoya Mir', watching: '1.2k Watching' },
-                       ].map((live, idx) => (
-                         <div key={idx} className="bg-white/5 border border-white/10 rounded-[2rem] p-8 hover:bg-white/10 transition-colors cursor-pointer group">
-                            <span className="text-[9px] font-black text-[#2dd4bf] mb-2 block tracking-[0.2em] uppercase">{live.subject}</span>
+                       {liveClasses.length === 0 ? (
+                         <p className="text-slate-500 text-center py-8 font-medium italic">No live tests currently active.</p>
+                       ) : liveClasses.slice(0, 3).map((live) => (
+                         <div 
+                           key={live.id} 
+                           onClick={() => navigate(`/live-test/${live.id}`)}
+                           className="bg-white/5 border border-white/10 rounded-[2rem] p-8 hover:bg-white/10 transition-colors cursor-pointer group"
+                         >
+                            <div className="flex justify-between items-start mb-2">
+                               <span className="text-[9px] font-black text-[#2dd4bf] block tracking-[0.2em] uppercase">{live.category || 'GENERAL'}</span>
+                               <span className={`text-[9px] font-black px-2 py-1 rounded bg-white/10 ${live.isFree ? 'text-emerald-400' : 'text-amber-400'} uppercase tracking-widest`}>
+                                 {live.isFree ? 'FREE' : `₹${live.price}`}
+                               </span>
+                            </div>
                             <h4 className="text-lg font-bold text-white mb-6 line-clamp-1 group-hover:text-[#2dd4bf] transition-colors">{live.title}</h4>
                             <div className="flex items-center justify-between">
                                <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden border border-white/10">
-                                     <img src={`https://ui-avatars.com/api/?name=${live.teacher}&background=random`} alt="" />
+                                  <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden border border-white/10 flex items-center justify-center text-white/50">
+                                     <Users className="w-5 h-5" />
                                   </div>
                                   <div>
-                                     <p className="text-[11px] font-bold text-slate-300 mb-0.5">{live.teacher}</p>
-                                     <p className="text-[10px] font-bold text-[#2dd4bf]">{live.watching}</p>
+                                     <p className="text-[11px] font-bold text-slate-300 mb-0.5">{(live.enrolledUsers?.length || 0) + 120}+ ENROLLED</p>
+                                     <p className="text-[10px] font-bold text-[#2dd4bf]">LIVE</p>
                                   </div>
                                </div>
-                               <button className="bg-[#2dd4bf] text-[#0f172a] px-6 py-2.5 rounded-xl text-[10px] font-black hover:bg-[#5eead4] transition-colors uppercase tracking-widest">JOIN CLASS</button>
+                               <button className="bg-[#2dd4bf] text-[#0f172a] px-6 py-2.5 rounded-xl text-[10px] font-black hover:bg-[#5eead4] transition-colors uppercase tracking-widest">ENROLL NOW</button>
                             </div>
                          </div>
                        ))}
                     </div>
 
-                    <button className="w-full py-4.5 border border-white/10 text-white rounded-2xl text-[10px] font-black hover:bg-white/5 transition-all mb-8 uppercase tracking-[0.2em]">
-                       VIEW FULL SCHEDULE
+                    <button 
+                      onClick={() => navigate('/live-tests')}
+                      className="w-full py-4.5 border border-white/10 text-white rounded-2xl text-[10px] font-black hover:bg-white/5 transition-all mb-8 uppercase tracking-[0.2em]"
+                    >
+                       BROWSE LIVE TESTS
                     </button>
 
-                    <div className="bg-[#5eead4]/10 rounded-2xl p-6 border border-[#5eead4]/20 flex items-center gap-5">
+                    <div 
+                      onClick={() => navigate('/premium')}
+                      className="bg-[#5eead4]/10 rounded-2xl p-6 border border-[#5eead4]/20 flex items-center gap-5 cursor-pointer hover:bg-[#5eead4]/20 transition-all shadow-lg"
+                    >
                        <div className="w-14 h-14 bg-[#5eead4] rounded-2xl flex items-center justify-center text-[#0f172a]">
                           <Zap className="w-7 h-7 fill-current" />
                        </div>
