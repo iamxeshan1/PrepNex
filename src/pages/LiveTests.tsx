@@ -103,75 +103,99 @@ export default function LiveTests() {
               <p className="text-slate-500 font-medium">Try searching with a different keyword or check back later.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="space-y-6">
               {filtered.map((test, idx) => {
                 const startTime = new Date(test.startTime);
-                const isUpcoming = startTime > new Date();
-                const isLive = new Date() >= startTime && new Date() <= new Date(test.endTime);
+                const endTime = new Date(test.endTime);
+                const now = new Date();
+                const isUpcoming = startTime > now;
+                const isLive = now >= startTime && now <= endTime;
+                const isEnded = now > endTime;
                 
                 return (
                   <motion.div
                     key={test.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.05 }}
-                    className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm hover:shadow-2xl hover:border-[#2dd4bf]/30 transition-all group overflow-hidden flex flex-col"
+                    className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl transition-all group overflow-hidden"
                   >
-                    <div className="p-8 pb-4">
-                      <div className="flex justify-between items-start mb-6">
-                        <div className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase border ${
+                    <div className="flex flex-col lg:flex-row items-center">
+                      {/* Left: Status & Category */}
+                      <div className="w-full lg:w-64 p-8 bg-slate-50 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-slate-200">
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase mb-4 self-start ${
                           isLive 
-                            ? 'bg-rose-50 text-rose-600 border-rose-100' 
-                            : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                            ? 'bg-rose-50 text-rose-600 border border-rose-100' 
+                            : isUpcoming 
+                              ? 'bg-blue-50 text-blue-600 border border-blue-100'
+                              : 'bg-slate-100 text-slate-500 border border-slate-200'
                         }`}>
                           {isLive ? (
-                            <span className="flex items-center gap-1.5">
+                            <>
                               <span className="w-1.5 h-1.5 bg-rose-600 rounded-full animate-pulse" />
                               LIVE NOW
-                            </span>
+                            </>
                           ) : (
-                            isUpcoming ? 'UPCOMING' : 'FINISHED'
+                            isUpcoming ? 'SCHEDULED' : 'COMPLETED'
                           )}
                         </div>
-                        <span className={`text-[10px] font-black px-3 py-1.5 rounded-xl ${test.isFree ? 'bg-[#ccfbf1] text-[#0f766e]' : 'bg-amber-100 text-amber-700'} uppercase tracking-widest`}>
-                          {test.isFree ? 'FREE ACCESS' : `₹ ${test.price}`}
-                        </span>
+                        <span className="text-[10px] font-black text-[#2dd4bf] block tracking-[0.2em] uppercase mb-1">{test.category || 'GENERAL'}</span>
+                        <h4 className="text-sm font-bold text-slate-400 uppercase tracking-tighter">Live Examination</h4>
                       </div>
 
-                      <span className="text-[10px] font-black text-[#2dd4bf] mb-2 block tracking-[0.2em] uppercase">{test.category || 'GENERAL'}</span>
-                      <h3 className="text-xl font-sans font-[800] text-[#0f172a] group-hover:text-[#008770] transition-colors tracking-tight line-clamp-2 mb-6">
-                        {test.title}
-                      </h3>
+                      {/* Middle: Title & Details */}
+                      <div className="flex-1 p-8">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4">
+                          <h3 className="text-xl font-sans font-[800] text-[#0f172a] group-hover:text-[#008770] transition-colors tracking-tight">
+                            {test.title}
+                          </h3>
+                          <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase ${test.isFree ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                            {test.isFree ? 'FREE ACCESS' : `₹ ${test.price}`}
+                          </span>
+                        </div>
 
-                      <div className="space-y-3 mb-8">
-                        <div className="flex items-center gap-3 text-slate-500">
-                          <Calendar className="w-4 h-4 text-[#008770]" />
-                          <span className="text-xs font-bold uppercase tracking-wider">{startTime.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                        </div>
-                        <div className="flex items-center gap-3 text-slate-500">
-                          <Clock className="w-4 h-4 text-[#008770]" />
-                          <span className="text-xs font-bold uppercase tracking-wider">{startTime.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                        <div className="flex items-center gap-3 text-slate-500">
-                          <Users className="w-4 h-4 text-[#008770]" />
-                          <span className="text-xs font-bold uppercase tracking-wider">{(test.enrolledUsers?.length || 0) + 120}+ Aspirants</span>
+                        <div className="flex flex-wrap gap-6 text-slate-500">
+                          <div className="flex items-center gap-2.5">
+                            <Calendar className="w-4 h-4 text-[#008770]" />
+                            <span className="text-xs font-bold uppercase tracking-wider">
+                              {startTime.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} - {endTime.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2.5">
+                            <Clock className="w-4 h-4 text-[#008770]" />
+                            <span className="text-xs font-bold uppercase tracking-wider">
+                              {startTime.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2.5">
+                            <Users className="w-4 h-4 text-[#008770]" />
+                            <span className="text-xs font-bold uppercase tracking-wider">
+                               {(test.enrolledUsers?.length || 0) + 120}+ Enrolled
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="mt-auto p-8 pt-0">
-                      <button 
-                        onClick={() => navigate(`/live-test/${test.id}`)}
-                        className={`w-full py-4 rounded-2xl font-black text-xs tracking-widest uppercase transition-all flex items-center justify-center gap-2 ${
-                          isLive 
-                            ? 'bg-[#0f172a] text-white hover:bg-slate-800 shadow-xl shadow-slate-200' 
-                            : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                        }`}
-                        disabled={!isLive && isUpcoming === false}
-                      >
-                        {isLive ? 'Enroll & Participate' : (isUpcoming ? 'Scheduled Soon' : 'Already Ended')}
-                        {isLive && <ArrowRight className="w-4 h-4" />}
-                      </button>
+                      {/* Right: Actions */}
+                      <div className="w-full lg:w-72 p-8 flex flex-col justify-center">
+                        <button 
+                          onClick={() => navigate(`/live-test/${test.id}`)}
+                          className={`w-full py-4 rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all flex items-center justify-center gap-2 ${
+                            isEnded 
+                              ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+                              : 'bg-[#0f172a] text-white hover:bg-slate-800 shadow-xl shadow-slate-200'
+                          }`}
+                          disabled={isEnded}
+                        >
+                          {isLive ? 'START TEST NOW' : (isUpcoming ? 'ENROLL NOW' : 'REGISTRATION CLOSED')}
+                          {!isEnded && <ArrowRight className="w-4 h-4" />}
+                        </button>
+                        {isUpcoming && (
+                          <p className="text-[9px] font-bold text-slate-400 text-center mt-3 uppercase tracking-widest">
+                            Limited Seats Available
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 );

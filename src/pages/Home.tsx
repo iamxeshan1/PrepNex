@@ -39,7 +39,8 @@ import {
   Sigma,
   Gamepad2,
   Brush,
-  Variable
+  Variable,
+  Calendar
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { db } from '../lib/firebase';
@@ -356,7 +357,23 @@ export default function Home() {
                                  {live.isFree ? 'FREE' : `₹${live.price}`}
                                </span>
                             </div>
-                            <h4 className="text-lg font-bold text-white mb-6 line-clamp-1 group-hover:text-[#2dd4bf] transition-colors">{live.title}</h4>
+                            <h4 className="text-lg font-bold text-white mb-2 line-clamp-1 group-hover:text-[#2dd4bf] transition-colors">{live.title}</h4>
+                            
+                            <div className="flex flex-wrap gap-4 mb-6">
+                               <div className="flex items-center gap-1.5 text-slate-400">
+                                  <Calendar className="w-3.5 h-3.5 text-[#2dd4bf]" />
+                                  <span className="text-[10px] font-bold uppercase tracking-wider">
+                                     {new Date(live.startTime).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} - {new Date(live.endTime).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                                  </span>
+                               </div>
+                               <div className="flex items-center gap-1.5 text-slate-400">
+                                  <Clock className="w-3.5 h-3.5 text-[#2dd4bf]" />
+                                  <span className="text-[10px] font-bold uppercase tracking-wider">
+                                     {new Date(live.startTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                               </div>
+                            </div>
+
                             <div className="flex items-center justify-between">
                                <div className="flex items-center gap-3">
                                   <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden border border-white/10 flex items-center justify-center text-white/50">
