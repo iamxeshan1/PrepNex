@@ -106,7 +106,7 @@ export default function ExamDetail() {
   };
 
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const isEnrolledInExam = profile?.isPremium || profile?.purchasedExams?.includes(examId);
+  const isEnrolledInExam = profile?.isPremium || profile?.purchasedExams?.includes(examId) || profile?.freeExams?.includes(examId);
 
   const handlePurchaseClick = () => {
     if (!user) return navigate('/login');

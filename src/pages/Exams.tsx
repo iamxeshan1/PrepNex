@@ -3,10 +3,12 @@ import { Layout } from '../components/Layout';
 import { db } from '../lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Shield, Search, FileText, Users } from 'lucide-react';
+import { Shield, Search, FileText, Users, CheckCircle2 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Exams() {
+  const { profile } = useAuth();
   const [exams, setExams] = useState<any[]>([]);
   const [agencies, setAgencies] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('All');
@@ -69,6 +71,7 @@ export default function Exams() {
             filteredExams.map(exam => {
               const agency = agencies.find(a => a.id === exam.agencyId);
               const logo = agency?.logoUrl || exam.logoUrl;
+              const isEnrolled = profile?.isPremium || profile?.purchasedExams?.includes(exam.id) || profile?.freeExams?.includes(exam.id) || false;
               return (
               <motion.div 
                  key={exam.id}
@@ -108,9 +111,15 @@ export default function Exams() {
 
                 <div className="flex items-center justify-between mt-auto pt-5 border-t border-slate-50">
                   <span className="text-[10px] font-bold text-slate-400 tracking-[0.1em] uppercase">{exam.isPaid ? 'PREMIUM' : 'FREE TRIAL'}</span>
-                  <button className="text-[10px] font-black text-[#008770] tracking-[0.05em] uppercase hover:underline transition-all">
-                    {exam.isPaid ? 'ENROLL NOW' : 'TRY FREE'}
-                  </button>
+                  {isEnrolled ? (
+                    <div className="flex items-center gap-1 text-[10px] font-black text-slate-700 tracking-[0.05em] uppercase">
+                       <CheckCircle2 className="w-3.5 h-3.5" /> ENROLLED
+                    </div>
+                  ) : (
+                    <button className="text-[10px] font-black text-[#008770] tracking-[0.05em] uppercase hover:underline transition-all">
+                      {exam.isPaid ? 'ENROLL NOW' : 'TRY FREE'}
+                    </button>
+                  )}
                 </div>
               </motion.div>
             )})

@@ -3,9 +3,11 @@ import { Link, useParams } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Search, ShieldCheck, Lock, ChevronRight, FileText } from 'lucide-react';
+import { Search, ShieldCheck, Lock, ChevronRight, FileText, CheckCircle2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function AgencyExams() {
+  const { profile } = useAuth();
   const { agencyId } = useParams();
   const [agency, setAgency] = useState<any>(null);
   const [exams, setExams] = useState<any[]>([]);
@@ -88,7 +90,9 @@ export default function AgencyExams() {
           </div>
         ) : filteredExams.length > 0 ? (
           <div className="grid grid-cols-1 gap-8">
-            {filteredExams.map((exam) => (
+            {filteredExams.map((exam) => {
+              const isEnrolled = profile?.isPremium || profile?.purchasedExams?.includes(exam.id) || profile?.freeExams?.includes(exam.id) || false;
+              return (
               <div 
                 key={exam.id} 
                 className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-xl hover:shadow-primary/5 hover:border-primary transition-all group flex flex-col justify-between h-full"
@@ -136,20 +140,26 @@ export default function AgencyExams() {
                         {exam.isPaid && <Lock className="w-4 h-4 text-slate-300 mb-1" />}
                       </div>
                     </div>
-                    <Link 
-                      to={`/exam/${exam.id}`}
-                      className={`flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.25em] hover:scale-[1.03] transition-all shadow-xl active:scale-95 ${
-                        exam.isPaid 
-                          ? 'bg-secondary text-white shadow-secondary/20' 
-                          : 'bg-primary text-white shadow-primary/20'
-                      }`}
-                    >
-                      {exam.isPaid ? 'Enroll Now' : 'Get Started'}
-                    </Link>
+                    {isEnrolled ? (
+                      <div className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.25em] bg-slate-800 text-white opacity-80 cursor-default">
+                        <CheckCircle2 className="w-4 h-4" /> ENROLLED
+                      </div>
+                    ) : (
+                      <Link 
+                        to={`/exam/${exam.id}`}
+                        className={`flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.25em] hover:scale-[1.03] transition-all shadow-xl active:scale-95 ${
+                          exam.isPaid 
+                            ? 'bg-secondary text-white shadow-secondary/20' 
+                            : 'bg-primary text-white shadow-primary/20'
+                        }`}
+                      >
+                        {exam.isPaid ? 'Enroll Now' : 'Get Started'}
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         ) : (
           <div className="text-center py-20 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">

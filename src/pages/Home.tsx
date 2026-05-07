@@ -14,11 +14,13 @@ import {
   Users,
   Compass,
   LayoutGrid,
-  FileText
+  FileText,
+  CheckCircle2
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { db } from '../lib/firebase';
 import { collection, query, getDocs, onSnapshot, limit } from 'firebase/firestore';
+import { useAuth } from '../context/AuthContext';
 
 const tabs = ['All', 'JKSSB', 'JKPSC', 'UPSC', 'NEET', 'IBPS'];
 
@@ -32,6 +34,7 @@ const subjects = [
 ];
 
 export default function Home() {
+  const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState('All');
   const [exams, setExams] = useState<any[]>([]);
   const [agencies, setAgencies] = useState<any[]>([]);
@@ -145,6 +148,7 @@ export default function Home() {
             ) : filteredExams.map((exam) => {
                 const agency = agencies.find(a => a.id === exam.agencyId);
                 const logo = agency?.logoUrl || exam.logoUrl;
+                const isEnrolled = profile?.isPremium || profile?.purchasedExams?.includes(exam.id) || profile?.freeExams?.includes(exam.id) || false;
                 return (
                   <motion.div 
                     key={exam.id}
@@ -184,9 +188,15 @@ export default function Home() {
 
                     <div className="flex items-center justify-between mt-auto pt-5 border-t border-slate-50">
                       <span className="text-[10px] font-bold text-slate-400 tracking-[0.1em] uppercase">{exam.isPaid ? 'PREMIUM' : 'FREE TRIAL'}</span>
-                      <button className="text-[10px] font-black text-[#008770] tracking-[0.05em] uppercase hover:underline transition-all">
-                        {exam.isPaid ? 'ENROLL NOW' : 'TRY FREE'}
-                      </button>
+                      {isEnrolled ? (
+                        <div className="flex items-center gap-1 text-[10px] font-black text-slate-700 tracking-[0.05em] uppercase">
+                           <CheckCircle2 className="w-3.5 h-3.5" /> ENROLLED
+                        </div>
+                      ) : (
+                        <button className="text-[10px] font-black text-[#008770] tracking-[0.05em] uppercase hover:underline transition-all">
+                          {exam.isPaid ? 'ENROLL NOW' : 'TRY FREE'}
+                        </button>
+                      )}
                     </div>
                   </motion.div>
                 )

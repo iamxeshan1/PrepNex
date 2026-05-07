@@ -35,8 +35,19 @@ export default function Dashboard() {
              const allExamsSnap = await getDocs(collection(db, 'exams'));
              const allExams = allExamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
 
+             const agenciesSnap = await getDocs(collection(db, 'agencies'));
+             const allAgencies = agenciesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+
+             const examsWithAgencyLogos = allExams.map(exam => {
+                 const agency = allAgencies.find(a => a.id === exam.agencyId);
+                 return {
+                     ...exam,
+                     logoUrl: agency?.logoUrl || exam.logoUrl
+                 };
+             });
+
              if (purchasedIds.length > 0) {
-                 const active = allExams.filter(ex => purchasedIds.includes(ex.id));
+                 const active = examsWithAgencyLogos.filter(ex => purchasedIds.includes(ex.id));
                  setActiveExams(active);
 
                  // Fetch tests for these exams
@@ -52,7 +63,7 @@ export default function Dashboard() {
              }
 
              // Discover New
-             const newExams = allExams.filter(ex => !purchasedIds.includes(ex.id)).slice(0, 3);
+             const newExams = examsWithAgencyLogos.filter(ex => !purchasedIds.includes(ex.id)).slice(0, 3);
              setDiscoverExams(newExams);
 
              // Subject Performance
@@ -238,13 +249,13 @@ export default function Dashboard() {
                                     <div className="flex items-start gap-3 mb-6">
                                         <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0 overflow-hidden">
                                             {exam.logoUrl ? (
-                                                <img src={exam.logoUrl} alt={exam.title} className="w-full h-full object-contain bg-white border border-slate-100 rounded-xl" />
+                                                <img src={exam.logoUrl} alt={exam.name || exam.title} className="w-full h-full object-contain bg-white border border-slate-100 rounded-xl" />
                                             ) : (
                                                 <Award className="w-5 h-5 text-indigo-500" />
                                             )}
                                         </div>
                                         <div>
-                                            <h4 className="text-sm font-bold text-slate-800 leading-tight mb-1 line-clamp-2">{exam.title}</h4>
+                                            <h4 className="text-sm font-bold text-slate-800 leading-tight mb-1 line-clamp-2">{exam.name || exam.title}</h4>
                                             <p className="text-[10px] text-slate-500 font-medium">Subscription Active</p>
                                         </div>
                                     </div>
@@ -285,7 +296,7 @@ export default function Dashboard() {
                           <div className="space-y-4 flex-1">
                               {discoverExams.length > 0 ? discoverExams.map(ex => (
                                   <div key={ex.id} onClick={() => navigate(`/exam/${ex.id}`)} className="p-4 border rounded-2xl flex items-center justify-between hover:bg-slate-50 cursor-pointer">
-                                      <p className="text-sm font-bold text-slate-700">{ex.title}</p>
+                                      <p className="text-sm font-bold text-slate-700">{ex.name || ex.title}</p>
                                       <span className="text-xs text-slate-400">→</span>
                                   </div>
                               )) : (
