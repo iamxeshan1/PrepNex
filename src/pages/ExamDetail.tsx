@@ -93,17 +93,20 @@ export default function ExamDetail() {
 
     // Free Exam Logic
     // User must be enrolled in the free exam
-    if (profile?.freeExams?.includes(examId)) {
-      // Free mocks within a free exam are accessible after enrollment
-      if (test.isFree) return true;
-      // Paid mocks within a free exam are not accessible just by enrollment
-      return false;
+    if (profile?.purchasedExams?.includes(examId) || profile?.freeExams?.includes(examId)) {
+      // If it's a free exam and user is enrolled, all free mocks inside are accessible.
+      if (!exam?.isPaid) {
+         if (test.isFree) return true;
+         // Note: If exam is free but mock is premium, they need premium pass, which is handled above.
+         return false;
+      }
     }
     
     return false;
   };
 
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const isEnrolledInExam = profile?.isPremium || profile?.purchasedExams?.includes(examId);
 
   const handlePurchaseClick = () => {
     if (!user) return navigate('/login');
@@ -212,7 +215,13 @@ export default function ExamDetail() {
                      {exam.isPaid && <span className="text-slate-500 line-through">₹{Number(exam.price || 499) + 500}</span>}
                      {exam.isPaid && <span className="bg-[#10b981] text-white text-[10px] font-black px-2 py-1 rounded uppercase tracking-widest">Off</span>}
                   </div>
-                  <button onClick={handlePurchaseClick} className="w-full py-4 bg-[#008770] text-white font-black rounded-xl hover:bg-[#006e5d] transition-all flex items-center justify-center gap-2">{exam.isPaid ? 'Enroll Now' : 'Enroll Free'} <ChevronLeft className="w-4 h-4 rotate-180" /></button>
+                  {isEnrolledInExam ? (
+                    <button disabled className="w-full py-4 bg-slate-800 text-white font-black rounded-xl flex items-center justify-center gap-2 opacity-80 cursor-not-allowed">
+                        <CheckCircle2 className="w-4 h-4" /> Enrolled
+                    </button>
+                  ) : (
+                    <button onClick={handlePurchaseClick} className="w-full py-4 bg-[#008770] text-white font-black rounded-xl hover:bg-[#006e5d] transition-all flex items-center justify-center gap-2">{exam.isPaid ? 'Enroll Now' : 'Enroll Free'} <ChevronLeft className="w-4 h-4 rotate-180" /></button>
+                  )}
                   <p className="text-[10px] text-center text-slate-600 mt-4">Secure 256-bit SSL encrypted payment</p>
                </div>
                

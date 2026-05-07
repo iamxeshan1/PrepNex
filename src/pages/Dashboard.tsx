@@ -236,8 +236,12 @@ export default function Dashboard() {
                             {activeExams.length > 0 ? activeExams.map((exam) => (
                                 <div key={exam.id} className="bg-white p-5 rounded-3xl border border-slate-100 flex flex-col justify-between">
                                     <div className="flex items-start gap-3 mb-6">
-                                        <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
-                                            <Award className="w-5 h-5 text-indigo-500" />
+                                        <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0 overflow-hidden">
+                                            {exam.logoUrl ? (
+                                                <img src={exam.logoUrl} alt={exam.title} className="w-full h-full object-contain bg-white border border-slate-100 rounded-xl" />
+                                            ) : (
+                                                <Award className="w-5 h-5 text-indigo-500" />
+                                            )}
                                         </div>
                                         <div>
                                             <h4 className="text-sm font-bold text-slate-800 leading-tight mb-1 line-clamp-2">{exam.title}</h4>

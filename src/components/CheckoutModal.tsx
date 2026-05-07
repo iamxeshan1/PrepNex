@@ -76,7 +76,7 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
       if (finalPrice <= 0) {
         // Free item or 100% discount, bypass Razorpay and process directly on client
         try {
-           const { doc, getDoc, updateDoc, addDoc, collection } = await import('firebase/firestore');
+           const { doc, getDoc, updateDoc, setDoc, addDoc, collection } = await import('firebase/firestore');
            const db = (await import('../lib/firebase')).db;
            const userName = user.displayName || user.email?.split('@')[0] || "User";
            const amount = finalPrice || 0;
@@ -84,10 +84,10 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
            if (item.id === "PREMIUM_PASS") {
              const expiryDate = new Date();
              expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-             await updateDoc(doc(db, "users", user.uid), {
+             await setDoc(doc(db, "users", user.uid), {
                 isPremium: true,
                 subscriptionExpiry: expiryDate.toISOString()
-             });
+             }, { merge: true });
 
              await addDoc(collection(db, "premium_subscriptions"), {
                 userId: user.uid,
@@ -116,7 +116,7 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
                const userDoc = await getDoc(doc(db, "users", user.uid));
                const purchasedExams = userDoc.data()?.purchasedExams || [];
                if (!purchasedExams.includes(item.id)) {
-                 await updateDoc(doc(db, "users", user.uid), { purchasedExams: [...purchasedExams, item.id] });
+                 await setDoc(doc(db, "users", user.uid), { purchasedExams: [...purchasedExams, item.id] }, { merge: true });
                }
              }
 
@@ -138,7 +138,7 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
         } catch (clientDbErr: any) {
            console.error("Free enrollment failed:", clientDbErr);
            setIsProcessing(false);
-           setPaymentError('Free enrollment failed. Please contact support.');
+           setPaymentError(clientDbErr?.message || 'Free enrollment failed. Please contact support.');
         }
         return;
       }
