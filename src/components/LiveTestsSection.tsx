@@ -72,16 +72,11 @@ export default function LiveTestsSection() {
         enrolledUsers: arrayUnion(user.uid)
       });
       alert('Successfully enrolled in the Live Test!');
-      setLiveTests(prev => prev.map(t => {
-        if (t.id === testId) {
-          return { ...t, enrolledUsers: [...(t.enrolledUsers || []), user.uid] };
-        }
-        return t;
-      }));
+      navigate('/dashboard');
     } catch (error) {
       alert('Enrollment failed.');
+      setEnrollingMap(prev => ({ ...prev, [testId]: false }));
     }
-    setEnrollingMap(prev => ({ ...prev, [testId]: false }));
   };
 
   if (loading) return (
@@ -250,7 +245,7 @@ export default function LiveTestsSection() {
         item={selectedTest || { id: '', name: '', price: 0 }}
         onSuccess={() => {
           alert('Successfully enrolled in the Live Test!');
-          window.location.reload();
+          navigate('/dashboard');
         }}
       />
     </section>

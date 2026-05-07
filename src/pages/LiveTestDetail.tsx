@@ -75,14 +75,27 @@ export default function LiveTestDetail() {
           enrolledUsers: arrayUnion(user.uid)
         });
         alert('Enrolled successfully!');
-        navigate('/');
+        navigate('/dashboard');
       } catch (e) {
         alert('Enrollment failed');
       } finally {
         setPurchaseLoading(false);
       }
     } else {
-      alert(`Payment gateway integration required to process ₹${finalPrice}`);
+      // For demo purposes, we will simulate a successful payment here.
+      alert(`Simulating payment for ₹${finalPrice}. Payment gateway integration required for production.`);
+      try {
+        setPurchaseLoading(true);
+        await updateDoc(doc(db, 'liveTests', id!), {
+          enrolledUsers: arrayUnion(user.uid)
+        });
+        alert('Enrolled successfully!');
+        navigate('/dashboard');
+      } catch (e) {
+        alert('Enrollment failed');
+      } finally {
+        setPurchaseLoading(false);
+      }
     }
   };
 

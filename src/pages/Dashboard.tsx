@@ -19,11 +19,8 @@ export default function Dashboard() {
   const [discoverExams, setDiscoverExams] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
-  const [subjectPerformance, setSubjectPerformance] = useState([
-      { subject: 'History of J&K', accuracy: 92, status: 'good' },
-      { subject: 'Test Physics', accuracy: 35, status: 'bad' },
-      { subject: 'General Science', accuracy: 88, status: 'good' },
-  ]);
+  const [subjectPerformance, setSubjectPerformance] = useState<any[]>([]);
+  const [userProgress, setUserProgress] = useState({ mockTestsAttempted: 0, averageAccuracy: 0, studyHours: 0 });
 
   useEffect(() => {
      const fetchDashboardData = async () => {
@@ -70,34 +67,66 @@ export default function Dashboard() {
 
              // Subject Performance
              const resultsSnap = await getDocs(query(collection(db, 'results'), where('userId', '==', profile.userId)));
-             if (!resultsSnap.empty) {
-                  let totalScore = 0;
-                  let totalMax = 0;
-                  let attemptCount = 0;
-                  let testIds: string[] = [];
+             
+             // Fetch subjects mapping to get proper names
+             const subjectsSnap = await getDocs(collection(db, 'subjects'));
+             const subjectNames: Record<string, string> = {};
+             subjectsSnap.docs.forEach(doc => {
+                 subjectNames[doc.id] = doc.data().name;
+             });
 
+             if (!resultsSnap.empty) {
+                  const aggregatedStats: Record<string, { totalCorrect: number, totalMaxScore: number, totalScore: number }> = {};
+                  let totalScoreAcrossTests = 0;
+                  let totalMaxMarksAcrossTests = 0;
+                  let testsAttempted = resultsSnap.empty ? 0 : resultsSnap.docs.length;
+                  
                   resultsSnap.docs.forEach(doc => {
                       const data = doc.data();
-                      testIds.push(data.testId);
-                      if (typeof data.score === 'number' && typeof data.maxMarks === 'number') {
-                         totalScore += data.score;
-                         totalMax += data.maxMarks;
-                         attemptCount++;
+                      
+                      totalScoreAcrossTests += typeof data.score === 'number' ? data.score : 0;
+                      totalMaxMarksAcrossTests += typeof data.maxMarks === 'number' ? data.maxMarks : 1;
+                      
+                      if (data.subjectStats) {
+                          Object.entries(data.subjectStats).forEach(([subjectId, stats]: [string, any]) => {
+                              if (!aggregatedStats[subjectId]) {
+                                  aggregatedStats[subjectId] = { totalCorrect: 0, totalMaxScore: 0, totalScore: 0 };
+                              }
+                              aggregatedStats[subjectId].totalCorrect += stats.correct || 0;
+                              aggregatedStats[subjectId].totalScore += stats.score || 0;
+                              aggregatedStats[subjectId].totalMaxScore += stats.maxScore || 1; // avoid div by 0
+                          });
                       }
                   });
                   
-                  // if we wanted real subject performance, we'd look at category breakdown in test/results.
-                  // Since we don't know the schema of the results document related to subjects, 
-                  // we will randomly generate mock subjects based on their overall accuracy, but dynamic to their attempts.
-                  if (attemptCount > 0) {
-                      const overallAcc = Math.round((totalScore / (totalMax || 1)) * 100);
-                      
-                      setSubjectPerformance([
-                          { subject: 'Verbal Ability', accuracy: Math.min(100, overallAcc + 5), status: overallAcc + 5 >= 70 ? 'good' : 'bad' },
-                          { subject: 'Quantitative Aptitude', accuracy: Math.max(0, overallAcc - 15), status: overallAcc - 15 >= 70 ? 'good' : 'bad' },
-                          { subject: 'General Knowledge', accuracy: overallAcc, status: overallAcc >= 70 ? 'good' : 'bad' }
-                      ]);
+                  const avgAcc = totalMaxMarksAcrossTests > 0 ? Math.round(Math.max(0, (totalScoreAcrossTests / totalMaxMarksAcrossTests)) * 100) : 0;
+                  
+                  setUserProgress({
+                      mockTestsAttempted: testsAttempted,
+                      averageAccuracy: avgAcc,
+                      studyHours: Math.round(testsAttempted * 0.5) // ~30 mins per test average
+                  });
+                  
+                  const performanceArr: any[] = [];
+                  Object.entries(aggregatedStats).forEach(([subjectId, stats]) => {
+                       const accuracy = Math.round(Math.max(0, (stats.totalScore / Math.max(1, stats.totalMaxScore)) * 100));
+                       const subjectName = subjectNames[subjectId] || subjectId;
+                       // Ignore 'general' placeholder if we have others or map it to 'General'
+                       performanceArr.push({
+                           subjectId: subjectId,
+                           subject: subjectId === 'general' ? 'General' : subjectName,
+                           accuracy: accuracy,
+                           status: accuracy >= 70 ? 'good' : 'bad'
+                       });
+                  });
+
+                  if (performanceArr.length > 0) {
+                      setSubjectPerformance(performanceArr.sort((a,b) => b.accuracy - a.accuracy).slice(0, 5));
+                  } else {
+                      setSubjectPerformance([]);
                   }
+             } else {
+                 setSubjectPerformance([]);
              }
 
          } catch (error) {
@@ -110,13 +139,6 @@ export default function Dashboard() {
   }, [profile]);
 
 
-  // Mock progress calculation
-  const userProgress = {
-      mockTestsAttempted: 15,
-      averageAccuracy: 88,
-      studyHours: 45,
-  };
-  
   // Calculate PrepScore out of 1000 based on progress
   const calculatePrepScore = () => {
        const baseScore = 400;
@@ -345,22 +367,28 @@ export default function Dashboard() {
                   {/* Subject Performance Analysis */}
                   <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm">
                     <h3 className="text-lg font-black text-[#0f172a] mb-6">Subject Performance Analysis</h3>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {subjectPerformance.map((subj, idx) => (
-                             <div key={idx} className="border rounded-2xl p-6">
-                                  <div className="flex justify-between items-center mb-2">
-                                     <p className="text-sm font-bold text-slate-500">{subj.subject}</p>
-                                     <span className={`text-[10px] font-black px-2 py-1 rounded-lg ${subj.status === 'bad' ? 'bg-red-50 text-red-700' : 'bg-teal-50 text-teal-700'}`}>
-                                         {subj.status === 'bad' ? 'NEEDS ATTENTION' : 'TOP PERFORMER'}
-                                     </span>
-                                  </div>
-                                  <div className="h-2 bg-slate-100 rounded-full w-full">
-                                      <div className={`h-full rounded-full ${subj.status === 'bad' ? 'bg-red-500' : 'bg-teal-500'}`} style={{ width: `${subj.accuracy}%` }}/>
-                                  </div>
-                                  <p className={`text-xs font-black mt-2 ${subj.status === 'bad' ? 'text-red-600' : 'text-teal-600'}`}>{subj.accuracy}% Accuracy</p>
-                             </div>
-                        ))}
-                    </div>
+                    {subjectPerformance.length > 0 ? (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {subjectPerformance.map((subj, idx) => (
+                                 <div key={idx} className="border rounded-2xl p-6">
+                                      <div className="flex justify-between items-center mb-2">
+                                         <p className="text-sm font-bold text-slate-500">{subj.subject}</p>
+                                         <span className={`text-[10px] font-black px-2 py-1 rounded-lg ${subj.status === 'bad' ? 'bg-red-50 text-red-700' : 'bg-teal-50 text-teal-700'}`}>
+                                             {subj.status === 'bad' ? 'NEEDS ATTENTION' : 'TOP PERFORMER'}
+                                         </span>
+                                      </div>
+                                      <div className="h-2 bg-slate-100 rounded-full w-full">
+                                          <div className={`h-full rounded-full ${subj.status === 'bad' ? 'bg-red-500' : 'bg-teal-500'}`} style={{ width: `${subj.accuracy}%` }}/>
+                                      </div>
+                                      <p className={`text-xs font-black mt-2 ${subj.status === 'bad' ? 'text-red-600' : 'text-teal-600'}`}>{subj.accuracy}% Accuracy</p>
+                                 </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="p-8 text-center text-slate-500 bg-slate-50 rounded-2xl border border-slate-100">
+                            Take a mock test to unlock subject performance analysis.
+                        </div>
+                    )}
                   </div>
 
                   {/* Projected Score Improvement & Quick Access */}
