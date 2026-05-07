@@ -88,7 +88,7 @@ export default function LiveTests() {
         </section>
 
         {/* Content Section */}
-        <section className="max-w-7xl mx-auto px-4 lg:px-8 -mt-20 pb-24">
+        <section className="max-w-7xl mx-auto px-4 lg:px-8 -mt-12 relative z-10 pb-24">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20">
               <Loader2 className="w-10 h-10 text-[#2dd4bf] animate-spin mb-4" />

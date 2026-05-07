@@ -2,8 +2,20 @@ import React from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { auth } from '../lib/firebase';
-import { Search, Bell, ShoppingCart, Youtube, Instagram, Facebook } from 'lucide-react';
+import { 
+  Search, 
+  Bell, 
+  ShoppingCart, 
+  Youtube, 
+  Instagram, 
+  Facebook,
+  Send,
+  MessageCircle,
+  MessageSquare 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { db } from '../lib/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAdmin } = useAuth();
@@ -12,6 +24,16 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const [searchParams] = useSearchParams();
   const initialSearch = searchParams.get('search') || '';
   const [searchValue, setSearchValue] = React.useState(initialSearch);
+  const [socialLinks, setSocialLinks] = React.useState<any>({});
+
+  React.useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'general'), (snap) => {
+      if (snap.exists()) {
+        setSocialLinks(snap.data());
+      }
+    });
+    return () => unsub();
+  }, []);
 
   React.useEffect(() => {
     setSearchValue(searchParams.get('search') || '');
@@ -81,52 +103,73 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       {/* Footer */}
       <footer className="bg-slate-50 py-16 border-t border-slate-200">
         <div className="max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-            <div className="col-span-1 md:col-span-1">
-              <Link to="/" className="inline-block mb-6">
-                <span className="font-logo font-black text-2xl tracking-tight text-[#0f172a]">Prep<span className="text-teal-600">Next</span></span>
-              </Link>
-              <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-xs">
-                Empowering J&K's youth through technology-led education and rigorous exam preparation frameworks.
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="text-slate-900 font-sans font-bold mb-6 uppercase text-xs tracking-widest">Explore</h4>
-              <ul className="space-y-4">
-                <li><Link to="/exams" className="text-slate-500 hover:text-teal-600 text-sm font-medium transition-colors">Exam Library</Link></li>
-                <li><Link to="/study-material" className="text-slate-500 hover:text-teal-600 text-sm font-medium transition-colors">Study Material</Link></li>
-                <li><Link to="/articles" className="text-slate-500 hover:text-teal-600 text-sm font-medium transition-colors">Articles</Link></li>
-                <li><Link to="/updates" className="text-slate-500 hover:text-teal-600 text-sm font-medium transition-colors">JKPSC Updates</Link></li>
-              </ul>
-            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-12">
+              <div className="col-span-2 md:col-span-1">
+                <Link to="/" className="inline-block mb-6">
+                  <span className="font-logo font-black text-2xl tracking-tight text-[#0f172a]">Prep<span className="text-teal-600">Next</span></span>
+                </Link>
+                <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-xs">
+                  Empowering J&K's youth through technology-led education and rigorous exam preparation frameworks.
+                </p>
+              </div>
+              
+              <div className="col-span-1">
+                <h4 className="text-slate-900 font-sans font-bold mb-6 uppercase text-xs tracking-widest">Explore</h4>
+                <ul className="space-y-4">
+                  <li><Link to="/exams" className="text-slate-500 hover:text-teal-600 text-sm font-medium transition-colors">Exam Library</Link></li>
+                  <li><Link to="/study-material" className="text-slate-500 hover:text-teal-600 text-sm font-medium transition-colors">Study Material</Link></li>
+                  <li><Link to="/articles" className="text-slate-500 hover:text-teal-600 text-sm font-medium transition-colors">Articles</Link></li>
+                  <li><Link to="/updates" className="text-slate-500 hover:text-teal-600 text-sm font-medium transition-colors">JKPSC Updates</Link></li>
+                </ul>
+              </div>
 
-            <div>
-              <h4 className="text-slate-900 font-sans font-bold mb-6 uppercase text-xs tracking-widest">Company</h4>
-              <ul className="space-y-4">
-                <li><Link to="/about" className="text-slate-500 hover:text-teal-600 text-sm font-medium transition-colors">About Us</Link></li>
-                <li><Link to="/success-stories" className="text-slate-500 hover:text-teal-600 text-sm font-medium transition-colors">Success Stories</Link></li>
-                <li><Link to="/privacy" className="text-slate-500 hover:text-teal-600 text-sm font-medium transition-colors">Privacy Policy</Link></li>
-                <li><Link to="/contact" className="text-slate-500 hover:text-teal-600 text-sm font-medium transition-colors">Contact</Link></li>
-              </ul>
-            </div>
+              <div className="col-span-1">
+                <h4 className="text-slate-900 font-sans font-bold mb-6 uppercase text-xs tracking-widest">Company</h4>
+                <ul className="space-y-4">
+                  <li><Link to="/about" className="text-slate-500 hover:text-teal-600 text-sm font-medium transition-colors">About Us</Link></li>
+                  <li><Link to="/success-stories" className="text-slate-500 hover:text-teal-600 text-sm font-medium transition-colors">Success Stories</Link></li>
+                  <li><Link to="/privacy" className="text-slate-500 hover:text-teal-600 text-sm font-medium transition-colors">Privacy Policy</Link></li>
+                  <li><Link to="/contact" className="text-slate-500 hover:text-teal-600 text-sm font-medium transition-colors">Contact</Link></li>
+                </ul>
+              </div>
 
-            <div>
-              <h4 className="text-slate-900 font-sans font-bold mb-6 uppercase text-xs tracking-widest">Social</h4>
-              <div className="flex items-center gap-4">
-                 {/* Social links - update these links in settings panel */}
-                 <a href="#" className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-teal-50 hover:text-teal-600 transition-all cursor-pointer">
-                    <Youtube className="w-5 h-5" />
-                 </a>
-                 <a href="#" className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-teal-50 hover:text-teal-600 transition-all cursor-pointer">
-                    <Instagram className="w-5 h-5" />
-                 </a>
-                 <a href="#" className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-teal-50 hover:text-teal-600 transition-all cursor-pointer">
-                    <Facebook className="w-5 h-5" />
-                 </a>
+              <div className="col-span-2 md:col-span-1">
+                <h4 className="text-slate-900 font-sans font-bold mb-6 uppercase text-xs tracking-widest">Social</h4>
+                <div className="flex flex-wrap items-center gap-4">
+                   {/* Social links - update these links in settings panel */}
+                   {socialLinks.socialYoutube && (
+                     <a href={socialLinks.socialYoutube} target="_blank" rel="noreferrer" className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-teal-50 hover:text-teal-600 transition-all cursor-pointer">
+                        <Youtube className="w-5 h-5" />
+                     </a>
+                   )}
+                   {socialLinks.socialInstagram && (
+                     <a href={socialLinks.socialInstagram} target="_blank" rel="noreferrer" className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-teal-50 hover:text-teal-600 transition-all cursor-pointer">
+                        <Instagram className="w-5 h-5" />
+                     </a>
+                   )}
+                   {socialLinks.socialFacebook && (
+                     <a href={socialLinks.socialFacebook} target="_blank" rel="noreferrer" className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-teal-50 hover:text-teal-600 transition-all cursor-pointer">
+                        <Facebook className="w-5 h-5" />
+                     </a>
+                   )}
+                   {socialLinks.socialTelegram && (
+                     <a href={socialLinks.socialTelegram} target="_blank" rel="noreferrer" className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-teal-50 hover:text-teal-600 transition-all cursor-pointer">
+                        <Send className="w-5 h-5" />
+                     </a>
+                   )}
+                   {socialLinks.socialWhatsapp && (
+                     <a href={socialLinks.socialWhatsapp} target="_blank" rel="noreferrer" className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-teal-50 hover:text-teal-600 transition-all cursor-pointer">
+                        <MessageCircle className="w-5 h-5" />
+                     </a>
+                   )}
+                   {socialLinks.socialDiscord && (
+                     <a href={socialLinks.socialDiscord} target="_blank" rel="noreferrer" className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-teal-50 hover:text-teal-600 transition-all cursor-pointer">
+                        <MessageSquare className="w-5 h-5" />
+                     </a>
+                   )}
+                </div>
               </div>
             </div>
-          </div>
           
           <div className="pt-8 border-t border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-slate-400 text-xs font-bold uppercase tracking-wide">© 2026 PREPNEXT EDTECH. MADE WITH CONVICTION.</p>

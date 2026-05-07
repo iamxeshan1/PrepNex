@@ -19,7 +19,10 @@ import {
   Server,
   Zap,
   Layout,
-  MousePointer2
+  MousePointer2,
+  Send,
+  MessageCircle,
+  MessageSquare
 } from 'lucide-react';
 
 export default function AdminSettings() {
@@ -29,6 +32,9 @@ export default function AdminSettings() {
   const [socialInstagram, setSocialInstagram] = useState('');
   const [socialFacebook, setSocialFacebook] = useState('');
   const [socialYoutube, setSocialYoutube] = useState('');
+  const [socialTelegram, setSocialTelegram] = useState('');
+  const [socialWhatsapp, setSocialWhatsapp] = useState('');
+  const [socialDiscord, setSocialDiscord] = useState('');
   
   const [smtpEmail, setSmtpEmail] = useState('');
   const [smtpPassword, setSmtpPassword] = useState('');
@@ -69,6 +75,9 @@ export default function AdminSettings() {
         setSocialInstagram(data.socialInstagram || '');
         setSocialFacebook(data.socialFacebook || '');
         setSocialYoutube(data.socialYoutube || '');
+        setSocialTelegram(data.socialTelegram || '');
+        setSocialWhatsapp(data.socialWhatsapp || '');
+        setSocialDiscord(data.socialDiscord || '');
         setContactEmail(data.contactEmail || '');
         setContactPhone(data.contactPhone || '');
         setContactAddress(data.contactAddress || '');
@@ -108,6 +117,9 @@ export default function AdminSettings() {
           socialInstagram,
           socialFacebook,
           socialYoutube,
+          socialTelegram,
+          socialWhatsapp,
+          socialDiscord,
           contactEmail,
           contactPhone,
           contactAddress,
@@ -320,6 +332,18 @@ export default function AdminSettings() {
                     <div className="relative group/input">
                        <Youtube className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-rose-600/40 group-focus-within/input:text-rose-600 transition-colors" />
                        <input className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-rose-500/20 font-bold text-slate-600 text-xs" placeholder="YouTube URL" value={socialYoutube} onChange={(e) => setSocialYoutube(e.target.value)} />
+                    </div>
+                    <div className="relative group/input">
+                       <Send className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400/40 group-focus-within/input:text-blue-400 transition-colors" />
+                       <input className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-400/20 font-bold text-slate-600 text-xs" placeholder="Telegram URL" value={socialTelegram} onChange={(e) => setSocialTelegram(e.target.value)} />
+                    </div>
+                    <div className="relative group/input">
+                       <MessageCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-500/40 group-focus-within/input:text-emerald-500 transition-colors" />
+                       <input className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-bold text-slate-600 text-xs" placeholder="WhatsApp URL" value={socialWhatsapp} onChange={(e) => setSocialWhatsapp(e.target.value)} />
+                    </div>
+                    <div className="relative group/input">
+                       <MessageSquare className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-500/40 group-focus-within/input:text-indigo-500 transition-colors" />
+                       <input className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-bold text-slate-600 text-xs" placeholder="Discord URL" value={socialDiscord} onChange={(e) => setSocialDiscord(e.target.value)} />
                     </div>
                  </div>
                  <div className="pt-2">
