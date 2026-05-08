@@ -204,7 +204,7 @@ export default function Dashboard() {
                         <button className="bg-teal-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 justify-center">
                            <Zap className="w-4 h-4" /> Resume Mock Test
                         </button>
-                        <button className="bg-white/10 text-white px-6 py-3 rounded-2xl font-bold justify-center">
+                        <button onClick={() => navigate('/performance')} className="bg-white/10 text-white px-6 py-3 rounded-2xl font-bold justify-center">
                            View History
                         </button>
                       </div>
