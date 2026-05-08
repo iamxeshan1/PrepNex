@@ -219,7 +219,8 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
                 razorpay_signature: response.razorpay_signature,
                 userId: user.uid,
                 itemId: item.id,
-                clientFallbackAmount: finalPrice
+                clientFallbackAmount: finalPrice,
+                clientFallbackUserName: user.displayName || user.email?.split('@')[0] || "User"
               })
             });
 
@@ -229,7 +230,7 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
               // Redirect to dashboard with success param
               let successUrl = `/dashboard?payment_success=true&itemId=${item.id}&userId=${user.uid}&paymentId=${response.razorpay_payment_id}&orderId=${response.razorpay_order_id}&needs_client_update=${verifyData.needsClientUpdate || false}`;
               if (verifyData.needsClientUpdate) {
-                successUrl += `&amount=${verifyData.amount || 0}&userName=${encodeURIComponent(verifyData.userName || 'User')}`;
+                successUrl += `&amount=${verifyData.amount || finalPrice || 0}&userName=${encodeURIComponent(verifyData.userName || user.displayName || user.email?.split('@')[0] || 'User')}`;
               }
               window.location.href = successUrl;
             } else {

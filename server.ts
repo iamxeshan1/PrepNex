@@ -710,7 +710,24 @@ app.get("/api/health-check", async (req, res) => {
         let clientFallbackRequired = false;
         let amountPaid = 0;
         let couponUsed = "NONE";
-        let userName = "User";
+        let userName = req.body?.clientFallbackUserName || "User";
+
+        if (clientFallbackAmount) {
+          amountPaid = Number(clientFallbackAmount);
+        }
+
+        try {
+          const razorpay = await getRazorpay();
+          if (razorpay && razorpay_order_id !== "FREE_ORDER") {
+            const orderInfo = await razorpay.orders.fetch(razorpay_order_id) as any;
+            if (orderInfo && orderInfo.amount) {
+               amountPaid = orderInfo.amount / 100;
+               couponUsed = orderInfo.notes?.couponCode || "NONE";
+            }
+          }
+        } catch (rzrErr) {
+          console.error("[Verify Payment] Razorpay fetch failed, retaining fallback amount:", rzrErr);
+        }
 
         try {
           const database = getDb();
@@ -719,34 +736,11 @@ app.get("/api/health-check", async (req, res) => {
 
           if (userDoc.exists) {
             const userData = userDoc.data();
-            console.log("[Verify Payment] User Data:", JSON.stringify(userData));
-            userName = userData?.displayName || userData?.name || userData?.email?.split('@')[0] || "User";
-            console.log("[Verify Payment] Resolved userName:", userName);
-
-            console.log(`[Verify Payment] Syncing DB for ${userId} (${userName}). Item: ${itemId}`);
-
-            try {
-              const razorpay = await getRazorpay();
-              if (razorpay && razorpay_order_id !== "FREE_ORDER") {
-                const orderInfo = await razorpay.orders.fetch(razorpay_order_id) as any;
-                console.log("[Verify Payment] Razorpay Order Info:", JSON.stringify(orderInfo));
-                amountPaid = (orderInfo.amount || 0) / 100;
-                console.log("[Verify Payment] Resolved amountPaid:", amountPaid);
-                couponUsed = orderInfo.notes?.couponCode || "NONE";
-              }
-            } catch (rzrErr) {
-              console.error("[Verify Payment] Razorpay fetch failed:", rzrErr);
-            }
-            if (!amountPaid && clientFallbackAmount) {
-              amountPaid = Number(clientFallbackAmount);
-              console.log("[Verify Payment] Used clientFallbackAmount:", amountPaid);
-            }
-
-            // Shared Logic: Always add to user's purchasedExams for Dashboard visibility
+            userName = userData?.displayName || userData?.name || userData?.email?.split('@')[0] || userName;
+            
             const purchasedExams = userData?.purchasedExams || [];
             if (!purchasedExams.includes(itemId)) {
               await userRef.update({ purchasedExams: [...purchasedExams, itemId] });
-              console.log(`[Verify Payment] Added ${itemId} to user ${userId} purchasedExams`);
             }
 
             if (itemId === "PREMIUM_PASS") {
@@ -770,9 +764,7 @@ app.get("/api/health-check", async (req, res) => {
                 amount: amountPaid,
                 couponCode: couponUsed
               };
-              console.log("[Verify Payment] PREPARING DOC DATA:", JSON.stringify(docData));
               await database.collection("premium_subscriptions").add(docData);
-              console.log("[Verify Payment] Successfully added premium subscription doc.");
             } else {
               let itemTitle = "Exam Package";
               const liveTestRef = database.collection("liveTests").doc(itemId);
@@ -780,18 +772,15 @@ app.get("/api/health-check", async (req, res) => {
               
               if (liveTestDoc.exists) {
                 itemTitle = liveTestDoc.data()?.title || "Live Test";
-                if (!amountPaid) amountPaid = liveTestDoc.data()?.price || 0;
                 const enrolledUsers = liveTestDoc.data()?.enrolledUsers || [];
                 if (!enrolledUsers.includes(userId)) {
                   enrolledUsers.push(userId);
                   await liveTestRef.update({ enrolledUsers });
-                  console.log(`[Verify Payment] Added ${userId} to liveTest ${itemId} enrolledUsers`);
                 }
               } else {
                 const examDoc = await database.collection("exams").doc(itemId).get();
                 if (examDoc.exists) {
                   itemTitle = examDoc.data()?.title || "Exam";
-                  if (!amountPaid) amountPaid = examDoc.data()?.price || 0;
                 }
               }
               
@@ -807,18 +796,11 @@ app.get("/api/health-check", async (req, res) => {
                 amount: amountPaid,
                 couponCode: couponUsed
               };
-              console.log("[Verify Payment] PREPARING SUB DOC DATA:", JSON.stringify(subDocData));
               await database.collection("subscriptions").add(subDocData);
-              console.log("[Verify Payment] Successfully added subscription doc.");
             }
-          } else {
-            console.warn(`[Verify Payment] User doc NOT FOUND: ${userId}`);
           }
         } catch (dbErr: any) {
-          console.error("[Verify Payment] DB SYNC FAILURE. Full details below.");
-          console.error("Error Code:", dbErr.code);
-          console.error("Error Message:", dbErr.message);
-          console.error("Stack Trace:", dbErr.stack);
+          console.error("[Verify Payment] DB SYNC FAILURE:", dbErr.message);
           clientFallbackRequired = true;
         }
 
@@ -835,6 +817,17 @@ app.get("/api/health-check", async (req, res) => {
     } catch (error: any) {
       console.error("Payment verification failed:", error);
       res.status(500).json({ error: "Verification error", detail: error.message });
+    }
+  });
+
+  app.get("/api/debug-subs", async (req, res) => {
+    try {
+      const db = getDb();
+      const subs = await db.collection("subscriptions").get();
+      const data = subs.docs.map((d: any) => d.data());
+      res.json(data);
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
     }
   });
 
