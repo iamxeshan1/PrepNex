@@ -7,6 +7,12 @@ import { Layout } from '../components/Layout';
 
 export default function Contact() {
   const [settings, setSettings] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: 'General Support',
+    message: ''
+  });
   const [loading, setLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
 
@@ -21,6 +27,23 @@ export default function Contact() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const recipient = settings?.contactEmail || 'support@prepnext.in';
+    const subject = encodeURIComponent(`${formData.subject}: Message from ${formData.name}`);
+    const body = encodeURIComponent(
+      `Hello Support Team,\n\n` +
+      `You have received a new message from ${formData.name} (${formData.email}).\n\n` +
+      `Subject: ${formData.subject}\n\n` +
+      `Message:\n${formData.message}\n\n` +
+      `Regards,\n${formData.name}`
+    );
+
+    // Construct Gmail Compose URL
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${recipient}&su=${subject}&body=${body}`;
+    
+    // Open in new tab
+    window.open(gmailUrl, '_blank');
+    
     setSubmitted(true);
     setTimeout(() => setSubmitted(false), 5000);
   };
@@ -140,6 +163,8 @@ export default function Contact() {
                           required
                           type="text" 
                           placeholder="John Doe" 
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                           className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500/30 font-bold text-slate-600 transition-all"
                         />
                       </div>
@@ -149,6 +174,8 @@ export default function Contact() {
                           required
                           type="email" 
                           placeholder="john@example.com" 
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500/30 font-bold text-slate-600 transition-all"
                         />
                       </div>
@@ -156,7 +183,11 @@ export default function Contact() {
 
                     <div className="space-y-3">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-4">Inquiry Subject</label>
-                      <select className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500/30 font-bold text-slate-600 transition-all appearance-none cursor-pointer">
+                      <select 
+                        value={formData.subject}
+                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500/30 font-bold text-slate-600 transition-all appearance-none cursor-pointer"
+                      >
                         <option>General Support</option>
                         <option>Premium Billing</option>
                         <option>Technical Issue</option>
@@ -171,6 +202,8 @@ export default function Contact() {
                         required
                         rows={6}
                         placeholder="How can we assist you today?" 
+                        value={formData.message}
+                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                         className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500/30 font-bold text-slate-600 transition-all resize-none"
                       />
                     </div>

@@ -1,10 +1,21 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { Target, Users, BookOpen, Award, CheckCircle2, ArrowRight } from 'lucide-react';
 import { Layout } from '../components/Layout';
 import { Link } from 'react-router-dom';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 export default function About() {
+  const [settings, setSettings] = useState<any>({});
+
+  useEffect(() => {
+    const unsubSettings = onSnapshot(doc(db, 'settings', 'general'), (doc) => {
+      if (doc.exists()) setSettings(doc.data());
+    });
+    return () => unsubSettings();
+  }, []);
+
   const values = [
     {
       icon: Target,
@@ -44,7 +55,7 @@ export default function About() {
                 transition={{ duration: 0.6 }}
               >
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-teal-500/10 border border-teal-500/20 rounded-full text-[#2dd4bf] text-[10px] font-black uppercase tracking-widest mb-6">
-                  <span className="w-2 h-2 bg-teal-500 rounded-full animate-pulse" /> Established 2024
+                  <span className="w-2 h-2 bg-teal-500 rounded-full animate-pulse" /> Established {settings.establishedYear || '2026'}
                 </div>
                 <h1 className="text-4xl md:text-6xl font-sans font-[800] tracking-tight mb-8 leading-[1.1]">
                   Revolutionizing <br/>
@@ -68,17 +79,17 @@ export default function About() {
               >
                 <div className="space-y-4 pt-8">
                   <div className="bg-white/5 border border-white/10 p-8 rounded-3xl backdrop-blur-sm">
-                    <h3 className="text-4xl font-black text-teal-400 mb-1">50k+</h3>
+                    <h3 className="text-4xl font-black text-teal-400 mb-1">{settings.aspirantCount || '50k+'}</h3>
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Students</p>
                   </div>
                   <div className="bg-white/5 border border-white/10 p-8 rounded-3xl backdrop-blur-sm">
-                    <h3 className="text-4xl font-black text-teal-400 mb-1">1.2k+</h3>
+                    <h3 className="text-4xl font-black text-teal-400 mb-1">{settings.totalTests || '1.2k+'}</h3>
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Mocks</p>
                   </div>
                 </div>
                 <div className="space-y-4">
                   <div className="bg-teal-500 p-8 rounded-3xl shadow-2xl shadow-teal-500/20">
-                    <h3 className="text-4xl font-black text-[#0f172a] mb-1">98%</h3>
+                    <h3 className="text-4xl font-black text-[#0f172a] mb-1">{settings.successRate || '98%'}</h3>
                     <p className="text-xs font-bold text-[#0f172a]/70 uppercase tracking-widest">Accuracy</p>
                   </div>
                   <div className="bg-white/5 border border-white/10 p-8 rounded-3xl backdrop-blur-sm">

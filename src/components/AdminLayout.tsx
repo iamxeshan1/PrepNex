@@ -25,7 +25,8 @@ import {
   Megaphone,
   Sparkles,
   Briefcase,
-  ArrowLeft
+  ArrowLeft,
+  ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -176,6 +177,13 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
           </div>
 
           <div className="flex items-center gap-6 ml-4">
+            <Link 
+              to="/" 
+              className="flex items-center gap-2 px-4 py-2 bg-teal-50 border border-teal-100 rounded-full text-teal-700 text-xs font-black shadow-sm hover:bg-teal-100 transition-all group"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-teal-600 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              <span className="uppercase tracking-widest">Visit Main Site</span>
+            </Link>
             <button className="text-slate-400 hover:text-slate-600 transition-colors relative">
               <Bell className="w-5 h-5" />
               <span className="absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>

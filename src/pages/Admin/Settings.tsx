@@ -52,6 +52,7 @@ export default function AdminSettings() {
   const [examsCovered, setExamsCovered] = useState('25+');
   const [activeUsers, setActiveUsers] = useState('12k+');
   const [successRate, setSuccessRate] = useState('88%');
+  const [establishedYear, setEstablishedYear] = useState('2026');
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -99,6 +100,7 @@ export default function AdminSettings() {
         setExamsCovered(data.examsCovered || '25+');
         setActiveUsers(data.activeUsers || '12k+');
         setSuccessRate(data.successRate || '88%');
+        setEstablishedYear(data.establishedYear || '2026');
       }
 
       if (smtpSnap.exists()) {
@@ -144,6 +146,7 @@ export default function AdminSettings() {
           examsCovered,
           activeUsers,
           successRate,
+          establishedYear,
           updatedAt: new Date().toISOString()
         }),
         setDoc(doc(db, 'settings', 'smtp'), {
@@ -256,6 +259,10 @@ export default function AdminSettings() {
                       <div className="space-y-3">
                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Institutional Success Rate</label>
                          <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/5 font-bold" value={successRate} onChange={(e) => setSuccessRate(e.target.value)} />
+                      </div>
+                      <div className="space-y-3">
+                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Established Year</label>
+                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/5 font-bold" value={establishedYear} onChange={(e) => setEstablishedYear(e.target.value)} />
                       </div>
                    </div>
                 </div>

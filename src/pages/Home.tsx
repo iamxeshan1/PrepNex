@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { 
+  Quote,
   ArrowRight, 
   Shield, 
   BookOpen, 
@@ -102,6 +103,7 @@ export default function Home() {
   const [liveClasses, setLiveClasses] = useState<any[]>([]);
   const [realSubjects, setRealSubjects] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>({});
+  const [latestThought, setLatestThought] = useState<any>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -138,11 +140,16 @@ export default function Home() {
         setRealSubjects(fetchedSubjects.slice(0, 6));
     });
 
+    const unsubThought = onSnapshot(query(collection(db, 'thoughts'), orderBy('createdAt', 'desc'), limit(1)), (snap) => {
+      if (!snap.empty) setLatestThought({ id: snap.docs[0].id, ...snap.docs[0].data() });
+    });
+
     fetchData();
     return () => {
       unsubLive();
       unsubSubjects();
       unsubSettings();
+      unsubThought();
     };
   }, []);
 
@@ -301,6 +308,37 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Thought of the Day Section */}
+      {latestThought && (
+        <section className="py-16 bg-white border-y border-slate-50 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full opacity-[0.02] pointer-events-none">
+            <Quote className="w-64 h-64 -ml-20 -mt-20 transform -rotate-12" />
+          </div>
+          <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="flex flex-col items-center gap-6"
+            >
+              <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-500 shadow-sm border border-indigo-100">
+                <Quote className="w-6 h-6 fill-current" />
+              </div>
+              <p className="text-xl md:text-2xl font-sans font-[600] text-slate-700 italic leading-relaxed tracking-tight max-w-2xl px-4">
+                "{latestThought.text}"
+              </p>
+              <div className="flex items-center gap-4">
+                <div className="h-[1px] w-8 bg-slate-200" />
+                <span className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.3em] font-sans">
+                  {latestThought.author || 'PrepNext Daily Inspiration'}
+                </span>
+                <div className="h-[1px] w-8 bg-slate-200" />
+              </div>
+            </motion.div>
+          </div>
+        </section>
+      )}
 
       {/* Individual Subject Mastery / Live Now Section */}
       <section className="py-24 bg-white">
