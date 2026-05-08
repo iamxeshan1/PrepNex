@@ -53,7 +53,7 @@ export default function AdminRevenue() {
       const monthlyStats: Record<string, number> = {};
 
       allDocs.forEach((data: any) => {
-        console.log("Analyzing data:", data);
+        console.log("Analyzing data object:", JSON.stringify(data, null, 2));
         const amount = Number(data.amount || data.totalAmount || data.price || data.total_amount || 0);
         const rawDate = data.purchaseDate || data.createdAt || data.date || data.timestamp;
         const date = rawDate?.seconds ? new Date(rawDate.seconds * 1000) : new Date(rawDate || Date.now());
