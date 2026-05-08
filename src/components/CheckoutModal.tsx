@@ -226,7 +226,10 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
             
             if (verifyResponse.ok) {
               // Redirect to dashboard with success param
-              const successUrl = `/dashboard?payment_success=true&itemId=${item.id}&userId=${user.uid}&paymentId=${response.razorpay_payment_id}&orderId=${response.razorpay_order_id}`;
+              let successUrl = `/dashboard?payment_success=true&itemId=${item.id}&userId=${user.uid}&paymentId=${response.razorpay_payment_id}&orderId=${response.razorpay_order_id}&needs_client_update=${verifyData.needsClientUpdate || false}`;
+              if (verifyData.needsClientUpdate) {
+                successUrl += `&amount=${verifyData.amount || 0}&userName=${encodeURIComponent(verifyData.userName || 'User')}`;
+              }
               window.location.href = successUrl;
             } else {
               throw new Error(verifyData.message || 'Payment verification failed on server');

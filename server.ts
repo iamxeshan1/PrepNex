@@ -803,7 +803,10 @@ app.get("/api/health-check", async (req, res) => {
             console.warn(`[Verify Payment] User doc NOT FOUND: ${userId}`);
           }
         } catch (dbErr: any) {
-          console.error("[Verify Payment] DB Sync Error:", dbErr.message);
+          console.error("[Verify Payment] DB SYNC FAILURE. Full details below.");
+          console.error("Error Code:", dbErr.code);
+          console.error("Error Message:", dbErr.message);
+          console.error("Stack Trace:", dbErr.stack);
           clientFallbackRequired = true;
         }
 
