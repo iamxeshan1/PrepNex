@@ -57,6 +57,7 @@ export default function AdminRevenue() {
         
         allTransactions.push({
           id: data.id,
+          paymentId: data.paymentId || 'N/A',
           amount,
           date,
           type: data.planName || data.type || data.source,
@@ -99,6 +100,7 @@ export default function AdminRevenue() {
     const wb = XLSX.utils.book_new();
     const exportData = filteredTransactions.map(t => ({
       "Transaction ID": t.id,
+      "Razorpay Payment ID": t.paymentId,
       "User": t.userName,
       "Amount": t.amount,
       "Date": t.date.toLocaleDateString(),
@@ -113,7 +115,8 @@ export default function AdminRevenue() {
 
   const filteredTransactions = transactions.filter(t => 
     t.userName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    t.id.toLowerCase().includes(searchTerm.toLowerCase())
+    t.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.paymentId.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const StatCard = ({ title, value, color, icon: Icon }: any) => (
@@ -185,7 +188,10 @@ export default function AdminRevenue() {
               {filteredTransactions.map(tx => (
                 <tr key={tx.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-8 py-4 font-bold text-slate-900">{tx.userName}</td>
-                  <td className="px-8 py-4 text-sm text-slate-500 font-mono">#{tx.id.slice(-8).toUpperCase()}</td>
+                  <td className="px-8 py-4 text-[10px] text-slate-500 font-mono">
+                    <p className="font-bold text-slate-700">{tx.paymentId !== 'N/A' ? tx.paymentId : 'INTERNAL'}</p>
+                    <p className="opacity-50">Ref: {tx.id.slice(-8).toUpperCase()}</p>
+                  </td>
                   <td className="px-8 py-4 text-sm text-slate-600">{tx.date.toLocaleDateString()}</td>
                   <td className="px-8 py-4 font-bold text-slate-900">₹{tx.amount.toLocaleString()}</td>
                   <td className="px-8 py-4 text-sm font-medium text-slate-500">{tx.coupon}</td>

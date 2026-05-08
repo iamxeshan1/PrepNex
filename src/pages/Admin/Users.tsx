@@ -1,6 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
-import { collection, query, getDocs, doc, updateDoc, deleteDoc, orderBy } from 'firebase/firestore';
+import { 
+  collection, 
+  query, 
+  getDocs, 
+  doc, 
+  updateDoc, 
+  deleteDoc, 
+  orderBy, 
+  writeBatch, 
+  where 
+} from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { 
   Search, 
@@ -42,15 +52,80 @@ export default function AdminUsers() {
 
   const confirmDelete = async () => {
     if (!selectedUser) return;
+    const userId = selectedUser.id;
+    
     try {
-        await deleteDoc(doc(db, 'users', selectedUser.id));
-        setUsers(users.filter(u => u.id !== selectedUser.id));
-        alert("User deleted successfully");
+        setLoading(true);
+        
+        // Collections where userId is a field
+        const collectionsToClean = [
+          'results',
+          'subscriptions',
+          'premium_subscriptions',
+          'tickets',
+          'activity_logs'
+        ];
+
+        // We use a helper to delete in batches of 500 to stay within Firestore limits
+        const deleteInBatches = async (querySnap: any) => {
+          let batch = writeBatch(db);
+          let count = 0;
+          
+          for (const docSnap of querySnap.docs) {
+            batch.delete(docSnap.ref);
+            count++;
+            
+            if (count === 490) {
+              await batch.commit();
+              batch = writeBatch(db);
+              count = 0;
+            }
+          }
+          
+          if (count > 0) {
+            await batch.commit();
+          }
+        };
+
+        // 1. Process related collections
+        for (const collName of collectionsToClean) {
+          const q = query(collection(db, collName), where('userId', '==', userId));
+          const snap = await getDocs(q);
+          if (!snap.empty) {
+            await deleteInBatches(snap);
+          }
+        }
+
+        // 2. Subcollections (specifically pushTokens as identified in server.ts)
+        const tokensSnap = await getDocs(collection(db, 'users', userId, 'pushTokens'));
+        if (!tokensSnap.empty) {
+          await deleteInBatches(tokensSnap);
+        }
+
+        // 3. Remove user from enrollment lists in liveTests
+        const liveTestsQ = query(collection(db, 'liveTests'), where('enrolledUsers', 'array-contains', userId));
+        const liveSnap = await getDocs(liveTestsQ);
+        if (!liveSnap.empty) {
+            const enrollBatch = writeBatch(db);
+            liveSnap.docs.forEach(testDoc => {
+                const enrolled = testDoc.data().enrolledUsers || [];
+                enrollBatch.update(testDoc.ref, { enrolledUsers: enrolled.filter((id: string) => id !== userId) });
+            });
+            await enrollBatch.commit();
+        }
+
+        // 4. Delete the main user document last
+        await deleteDoc(doc(db, 'users', userId));
+
+        setUsers(users.filter(u => u.id !== userId));
+        alert("User and all associated data (progress, subscriptions, etc.) deleted successfully.");
         setShowDeleteModal(false);
         setSelectedUser(null);
     } catch (error) {
-        console.error("Error deleting user:", error);
-        alert("Failed to delete user");
+        console.error("Error deleting user data:", error);
+        alert("Failed to delete user fully. Some associated data might still exist.");
+    } finally {
+        setLoading(false);
     }
   };
 

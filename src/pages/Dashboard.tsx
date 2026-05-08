@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { DashboardSidebar } from '../components/DashboardSidebar';
 import { DashboardTopHeader } from '../components/DashboardTopHeader';
-import { Award, Zap, HelpCircle, BookOpenText, TrendingUp, CheckCircle2, Megaphone, Info, AlertTriangle } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Award, Zap, HelpCircle, BookOpenText, TrendingUp, CheckCircle2, Megaphone, Info, AlertTriangle, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useSettings } from '../context/SettingsContext';
 import { collection, getDocs, query, where, documentId, orderBy, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -14,15 +14,29 @@ export default function Dashboard() {
   const { profile } = useAuth();
   const { settings } = useSettings();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [activeExams, setActiveExams] = useState<any[]>([]);
   const [upcomingTests, setUpcomingTests] = useState<any[]>([]);
   const [discoverExams, setDiscoverExams] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [notices, setNotices] = useState<any[]>([]);
+  const [paymentSuccessInfo, setPaymentSuccessInfo] = useState<{orderId: string, paymentId: string} | null>(null);
 
   const [subjectPerformance, setSubjectPerformance] = useState<any[]>([]);
   const [userProgress, setUserProgress] = useState({ mockTestsAttempted: 0, averageAccuracy: 0, studyHours: 0 });
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('payment_success') === 'true') {
+        setPaymentSuccessInfo({
+            orderId: params.get('orderId') || '',
+            paymentId: params.get('paymentId') || ''
+        });
+        // Scroll to top
+        window.scrollTo(0, 0);
+    }
+  }, [location]);
 
   useEffect(() => {
      const fetchDashboardData = async () => {
@@ -205,6 +219,43 @@ export default function Dashboard() {
           <DashboardTopHeader user={profile} onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
           <main className="p-4 lg:p-8 overflow-y-auto">
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+                  
+                  {/* Payment Success Banner */}
+                  <AnimatePresence>
+                    {paymentSuccessInfo && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                        animate={{ opacity: 1, height: 'auto', marginBottom: 32 }}
+                        exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                        className="bg-emerald-50 border-2 border-emerald-100 rounded-[2rem] p-6 md:p-8 relative overflow-hidden"
+                      >
+                         <button 
+                           onClick={() => setPaymentSuccessInfo(null)}
+                           className="absolute top-6 right-6 p-2 text-emerald-400 hover:text-emerald-600 transition-colors"
+                         >
+                           <X size={20} />
+                         </button>
+                         <div className="flex flex-col md:flex-row items-center gap-6">
+                            <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 shrink-0">
+                               <CheckCircle2 size={32} />
+                            </div>
+                            <div className="text-center md:text-left">
+                               <h2 className="text-xl font-black text-emerald-900 mb-1">Payment Successful!</h2>
+                               <p className="text-sm text-emerald-700 font-medium">Your enrollment has been confirmed. You can now access your materials.</p>
+                               {paymentSuccessInfo.paymentId && (
+                                 <div className="mt-4 inline-flex flex-wrap items-center gap-3">
+                                   <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest bg-white/50 px-3 py-1 rounded-full border border-emerald-100">
+                                     Transaction ID: {paymentSuccessInfo.paymentId}
+                                   </span>
+                                   <p className="text-[9px] text-emerald-400 font-bold italic">Keep this for your records.</p>
+                                 </div>
+                               )}
+                            </div>
+                         </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
                   {/* Welcome Panel */}
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2 bg-[#0f172a] text-white p-6 md:p-10 rounded-[2rem] flex flex-col justify-center relative overflow-hidden">
