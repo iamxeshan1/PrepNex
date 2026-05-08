@@ -4,6 +4,7 @@ import {
   collection, 
   query, 
   getDocs, 
+  getDoc,
   doc, 
   updateDoc, 
   deleteDoc, 
@@ -12,6 +13,7 @@ import {
   where 
 } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { useItemTitles } from '../../hooks/useItemTitles';
 import { 
   Search, 
   Ban, 
@@ -29,11 +31,14 @@ import {
   Plus,
   Trash2,
   Clock,
-  FileText
+  FileText,
+  CreditCard,
+  Ticket
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function AdminUsers() {
+  const { getItemTitle } = useItemTitles();
   const [users, setUsers] = useState<any[]>([]);
   const [exams, setExams] = useState<any[]>([]);
   const [agencies, setAgencies] = useState<any[]>([]);
@@ -44,6 +49,10 @@ export default function AdminUsers() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editFormData, setEditFormData] = useState<any>({});
+
+  const [showPurchasesModal, setShowPurchasesModal] = useState(false);
+  const [userPurchases, setUserPurchases] = useState<any[]>([]);
+  const [loadingPurchases, setLoadingPurchases] = useState(false);
 
   const handleDelete = async (userId: string) => {
     setSelectedUser(users.find(u => u.id === userId));
@@ -224,6 +233,61 @@ export default function AdminUsers() {
     }
   };
 
+  const viewPurchases = async (user: any) => {
+    setSelectedUser(user);
+    setShowPurchasesModal(true);
+    setLoadingPurchases(true);
+    try {
+      const subsSnap = await getDocs(query(collection(db, 'subscriptions'), where('userId', '==', user.id)));
+      const premSnap = await getDocs(query(collection(db, 'premium_subscriptions'), where('userId', '==', user.id)));
+      
+      const purchases: any[] = [];
+      subsSnap.forEach(snap => purchases.push({ id: snap.id, collection: 'subscriptions', ...snap.data() }));
+      premSnap.forEach(snap => purchases.push({ id: snap.id, collection: 'premium_subscriptions', ...snap.data() }));
+      
+      purchases.sort((a, b) => new Date(b.purchaseDate || 0).getTime() - new Date(a.purchaseDate || 0).getTime());
+      setUserPurchases(purchases);
+    } catch (error) {
+      console.error("Failed to load user purchases:", error);
+    } finally {
+      setLoadingPurchases(false);
+    }
+  };
+
+  const revokePurchase = async (purchase: any) => {
+    if (!confirm(`Are you sure you want to revoke this purchase: ${purchase.type || purchase.examId}?`)) return;
+    try {
+      // 1. Delete subscription doc
+      await deleteDoc(doc(db, purchase.collection, purchase.id));
+      
+      // 2. Adjust user doc
+      const userDocRef = doc(db, 'users', selectedUser.id);
+      if (purchase.collection === 'premium_subscriptions') {
+         await updateDoc(userDocRef, { isPremium: false, subscriptionExpiry: null });
+         setUsers(users.map(u => u.id === selectedUser.id ? { ...u, isPremium: false } : u));
+      } else {
+         const newPurchasedExams = (selectedUser.purchasedExams || []).filter((id: string) => id !== purchase.examId);
+         await updateDoc(userDocRef, { purchasedExams: newPurchasedExams });
+         setUsers(users.map(u => u.id === selectedUser.id ? { ...u, purchasedExams: newPurchasedExams } : u));
+         
+         // 3. Remove from live test enrolledUsers if it was a live test
+         if (purchase.examId) {
+             const liveRef = doc(db, 'liveTests', purchase.examId);
+             const liveSnap = await getDoc(liveRef);
+             if (liveSnap.exists()) {
+                 const enrolled = liveSnap.data().enrolledUsers || [];
+                 await updateDoc(liveRef, { enrolledUsers: enrolled.filter((id: string) => id !== selectedUser.id) });
+             }
+         }
+      }
+      
+      setUserPurchases(userPurchases.filter(p => p.id !== purchase.id));
+    } catch (error) {
+      console.error("Failed to revoke access:", error);
+      alert("Failed to revoke access");
+    }
+  };
+
   const filteredUsers = users.filter(u => 
     u.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
     u.email?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -332,6 +396,9 @@ export default function AdminUsers() {
                        <div className="flex items-center justify-end gap-2 text-slate-400">
                         <button onClick={() => { setSelectedUser(user); setEditFormData(user); setShowEditModal(true); }} className="p-2 hover:bg-slate-200 rounded text-slate-600 transition-colors" title="Edit User">
                              <User className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => viewPurchases(user)} className="p-2 hover:bg-teal-50 rounded text-teal-600 transition-colors" title="View Purchases">
+                             <CreditCard className="w-4 h-4" />
                           </button>
                           <button onClick={() => { setSelectedUser(user); setShowPrivilegeModal(true); }} className="p-2 hover:bg-slate-200 rounded text-slate-600 transition-colors" title="Manage Permissions">
                              <ShieldCheck className="w-4 h-4" />
@@ -492,6 +559,71 @@ export default function AdminUsers() {
               >
                 Confirm Delete
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showPurchasesModal && selectedUser && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-3xl rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-200 flex flex-col max-h-[85vh]">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+               <div>
+                  <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 text-teal-600" /> 
+                    Purchases & Subscriptions
+                  </h2>
+                  <p className="text-sm font-medium text-slate-500 mt-1">{selectedUser.name} ({selectedUser.email})</p>
+               </div>
+               <button onClick={() => setShowPurchasesModal(false)} className="p-2 bg-white border border-slate-200 rounded-md text-slate-400 hover:text-slate-600 transition-all">
+                 <XCircle className="w-5 h-5" />
+               </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto flex-1">
+               {loadingPurchases ? (
+                  <div className="py-12 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin" /></div>
+               ) : userPurchases.length > 0 ? (
+                  <div className="space-y-4">
+                     {userPurchases.map((purchase, index) => (
+                        <div key={purchase.id || index} className="p-4 rounded-xl border border-slate-200 flex items-center justify-between bg-white hover:border-teal-200 transition-colors">
+                           <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                 <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${
+                                    purchase.collection === 'premium_subscriptions' ? 'bg-amber-100 text-amber-700' : 'bg-teal-100 text-teal-700'
+                                 }`}>
+                                    {purchase.collection === 'premium_subscriptions' ? 'Premium Pass' : 'Exam/Test'}
+                                 </span>
+                                 <span className="text-xs font-semibold text-slate-400">
+                                    {new Date(purchase.purchaseDate || purchase.date || Date.now()).toLocaleDateString()}
+                                 </span>
+                              </div>
+                              <p className="text-base font-bold text-slate-900">{getItemTitle(purchase.examId || (purchase.collection === "premium_subscriptions" ? "PREMIUM_PASS" : null), purchase.type) || purchase.examId || 'Purchase'}</p>
+                              {purchase.paymentId && <p className="text-xs font-medium text-slate-500 mt-1">Ref: {purchase.paymentId}</p>}
+                           </div>
+                           
+                           <div className="flex items-center gap-6">
+                              <div className="text-right">
+                                 <p className="text-lg font-black text-slate-900">₹{purchase.amount || 0}</p>
+                                 {purchase.couponCode && purchase.couponCode !== 'NONE' && (
+                                    <p className="text-[10px] font-bold text-emerald-600 uppercase">Code: {purchase.couponCode}</p>
+                                 )}
+                              </div>
+                              <button 
+                                 onClick={() => revokePurchase(purchase)} 
+                                 className="px-4 py-2 bg-rose-50 text-rose-600 rounded-lg text-sm font-bold hover:bg-rose-100 transition-colors flex items-center gap-1"
+                              >
+                                 <Ban className="w-4 h-4" /> Revoke
+                              </button>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+               ) : (
+                  <div className="py-12 text-center text-slate-500 font-medium">
+                     No purchases found for this user.
+                  </div>
+               )}
             </div>
           </div>
         </div>

@@ -123,7 +123,7 @@ export default function ExamDetail() {
         <Link to="/exams" className="inline-flex items-center gap-1 text-sm font-bold text-slate-400 hover:text-[#008770] mb-8 transition-colors">
           <ChevronLeft className="w-4 h-4" /> Back to Catalog
         </Link>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div className="flex flex-col lg:grid lg:grid-cols-3 gap-8 lg:gap-12">
           {/* Main Info - Left Column */}
           <div className="lg:col-span-2 space-y-12">
             <header>
@@ -138,7 +138,7 @@ export default function ExamDetail() {
             {/* Stats row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                {[
-                 { label: 'TOTAL TESTS', value: `${exam.mockCount || 0} Mock Tests` },
+                 { label: 'TOTAL TESTS', value: `${tests.length > 0 ? tests.length : (exam.mockCount || 0)} Mock Tests` },
                  { label: 'DURATION', value: `${exam.duration || 0} Minutes` },
                  { label: 'ENROLLED', value: `${exam.enrollCount || '0'} Students` },
                  { label: 'LANGUAGE', value: exam.language || 'English / Urdu' }
@@ -150,13 +150,17 @@ export default function ExamDetail() {
                ))}
             </div>
 
-            {/* Mock Tests Section */}
+            </div>
+
+           {/* Mock Tests Section - Bottom Left */}
+           <div className="lg:col-span-2 lg:col-start-1 order-3 lg:order-none mb-12">
+             {/* Mock Tests Section */}
             <section>
               <div className="flex justify-between items-center mb-8">
                 <h2 className="text-2xl font-display font-black text-slate-900 tracking-tighter">Available Mock Tests</h2>
                 <div className="flex bg-slate-100 p-1 rounded-full text-[12px] font-bold tracking-widest">
                    <button className="px-5 py-2 bg-white rounded-full text-[#0f172a] shadow-sm">All Tests</button>
-                   <button className="px-5 py-2 text-slate-500 hover:text-slate-700">Sectional</button>
+                   <button className="hidden sm:block px-5 py-2 text-slate-500 hover:text-slate-700">Sectional</button>
                 </div>
               </div>
 
@@ -166,32 +170,35 @@ export default function ExamDetail() {
                   return (
                     <div 
                       key={test.id}
-                      className="p-6 bg-white border border-slate-100 rounded-2xl shadow-sm flex items-center justify-between gap-6"
+                      className="p-5 sm:p-6 bg-white border border-slate-100 rounded-2xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-5 transition-all hover:border-teal-100"
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">
+                      <div className="flex items-start sm:items-center gap-4">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 shrink-0">
                           <FileText className="w-6 h-6" />
                         </div>
                         <div>
-                           <h4 className="font-display font-bold text-[#0f172a] mb-1">{test.title}</h4>
-                           <div className="flex items-center gap-4 text-slate-500 text-[10px] uppercase font-bold tracking-widest">
-                              <span>{test.questionCount || 120} Questions</span>
-                              <span>{test.duration || 120} Mins</span>
-                              <span>{test.difficulty || 'Easy'}</span>
-                           </div>
+                           <h4 className="font-display font-bold text-[#0f172a] mb-1 leading-tight line-clamp-2">{test.title}</h4>
+                           <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-slate-500 text-[10px] uppercase font-bold tracking-widest mt-2 sm:mt-0">
+                               <span>{test.questionCount || 120} Qs</span>
+                               <span className="hidden sm:inline">•</span>
+                               <span>{test.duration || 120} Mins</span>
+                               <span className="hidden sm:inline">•</span>
+                               <span>{test.difficulty || 'Easy'}</span>
+                            </div>
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-4">
-                         {test.isFree && !unlocked && <span className="text-[10px] font-black uppercase text-teal-600 bg-teal-50 px-2 py-1 rounded">Free</span>}
-                         {!test.isFree && !unlocked && <span className="text-[10px] font-black uppercase text-amber-600 bg-amber-50 px-2 py-1 rounded">Premium</span>}
-                         
-                         {unlocked ? (
-                           <button onClick={() => navigate(`/test/${test.id}`)} className="px-6 py-3 bg-[#008770] text-white font-black rounded-lg text-sm hover:bg-[#006e5d] transition-all">Start</button>
-                         ) : (
-                           <button className="px-6 py-3 bg-slate-50 text-slate-500 font-bold rounded-lg text-sm border border-slate-200 flex items-center gap-2"><Lock className="w-3 h-3" /> Locked</button>
-                         )}
-                      </div>
+                      <div className="flex justify-between sm:justify-end items-center gap-3 w-full sm:w-auto border-t border-slate-50 sm:border-t-0 pt-4 sm:pt-0 shrink-0">
+                          <div className="flex items-center gap-2">
+                             {test.isFree && !unlocked && <span className="text-[10px] font-black uppercase text-teal-600 bg-teal-50 px-2.5 py-1.5 rounded-lg">Free</span>}
+                             {!test.isFree && !unlocked && <span className="text-[10px] font-black uppercase text-amber-600 bg-amber-50 px-2.5 py-1.5 rounded-lg">Premium</span>}
+                          </div>
+                          {unlocked ? (
+                            <button onClick={() => navigate(`/test/${test.id}`)} className="px-5 py-2.5 sm:px-6 sm:py-3 bg-[#008770] text-white font-black rounded-xl text-sm hover:bg-[#006e5d] transition-all whitespace-nowrap">Start</button>
+                          ) : (
+                            <button className="px-5 py-2.5 sm:px-6 sm:py-3 bg-slate-50 text-slate-500 font-bold rounded-xl text-sm border border-slate-200 flex items-center justify-center w-full sm:w-auto gap-2 whitespace-nowrap"><Lock className="w-4 h-4" /> Locked</button>
+                          )}
+                       </div>
                     </div>
                   );
                 })}
@@ -200,7 +207,7 @@ export default function ExamDetail() {
           </div>
 
           {/* Right Sidebar */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 lg:row-span-2 order-2 lg:order-none">
              <div className="sticky top-24 space-y-8">
                {/* Premium Access Card */}
                <div className="bg-[#0f172a] rounded-3xl p-8 text-white">
@@ -209,7 +216,7 @@ export default function ExamDetail() {
                      <span>Premium Access</span>
                   </div>
                   <h3 className="text-2xl font-display font-black tracking-tight mb-4">Unlock Full Test Series</h3>
-                  <p className="text-slate-400 text-sm font-medium mb-6">Get access to 35+ Full Length Mocks, Subject-wise tests, and Detailed Analytics for the {exam.name}.</p>
+                  <p className="text-slate-400 text-sm font-medium mb-6">Get access to Full Length Mocks, Subject-wise tests, and Detailed Analytics for the {exam.name}.</p>
                    <div className="flex items-baseline gap-2 mb-6">
                      <span className="text-4xl font-black text-white">{exam.isPaid ? `₹${exam.price || '499'}` : 'FREE'}</span>
                      {exam.isPaid && <span className="text-slate-500 line-through">₹{Number(exam.price || 499) + 500}</span>}
@@ -230,7 +237,7 @@ export default function ExamDetail() {
                   <h3 className="text-xl font-display font-black text-[#0f172a] mb-6">What's Included</h3>
                   <ul className="space-y-4">
                     {[
-                      '45 Full Length Mock Tests',
+                      'Full Length Mock Tests',
                       'Performance Analysis',
                       'Solved Previous Year Papers',
                       'Sectional Practice Sets'

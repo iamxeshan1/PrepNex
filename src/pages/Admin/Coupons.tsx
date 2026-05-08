@@ -3,8 +3,10 @@ import { AdminLayout } from '../../components/AdminLayout';
 import { db } from '../../lib/firebase';
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { Plus, Trash2, Ticket, Power, Activity, X, Zap, Loader2, Search, Users } from 'lucide-react';
+import { useItemTitles } from '../../hooks/useItemTitles';
 
 export default function AdminCoupons() {
+  const { getItemTitle } = useItemTitles();
   const [coupons, setCoupons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
@@ -92,7 +94,9 @@ export default function AdminCoupons() {
               userName: data.userName || data.userEmail?.split('@')[0] || 'Unknown User',
               purchaseDate: data.purchaseDate || data.createdAt || new Date().toISOString(),
               amount: data.amount || 0,
-              type: data.type || 'Purchase'
+              type: data.type || 'Purchase',
+              collection: snap === snap2 ? "premium_subscriptions" : "subscriptions",
+              examId: data.examId || null
            });
         });
       };
@@ -335,7 +339,7 @@ export default function AdminCoupons() {
                         {couponUsers.map((u, i) => (
                            <tr key={u.id + '_' + i} className="border-b border-slate-50 last:border-0 text-sm">
                               <td className="p-3 font-semibold text-slate-900">{u.userName}</td>
-                              <td className="p-3 font-medium text-slate-500">{u.type}</td>
+                              <td className="p-3 font-medium text-slate-500">{getItemTitle(u.examId || (u.collection === "premium_subscriptions" ? "PREMIUM_PASS" : null), u.type) || u.examId || 'Purchase'}</td>
                               <td className="p-3 font-black text-slate-700">₹{u.amount}</td>
                               <td className="p-3 font-medium text-slate-400">{new Date(u.purchaseDate).toLocaleDateString()}</td>
                            </tr>

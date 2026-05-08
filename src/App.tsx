@@ -48,8 +48,10 @@ import Helpdesk from './pages/Helpdesk';
 import Exams from './pages/Exams';
 import Performance from './pages/Performance';
 import Profile from './pages/Profile';
+import Transactions from './pages/Transactions';
 import About from './pages/About';
 import Announcements from './pages/Announcements';
+import MySubscriptions from './pages/MySubscriptions';
 import LiveTests from './pages/LiveTests';
 import ResetPassword from './pages/ResetPassword';
 import RequestReset from './pages/RequestReset';
@@ -107,6 +109,8 @@ export function AppContent() {
           <Route path="/exams" element={<Exams />} />
           <Route path="/performance" element={<ProtectedRoute><Performance /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
+          <Route path="/my-subscriptions" element={<ProtectedRoute><MySubscriptions /></ProtectedRoute>} />
           <Route path="/subjects" element={<Subjects />} />
           <Route path="/premium" element={<Premium />} />
           <Route path="/about" element={<About />} />

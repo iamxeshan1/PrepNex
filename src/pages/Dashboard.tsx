@@ -344,10 +344,10 @@ export default function Dashboard() {
                       <h1 className="text-2xl md:text-4xl font-black mb-3">Welcome back, {profile?.name || 'Aspirant'}!</h1>
                       <p className="text-slate-400 mb-6 md:mb-8 text-sm md:text-base max-w-lg">You're in the top 5% of aspirants this week. Keep up the momentum to secure your spot.</p>
                       <div className="flex flex-col sm:flex-row gap-4">
-                        <button className="bg-teal-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 justify-center">
+                        <button onClick={() => navigate('/exams')} className="bg-teal-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 justify-center hover:bg-teal-700 transition">
                            <Zap className="w-4 h-4" /> Resume Mock Test
                         </button>
-                        <button onClick={() => navigate('/performance')} className="bg-white/10 text-white px-6 py-3 rounded-2xl font-bold justify-center">
+                        <button onClick={() => navigate('/performance')} className="bg-white/10 text-white px-6 py-3 rounded-2xl font-bold justify-center hover:bg-white/20 transition">
                            View History
                         </button>
                       </div>
@@ -381,7 +381,7 @@ export default function Dashboard() {
                      <div className="flex flex-col gap-4">
                         <div className="flex justify-between items-center mb-2">
                            <h3 className="text-lg font-black text-[#0f172a]">Upcoming Live Tests</h3>
-                           <Link to="/exams" className="text-teal-600 text-[10px] font-black uppercase tracking-wider">View All</Link>
+                           <Link to="/live-tests" className="text-teal-600 text-[10px] font-black uppercase tracking-wider hover:underline">View All</Link>
                         </div>
                         {upcomingTests.length > 0 ? upcomingTests.map((t) => {
                             const now = new Date().getTime();
@@ -442,10 +442,15 @@ export default function Dashboard() {
                      <div className="flex flex-col gap-4">
                         <div className="flex justify-between items-center mb-2">
                            <h3 className="text-lg font-black text-[#0f172a]">Active Subscriptions</h3>
+                           {activeExams.length > 4 && (
+                               <Link to="/my-subscriptions" className="text-teal-600 text-[10px] font-black uppercase tracking-wider hover:underline flex items-center gap-1">
+                                   View All ({activeExams.length})
+                               </Link>
+                           )}
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {activeExams.length > 0 ? activeExams.map((exam) => (
-                                <div key={exam.id} className="bg-white p-5 rounded-3xl border border-slate-100 flex flex-col justify-between">
+                            {activeExams.length > 0 ? activeExams.slice(0, 4).map((exam) => (
+                                <div key={exam.id} className="bg-white p-5 rounded-3xl border border-slate-100 flex flex-col justify-between hover:border-teal-100 hover:shadow-sm transition group">
                                     <div className="flex items-start gap-3 mb-6">
                                         <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0 overflow-hidden">
                                             {exam.logoUrl ? (
@@ -455,19 +460,19 @@ export default function Dashboard() {
                                             )}
                                         </div>
                                         <div>
-                                            <h4 className="text-sm font-bold text-slate-800 leading-tight mb-1 line-clamp-2">{exam.name || exam.title}</h4>
-                                            <p className="text-[10px] text-slate-500 font-medium">Subscription Active</p>
+                                            <h4 className="text-sm font-bold text-slate-800 leading-tight mb-1 line-clamp-2 group-hover:text-teal-700 transition">{exam.name || exam.title}</h4>
+                                            <p className="text-[10px] text-slate-500 font-medium">{exam.type === 'live_test' ? 'Live Test Access' : 'Subscription Active'}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between pt-4 border-t border-slate-50">
                                         <span className="text-xs font-bold text-slate-700">One Time</span>
-                                        <button onClick={() => navigate(`/exam/${exam.id}`)} className="text-[10px] font-black text-teal-700 tracking-wider">MANAGE</button>
+                                        <button onClick={() => navigate(exam.type === 'live_test' ? `/live-test/${exam.id}` : `/exam/${exam.id}`)} className="text-[10px] font-black text-teal-700 tracking-wider hover:text-teal-800">MANAGE</button>
                                     </div>
                                 </div>
                             )) : (
                                 <div className="col-span-1 md:col-span-2 bg-white p-6 rounded-3xl border border-slate-100 text-center flex flex-col items-center justify-center min-h-[140px]">
                                     <p className="text-slate-500 text-sm font-medium mb-4">No active subscriptions found.</p>
-                                    <Link to="/exams" className="text-teal-600 bg-teal-50 px-4 py-2 rounded-xl text-xs font-bold">Browse Exams</Link>
+                                    <Link to="/exams" className="text-teal-600 bg-teal-50 px-4 py-2 rounded-xl text-xs font-bold hover:bg-teal-100 transition">Browse Exams</Link>
                                 </div>
                             )}
                         </div>
@@ -570,6 +575,9 @@ export default function Dashboard() {
                         <button onClick={handleDoubtClick} className="bg-[#4a2406] text-white p-4 rounded-2xl font-bold text-center flex items-center justify-center gap-2">
                              <HelpCircle className="w-5 h-5"/> Doubt Hub
                         </button>
+                        <Link to="/helpdesk" className="bg-[#0f172a] text-white p-4 rounded-2xl font-bold text-center flex items-center justify-center gap-2 transition hover:bg-black">
+                             <MessageCircle className="w-5 h-5"/> Support Ticket
+                        </Link>
                     </div>
                   </div>
                 </motion.div>
