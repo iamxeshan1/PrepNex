@@ -590,7 +590,14 @@ app.get("/api/health-check", async (req, res) => {
             console.error("[Payment Callback] Could not fetch order info from Razorpay:", rzrErr.message);
           }
 
-          console.log(`[Payment Callback] Syncing DB for ${userId} (${userName})...`);
+          console.log(`[Payment Callback] Syncing DB for ${userId} (${userName}). Item: ${itemId}`);
+          
+          // Shared Logic: Always add to user's purchasedExams for Dashboard visibility
+          const purchased = userData?.purchasedExams || [];
+          if (!purchased.includes(itemId)) {
+            await userRef.update({ purchasedExams: [...purchased, itemId] });
+            console.log(`[Payment Callback] Added ${itemId} to user ${userId} purchasedExams`);
+          }
           
           if (itemId === "PREMIUM_PASS") {
             const expiry = new Date();
@@ -620,7 +627,10 @@ app.get("/api/health-check", async (req, res) => {
                 itemTitle = liveTestDoc.data()?.title || "Live Test";
                 if (!amountPaid) amountPaid = liveTestDoc.data()?.price || 0;
                 const enrolled = liveTestDoc.data()?.enrolledUsers || [];
-                if (!enrolled.includes(userId)) await liveTestRef.update({ enrolledUsers: [...enrolled, userId] });
+                if (!enrolled.includes(userId)) {
+                  await liveTestRef.update({ enrolledUsers: [...enrolled, userId] });
+                  console.log(`[Payment Callback] Added ${userId} to liveTest ${itemId} enrolledUsers`);
+                }
              } else {
                 const examDoc = await database.collection("exams").doc(itemId).get();
                 if (examDoc.exists) {
@@ -628,9 +638,6 @@ app.get("/api/health-check", async (req, res) => {
                    // Fallback amount if razorpay fetch fails
                    if (!amountPaid) amountPaid = examDoc.data()?.price || 0;
                 }
-                
-                const purchased = userData?.purchasedExams || [];
-                if (!purchased.includes(itemId)) await userRef.update({ purchasedExams: [...purchased, itemId] });
              }
              
              await database.collection("subscriptions").add({
@@ -714,6 +721,8 @@ app.get("/api/health-check", async (req, res) => {
             const userData = userDoc.data();
             userName = userData?.displayName || userData?.name || userData?.email?.split('@')[0] || "User";
 
+            console.log(`[Verify Payment] Syncing DB for ${userId} (${userName}). Item: ${itemId}`);
+
             try {
               const razorpay = await getRazorpay();
               if (razorpay && razorpay_order_id !== "FREE_ORDER") {
@@ -722,7 +731,14 @@ app.get("/api/health-check", async (req, res) => {
                 couponUsed = orderInfo.notes?.couponCode || "NONE";
               }
             } catch (rzrErr) {
-              // fallback
+              console.error("[Verify Payment] Razorpay fetch failed:", rzrErr);
+            }
+
+            // Shared Logic: Always add to user's purchasedExams for Dashboard visibility
+            const purchasedExams = userData?.purchasedExams || [];
+            if (!purchasedExams.includes(itemId)) {
+              await userRef.update({ purchasedExams: [...purchasedExams, itemId] });
+              console.log(`[Verify Payment] Added ${itemId} to user ${userId} purchasedExams`);
             }
 
             if (itemId === "PREMIUM_PASS") {
@@ -758,18 +774,13 @@ app.get("/api/health-check", async (req, res) => {
                 if (!enrolledUsers.includes(userId)) {
                   enrolledUsers.push(userId);
                   await liveTestRef.update({ enrolledUsers });
+                  console.log(`[Verify Payment] Added ${userId} to liveTest ${itemId} enrolledUsers`);
                 }
               } else {
                 const examDoc = await database.collection("exams").doc(itemId).get();
                 if (examDoc.exists) {
                   itemTitle = examDoc.data()?.title || "Exam";
                   if (!amountPaid) amountPaid = examDoc.data()?.price || 0;
-                }
-                
-                const purchasedExams = userData?.purchasedExams || [];
-                if (!purchasedExams.includes(itemId)) {
-                  purchasedExams.push(itemId);
-                  await userRef.update({ purchasedExams });
                 }
               }
               
@@ -786,8 +797,11 @@ app.get("/api/health-check", async (req, res) => {
                 couponCode: couponUsed
               });
             }
+          } else {
+            console.warn(`[Verify Payment] User doc NOT FOUND: ${userId}`);
           }
         } catch (dbErr: any) {
+          console.error("[Verify Payment] DB Sync Error:", dbErr.message);
           clientFallbackRequired = true;
         }
 

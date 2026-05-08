@@ -55,21 +55,29 @@ export default function Dashboard() {
                  const agency = allAgencies.find(a => a.id === exam.agencyId);
                  return {
                      ...exam,
+                     type: 'exam',
                      logoUrl: agency?.logoUrl || exam.logoUrl
                  };
              });
-
-             if (purchasedIds.length > 0) {
-                 const active = examsWithAgencyLogos.filter(ex => purchasedIds.includes(ex.id));
-                 setActiveExams(active);
-             } else {
-                 setActiveExams([]);
-             }
 
              // Fetch live tests
              const liveTestsSnap = await getDocs(collection(db, 'liveTests'));
              const allLiveTests = liveTestsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
              
+             const enrolledLiveTests = allLiveTests.filter(t => t.enrolledUsers?.includes(profile.userId) || purchasedIds.includes(t.id));
+
+             const activeExamsAndTests = [
+               ...examsWithAgencyLogos.filter(ex => purchasedIds.includes(ex.id)),
+               ...enrolledLiveTests.map(t => ({
+                  ...t,
+                  type: 'live_test',
+                  name: t.title, // Map title to name for consistency
+                  category: 'Live Test'
+               }))
+             ];
+
+             setActiveExams(activeExamsAndTests);
+
              // Sort approaching live tests, show only upcoming or currently active ones
              const now = new Date().getTime();
              const validLiveTests = allLiveTests.filter(t => new Date(t.endTime).getTime() > now);
