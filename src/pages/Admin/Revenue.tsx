@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
-import { collection, query, getDocs, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, getDocs, onSnapshot, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { 
   Download, 
@@ -103,9 +103,17 @@ export default function AdminRevenue() {
     if (!window.confirm("Are you sure you want to clear all transaction records? This cannot be undone.")) return;
     try {
       setLoading(true);
-      await fetch('/api/admin/clear-transactions', { method: 'POST' });
-      processData();
+      const subsSnap = await getDocs(collection(db, 'subscriptions'));
+      const premiumSnap = await getDocs(collection(db, 'premium_subscriptions'));
+      
+      const deletions: Promise<void>[] = [];
+      subsSnap.forEach(docSnap => deletions.push(deleteDoc(doc(db, 'subscriptions', docSnap.id))));
+      premiumSnap.forEach(docSnap => deletions.push(deleteDoc(doc(db, 'premium_subscriptions', docSnap.id))));
+      
+      await Promise.all(deletions);
+      await processData();
     } catch (e) {
+      console.error("Failed to clear transactions:", e);
       alert("Failed to clear transactions");
       setLoading(false);
     }

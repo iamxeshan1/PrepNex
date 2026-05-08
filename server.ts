@@ -672,7 +672,7 @@ app.get("/api/health-check", async (req, res) => {
 
   app.post("/api/verify-payment", async (req, res) => {
     try {
-      const { razorpay_order_id, razorpay_payment_id, razorpay_signature, userId, itemId } = req.body;
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature, userId, itemId, clientFallbackAmount } = req.body;
       
       if (!razorpay_order_id || !razorpay_payment_id || !userId || !itemId) {
         return res.status(400).json({ status: "failed", message: "Missing required details" });
@@ -736,6 +736,10 @@ app.get("/api/health-check", async (req, res) => {
               }
             } catch (rzrErr) {
               console.error("[Verify Payment] Razorpay fetch failed:", rzrErr);
+            }
+            if (!amountPaid && clientFallbackAmount) {
+              amountPaid = Number(clientFallbackAmount);
+              console.log("[Verify Payment] Used clientFallbackAmount:", amountPaid);
             }
 
             // Shared Logic: Always add to user's purchasedExams for Dashboard visibility

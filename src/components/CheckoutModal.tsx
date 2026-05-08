@@ -218,7 +218,8 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
                 userId: user.uid,
-                itemId: item.id
+                itemId: item.id,
+                clientFallbackAmount: finalPrice
               })
             });
 
