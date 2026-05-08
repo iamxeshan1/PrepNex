@@ -839,16 +839,24 @@ app.get("/api/health-check", async (req, res) => {
     try {
       const collections = ['subscriptions', 'premium_subscriptions'];
       const db = getDb();
-      console.log("[Admin API] DB Instance:", db._buildId || "Default/Other");
+      console.log("[Admin API] DB initialized for:", db.databaseId || "default");
       for (const col of collections) {
          console.log(`[Admin API] Clearing collection: ${col}`);
          const colRef = db.collection(col);
          const docs = await colRef.get();
-         console.log(`[Admin API] Found ${docs.size} docs in ${col}`);
+         console.log(`[Admin API] Found ${docs.size} docs in ${col} to delete`);
+         
+         let deletedCount = 0;
          for (const doc of docs.docs) {
-           console.log(`[Admin API] Deleting doc: ${doc.id}`);
-           await doc.ref.delete();
+           console.log(`[Admin API] Attempting delete of doc: ${doc.id}`);
+           try {
+             await doc.ref.delete();
+             deletedCount++;
+           } catch (delErr) {
+             console.error(`[Admin API] Error deleting doc ${doc.id}:`, delErr);
+           }
          }
+         console.log(`[Admin API] Deleted ${deletedCount} docs from ${col}`);
       }
       res.json({ success: true, message: "Cleared transactions." });
     } catch (e: any) {
