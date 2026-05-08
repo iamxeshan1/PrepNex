@@ -826,6 +826,22 @@ app.get("/api/health-check", async (req, res) => {
     }
   });
 
+  app.post("/api/admin/clear-transactions", async (req, res) => {
+    try {
+      const collections = ['subscriptions', 'premium_subscriptions'];
+      for (const col of collections) {
+         const docs = await db.collection(col).get();
+         for (const doc of docs.docs) {
+           await doc.ref.delete();
+         }
+      }
+      res.json({ success: true, message: "Cleared transactions." });
+    } catch (e: any) {
+      console.error("Cleanup error:", e);
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   // Vite middleware for development
   const isProduction = process.env.NODE_ENV === "production" || fs.existsSync(path.join(process.cwd(), "dist"));
   

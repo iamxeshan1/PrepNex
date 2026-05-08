@@ -98,6 +98,18 @@ export default function AdminRevenue() {
     }
   };
 
+  const clearTransactions = async () => {
+    if (!window.confirm("Are you sure you want to clear all transaction records? This cannot be undone.")) return;
+    try {
+      setLoading(true);
+      await fetch('/api/admin/clear-transactions', { method: 'POST' });
+      processData();
+    } catch (e) {
+      alert("Failed to clear transactions");
+      setLoading(false);
+    }
+  };
+
   const exportTransactions = () => {
     const wb = XLSX.utils.book_new();
     const exportData = filteredTransactions.map(t => ({
@@ -164,14 +176,19 @@ export default function AdminRevenue() {
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
         <div className="p-8 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-xl font-black text-slate-900">Recent Transactions</h3>
-          <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input 
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-            />
+          <div className="flex gap-2">
+            <button onClick={clearTransactions} className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-700 rounded-lg text-sm font-semibold hover:bg-rose-100">
+              Clear All
+            </button>
+            <div className="relative w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input 
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
           </div>
         </div>
         <div className="overflow-x-auto">
