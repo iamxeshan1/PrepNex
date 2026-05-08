@@ -839,11 +839,14 @@ app.get("/api/health-check", async (req, res) => {
     try {
       const collections = ['subscriptions', 'premium_subscriptions'];
       const db = getDb();
+      console.log("[Admin API] DB Instance:", db._buildId || "Default/Other");
       for (const col of collections) {
          console.log(`[Admin API] Clearing collection: ${col}`);
-         const docs = await db.collection(col).get();
+         const colRef = db.collection(col);
+         const docs = await colRef.get();
          console.log(`[Admin API] Found ${docs.size} docs in ${col}`);
          for (const doc of docs.docs) {
+           console.log(`[Admin API] Deleting doc: ${doc.id}`);
            await doc.ref.delete();
          }
       }
