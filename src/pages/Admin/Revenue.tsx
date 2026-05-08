@@ -53,6 +53,7 @@ export default function AdminRevenue() {
       const monthlyStats: Record<string, number> = {};
 
       allDocs.forEach((data: any) => {
+        console.log("Analyzing data:", data);
         const amount = Number(data.amount || data.totalAmount || data.price || data.total_amount || 0);
         const rawDate = data.purchaseDate || data.createdAt || data.date || data.timestamp;
         const date = rawDate?.seconds ? new Date(rawDate.seconds * 1000) : new Date(rawDate || Date.now());
@@ -215,8 +216,8 @@ export default function AdminRevenue() {
                   <td className="px-8 py-4 font-bold text-slate-900">₹{tx.amount.toLocaleString()}</td>
                   <td className="px-8 py-4 text-sm font-medium text-slate-500">{tx.coupon}</td>
                   <td className="px-8 py-4">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${tx.status === 'Success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
-                      {tx.status === 'Success' ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${(tx.status?.toLowerCase() === 'completed' || tx.status === 'Success') ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+                      {(tx.status?.toLowerCase() === 'completed' || tx.status === 'Success') ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
                       {tx.status}
                     </span>
                   </td>

@@ -750,7 +750,7 @@ app.get("/api/health-check", async (req, res) => {
                 subscriptionExpiry: expiryDate.toISOString()
               });
 
-              await database.collection("premium_subscriptions").add({
+              const docData = {
                 userId,
                 userName,
                 type: "Premium",
@@ -761,7 +761,9 @@ app.get("/api/health-check", async (req, res) => {
                 paymentStatus: "completed",
                 amount: amountPaid || 599,
                 couponCode: couponUsed
-              });
+              };
+              console.log("[Verify Payment] Adding premium_subscriptions doc:", docData);
+              await database.collection("premium_subscriptions").add(docData);
               console.log("[Verify Payment] Successfully added premium subscription doc.");
             } else {
               let itemTitle = "Exam Package";
@@ -785,7 +787,7 @@ app.get("/api/health-check", async (req, res) => {
                 }
               }
               
-              await database.collection("subscriptions").add({
+              const subDocData = {
                 userId,
                 userName,
                 examId: itemId,
@@ -796,7 +798,9 @@ app.get("/api/health-check", async (req, res) => {
                 paymentStatus: "completed",
                 amount: amountPaid,
                 couponCode: couponUsed
-              });
+              };
+              console.log("[Verify Payment] Adding subscriptions doc:", subDocData);
+              await database.collection("subscriptions").add(subDocData);
               console.log("[Verify Payment] Successfully added subscription doc.");
             }
           } else {
@@ -827,10 +831,13 @@ app.get("/api/health-check", async (req, res) => {
   });
 
   app.post("/api/admin/clear-transactions", async (req, res) => {
+    console.log("[Admin API] Clear Transactions called.");
     try {
       const collections = ['subscriptions', 'premium_subscriptions'];
       for (const col of collections) {
+         console.log(`[Admin API] Clearing collection: ${col}`);
          const docs = await db.collection(col).get();
+         console.log(`[Admin API] Found ${docs.size} docs in ${col}`);
          for (const doc of docs.docs) {
            await doc.ref.delete();
          }
