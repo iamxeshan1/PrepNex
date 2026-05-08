@@ -29,14 +29,88 @@ export default function Dashboard() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('payment_success') === 'true') {
+        const orderId = params.get('orderId') || '';
+        const paymentId = params.get('paymentId') || '';
+        const itemId = params.get('itemId') || '';
+        const userId = params.get('userId') || '';
+        const needsClientUpdate = params.get('needs_client_update') === 'true';
+
         setPaymentSuccessInfo({
-            orderId: params.get('orderId') || '',
-            paymentId: params.get('paymentId') || ''
+            orderId,
+            paymentId
         });
+        
+        // Client-side fallback sync if server failed to update DB
+        if (needsClientUpdate && userId && itemId) {
+           console.log("[Dashboard] Performing client-side sync fallback...");
+           const performFallbackSync = async () => {
+              try {
+                const { doc, getDoc, updateDoc, setDoc, addDoc, collection } = await import('firebase/firestore');
+                
+                // 1. Update user profile
+                const userRef = doc(db, "users", userId);
+                const userSnap = await getDoc(userRef);
+                if (userSnap.exists()) {
+                  const userData = userSnap.data();
+                  const currentPurchased = userData.purchasedExams || [];
+                  if (!currentPurchased.includes(itemId)) {
+                    await setDoc(userRef, { 
+                      purchasedExams: [...currentPurchased, itemId],
+                      // If it was a premium pass
+                      ...(itemId === "PREMIUM_PASS" ? { 
+                        isPremium: true, 
+                        subscriptionExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() 
+                      } : {})
+                    }, { merge: true });
+                  }
+                }
+
+                // 2. Add subscription record
+                const amount = parseFloat(params.get('amount') || '0');
+                const userName = params.get('userName') || 'User';
+                
+                if (itemId === "PREMIUM_PASS") {
+                   await addDoc(collection(db, "premium_subscriptions"), {
+                      userId,
+                      userName,
+                      type: "Premium",
+                      purchaseDate: new Date().toISOString(),
+                      paymentId,
+                      orderId,
+                      paymentStatus: "completed",
+                      amount
+                   });
+                } else {
+                   await addDoc(collection(db, "subscriptions"), {
+                      userId,
+                      userName,
+                      examId: itemId,
+                      type: "Exam Purchase", // Generic title for fallback
+                      purchaseDate: new Date().toISOString(),
+                      paymentId,
+                      orderId,
+                      paymentStatus: "completed",
+                      amount
+                   });
+                }
+                console.log("[Dashboard] Client-side sync fallback complete.");
+              } catch (err) {
+                console.error("[Dashboard] Client-side sync fallback failed:", err);
+              }
+           };
+           performFallbackSync();
+        }
+
         // Scroll to top
         window.scrollTo(0, 0);
+        
+        // Clear URL params without reloading to keep the success state but clean the browser history
+        if (window.history.replaceState) {
+          const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+          window.history.replaceState({ path: newUrl }, '', newUrl);
+        }
     }
-  }, [location]);
+  }, [location, db]);
 
   useEffect(() => {
      const fetchDashboardData = async () => {

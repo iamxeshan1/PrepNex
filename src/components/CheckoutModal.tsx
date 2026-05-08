@@ -207,36 +207,8 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
              setIsProcessing(false);
           }
         },
-        handler: async function (response: any) {
-          try {
-            setIsProcessing(true);
-            const verifyResponse = await fetch('/api/verify-payment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                userId: user.uid,
-                itemId: item.id
-              })
-            });
-
-            const verifyData = await verifyResponse.json();
-            
-            if (verifyResponse.ok && verifyData.status === 'ok') {
-              // Redirect to dashboard with success param
-              const successUrl = `/dashboard?payment_success=true&itemId=${item.id}&userId=${user.uid}&paymentId=${response.razorpay_payment_id}&orderId=${response.razorpay_order_id}`;
-              window.location.href = successUrl;
-            } else {
-              throw new Error(verifyData.message || 'Payment verification failed on server');
-            }
-          } catch (err: any) {
-            console.error('Verification Error:', err);
-            setPaymentError(err.message || 'Payment was successful but we couldn\'t update your profile. Please contact support.');
-            setIsProcessing(false);
-          }
-        }
+        callback_url: callbackUrl,
+        redirect: true
       };
 
       const rzp = new (window as any).Razorpay(options);

@@ -526,10 +526,10 @@ app.get("/api/health-check", async (req, res) => {
       const userId = (req.query?.userId || req.body?.userId || "") as string;
       const itemId = (req.query?.itemId || req.body?.itemId || "") as string;
 
-      console.log(`[Payment Callback] Params: OID=${razorpay_order_id}, PID=${razorpay_payment_id}, UID=${userId}, ITEM=${itemId}`);
-
+      console.log(`[Payment Callback] Received data - OID: ${razorpay_order_id}, PID: ${razorpay_payment_id}, UID: ${userId}, ITEM: ${itemId}, hasSignature: ${!!razorpay_signature}`);
+      
       if (!razorpay_order_id || !razorpay_payment_id || !userId || !itemId) {
-        console.warn("[Payment Callback] Missing core parameters.");
+        console.warn("[Payment Callback] ERROR: Missing required parameters in callback.");
         return res.redirect(`/dashboard?payment_error=missing_data&userId=${userId}&itemId=${itemId}`);
       }
 
