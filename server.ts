@@ -763,10 +763,10 @@ app.get("/api/health-check", async (req, res) => {
                 paymentId: razorpay_payment_id,
                 orderId: razorpay_order_id,
                 paymentStatus: "completed",
-                amount: amountPaid || 599,
+                amount: amountPaid,
                 couponCode: couponUsed
               };
-              console.log("[Verify Payment] Adding premium_subscriptions doc:", docData);
+              console.log("[Verify Payment] PREPARING DOC DATA:", JSON.stringify(docData));
               await database.collection("premium_subscriptions").add(docData);
               console.log("[Verify Payment] Successfully added premium subscription doc.");
             } else {
@@ -803,7 +803,7 @@ app.get("/api/health-check", async (req, res) => {
                 amount: amountPaid,
                 couponCode: couponUsed
               };
-              console.log("[Verify Payment] Adding subscriptions doc:", subDocData);
+              console.log("[Verify Payment] PREPARING SUB DOC DATA:", JSON.stringify(subDocData));
               await database.collection("subscriptions").add(subDocData);
               console.log("[Verify Payment] Successfully added subscription doc.");
             }
