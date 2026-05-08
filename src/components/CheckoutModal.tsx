@@ -53,12 +53,19 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
       const couponData = snap.docs[0].data();
       const isActive = couponData.isActive === true || couponData.isActive === "true";
 
-      if (isActive) {
-        setDiscount({ type: couponData.discountType, value: couponData.discountValue });
-      } else {
+      if (!isActive) {
         setCouponError('This coupon is expired or disabled');
         setDiscount(null);
+        return;
       }
+
+      if (couponData.discountType === 'fixed' && couponData.minAmount && item.price < couponData.minAmount) {
+         setCouponError(`This coupon requires a minimum purchase of ₹${couponData.minAmount}`);
+         setDiscount(null);
+         return;
+      }
+
+      setDiscount({ type: couponData.discountType, value: couponData.discountValue });
     } catch (err) {
       setCouponError('Network error. Try again.');
       setDiscount(null);

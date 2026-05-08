@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
 import { db } from '../../lib/firebase';
-import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { Plus, Trash2, Ticket, Power, Activity, X, Zap, Loader2, Search } from 'lucide-react';
+import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
+import { Plus, Trash2, Ticket, Power, Activity, X, Zap, Loader2, Search, Users } from 'lucide-react';
 
 export default function AdminCoupons() {
   const [coupons, setCoupons] = useState<any[]>([]);
@@ -14,7 +14,14 @@ export default function AdminCoupons() {
   const [code, setCode] = useState('');
   const [discountType, setDiscountType] = useState('fixed');
   const [discountValue, setDiscountValue] = useState('');
+  const [minAmount, setMinAmount] = useState('');
   const [isActive, setIsActive] = useState(true);
+
+  // Usage Modal State
+  const [usageModalOpen, setUsageModalOpen] = useState(false);
+  const [selectedCoupon, setSelectedCoupon] = useState<any>(null);
+  const [couponUsers, setCouponUsers] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
   const fetchCoupons = async () => {
     setLoading(true);
@@ -33,10 +40,11 @@ export default function AdminCoupons() {
         code: code.trim().toUpperCase(),
         discountType,
         discountValue: Number(discountValue),
+        minAmount: discountType === 'fixed' && minAmount ? Number(minAmount) : null,
         isActive,
         createdAt: new Date().toISOString()
       });
-      setCode(''); setDiscountValue(''); setDiscountType('fixed'); setIsActive(true);
+      setCode(''); setDiscountValue(''); setMinAmount(''); setDiscountType('fixed'); setIsActive(true);
       setShowAdd(false);
       fetchCoupons();
     } catch (err) {
@@ -60,6 +68,44 @@ export default function AdminCoupons() {
       fetchCoupons();
     } catch (err) {
        console.error(err);
+    }
+  };
+
+  const viewCouponUsage = async (coupon: any) => {
+    setSelectedCoupon(coupon);
+    setUsageModalOpen(true);
+    setLoadingUsers(true);
+    setCouponUsers([]);
+    try {
+      const q1 = query(collection(db, 'subscriptions'), where('couponCode', '==', coupon.code));
+      const q2 = query(collection(db, 'premium_subscriptions'), where('couponCode', '==', coupon.code));
+      
+      const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+      const usages: any[] = [];
+      
+      const processSnap = (snap: any) => {
+        snap.forEach((docSnap: any) => {
+           const data = docSnap.data();
+           usages.push({
+              id: docSnap.id,
+              userId: data.userId,
+              userName: data.userName || data.userEmail?.split('@')[0] || 'Unknown User',
+              purchaseDate: data.purchaseDate || data.createdAt || new Date().toISOString(),
+              amount: data.amount || 0,
+              type: data.type || 'Purchase'
+           });
+        });
+      };
+      
+      processSnap(snap1);
+      processSnap(snap2);
+      
+      usages.sort((a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime());
+      setCouponUsers(usages);
+    } catch (err) {
+      console.error("Failed to fetch coupon usages:", err);
+    } finally {
+      setLoadingUsers(false);
     }
   };
 
@@ -130,6 +176,18 @@ export default function AdminCoupons() {
                  placeholder={discountType === 'fixed' ? '500' : '20'}
                />
              </div>
+             
+             {discountType === 'fixed' && (
+               <div>
+                 <label className="block text-sm font-semibold text-slate-700 mb-2">Minimum Amount (Optional)</label>
+                 <input 
+                   type="number"
+                   className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-indigo-500 focus:border-indigo-500 font-bold text-slate-800"
+                   value={minAmount} onChange={(e) => setMinAmount(e.target.value)} 
+                   placeholder="e.g. 1000"
+                 />
+               </div>
+             )}
            </div>
 
            <div className="mt-8 flex items-center gap-6">
@@ -189,6 +247,9 @@ export default function AdminCoupons() {
                          <p className="font-black text-slate-900 group-hover:text-indigo-700 transition-colors uppercase tracking-wider text-sm mt-0.5">
                            {coupon.code}
                          </p>
+                         {coupon.minAmount && (
+                            <p className="text-[10px] font-bold text-emerald-600 mt-0.5 uppercase tracking-wider">Min ₹{coupon.minAmount}</p>
+                         )}
                        </div>
                     </div>
                   </td>
@@ -207,6 +268,13 @@ export default function AdminCoupons() {
                   </td>
                   <td className="p-4 pr-6 text-right">
                      <div className="flex items-center justify-end gap-2 text-slate-400">
+                        <button 
+                           onClick={() => viewCouponUsage(coupon)}
+                           className="p-2 rounded hover:bg-indigo-50 text-indigo-500 transition-colors" 
+                           title="View Usage"
+                        >
+                           <Users className="w-4 h-4" />
+                        </button>
                         <button 
                            onClick={() => toggleStatus(coupon.id, coupon.isActive)}
                            className={`p-2 rounded transition-colors ${coupon.isActive ? 'hover:bg-amber-50 text-amber-500' : 'hover:bg-emerald-50 text-emerald-500'}`} 
@@ -230,6 +298,59 @@ export default function AdminCoupons() {
           </table>
         )}
       </div>
+
+      {usageModalOpen && selectedCoupon && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl relative">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-indigo-600" /> 
+                  Usage: {selectedCoupon.code}
+                </h2>
+                <p className="text-sm font-medium text-slate-500 mt-1">Total uses: {couponUsers.length}</p>
+              </div>
+              <button 
+                 onClick={() => setUsageModalOpen(false)}
+                 className="p-2 text-slate-400 hover:text-rose-500 transition-colors bg-slate-50 hover:bg-rose-50 rounded-lg"
+              >
+                 <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-4 overflow-y-auto flex-1">
+               {loadingUsers ? (
+                  <div className="py-12 flex justify-center"><Loader2 className="w-8 h-8 text-indigo-600 animate-spin" /></div>
+               ) : couponUsers.length > 0 ? (
+                  <table className="w-full text-left">
+                     <thead className="bg-slate-50 text-xs font-bold text-slate-400 uppercase">
+                        <tr>
+                          <th className="p-3 rounded-l-lg">User</th>
+                          <th className="p-3">Type</th>
+                          <th className="p-3">Amount</th>
+                          <th className="p-3 rounded-r-lg">Date</th>
+                        </tr>
+                     </thead>
+                     <tbody>
+                        {couponUsers.map((u, i) => (
+                           <tr key={u.id + '_' + i} className="border-b border-slate-50 last:border-0 text-sm">
+                              <td className="p-3 font-semibold text-slate-900">{u.userName}</td>
+                              <td className="p-3 font-medium text-slate-500">{u.type}</td>
+                              <td className="p-3 font-black text-slate-700">₹{u.amount}</td>
+                              <td className="p-3 font-medium text-slate-400">{new Date(u.purchaseDate).toLocaleDateString()}</td>
+                           </tr>
+                        ))}
+                     </tbody>
+                  </table>
+               ) : (
+                  <div className="py-12 text-center text-slate-500 font-medium">
+                     No usages found for this coupon yet.
+                  </div>
+               )}
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 }
