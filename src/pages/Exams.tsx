@@ -45,7 +45,7 @@ export default function Exams() {
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-12">
         <div className="mb-12">
           <h1 className="text-4xl md:text-5xl font-display font-black text-slate-900 tracking-tighter mb-4">Explore All Exam Series</h1>
-          <p className="text-slate-500 text-lg font-medium max-w-2xl">Access Jammu & Kashmir's most comprehensive test series library. Verified by toppers, designed for excellence.</p>
+          <p className="text-slate-500 text-lg font-medium max-w-2xl">Access the most comprehensive test series library. Verified by toppers, designed for excellence.</p>
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto pb-6 scrollbar-hide mb-8">

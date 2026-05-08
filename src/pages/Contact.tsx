@@ -82,6 +82,18 @@ export default function Contact() {
                       <p className="text-lg font-bold text-white max-w-xs">{settings?.contactAddress || 'Digital Hub, New Delhi, India'}</p>
                     </div>
                   </div>
+
+                  {settings?.doubtLink && (
+                    <div className="flex items-center gap-5 group cursor-pointer" onClick={() => window.open(settings.doubtLink, '_blank')}>
+                      <div className="w-14 h-14 bg-teal-500/10 border border-teal-500/20 rounded-2xl flex items-center justify-center text-teal-400 group-hover:bg-teal-500 group-hover:text-white transition-all duration-300">
+                        <MessageSquare className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-teal-400 uppercase tracking-widest mb-1">Interactive Doubts</p>
+                        <p className="text-lg font-bold text-white max-w-xs hover:underline transition-all">Join Doubt Clearing Hub</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-12 pt-10 border-t border-white/5">

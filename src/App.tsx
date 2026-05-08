@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { SettingsProvider } from './context/SettingsContext';
 import { collection, getDocs, query, where, addDoc, setDoc, doc, limit } from 'firebase/firestore';
 import { db } from './lib/firebase';
 
@@ -48,6 +49,7 @@ import Exams from './pages/Exams';
 import Performance from './pages/Performance';
 import Profile from './pages/Profile';
 import About from './pages/About';
+import Announcements from './pages/Announcements';
 import LiveTests from './pages/LiveTests';
 import ResetPassword from './pages/ResetPassword';
 import RequestReset from './pages/RequestReset';
@@ -108,6 +110,7 @@ export function AppContent() {
           <Route path="/subjects" element={<Subjects />} />
           <Route path="/premium" element={<Premium />} />
           <Route path="/about" element={<About />} />
+          <Route path="/announcements" element={<Announcements />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/exam/:examId" element={<ExamDetail />} />
@@ -283,8 +286,10 @@ export function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <SettingsProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </SettingsProvider>
   );
 }

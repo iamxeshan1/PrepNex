@@ -59,6 +59,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 <Link to="/exams" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/exams') ? 'text-teal-600' : 'text-slate-600 hover:text-slate-900'}`}>Exams</Link>
                 <Link to="/subjects" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/subjects') ? 'text-teal-600' : 'text-slate-600 hover:text-slate-900'}`}>Subjects</Link>
                 <Link to="/live-tests" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/live-tests') ? 'text-teal-600' : 'text-slate-600 hover:text-slate-900'}`}>Live Tests</Link>
+                <Link to="/announcements" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/announcements') ? 'text-teal-600' : 'text-slate-600 hover:text-slate-900'}`}>Announcements</Link>
                 <Link to="/study-material" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/study-material') ? 'text-teal-600' : 'text-slate-600 hover:text-slate-900'}`}>Study Material</Link>
                 {user && (
                   <Link to="/dashboard" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/dashboard') ? 'text-teal-600' : 'text-slate-600 hover:text-slate-900'}`}>My Library</Link>
@@ -132,6 +133,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   className={`block text-sm font-bold p-3 rounded-xl ${isActive('/live-tests') ? 'bg-teal-50 text-teal-600' : 'text-slate-600'}`}
                 >
                   Live Tests
+                </Link>
+                <Link 
+                  to="/announcements" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/announcements') ? 'bg-teal-50 text-teal-600' : 'text-slate-600'}`}
+                >
+                  Announcements
                 </Link>
                 <Link 
                   to="/study-material" 
@@ -227,6 +235,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   <li><Link to="/subjects" className="text-slate-500 hover:text-teal-600 text-sm font-medium transition-colors">Subject Catalog</Link></li>
                   <li><Link to="/live-tests" className="text-slate-500 hover:text-teal-600 text-sm font-medium transition-colors">Live Tests</Link></li>
                   <li><Link to="/study-material" className="text-slate-500 hover:text-teal-600 text-sm font-medium transition-colors">Study Material</Link></li>
+                  {socialLinks.doubtLink && (
+                    <li><a href={socialLinks.doubtLink} target="_blank" rel="noreferrer" className="text-teal-600 hover:text-teal-700 text-sm font-bold transition-colors">Doubt Clearing Hub</a></li>
+                  )}
                 </ul>
               </div>
 

@@ -16,6 +16,7 @@ import {
   BarChart3, 
   Globe, 
   Lock, 
+  HelpCircle,
   Server,
   Zap,
   Layout,
@@ -35,6 +36,7 @@ export default function AdminSettings() {
   const [socialTelegram, setSocialTelegram] = useState('');
   const [socialWhatsapp, setSocialWhatsapp] = useState('');
   const [socialDiscord, setSocialDiscord] = useState('');
+  const [doubtLink, setDoubtLink] = useState('');
   
   const [smtpEmail, setSmtpEmail] = useState('');
   const [smtpPassword, setSmtpPassword] = useState('');
@@ -43,6 +45,7 @@ export default function AdminSettings() {
   const [contactPhone, setContactPhone] = useState('');
   const [contactAddress, setContactAddress] = useState('');
   const [contactMapUrl, setContactMapUrl] = useState('');
+  const [heroHeading, setHeroHeading] = useState('Master Exams with Confidence.');
   const [heroTagline, setHeroTagline] = useState('Crack exams with smart practice');
   const [aspirantCount, setAspirantCount] = useState('10,000+');
   const [totalTests, setTotalTests] = useState('500+');
@@ -57,11 +60,17 @@ export default function AdminSettings() {
   useEffect(() => { fetchSettings(); }, []);
 
   const fetchSettings = async () => {
+    setLoading(true);
     try {
+      // Use individual try-catch or handle separately if one might fail intentionally
+      const payRef = doc(db, 'settings', 'razorpay');
+      const genRef = doc(db, 'settings', 'general');
+      const smtpRef = doc(db, 'settings', 'smtp');
+
       const [paySnap, genSnap, smtpSnap] = await Promise.all([
-        getDoc(doc(db, 'settings', 'razorpay')),
-        getDoc(doc(db, 'settings', 'general')),
-        getDoc(doc(db, 'settings', 'smtp'))
+        getDoc(payRef),
+        getDoc(genRef),
+        getDoc(smtpRef)
       ]);
       
       if (paySnap.exists()) {
@@ -78,10 +87,12 @@ export default function AdminSettings() {
         setSocialTelegram(data.socialTelegram || '');
         setSocialWhatsapp(data.socialWhatsapp || '');
         setSocialDiscord(data.socialDiscord || '');
+        setDoubtLink(data.doubtLink || '');
         setContactEmail(data.contactEmail || '');
         setContactPhone(data.contactPhone || '');
         setContactAddress(data.contactAddress || '');
         setContactMapUrl(data.contactMapUrl || '');
+        setHeroHeading(data.heroHeading || 'Master Exams with Confidence.');
         setHeroTagline(data.heroTagline || 'Crack exams with smart practice');
         setAspirantCount(data.aspirantCount || '10,000+');
         setTotalTests(data.totalTests || '500+');
@@ -97,6 +108,7 @@ export default function AdminSettings() {
       }
     } catch (error) {
       console.error("Error fetching settings:", error);
+      setMessage({ type: 'error', text: 'Failed to source cloud preferences. Check console for details.' });
     } finally {
       setLoading(false);
     }
@@ -120,10 +132,12 @@ export default function AdminSettings() {
           socialTelegram,
           socialWhatsapp,
           socialDiscord,
+          doubtLink,
           contactEmail,
           contactPhone,
           contactAddress,
           contactMapUrl,
+          heroHeading,
           heroTagline,
           aspirantCount,
           totalTests,
@@ -147,8 +161,6 @@ export default function AdminSettings() {
     }
   };
 
-  if (loading) return <AdminLayout title="System Configuration"><div className="py-20 text-center font-black text-slate-400 animate-pulse">Sourcing Node Preferences...</div></AdminLayout>;
-
   return (
     <AdminLayout title="System Configuration">
       <form onSubmit={handleSave} className="max-w-5xl space-y-12 pb-32">
@@ -157,13 +169,16 @@ export default function AdminSettings() {
               <h2 className="text-3xl font-black text-slate-900 tracking-tight font-display">Core Infrastructure</h2>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 italic">Propagating global settings across PrepNext ecosystem</p>
            </div>
-           <button 
-              type="submit" 
-              disabled={saving}
-              className="px-10 py-5 bg-[#0f172a] text-white rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-2xl hover:bg-black transition-all active:scale-95 flex items-center justify-center gap-3"
-            >
-              <Save className="w-5 h-5" /> {saving ? 'Indexing...' : 'Commit All Settings'}
-            </button>
+           <div className="flex items-center gap-4">
+             {loading && <div className="text-xs font-bold text-slate-400 animate-pulse uppercase tracking-widest">Sourcing Cloud Prefs...</div>}
+             <button 
+                type="submit" 
+                disabled={saving || loading}
+                className="px-10 py-5 bg-[#0f172a] text-white rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-2xl hover:bg-black transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
+              >
+                <Save className="w-5 h-5" /> {saving ? 'Indexing...' : 'Commit All Settings'}
+              </button>
+           </div>
         </header>
 
         {message && (
@@ -171,11 +186,27 @@ export default function AdminSettings() {
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${message.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
                {message.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
             </div>
-            <p className="text-sm font-black uppercase tracking-widest">{message.text}</p>
+            <p className="text-sm font-black uppercase tracking-widest flex-1">{message.text}</p>
+            {message.type === 'error' && (
+              <button 
+                type="button"
+                onClick={() => fetchSettings()}
+                className="text-[10px] font-black uppercase tracking-widest bg-rose-600 text-white px-4 py-2 rounded-lg hover:bg-rose-700 transition-colors"
+              >
+                Retry Link
+              </button>
+            )}
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {loading && !message && (
+          <div className="py-32 flex flex-col items-center justify-center space-y-4 opacity-50 bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
+             <div className="w-12 h-12 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin"></div>
+             <p className="text-sm font-black text-slate-400 uppercase tracking-widest">Bridging Cloud Repository...</p>
+          </div>
+        )}
+
+        <div className={`grid grid-cols-1 lg:grid-cols-3 gap-8 items-start transition-opacity duration-300 ${loading ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
            <div className="lg:col-span-2 space-y-10">
               {/* General Platform Controls */}
               <section className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-10 relative overflow-hidden group">
@@ -191,6 +222,12 @@ export default function AdminSettings() {
 
                 <div className="space-y-6">
                    <div className="space-y-3">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Hero Main Heading</label>
+                      <input 
+                        className="w-full px-8 py-4 bg-slate-50 border border-slate-200 rounded-[2xl] outline-none focus:ring-4 focus:ring-indigo-500/5 font-bold text-slate-700 text-xl shadow-inner mb-4"
+                        value={heroHeading} onChange={(e) => setHeroHeading(e.target.value)} 
+                        placeholder="e.g. Master Exams with Confidence."
+                      />
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Hero Tagline Statement</label>
                       <input 
                         className="w-full px-8 py-4 bg-slate-50 border border-slate-200 rounded-[2rem] outline-none focus:ring-4 focus:ring-indigo-500/5 font-bold text-slate-700 text-lg shadow-inner"
@@ -344,6 +381,10 @@ export default function AdminSettings() {
                     <div className="relative group/input">
                        <MessageSquare className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-500/40 group-focus-within/input:text-indigo-500 transition-colors" />
                        <input className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-bold text-slate-600 text-xs" placeholder="Discord URL" value={socialDiscord} onChange={(e) => setSocialDiscord(e.target.value)} />
+                    </div>
+                    <div className="relative group/input">
+                       <HelpCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-teal-500/40 group-focus-within/input:text-teal-500 transition-colors" />
+                       <input className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500/20 font-bold text-slate-600 text-xs" placeholder="Doubt Clearing URL (WhatsApp/Telegram)" value={doubtLink} onChange={(e) => setDoubtLink(e.target.value)} />
                     </div>
                  </div>
                  <div className="pt-2">

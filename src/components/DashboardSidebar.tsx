@@ -1,9 +1,12 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpenText, Book, BarChart3, HelpCircle, User, LogOut } from 'lucide-react';
-import { DOUBT_LINK } from '../constants';
+import { LayoutDashboard, BookOpenText, Book, BarChart3, HelpCircle, User, ShieldCheck } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 
 export const DashboardSidebar = () => {
+  const { isAdmin } = useAuth();
+  const { settings } = useSettings();
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
 
@@ -15,8 +18,16 @@ export const DashboardSidebar = () => {
     { name: 'My Profile', icon: User, path: '/profile' },
   ];
 
+  if (isAdmin) {
+    navItems.push({ name: 'Admin Panel', icon: ShieldCheck, path: '/admin' });
+  }
+
   const handleDoubtClick = () => {
-    window.open(DOUBT_LINK, '_blank');
+    if (settings?.doubtLink) {
+      window.open(settings.doubtLink, '_blank');
+    } else {
+      alert("Doubt clearing link is not configured yet.");
+    }
   };
 
   return (

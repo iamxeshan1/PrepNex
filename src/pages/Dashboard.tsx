@@ -3,21 +3,23 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { DashboardSidebar } from '../components/DashboardSidebar';
 import { DashboardTopHeader } from '../components/DashboardTopHeader';
-import { Award, Zap, HelpCircle, BookOpenText, TrendingUp, CheckCircle2 } from 'lucide-react';
+import { Award, Zap, HelpCircle, BookOpenText, TrendingUp, CheckCircle2, Megaphone, Info, AlertTriangle } from 'lucide-react';
 import { motion } from 'motion/react';
-import { DOUBT_LINK } from '../constants';
+import { useSettings } from '../context/SettingsContext';
 import { collection, getDocs, query, where, documentId, orderBy, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 export default function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { profile } = useAuth();
+  const { settings } = useSettings();
   const navigate = useNavigate();
 
   const [activeExams, setActiveExams] = useState<any[]>([]);
   const [upcomingTests, setUpcomingTests] = useState<any[]>([]);
   const [discoverExams, setDiscoverExams] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [notices, setNotices] = useState<any[]>([]);
 
   const [subjectPerformance, setSubjectPerformance] = useState<any[]>([]);
   const [userProgress, setUserProgress] = useState({ mockTestsAttempted: 0, averageAccuracy: 0, studyHours: 0 });
@@ -64,6 +66,10 @@ export default function Dashboard() {
              // Discover New
              const newExams = examsWithAgencyLogos.filter(ex => !purchasedIds.includes(ex.id)).slice(0, 3);
              setDiscoverExams(newExams);
+
+             // Fetch latest announcements
+             const noticesSnap = await getDocs(query(collection(db, 'notices'), orderBy('createdAt', 'desc'), limit(3)));
+             setNotices(noticesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any })));
 
              // Subject Performance
              const resultsSnap = await getDocs(query(collection(db, 'results'), where('userId', '==', profile.userId)));
@@ -178,7 +184,11 @@ export default function Dashboard() {
   };
 
   const handleDoubtClick = () => {
-    window.open(DOUBT_LINK, '_blank');
+    if (settings?.doubtLink) {
+      window.open(settings.doubtLink, '_blank');
+    } else {
+      alert("Doubt clearing link is not configured yet.");
+    }
   };
 
   return (
@@ -331,21 +341,42 @@ export default function Dashboard() {
                      </div>
                   </div>
 
-                  {/* Resume Learning & Discover New */}
+                  {/* Announcements & Discover New */}
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                      <div className="lg:col-span-2 bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm">
-                          <h3 className="text-lg font-black text-[#0f172a] mb-6">Resume Learning</h3>
-                          <div className="bg-slate-50 p-4 md:p-6 rounded-3xl flex gap-4 md:gap-6 flex-col md:flex-row">
-                            <div className="w-full md:w-40 h-24 bg-slate-200 rounded-2xl flex items-center justify-center">
-                                <span className="text-slate-400 text-3xl font-black">▶</span>
-                            </div>
-                            <div className="flex-1">
-                                <h4 className="font-bold text-slate-800">Quantitative Aptitude: Level 3</h4>
-                                <p className="text-xs text-slate-500 mb-4">Last activity: 2 hours ago • Section 3/5</p>
-                                <div className="h-2 bg-slate-200 rounded-full w-full">
-                                    <div className="h-full bg-teal-600 rounded-full w-[60%]"/>
-                                </div>
-                            </div>
+                      <div className="lg:col-span-2 bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col">
+                          <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-black text-[#0f172a] flex items-center gap-2">
+                                <Megaphone className="w-5 h-5 text-indigo-600" /> Platform Announcements
+                            </h3>
+                            <button onClick={() => navigate('/announcements')} className="text-indigo-600 text-[10px] font-black uppercase tracking-wider hover:underline">View All Updates</button>
+                          </div>
+                          
+                          <div className="space-y-4 flex-1">
+                            {notices.length > 0 ? notices.map((notice) => (
+                              <div key={notice.id} className="p-4 rounded-3xl border border-slate-50 bg-slate-50/30 group hover:bg-slate-50 transition-all flex items-start gap-4">
+                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                                   notice.type === 'warning' ? 'bg-amber-100 text-amber-600' :
+                                   notice.type === 'update' ? 'bg-teal-100 text-teal-600' :
+                                   'bg-indigo-100 text-indigo-600'
+                                 }`}>
+                                    {notice.type === 'warning' ? <AlertTriangle className="w-5 h-5" /> : 
+                                     notice.type === 'update' ? <Zap className="w-5 h-5" /> : 
+                                     <Info className="w-5 h-5" />}
+                                 </div>
+                                 <div className="flex-1 min-w-0">
+                                    <h4 className="font-bold text-slate-800 text-sm truncate">{notice.title}</h4>
+                                    <p className="text-xs text-slate-500 line-clamp-1">{notice.content}</p>
+                                 </div>
+                                 <div className="text-right shrink-0">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase">{new Date(notice.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</p>
+                                 </div>
+                              </div>
+                            )) : (
+                              <div className="h-full flex flex-col items-center justify-center py-10 opacity-50">
+                                 <Megaphone className="w-10 h-10 mb-3 text-slate-300" />
+                                 <p className="text-sm font-medium text-slate-400">No announcements yet</p>
+                              </div>
+                            )}
                           </div>
                       </div>
                       <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col">

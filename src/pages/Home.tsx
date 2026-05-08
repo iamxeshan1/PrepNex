@@ -169,7 +169,15 @@ export default function Home() {
             transition={{ delay: 0.1 }}
             className="text-5xl md:text-6xl font-sans font-[800] text-[#0f172a] mb-8 tracking-tighter max-w-4xl mx-auto leading-[1.15]"
           >
-            Master Exams with <span className="text-[#008770]">Confidence.</span>
+            {settings.heroHeading ? (
+              settings.heroHeading.includes('.') ? (
+                <>
+                  {settings.heroHeading.split('.')[0]} <span className="text-[#008770]">{settings.heroHeading.split('.')[1]}</span>
+                </>
+              ) : settings.heroHeading
+            ) : (
+              <>Master Exams with <span className="text-[#008770]">Confidence.</span></>
+            )}
           </motion.h1>
           
           <motion.p 
@@ -178,7 +186,7 @@ export default function Home() {
             transition={{ delay: 0.2 }}
             className="text-slate-500 text-lg md:text-xl font-medium max-w-2xl mx-auto mb-12 leading-relaxed tracking-tight"
           >
-            Get the most comprehensive mock tests and AI-driven performance insights.
+            {settings.heroTagline || "Get the most comprehensive mock tests and AI-driven performance insights."}
           </motion.p>
           
           <motion.div 
