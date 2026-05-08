@@ -170,11 +170,13 @@ export default function Home() {
             className="text-5xl md:text-6xl font-sans font-[800] text-[#0f172a] mb-8 tracking-tighter max-w-4xl mx-auto leading-[1.15]"
           >
             {settings.heroHeading ? (
-              settings.heroHeading.includes('.') ? (
+              settings.heroHeading.includes('|') ? (
                 <>
-                  {settings.heroHeading.split('.')[0]} <span className="text-[#008770]">{settings.heroHeading.split('.')[1]}</span>
+                  {settings.heroHeading.split('|')[0]} <span className="text-[#008770]">{settings.heroHeading.split('|')[1]}</span>
                 </>
-              ) : settings.heroHeading
+              ) : (
+                settings.heroHeading
+              )
             ) : (
               <>Master Exams with <span className="text-[#008770]">Confidence.</span></>
             )}

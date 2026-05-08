@@ -45,10 +45,10 @@ export default function AdminSettings() {
   const [contactPhone, setContactPhone] = useState('');
   const [contactAddress, setContactAddress] = useState('');
   const [contactMapUrl, setContactMapUrl] = useState('');
-  const [heroHeading, setHeroHeading] = useState('Master Exams with Confidence.');
-  const [heroTagline, setHeroTagline] = useState('Crack exams with smart practice');
-  const [aspirantCount, setAspirantCount] = useState('10,000+');
-  const [totalTests, setTotalTests] = useState('500+');
+  const [heroHeading, setHeroHeading] = useState('Master Exams with | Confidence.');
+  const [heroTagline, setHeroTagline] = useState('Get the most comprehensive mock tests and AI-driven performance insights.');
+  const [aspirantCount, setAspirantCount] = useState('50,000+');
+  const [totalTests, setTotalTests] = useState('1,200+');
   const [examsCovered, setExamsCovered] = useState('25+');
   const [activeUsers, setActiveUsers] = useState('12k+');
   const [successRate, setSuccessRate] = useState('88%');
@@ -92,10 +92,10 @@ export default function AdminSettings() {
         setContactPhone(data.contactPhone || '');
         setContactAddress(data.contactAddress || '');
         setContactMapUrl(data.contactMapUrl || '');
-        setHeroHeading(data.heroHeading || 'Master Exams with Confidence.');
-        setHeroTagline(data.heroTagline || 'Crack exams with smart practice');
-        setAspirantCount(data.aspirantCount || '10,000+');
-        setTotalTests(data.totalTests || '500+');
+        setHeroHeading(data.heroHeading || 'Master Exams with | Confidence.');
+        setHeroTagline(data.heroTagline || 'Get the most comprehensive mock tests and AI-driven performance insights.');
+        setAspirantCount(data.aspirantCount || '50,000+');
+        setTotalTests(data.totalTests || '1,200+');
         setExamsCovered(data.examsCovered || '25+');
         setActiveUsers(data.activeUsers || '12k+');
         setSuccessRate(data.successRate || '88%');
@@ -221,18 +221,24 @@ export default function AdminSettings() {
                 </div>
 
                 <div className="space-y-6">
-                   <div className="space-y-3">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Hero Main Heading</label>
-                      <input 
-                        className="w-full px-8 py-4 bg-slate-50 border border-slate-200 rounded-[2xl] outline-none focus:ring-4 focus:ring-indigo-500/5 font-bold text-slate-700 text-xl shadow-inner mb-4"
-                        value={heroHeading} onChange={(e) => setHeroHeading(e.target.value)} 
-                        placeholder="e.g. Master Exams with Confidence."
-                      />
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Hero Tagline Statement</label>
-                      <input 
-                        className="w-full px-8 py-4 bg-slate-50 border border-slate-200 rounded-[2rem] outline-none focus:ring-4 focus:ring-indigo-500/5 font-bold text-slate-700 text-lg shadow-inner"
-                        value={heroTagline} onChange={(e) => setHeroTagline(e.target.value)} 
-                      />
+                   <div className="bg-slate-50 p-8 rounded-3xl border border-slate-200 shadow-inner space-y-6">
+                      <div className="space-y-3">
+                         <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest ml-1">Landing Page: Main Hero Heading</label>
+                         <input 
+                           className="w-full px-8 py-5 bg-white border border-slate-200 rounded-[2rem] outline-none focus:ring-4 focus:ring-indigo-500/10 font-black text-slate-800 text-2xl"
+                           value={heroHeading} onChange={(e) => setHeroHeading(e.target.value)} 
+                           placeholder="Master Exams with | Confidence."
+                         />
+                         <p className="text-[9px] font-bold text-slate-400 italic px-4">Pro-tip: Use a '|' to separate the main text from the colored highlight word.</p>
+                      </div>
+                      <div className="space-y-3">
+                         <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest ml-1">Landing Page: Hero Sub-Tagline</label>
+                         <textarea 
+                           className="w-full px-8 py-5 bg-white border border-slate-200 rounded-[2rem] outline-none focus:ring-4 focus:ring-indigo-500/10 font-bold text-slate-600 text-lg h-32 resize-none"
+                           value={heroTagline} onChange={(e) => setHeroTagline(e.target.value)} 
+                           placeholder="Get the most comprehensive mock tests and AI-driven performance insights."
+                         />
+                      </div>
                    </div>
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-3">
