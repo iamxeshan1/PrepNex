@@ -13,7 +13,7 @@ export default function PremiumPlanManagement() {
   const [premiumValidity, setPremiumValidity] = useState('365 Days');
   const [premiumFeatures, setPremiumFeatures] = useState([
     "Unlimited access to 500+ Mock Tests",
-    "All Exam Categories (JKSSB, UPSC, SSC, etc.)",
+    "All Exam Categories (UPSC, SSC, Banking, etc.)",
     "Advanced Performance Analytics",
     "Premium 24/7 Priority Helpdesk",
     "Ad-free focused exam environment"
@@ -37,7 +37,7 @@ export default function PremiumPlanManagement() {
         setPremiumValidity(data.premiumValidity || '365 Days');
         setPremiumFeatures(data.premiumFeatures || [
           "Unlimited access to 500+ Mock Tests",
-          "All Exam Categories (JKSSB, UPSC, SSC, etc.)",
+          "All Exam Categories (UPSC, SSC, Banking, etc.)",
           "Advanced Performance Analytics",
           "Premium 24/7 Priority Helpdesk",
           "Ad-free focused exam environment"

@@ -136,7 +136,7 @@ export default function AdminExams() {
              <h3 className="text-4xl font-bold tracking-tight mb-2">99.9% Uptime</h3>
            </div>
            <p className="text-xs text-slate-300 relative z-10 w-2/3 leading-relaxed">
-             All regional servers operating at peak performance for current active test sessions.
+             All optimized servers operating at peak performance for current active test sessions.
            </p>
            <Activity className="absolute bottom-4 right-4 w-24 h-24 text-slate-800" />
         </div>
@@ -148,7 +148,7 @@ export default function AdminExams() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Exam Name</label>
-                <input required placeholder="e.g. JKSSB Sub-Inspector" className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" value={name} onChange={(e) => setName(e.target.value)} />
+                <input required placeholder="e.g. UPSC CSE" className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Organization</label>

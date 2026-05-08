@@ -51,7 +51,7 @@ export default function About() {
                   <span className="text-teal-400">Competitive Trials</span>
                 </h1>
                 <p className="text-lg text-slate-400 font-medium leading-relaxed mb-10 max-w-lg">
-                  PrepNext is J&K's premier ed-tech ecosystem designed to bridge the gap between traditional learning and modern examination standards.
+                  PrepNext is a premier ed-tech ecosystem designed to bridge the gap between traditional learning and modern examination standards.
                 </p>
                 <div className="flex flex-wrap gap-4">
                   <Link to="/signup" className="bg-teal-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-700 transition-all flex items-center gap-2 shadow-xl shadow-teal-900/20">
@@ -144,7 +144,7 @@ export default function About() {
                 Why we built <span className="text-teal-600">PrepNext?</span>
               </h2>
               <p className="text-lg text-slate-600 font-medium leading-relaxed">
-                We observed a significant gap in the quality of test series accessible locally. PrepNext was born out of the need for high-fidelity simulations that actually reflect the complexity of real examinations.
+                We observed a significant gap in the quality of test series accessible to aspirants. PrepNext was born out of the need for high-fidelity simulations that actually reflect the complexity of real examinations.
               </p>
               <div className="space-y-4">
                 {[

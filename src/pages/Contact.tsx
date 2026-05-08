@@ -79,7 +79,7 @@ export default function Contact() {
                     </div>
                     <div>
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Headquarters</p>
-                      <p className="text-lg font-bold text-white max-w-xs">{settings?.contactAddress || 'Parraypora, Srinagar, J&K'}</p>
+                      <p className="text-lg font-bold text-white max-w-xs">{settings?.contactAddress || 'Digital Hub, New Delhi, India'}</p>
                     </div>
                   </div>
                 </div>

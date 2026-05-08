@@ -91,7 +91,7 @@ const COLOR_VARIANTS = [
   'bg-purple-50 text-purple-500',
 ];
 
-const tabs = ['All', 'JKSSB', 'JKPSC', 'UPSC', 'NEET', 'IBPS'];
+const tabs = ['All', 'UPSC', 'SSC', 'NEET', 'JEE', 'IBPS', 'GATE'];
 
 export default function Home() {
   const { profile } = useAuth();
@@ -160,7 +160,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             className="inline-flex items-center gap-2 bg-[#ccfbf1] text-[#0f766e] px-4 py-2 rounded-full text-[10px] font-black tracking-widest uppercase mb-8"
           >
-            <Zap className="w-3 h-3 fill-[#0f766e]" /> J&K's Trusted Learning Partner
+            <Zap className="w-3 h-3 fill-[#0f766e]" /> The Trusted Learning Partner
           </motion.div>
           
           <motion.h1 
@@ -178,7 +178,7 @@ export default function Home() {
             transition={{ delay: 0.2 }}
             className="text-slate-500 text-lg md:text-xl font-medium max-w-2xl mx-auto mb-12 leading-relaxed tracking-tight"
           >
-            Get J&K's most comprehensive mock tests and AI-driven performance insights.
+            Get the most comprehensive mock tests and AI-driven performance insights.
           </motion.p>
           
           <motion.div 
@@ -203,7 +203,7 @@ export default function Home() {
           <div className="mb-16">
             <h2 className="text-4xl font-sans font-[800] text-[#0f172a] mb-4 tracking-tighter">Top Rated Mock Test Series</h2>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <p className="text-slate-500 font-medium max-w-xl tracking-tight">Curated by subject matter experts following the latest JKSSB and JKPSC patterns.</p>
+              <p className="text-slate-500 font-medium max-w-xl tracking-tight">Curated by subject matter experts following the latest examination patterns.</p>
               
               <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
                 {agencies.map((agency) => (
@@ -439,8 +439,8 @@ export default function Home() {
                     <Shield className="w-8 h-8 fill-current" />
                  </div>
                  <div>
-                    <h3 className="text-2xl font-sans font-[800] text-[#0f172a] mb-3 tracking-tight">Regional Authority</h3>
-                    <p className="text-slate-500 text-sm font-medium leading-[1.8] max-w-sm tracking-tight">Exclusively designed for J&K state exams with local context and updated current affairs.</p>
+                    <h3 className="text-2xl font-sans font-[800] text-[#0f172a] mb-3 tracking-tight">Expert Authority</h3>
+                    <p className="text-slate-500 text-sm font-medium leading-[1.8] max-w-sm tracking-tight">Designed for all competitive exams with comprehensive context and updated current affairs.</p>
                  </div>
               </div>
            </div>

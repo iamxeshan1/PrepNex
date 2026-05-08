@@ -199,7 +199,7 @@ export default function Dashboard() {
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2 bg-[#0f172a] text-white p-6 md:p-10 rounded-[2rem] flex flex-col justify-center relative overflow-hidden">
                       <h1 className="text-2xl md:text-4xl font-black mb-3">Welcome back, {profile?.name || 'Aspirant'}!</h1>
-                      <p className="text-slate-400 mb-6 md:mb-8 text-sm md:text-base max-w-lg">You're in the top 5% of JKSSB aspirants this week. Keep up the momentum to secure your spot.</p>
+                      <p className="text-slate-400 mb-6 md:mb-8 text-sm md:text-base max-w-lg">You're in the top 5% of aspirants this week. Keep up the momentum to secure your spot.</p>
                       <div className="flex flex-col sm:flex-row gap-4">
                         <button className="bg-teal-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 justify-center">
                            <Zap className="w-4 h-4" /> Resume Mock Test
@@ -413,7 +413,7 @@ export default function Dashboard() {
                 {/* Footer */}
                 <footer className="mt-12 py-8 border-t border-slate-100/60 pb-4 lg:pb-0">
                   <p className="text-center text-xs text-slate-500 font-medium pb-4">
-                    © {new Date().getFullYear()} PrepNext. Built for Excellence in Regional Aspirations.
+                    © {new Date().getFullYear()} PrepNext. Built for Excellence in Competitive Examinations.
                   </p>
                 </footer>
           </main>

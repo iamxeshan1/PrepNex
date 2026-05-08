@@ -1,6 +1,6 @@
 {
   "name": "PrepNext | Practice. Improve. Succeed.",
-  "description": "Your ultimate exam mastery platform. Focused test series for JKSSB, UPSC, SSC and more with real exam simulations.",
+  "description": "Your ultimate exam mastery platform. Focused test series for UPSC, SSC, Banking and more with real exam simulations.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "Firebase Authentication",

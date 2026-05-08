@@ -230,7 +230,7 @@ export default function LiveTestsSection() {
               </div>
               <h3 className="text-2xl font-black text-primary mb-3">No Active Live Tests</h3>
               <p className="text-slate-500 font-medium max-w-md mx-auto">
-                We're setting up the next big challenge for you. Stay tuned for J&K's most competitive live mock tests.
+                We're setting up the next big challenge for you. Stay tuned for the most competitive live mock tests.
               </p>
               <div className="mt-10 inline-flex items-center gap-3 text-xs font-black text-primary uppercase tracking-widest bg-white px-6 py-3 rounded-full shadow-sm">
                 <Users className="w-4 h-4" /> Join 10k+ Waiting Aspirants

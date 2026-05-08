@@ -66,7 +66,7 @@ export default function LiveTests() {
               transition={{ delay: 0.2 }}
               className="text-slate-400 text-lg font-medium max-w-2xl mx-auto mb-10 tracking-tight"
             >
-              Participate in globally scheduled live tests and see where you stand among thousands of aspirants across J&K.
+              Participate in globally scheduled live tests and see where you stand among thousands of aspirants from across the nation.
             </motion.p>
 
             <motion.div 
