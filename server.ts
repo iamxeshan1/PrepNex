@@ -719,7 +719,9 @@ app.get("/api/health-check", async (req, res) => {
 
           if (userDoc.exists) {
             const userData = userDoc.data();
+            console.log("[Verify Payment] User Data:", JSON.stringify(userData));
             userName = userData?.displayName || userData?.name || userData?.email?.split('@')[0] || "User";
+            console.log("[Verify Payment] Resolved userName:", userName);
 
             console.log(`[Verify Payment] Syncing DB for ${userId} (${userName}). Item: ${itemId}`);
 
@@ -727,7 +729,9 @@ app.get("/api/health-check", async (req, res) => {
               const razorpay = await getRazorpay();
               if (razorpay && razorpay_order_id !== "FREE_ORDER") {
                 const orderInfo = await razorpay.orders.fetch(razorpay_order_id) as any;
+                console.log("[Verify Payment] Razorpay Order Info:", JSON.stringify(orderInfo));
                 amountPaid = (orderInfo.amount || 0) / 100;
+                console.log("[Verify Payment] Resolved amountPaid:", amountPaid);
                 couponUsed = orderInfo.notes?.couponCode || "NONE";
               }
             } catch (rzrErr) {
@@ -834,6 +838,7 @@ app.get("/api/health-check", async (req, res) => {
     console.log("[Admin API] Clear Transactions called.");
     try {
       const collections = ['subscriptions', 'premium_subscriptions'];
+      const db = getDb();
       for (const col of collections) {
          console.log(`[Admin API] Clearing collection: ${col}`);
          const docs = await db.collection(col).get();
