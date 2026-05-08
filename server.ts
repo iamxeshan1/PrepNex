@@ -762,6 +762,7 @@ app.get("/api/health-check", async (req, res) => {
                 amount: amountPaid || 599,
                 couponCode: couponUsed
               });
+              console.log("[Verify Payment] Successfully added premium subscription doc.");
             } else {
               let itemTitle = "Exam Package";
               const liveTestRef = database.collection("liveTests").doc(itemId);
@@ -796,6 +797,7 @@ app.get("/api/health-check", async (req, res) => {
                 amount: amountPaid,
                 couponCode: couponUsed
               });
+              console.log("[Verify Payment] Successfully added subscription doc.");
             }
           } else {
             console.warn(`[Verify Payment] User doc NOT FOUND: ${userId}`);

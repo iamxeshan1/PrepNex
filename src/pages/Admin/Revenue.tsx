@@ -39,6 +39,8 @@ export default function AdminRevenue() {
         getDocs(collection(db, 'premium_subscriptions'))
       ]);
 
+      console.log(`[AdminRevenue] Found ${subsSnap.size} subscription docs and ${premiumSnap.size} premium subscription docs.`);
+
       const allDocs = [
         ...subsSnap.docs.map(d => ({ ...d.data(), id: d.id, source: 'Standard' })),
         ...premiumSnap.docs.map(d => ({ ...d.data(), id: d.id, source: 'Premium' }))
