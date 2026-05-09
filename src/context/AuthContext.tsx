@@ -8,9 +8,10 @@ interface AuthContextType {
   profile: any | null;
   loading: boolean;
   isAdmin: boolean;
+  logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, profile: null, loading: true, isAdmin: false });
+const AuthContext = createContext<AuthContextType>({ user: null, profile: null, loading: true, isAdmin: false, logout: async () => {} });
 
 export const useAuth = () => useContext(AuthContext);
 
@@ -21,6 +22,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let profileUnsubscribe: (() => void) | null = null;
+    
+    // Absolute fallback to ensure app is never stuck at Loading...
+    const globalLoadingTimeout = setTimeout(() => {
+      console.warn("Global auth loading timeout reached. Forced to false.");
+      setLoading(false);
+    }, 8000);
 
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       if (profileUnsubscribe) {
@@ -33,15 +40,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (authUser) {
         const userDocRef = doc(db, 'users', authUser.uid);
         
-        // Safety timeout for loading state
-        const loadingTimeout = setTimeout(() => {
-          console.warn("Auth profile loading timeout reached.");
-          setLoading(false);
-        }, 6000);
-
         // Use onSnapshot for real-time profile updates
         profileUnsubscribe = onSnapshot(userDocRef, async (snapshot) => {
-          clearTimeout(loadingTimeout);
+          clearTimeout(globalLoadingTimeout);
           if (snapshot.exists()) {
             const data = snapshot.data();
             if (data.isBlocked) {
@@ -77,6 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setLoading(false);
         });
       } else {
+        clearTimeout(globalLoadingTimeout);
         setProfile(null);
         setLoading(false);
       }
@@ -84,6 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       unsubscribe();
+      clearTimeout(globalLoadingTimeout);
       if (profileUnsubscribe) profileUnsubscribe();
     };
   }, []);
@@ -92,7 +95,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     profile,
     loading,
-    isAdmin: profile?.role === 'admin' || user?.email === 'iamxeshan1@gmail.com' || user?.email === 'prepnextedtech@gmail.com'
+    isAdmin: profile?.role === 'admin' || user?.email === 'iamxeshan1@gmail.com' || user?.email === 'prepnextedtech@gmail.com',
+    logout: async () => {
+      await auth.signOut();
+    }
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

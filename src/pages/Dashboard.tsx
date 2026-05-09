@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { DashboardSidebar } from '../components/DashboardSidebar';
 import { DashboardTopHeader } from '../components/DashboardTopHeader';
-import { Award, Zap, HelpCircle, BookOpenText, TrendingUp, CheckCircle2, Megaphone, Info, AlertTriangle, X } from 'lucide-react';
+import { Award, Zap, HelpCircle, BookOpenText, TrendingUp, CheckCircle2, Megaphone, Info, AlertTriangle, X, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSettings } from '../context/SettingsContext';
 import { collection, getDocs, query, where, documentId, orderBy, limit } from 'firebase/firestore';
@@ -118,13 +118,30 @@ export default function Dashboard() {
          try {
              const purchasedIds = profile.purchasedExams || [];
              
-             // Fetch All Exams to filter manually (avoiding index issues)
-             const allExamsSnap = await getDocs(collection(db, 'exams'));
-             const allExams = allExamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
-
-             const agenciesSnap = await getDocs(collection(db, 'agencies'));
-             const allAgencies = agenciesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
-
+             // Fetch all data in parallel with error tolerance
+             const [
+               allExamsSnap,
+               agenciesSnap,
+               liveTestsSnap,
+               noticesSnap,
+               resultsSnap,
+               subjectsSnap
+             ] = await Promise.allSettled([
+               getDocs(collection(db, 'exams')),
+               getDocs(collection(db, 'agencies')),
+               getDocs(collection(db, 'liveTests')),
+               getDocs(query(collection(db, 'notices'), orderBy('createdAt', 'desc'), limit(3))),
+               getDocs(query(collection(db, 'results'), where('userId', '==', profile.userId))),
+               getDocs(collection(db, 'subjects'))
+             ]);
+ 
+             const allExams = allExamsSnap.status === 'fulfilled' ? allExamsSnap.value.docs.map(doc => ({ id: doc.id, ...doc.data() as any })) : [];
+             const allAgencies = agenciesSnap.status === 'fulfilled' ? agenciesSnap.value.docs.map(doc => ({ id: doc.id, ...doc.data() as any })) : [];
+             const allLiveTests = liveTestsSnap.status === 'fulfilled' ? liveTestsSnap.value.docs.map(doc => ({ id: doc.id, ...doc.data() as any })) : [];
+             const currentNotices = noticesSnap.status === 'fulfilled' ? noticesSnap.value.docs.map(doc => ({ id: doc.id, ...doc.data() as any })) : [];
+             const currentResults = resultsSnap.status === 'fulfilled' ? resultsSnap.value.docs.map(doc => ({ id: doc.id, ...doc.data() as any })) : [];
+             const currentSubjects = subjectsSnap.status === 'fulfilled' ? subjectsSnap.value.docs.map(doc => ({ id: doc.id, ...doc.data() as any })) : [];
+ 
              const examsWithAgencyLogos = allExams.map(exam => {
                  const agency = allAgencies.find(a => a.id === exam.agencyId);
                  return {
@@ -133,13 +150,9 @@ export default function Dashboard() {
                      logoUrl: agency?.logoUrl || exam.logoUrl
                  };
              });
-
-             // Fetch live tests
-             const liveTestsSnap = await getDocs(collection(db, 'liveTests'));
-             const allLiveTests = liveTestsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
-             
+ 
              const enrolledLiveTests = allLiveTests.filter(t => t.enrolledUsers?.includes(profile.userId) || purchasedIds.includes(t.id));
-
+ 
              const activeExamsAndTests = [
                ...examsWithAgencyLogos.filter(ex => purchasedIds.includes(ex.id)),
                ...enrolledLiveTests.map(t => ({
@@ -149,43 +162,37 @@ export default function Dashboard() {
                   category: 'Live Test'
                }))
              ];
-
+ 
              setActiveExams(activeExamsAndTests);
-
+ 
              // Sort approaching live tests, show only upcoming or currently active ones
              const now = new Date().getTime();
              const validLiveTests = allLiveTests.filter(t => new Date(t.endTime).getTime() > now);
              validLiveTests.sort((a,b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
              
              setUpcomingTests(validLiveTests.slice(0, 3));
-
+ 
              // Discover New
              const newExams = examsWithAgencyLogos.filter(ex => !purchasedIds.includes(ex.id)).slice(0, 3);
              setDiscoverExams(newExams);
-
+ 
              // Fetch latest announcements
-             const noticesSnap = await getDocs(query(collection(db, 'notices'), orderBy('createdAt', 'desc'), limit(3)));
-             setNotices(noticesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any })));
-
+             setNotices(currentNotices);
+ 
              // Subject Performance
-             const resultsSnap = await getDocs(query(collection(db, 'results'), where('userId', '==', profile.userId)));
-             
              // Fetch subjects mapping to get proper names
-             const subjectsSnap = await getDocs(collection(db, 'subjects'));
              const subjectNames: Record<string, string> = {};
-             subjectsSnap.docs.forEach(doc => {
-                 subjectNames[doc.id] = doc.data().name;
+             currentSubjects.forEach(doc => {
+                 subjectNames[doc.id] = doc.name;
              });
-
-             if (!resultsSnap.empty) {
+ 
+             if (currentResults.length > 0) {
                   const aggregatedStats: Record<string, { totalCorrect: number, totalMaxScore: number, totalScore: number }> = {};
                   let totalScoreAcrossTests = 0;
                   let totalMaxMarksAcrossTests = 0;
-                  let testsAttempted = resultsSnap.empty ? 0 : resultsSnap.docs.length;
+                  let testsAttempted = currentResults.length;
                   
-                  resultsSnap.docs.forEach(doc => {
-                      const data = doc.data();
-                      
+                  currentResults.forEach(data => {
                       totalScoreAcrossTests += typeof data.score === 'number' ? data.score : 0;
                       totalMaxMarksAcrossTests += typeof data.maxMarks === 'number' ? data.maxMarks : 1;
                       
@@ -221,7 +228,7 @@ export default function Dashboard() {
                            status: accuracy >= 70 ? 'good' : 'bad'
                        });
                   });
-
+ 
                   if (performanceArr.length > 0) {
                       setSubjectPerformance(performanceArr.sort((a,b) => b.accuracy - a.accuracy).slice(0, 5));
                   } else {
@@ -230,15 +237,15 @@ export default function Dashboard() {
              } else {
                  setSubjectPerformance([]);
              }
-
+ 
          } catch (error) {
              console.error("Error fetching dashboard data:", error);
          } finally {
              setLoadingData(false);
          }
-     };
-     fetchDashboardData();
-  }, [profile]);
+      };
+      fetchDashboardData();
+   }, [profile]);
 
 
   // Calculate PrepScore out of 1000 based on progress

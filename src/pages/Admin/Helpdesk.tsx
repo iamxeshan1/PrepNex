@@ -19,16 +19,7 @@ export default function AdminHelpdesk() {
       const q = query(collection(db, 'tickets'), orderBy('createdAt', 'desc'));
       const snap = await getDocs(q);
       const allTickets = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
-      
-      const closedTickets = allTickets.filter((t: any) => t.status === 'closed');
-      if (closedTickets.length > 0) {
-        for (const t of closedTickets) {
-          await deleteDoc(doc(db, 'tickets', t.id));
-        }
-        setTickets(allTickets.filter((t: any) => t.status !== 'closed'));
-      } else {
-        setTickets(allTickets);
-      }
+      setTickets(allTickets);
     } catch (err) {
       console.error(err);
     } finally {
@@ -69,15 +60,14 @@ export default function AdminHelpdesk() {
     }
   };
 
-  const handleClose = async (ticketId: string) => {
-    if (!window.confirm('Mark this query as resolved?')) return;
-    
+  const handleArchive = async (ticketId: string) => {
     setClosing(ticketId);
     try {
       await deleteDoc(doc(db, 'tickets', ticketId));
-      fetchTickets();
+      setTickets(prev => prev.filter(t => t.id !== ticketId));
     } catch (err) {
-      alert('Failed to resolve ticket');
+      console.error(err);
+      alert('Failed to archive ticket');
     } finally {
       setClosing(null);
     }
@@ -146,12 +136,12 @@ export default function AdminHelpdesk() {
                         {ticket.status} Dispatch
                       </span>
                       <button 
-                        onClick={() => handleClose(ticket.id)}
+                        onClick={() => handleArchive(ticket.id)}
                         disabled={closing === ticket.id}
                         className="p-3 bg-white border border-slate-100 text-slate-300 hover:text-rose-600 hover:border-rose-100 rounded-xl transition-all shadow-sm hover:scale-110 active:scale-95"
                         title="Archive Case"
                       >
-                         <X className="w-5 h-5" />
+                         {closing === ticket.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <X className="w-5 h-5" />}
                       </button>
                     </div>
                   </header>
@@ -214,8 +204,8 @@ export default function AdminHelpdesk() {
                      <div className="flex items-center gap-2 text-[9px] font-black text-slate-300 uppercase tracking-widest">
                         <Sparkles className="w-3.5 h-3.5" /> Direct Channel Protocol v2.4
                      </div>
-                     <button onClick={() => handleClose(ticket.id)} className="flex items-center gap-2 text-[9px] font-black text-emerald-600 uppercase tracking-widest hover:underline">
-                        <CheckCircle2 className="w-4 h-4" /> Move to Archive
+                     <button onClick={() => handleArchive(ticket.id)} disabled={closing === ticket.id} className="flex items-center gap-2 text-[9px] font-black text-emerald-600 uppercase tracking-widest hover:underline disabled:opacity-50">
+                        {closing === ticket.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} Move to Archive
                      </button>
                   </div>
                 </div>

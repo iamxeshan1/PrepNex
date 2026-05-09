@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../lib/firebase';
-import { collection, addDoc, query, where, getDocs, orderBy, doc, updateDoc } from 'firebase/firestore';
-import { MessageCircle, Send, CheckCircle2, AlertCircle, Clock, Plus, ArrowLeft, User, MessageSquare, Loader2, Sparkles, X } from 'lucide-react';
+import { collection, addDoc, query, where, getDocs, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { MessageCircle, Send, CheckCircle2, AlertCircle, Clock, Plus, ArrowLeft, User, MessageSquare, Loader2, Sparkles, X, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { DashboardSidebar } from '../components/DashboardSidebar';
 import { DashboardTopHeader } from '../components/DashboardTopHeader';
@@ -32,7 +32,8 @@ export default function Helpdesk() {
     try {
       const q = query(collection(db, 'tickets'), where('userId', '==', user?.uid), orderBy('createdAt', 'desc'));
       const snap = await getDocs(q);
-      setTickets(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      // Filter out disposed tickets from the user view
+      setTickets(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter((t: any) => t.status !== 'disposed'));
     } catch (err) {
       console.error(err);
     } finally {
@@ -104,15 +105,29 @@ export default function Helpdesk() {
   };
 
   const handleResolve = async (ticketId: string) => {
-    if (!window.confirm('Are you satisfied and want to close this ticket?')) return;
-    
     try {
       await updateDoc(doc(db, 'tickets', ticketId), {
-        status: 'closed'
+        status: 'closed',
+        updatedAt: new Date().toISOString()
       });
       fetchTickets();
     } catch (err) {
       alert('Failed to close ticket');
+    }
+  };
+
+  const handleDispose = async (ticketId: string) => {
+    if (!window.confirm('Are you sure you want to dispose of this ticket? This will permanently remove it.')) return;
+    
+    setReplying(ticketId); // Reusing replying for general loading
+    try {
+      await deleteDoc(doc(db, 'tickets', ticketId));
+      setTickets(prev => prev.filter(t => t.id !== ticketId));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to dispose ticket');
+    } finally {
+      setReplying(null);
     }
   };
 
@@ -337,15 +352,20 @@ export default function Helpdesk() {
                         </div>
                       )}
 
-                      <div className="mt-10 flex items-center justify-between">
+                      <div className="mt-10 flex items-center justify-between gap-4 flex-wrap">
                          <div className="flex items-center gap-2 text-[9px] font-black text-slate-300 uppercase tracking-widest">
                             <Sparkles className="w-3.5 h-3.5" /> Direct Support Protocol v3.0 Enabled
                          </div>
-                         {ticket.status !== 'closed' && (
-                             <button onClick={() => handleResolve(ticket.id)} className="flex items-center gap-2 text-[9px] font-black text-emerald-600 uppercase tracking-widest hover:underline transition-colors">
-                                <CheckCircle2 className="w-4 h-4" /> Move Case to Resolve
-                             </button>
-                         )}
+                         <div className="flex items-center gap-6">
+                           {ticket.status !== 'closed' && (
+                               <button onClick={() => handleResolve(ticket.id)} className="flex items-center gap-2 text-[9px] font-black text-emerald-600 uppercase tracking-widest hover:underline transition-colors">
+                                  <CheckCircle2 className="w-4 h-4" /> Resolve Case
+                               </button>
+                           )}
+                           <button onClick={() => handleDispose(ticket.id)} className="flex items-center gap-2 text-[9px] font-black text-rose-600 uppercase tracking-widest hover:underline transition-colors">
+                              <X className="w-4 h-4" /> Dispose off
+                           </button>
+                         </div>
                       </div>
                     </div>
                   </motion.div>
@@ -365,6 +385,3 @@ export default function Helpdesk() {
     </div>
   );
 }
-
-// Add Lock icon which was missing in import
-import { Lock } from 'lucide-react';
