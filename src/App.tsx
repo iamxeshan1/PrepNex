@@ -6,55 +6,55 @@ import { collection, getDocs, query, where, addDoc, setDoc, doc, limit } from 'f
 import { db } from './lib/firebase';
 
 // Pages
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import Dashboard from './pages/Dashboard';
-import ExamDetail from './pages/ExamDetail';
-import Test from './pages/Test';
-import Result from './pages/Result';
-import AdminMockTestBank from './pages/Admin/MockTestBank';
-import AdminDashboard from './pages/Admin/Dashboard';
-import AdminAgencies from './pages/Admin/Agencies';
-import AdminExams from './pages/Admin/Exams';
-import AdminTests from './pages/Admin/Tests';
-import AdminQuestions from './pages/Admin/Questions';
-import AdminSettings from './pages/Admin/Settings';
-import AdminNotices from './pages/Admin/Notices';
-import AdminThoughts from './pages/Admin/Thoughts';
-import AdminSubjects from './pages/Admin/Subjects';
-import AdminRevenue from './pages/Admin/Revenue';
-import AdminPremiumPlan from './pages/Admin/PremiumPlan';
-import AdminUsers from './pages/Admin/Users';
-import AdminCoupons from './pages/Admin/Coupons';
-import AdminSubscriptions from './pages/Admin/Subscriptions';
-import AdminLiveTests from './pages/Admin/LiveTests';
-import AdminHelpdesk from './pages/Admin/Helpdesk';
-import AdminActivityLog from './pages/Admin/ActivityLog';
-import AdminExamManagement from './pages/Admin/ExamManagement';
-import AdminTestManagement from './pages/Admin/TestManagement';
-import AdminManageLiveTest from './pages/Admin/ManageLiveTest';
-import AdminEditLiveTest from './pages/Admin/EditLiveTest';
-import AdminReviews from './pages/Admin/Reviews';
-import AdminStudyMaterial from './pages/Admin/StudyMaterial';
-import AdminPushNotifications from './pages/Admin/PushNotifications';
-import Premium from './pages/Premium';
-import Subjects from './pages/Subjects';
-import Contact from './pages/Contact';
-import StudyMaterial from './pages/StudyMaterial';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import LiveTestDetail from './pages/LiveTestDetail';
-import Helpdesk from './pages/Helpdesk';
-import Exams from './pages/Exams';
-import Performance from './pages/Performance';
-import Profile from './pages/Profile';
-import Transactions from './pages/Transactions';
-import About from './pages/About';
-import Announcements from './pages/Announcements';
-import MySubscriptions from './pages/MySubscriptions';
-import LiveTests from './pages/LiveTests';
-import ResetPassword from './pages/ResetPassword';
-import RequestReset from './pages/RequestReset';
+const Home = React.lazy(() => import('./pages/Home'));
+const Login = React.lazy(() => import('./pages/Login'));
+const Signup = React.lazy(() => import('./pages/Signup'));
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const ExamDetail = React.lazy(() => import('./pages/ExamDetail'));
+const Test = React.lazy(() => import('./pages/Test'));
+const Result = React.lazy(() => import('./pages/Result'));
+const AdminMockTestBank = React.lazy(() => import('./pages/Admin/MockTestBank'));
+const AdminDashboard = React.lazy(() => import('./pages/Admin/Dashboard'));
+const AdminAgencies = React.lazy(() => import('./pages/Admin/Agencies'));
+const AdminExams = React.lazy(() => import('./pages/Admin/Exams'));
+const AdminTests = React.lazy(() => import('./pages/Admin/Tests'));
+const AdminQuestions = React.lazy(() => import('./pages/Admin/Questions'));
+const AdminSettings = React.lazy(() => import('./pages/Admin/Settings'));
+const AdminNotices = React.lazy(() => import('./pages/Admin/Notices'));
+const AdminThoughts = React.lazy(() => import('./pages/Admin/Thoughts'));
+const AdminSubjects = React.lazy(() => import('./pages/Admin/Subjects'));
+const AdminRevenue = React.lazy(() => import('./pages/Admin/Revenue'));
+const AdminPremiumPlan = React.lazy(() => import('./pages/Admin/PremiumPlan'));
+const AdminUsers = React.lazy(() => import('./pages/Admin/Users'));
+const AdminCoupons = React.lazy(() => import('./pages/Admin/Coupons'));
+const AdminSubscriptions = React.lazy(() => import('./pages/Admin/Subscriptions'));
+const AdminLiveTests = React.lazy(() => import('./pages/Admin/LiveTests'));
+const AdminHelpdesk = React.lazy(() => import('./pages/Admin/Helpdesk'));
+const AdminActivityLog = React.lazy(() => import('./pages/Admin/ActivityLog'));
+const AdminExamManagement = React.lazy(() => import('./pages/Admin/ExamManagement'));
+const AdminTestManagement = React.lazy(() => import('./pages/Admin/TestManagement'));
+const AdminManageLiveTest = React.lazy(() => import('./pages/Admin/ManageLiveTest'));
+const AdminEditLiveTest = React.lazy(() => import('./pages/Admin/EditLiveTest'));
+const AdminReviews = React.lazy(() => import('./pages/Admin/Reviews'));
+const AdminStudyMaterial = React.lazy(() => import('./pages/Admin/StudyMaterial'));
+const AdminPushNotifications = React.lazy(() => import('./pages/Admin/PushNotifications'));
+const Premium = React.lazy(() => import('./pages/Premium'));
+const Subjects = React.lazy(() => import('./pages/Subjects'));
+const Contact = React.lazy(() => import('./pages/Contact'));
+const StudyMaterial = React.lazy(() => import('./pages/StudyMaterial'));
+const PrivacyPolicy = React.lazy(() => import('./pages/PrivacyPolicy'));
+const LiveTestDetail = React.lazy(() => import('./pages/LiveTestDetail'));
+const Helpdesk = React.lazy(() => import('./pages/Helpdesk'));
+const Exams = React.lazy(() => import('./pages/Exams'));
+const Performance = React.lazy(() => import('./pages/Performance'));
+const Profile = React.lazy(() => import('./pages/Profile'));
+const Transactions = React.lazy(() => import('./pages/Transactions'));
+const About = React.lazy(() => import('./pages/About'));
+const Announcements = React.lazy(() => import('./pages/Announcements'));
+const MySubscriptions = React.lazy(() => import('./pages/MySubscriptions'));
+const LiveTests = React.lazy(() => import('./pages/LiveTests'));
+const ResetPassword = React.lazy(() => import('./pages/ResetPassword'));
+const RequestReset = React.lazy(() => import('./pages/RequestReset'));
 import ScrollToTop from './components/ScrollToTop';
 import { SessionTimeoutManager } from './components/SessionTimeoutManager';
 import { NotificationManager } from './components/NotificationManager';
@@ -93,6 +93,7 @@ export function AppContent() {
       <InstallPrompt />
       <Router>
         <ScrollToTop />
+        <React.Suspense fallback={<div className="flex h-screen items-center justify-center min-h-[50vh]"><div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div></div>}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -283,6 +284,7 @@ export function AppContent() {
           
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
+        </React.Suspense>
       </Router>
     </>
   );

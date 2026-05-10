@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/AdminLayout';
-import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, where } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { 
   Plus, 
@@ -94,12 +94,19 @@ export default function AdminExams() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this exam?")) {
+    if (confirm("Are you sure you want to permanently delete this exam and all its associated tests and questions? This action cannot be undone.")) {
       try {
+        const testsSnap = await getDocs(query(collection(db, 'tests'), where('examId', '==', id)));
+        for (const tDoc of testsSnap.docs) {
+          const qSnap = await getDocs(query(collection(db, 'questions'), where('testId', '==', tDoc.id)));
+          const queries = qSnap.docs.map(qd => deleteDoc(doc(db, 'questions', qd.id)));
+          await Promise.all(queries);
+          await deleteDoc(doc(db, 'tests', tDoc.id));
+        }
         await deleteDoc(doc(db, 'exams', id));
         fetchExamsAndAgencies();
       } catch (error) {
-        alert("Failed to delete exam");
+        alert("Failed to delete exam permanently");
       }
     }
   };

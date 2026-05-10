@@ -168,13 +168,16 @@ export default function AdminTests() {
 
   const handleDelete = async (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    if (window.confirm("Are you sure you want to delete this test?")) {
+    if (window.confirm("Are you sure you want to permanently delete this test and all its questions? This action cannot be undone.")) {
       try {
+        const qSnap = await getDocs(query(collection(db, 'questions'), where('testId', '==', id)));
+        const queries = qSnap.docs.map(qd => deleteDoc(doc(db, 'questions', qd.id)));
+        await Promise.all(queries);
         await deleteDoc(doc(db, 'tests', id));
         setTests(tests.filter(t => t.id !== id));
       } catch (error: any) {
         console.error("Delete error:", error);
-        alert(`Failed to delete test`);
+        alert(`Failed to delete test permanently`);
       }
     }
   };

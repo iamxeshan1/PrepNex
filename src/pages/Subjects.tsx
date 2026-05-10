@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { collection, getDocs, query, orderBy, where, doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -77,8 +77,20 @@ const ICON_MAP: Record<string, any> = {
   Variable
 };
 
+const COLOR_VARIANTS = [
+  'bg-emerald-50 text-emerald-500',
+  'bg-amber-50 text-amber-500',
+  'bg-blue-50 text-blue-500',
+  'bg-teal-50 text-teal-500',
+  'bg-orange-50 text-orange-500',
+  'bg-indigo-50 text-indigo-500',
+  'bg-rose-50 text-rose-500',
+  'bg-purple-50 text-purple-500',
+];
+
 export default function Subjects() {
   const { subjectId } = useParams();
+  const navigate = useNavigate();
   const [subjects, setSubjects] = useState<any[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<any>(null);
   const [tests, setTests] = useState<any[]>([]);
@@ -142,44 +154,49 @@ export default function Subjects() {
               </div>
             ) : selectedSubject ? (
               <div className="space-y-10">
-                <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-10">
-                  <div className="w-24 h-24 bg-primary text-white rounded-[2rem] flex items-center justify-center shadow-2xl shadow-primary/20 shrink-0">
-                    {IconComp && <IconComp className="w-12 h-12" />}
+                <div className="bg-white p-8 rounded-[1.5rem] border border-slate-100 shadow-sm flex items-center gap-8">
+                  <div className="w-20 h-20 bg-slate-50 rounded-[1.5rem] flex items-center justify-center shrink-0">
+                    {IconComp && <IconComp className="w-10 h-10 text-primary" />}
                   </div>
-                  <div className="text-center md:text-left">
-                    <h1 className="text-3xl font-black text-primary tracking-tight mb-2">{selectedSubject.name}</h1>
-                    <p className="text-slate-500 font-medium leading-relaxed">{selectedSubject.description || 'Focused training module for competitive excellence.'}</p>
+                  <div>
+                    <h1 className="text-2xl font-sans font-[800] text-[#0f172a] tracking-tight mb-2">{selectedSubject.name}</h1>
+                    <p className="text-sm text-slate-500 font-medium leading-relaxed">{selectedSubject.description || 'Focused training module for competitive excellence.'}</p>
                   </div>
                 </div>
 
                 <div className="space-y-6">
-                  <h2 className="text-xl font-black text-primary tracking-tight px-2">Available Practice Sets</h2>
-                  <div className="grid grid-cols-1 gap-4">
+                  <h2 className="text-xl font-sans font-[800] text-[#0f172a] tracking-tight px-2">Available Practice Sets</h2>
+                  <div className="flex flex-col gap-4">
                     {tests.map((test) => (
-                      <div key={test.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:border-primary/30 transition-all flex items-center justify-between group">
-                        <div className="flex items-center gap-6">
-                          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${test.isFree ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
-                            {test.isFree ? <Zap className="w-6 h-6 fill-green-600/20" /> : <Lock className="w-5 h-5" />}
+                      <div key={test.id} className="bg-white p-5 rounded-[1.25rem] border border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200 transition-all group flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-[1rem] flex items-center justify-center shrink-0 ${test.isFree ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                            {test.isFree ? <Zap className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
                           </div>
                           <div>
-                            <h4 className="font-extrabold text-primary tracking-tight group-hover:text-secondary transition-colors">{test.title}</h4>
-                            <div className="flex items-center gap-4 mt-1">
-                              <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest"><Clock className="w-3 h-3" /> {test.duration} MIN</span>
-                              <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest"><Award className="w-3 h-3" /> {test.totalMarks} MARKS</span>
-                              {!test.isFree && <span className="text-[8px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">Premium</span>}
+                            <div className="flex items-center gap-3 mb-1.5">
+                              <h4 className="font-sans font-[800] text-[#0f172a] text-[15px] tracking-tight group-hover:text-primary transition-colors">{test.title}</h4>
+                              {!test.isFree && (
+                                <span className="text-[9px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full uppercase tracking-widest">Premium</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <span className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest"><Clock className="w-3.5 h-3.5" /> {test.duration} min</span>
+                              <span className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest"><Award className="w-3.5 h-3.5" /> {test.totalMarks} marks</span>
                             </div>
                           </div>
                         </div>
+                        
                         <Link 
                           to={`/test/${test.id}`}
-                          className={`px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${test.isFree ? 'bg-primary text-white shadow-lg shadow-primary/10 hover:scale-105' : 'bg-slate-100 text-slate-400 hover:bg-amber-600 hover:text-white cursor-pointer'}`}
+                          className={`flex items-center justify-center w-full sm:w-auto px-8 py-3 rounded-[0.75rem] font-sans font-[800] text-xs uppercase tracking-widest transition-all ${test.isFree ? 'bg-[#0f172a] text-white hover:bg-primary' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
                         >
                           {test.isFree ? 'Start Test' : 'Unlock Pro'}
                         </Link>
                       </div>
                     ))}
                     {tests.length === 0 && (
-                      <div className="py-20 bg-white rounded-[3rem] border-2 border-dashed border-slate-100 text-center">
+                      <div className="py-16 bg-white rounded-[1.5rem] border border-slate-100 text-center">
                         <FileText className="w-12 h-12 text-slate-200 mx-auto mb-4" />
                         <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No tests uploaded for this topic yet.</p>
                       </div>
@@ -238,31 +255,23 @@ export default function Subjects() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {subjects.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase())).map((subject, index) => {
                   const IconComp = ICON_MAP[subject.icon] || BookOpen;
+                  const colorClass = COLOR_VARIANTS[index % COLOR_VARIANTS.length];
                   return (
                     <motion.div
                       key={subject.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className="group bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm hover:shadow-2xl hover:border-primary transition-all duration-500 relative flex flex-col justify-between"
+                      onClick={() => navigate(`/subject-tests/${subject.id}`)}
+                      className="flex flex-col items-center text-center p-8 bg-white border border-slate-100 rounded-[1.5rem] hover:shadow-xl transition-all cursor-pointer group shadow-sm"
                     >
-                      <div>
-                        <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500 mb-8">
-                          <IconComp className="w-10 h-10 group-hover:scale-110 transition-transform" />
-                        </div>
-                        <h3 className="text-2xl font-black text-primary mb-3 tracking-tight group-hover:text-secondary transition-colors">{subject.name}</h3>
-                        <p className="text-sm text-slate-500 font-medium leading-relaxed mb-8">
-                          {subject.description || 'Master the concepts and shortcuts of this subject through specialized practice sets.'}
-                        </p>
+                      <div className={`w-14 h-14 ${colorClass} rounded-[1rem] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                        <IconComp className="w-7 h-7" />
                       </div>
-                      
-                      <Link 
-                        to={`/subject-tests/${subject.id}`} 
-                        className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl group-hover:bg-primary group-hover:text-white transition-all font-black text-[10px] uppercase tracking-widest"
-                      >
-                        Explore Mock Tests
-                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                      </Link>
+                      <h4 className="text-base font-sans font-[800] text-[#0f172a] mb-2 tracking-tight">{subject.name}</h4>
+                      <p className="text-[11px] font-medium text-slate-400 line-clamp-2">
+                        {subject.description || 'Master the concepts and shortcuts.'}
+                      </p>
                     </motion.div>
                   )
                 })}

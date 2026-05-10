@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/AdminLayout';
-import { collection, addDoc, getDocs, deleteDoc, doc, setDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, deleteDoc, doc, setDoc, query, where } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { 
   Plus, 
@@ -147,10 +147,28 @@ export default function AdminSubjects() {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this subject?")) {
+    if (window.confirm("Are you sure you want to permanently delete this subject and all its associated tests and questions? This action cannot be undone.")) {
       setLoading(true);
-      await deleteDoc(doc(db, 'subjects', id));
-      fetchSubjects();
+      try {
+        const testsSnap = await getDocs(query(collection(db, 'tests'), where('subjectId', '==', id)));
+        for (const tDoc of testsSnap.docs) {
+          const qSnap = await getDocs(query(collection(db, 'questions'), where('testId', '==', tDoc.id)));
+          const queries = qSnap.docs.map(qd => deleteDoc(doc(db, 'questions', qd.id)));
+          await Promise.all(queries);
+          await deleteDoc(doc(db, 'tests', tDoc.id));
+        }
+        
+        // Delete subject questions that may not belong to tests (if any)
+        const subQuestionsSnap = await getDocs(query(collection(db, 'questions'), where('subjectId', '==', id)));
+        const qQueries = subQuestionsSnap.docs.map(qd => deleteDoc(doc(db, 'questions', qd.id)));
+        await Promise.all(qQueries);
+
+        await deleteDoc(doc(db, 'subjects', id));
+        fetchSubjects();
+      } catch (err) {
+        console.error(err);
+        alert("Failed to delete subject permanently");
+      }
       setLoading(false);
     }
   };

@@ -72,7 +72,8 @@ export default function AdminUsers() {
           'subscriptions',
           'premium_subscriptions',
           'tickets',
-          'activity_logs'
+          'activity_logs',
+          'reviews'
         ];
 
         // We use a helper to delete in batches of 500 to stay within Firestore limits

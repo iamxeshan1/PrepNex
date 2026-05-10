@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
-import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';                
+import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, where } from 'firebase/firestore';                
 import { db } from '../../lib/firebase';
 import { Plus, Trash2, Edit3, X, Loader2, Upload, ShieldCheck, Star, Activity, LayoutGrid, Award, Search, FileText, CheckCircle2 } from 'lucide-react';
 
@@ -67,9 +67,25 @@ export default function AdminAgencies() {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this agency?")) {
-      await deleteDoc(doc(db, 'agencies', id));
-      fetchAgencies();
+    if (window.confirm("Are you sure you want to permanently delete this agency and all its exams, tests, and questions? This action cannot be undone.")) {
+      try {
+        const examsSnap = await getDocs(query(collection(db, 'exams'), where('agencyId', '==', id)));
+        for (const eDoc of examsSnap.docs) {
+          const testsSnap = await getDocs(query(collection(db, 'tests'), where('examId', '==', eDoc.id)));
+          for (const tDoc of testsSnap.docs) {
+            const qSnap = await getDocs(query(collection(db, 'questions'), where('testId', '==', tDoc.id)));
+            const queries = qSnap.docs.map(qd => deleteDoc(doc(db, 'questions', qd.id)));
+            await Promise.all(queries);
+            await deleteDoc(doc(db, 'tests', tDoc.id));
+          }
+          await deleteDoc(doc(db, 'exams', eDoc.id));
+        }
+        await deleteDoc(doc(db, 'agencies', id));
+        fetchAgencies();
+      } catch (err) {
+        console.error("Delete error:", err);
+        alert("Failed to delete agency permanently");
+      }
     }
   };
 

@@ -522,20 +522,20 @@ export default function Home() {
       </section>
 
       {/* Stats Bar */}
-      <section className="bg-[#0f172a] py-24 border-t border-white/5">
+      <section className="bg-gradient-to-r from-[#004d40] to-[#006e5d] py-20 border-y border-[#008770]/30 shadow-inner">
          <div className="max-w-7xl mx-auto px-4 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-16 text-center divide-y md:divide-y-0 md:divide-x divide-white/10">
-               <div className="py-8 md:py-0">
-                  <h3 className="text-6xl font-sans font-[800] text-white mb-2 tracking-tighter">{settings.aspirantCount || '50k+'}</h3>
-                  <p className="text-[#2dd4bf] font-black text-xs uppercase tracking-[0.4em]">Aspirants Enrolled</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center divide-y md:divide-y-0 md:divide-x divide-white/20">
+               <div className="py-6 md:py-0">
+                  <h3 className="text-5xl font-sans font-[800] text-white mb-2 tracking-tighter drop-shadow-md">{settings.aspirantCount || '50k+'}</h3>
+                  <p className="text-emerald-200 font-extrabold text-[11px] uppercase tracking-[0.3em] opacity-90">Aspirants Enrolled</p>
                </div>
-               <div className="py-8 md:py-0">
-                  <h3 className="text-6xl font-sans font-[800] text-white mb-2 tracking-tighter">{settings.totalTests || '1.2k+'}</h3>
-                  <p className="text-[#2dd4bf] font-black text-xs uppercase tracking-[0.4em]">Full Mock Tests</p>
+               <div className="py-6 md:py-0">
+                  <h3 className="text-5xl font-sans font-[800] text-white mb-2 tracking-tighter drop-shadow-md">{settings.totalTests || '1.2k+'}</h3>
+                  <p className="text-emerald-200 font-extrabold text-[11px] uppercase tracking-[0.3em] opacity-90">Full Mock Tests</p>
                </div>
-               <div className="py-8 md:py-0">
-                  <h3 className="text-6xl font-sans font-[800] text-white mb-2 tracking-tighter">{settings.successRate || '98%'}</h3>
-                  <p className="text-[#2dd4bf] font-black text-xs uppercase tracking-[0.4em]">Success Rate</p>
+               <div className="py-6 md:py-0">
+                  <h3 className="text-5xl font-sans font-[800] text-white mb-2 tracking-tighter drop-shadow-md">{settings.successRate || '98%'}</h3>
+                  <p className="text-emerald-200 font-extrabold text-[11px] uppercase tracking-[0.3em] opacity-90">Success Rate</p>
                </div>
             </div>
          </div>

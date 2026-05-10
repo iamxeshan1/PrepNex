@@ -132,8 +132,11 @@ export default function AdminLiveTests() {
   useEffect(() => { fetchLiveTests(); }, []);
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this live test?")) {
+    if (window.confirm("Are you sure you want to permanently delete this live test and all its questions? This action cannot be undone.")) {
       try {
+        const qSnap = await getDocs(query(collection(db, 'questions'), where('testId', '==', id)));
+        const queries = qSnap.docs.map(qd => deleteDoc(doc(db, 'questions', qd.id)));
+        await Promise.all(queries);
         await deleteDoc(doc(db, 'liveTests', id));
         fetchLiveTests();
       } catch (err) {

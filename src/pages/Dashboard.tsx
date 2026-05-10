@@ -24,6 +24,7 @@ export default function Dashboard() {
   const [paymentSuccessInfo, setPaymentSuccessInfo] = useState<{orderId: string, paymentId: string} | null>(null);
 
   const [subjectPerformance, setSubjectPerformance] = useState<any[]>([]);
+  const [lowestSubject, setLowestSubject] = useState<any>(null);
   const [userProgress, setUserProgress] = useState({ mockTestsAttempted: 0, averageAccuracy: 0, studyHours: 0 });
 
   useEffect(() => {
@@ -231,8 +232,11 @@ export default function Dashboard() {
  
                   if (performanceArr.length > 0) {
                       setSubjectPerformance(performanceArr.sort((a,b) => b.accuracy - a.accuracy).slice(0, 5));
+                      const lowest = performanceArr.sort((a,b) => a.accuracy - b.accuracy)[0];
+                      setLowestSubject(lowest);
                   } else {
                       setSubjectPerformance([]);
+                      setLowestSubject(null);
                   }
              } else {
                  setSubjectPerformance([]);
@@ -574,7 +578,13 @@ export default function Dashboard() {
                             <h3 className="font-black text-teal-900 mb-2">Projected Score Improvement</h3>
                             <p className="text-sm text-teal-700">Focusing on Quantitative Aptitude could add 45 points.</p>
                          </div>
-                         <button className="bg-teal-600 text-white font-black px-6 py-3 rounded-2xl w-full md:w-auto">Start Practice</button>
+                         <button 
+                             onClick={() => lowestSubject && navigate(`/subject-tests/${lowestSubject.subjectId}`)}
+                             disabled={!lowestSubject}
+                             className="bg-teal-600 text-white font-black px-6 py-3 rounded-2xl w-full md:w-auto disabled:opacity-50 disabled:bg-slate-400"
+                         >
+                            {lowestSubject ? `Practice ${lowestSubject.subject}` : 'No Subject Found'}
+                         </button>
                     </div>
                     <div className="flex flex-col gap-4">
                         <Link to="/study-material" className="bg-[#1e293b] text-white p-4 rounded-2xl font-bold text-center">Study Material</Link>
