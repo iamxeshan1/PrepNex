@@ -19,6 +19,12 @@
 }
 
 @layer base {
+  @media (max-width: 768px) {
+    input, textarea, select {
+      font-size: 16px !important;
+    }
+  }
+
   body {
     @apply font-sans bg-background text-slate-900;
   }

@@ -96,7 +96,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 {/* Mobile Menu Button */}
                 <button 
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="lg:hidden w-10 h-10 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors"
+                  className="lg:hidden w-11 h-11 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors"
                   aria-label="Toggle menu"
                 >
                   {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -177,6 +177,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                         <img 
                           src={`https://ui-avatars.com/api/?name=${user.email || 'User'}&background=0D8ABC&color=fff`} 
                           alt="User" 
+                          width="32"
+                          height="32"
+                          loading="lazy"
                           className="w-8 h-8 rounded-full" 
                         />
                         <span className="text-sm font-bold text-slate-900 truncate">{user.email}</span>

@@ -49,7 +49,7 @@ export default function AgencyExams() {
              
              <div className="w-32 h-32 bg-slate-50 rounded-full flex items-center justify-center p-4 border-4 border-white shadow-xl z-10 shrink-0">
                 {agency.logoUrl ? (
-                  <img src={agency.logoUrl} alt={agency.name} className="w-full h-full object-contain" />
+                  <img src={agency.logoUrl} alt={agency.name} loading="lazy" decoding="async" width="128" height="128" className="w-full h-full object-contain" />
                 ) : (
                   <ShieldCheck className="w-16 h-16 text-slate-300" />
                 )}

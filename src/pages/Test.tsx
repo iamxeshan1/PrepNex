@@ -502,13 +502,13 @@ export default function Test() {
            <div className="flex items-center gap-3 w-full sm:w-auto">
               <button 
                 onClick={() => setAnswers(prev => { const next = { ...prev }; delete next[currentQ.id]; return next; })}
-                className="flex-1 sm:flex-none text-xs md:text-sm font-bold text-[#065f46] border border-[#065f46] px-3 md:px-6 py-2.5 rounded hover:bg-emerald-50 transition-colors text-center whitespace-nowrap"
+                className="flex-1 sm:flex-none text-xs md:text-sm font-bold text-[#065f46] border border-[#065f46] px-3 md:px-6 py-2.5 min-h-[44px] rounded hover:bg-emerald-50 transition-colors text-center whitespace-nowrap"
               >
                  Clear Response
               </button>
               <button 
                 onClick={toggleMarkForReview}
-                className="flex-1 sm:flex-none text-xs md:text-sm font-bold text-orange-500 border border-orange-500 px-3 md:px-6 py-2.5 rounded hover:bg-orange-50 transition-colors flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap"
+                className="flex-1 sm:flex-none text-xs md:text-sm font-bold text-orange-500 border border-orange-500 px-3 md:px-6 py-2.5 min-h-[44px] rounded hover:bg-orange-50 transition-colors flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap"
               >
                  <Bookmark className="w-3 h-3 md:w-4 md:h-4 fill-transparent" /> Mark for Review <span className="hidden sm:inline">& Next</span>
               </button>
@@ -517,13 +517,13 @@ export default function Test() {
               <button 
                  onClick={() => setCurrentIdx(prev => Math.max(0, prev - 1))}
                  disabled={currentIdx === 0}
-                 className="flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 text-xs md:text-sm font-bold text-slate-700 border border-slate-300 px-3 md:px-6 py-2.5 rounded hover:bg-slate-50 transition-colors disabled:opacity-50"
+                 className="flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 text-xs md:text-sm font-bold text-slate-700 border border-slate-300 px-3 md:px-6 py-2.5 min-h-[44px] rounded hover:bg-slate-50 transition-colors disabled:opacity-50"
               >
                  <ChevronLeft className="w-4 h-4" /> Previous
               </button>
               <button 
                  onClick={handleNext}
-                 className="flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 text-xs md:text-sm font-bold text-white bg-[#065f46] px-4 md:px-8 py-2.5 rounded hover:bg-[#044e3a] transition-colors"
+                 className="flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 text-xs md:text-sm font-bold text-white bg-[#065f46] px-4 md:px-8 py-2.5 min-h-[44px] rounded hover:bg-[#044e3a] transition-colors"
               >
                  Save & Next <ChevronRight className="w-4 h-4" />
               </button>

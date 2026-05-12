@@ -10,7 +10,7 @@ export const DashboardTopHeader = ({ user, onMenuClick }: { user: any, onMenuCli
     <header className="bg-white border-b border-slate-100 flex items-center justify-between px-4 lg:px-8 py-4 lg:py-5 min-h-[64px]">
       {/* Mobile View: Hamburger on Left */}
       <div className="flex items-center lg:hidden flex-1">
-         <button onClick={onMenuClick} className="p-2 -ml-2 text-slate-600" aria-label="Toggle menu">
+         <button onClick={onMenuClick} className="w-11 h-11 flex items-center justify-center -ml-2 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors" aria-label="Toggle menu">
             <Menu className="w-6 h-6" />
          </button>
       </div>
@@ -37,7 +37,7 @@ export const DashboardTopHeader = ({ user, onMenuClick }: { user: any, onMenuCli
         </div>
 
         {/* Both Views: Logout Button */}
-        <button onClick={() => logout()} className="p-2 text-slate-500 hover:text-red-500" aria-label="Log out">
+        <button onClick={() => logout()} className="w-11 h-11 flex items-center justify-center -mr-2 lg:mr-0 text-slate-500 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors" aria-label="Log out">
             <LogOut className="w-5 h-5" />
         </button>
       </div>

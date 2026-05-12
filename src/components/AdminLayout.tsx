@@ -199,9 +199,9 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
                </div>
                <div className="w-9 h-9 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden">
                   {profile?.profilePicture ? (
-                    <img src={profile.profilePicture} alt="Avatar" className="w-full h-full object-cover" />
+                    <img src={profile.profilePicture} alt="Avatar" width="36" height="36" className="w-full h-full object-cover" />
                   ) : (
-                    <img src={`https://ui-avatars.com/api/?name=${profile?.fullName || 'Admin'}&background=0f766e&color=fff`} alt="Avatar" className="w-full h-full object-cover" />
+                    <img src={`https://ui-avatars.com/api/?name=${profile?.fullName || 'Admin'}&background=0f766e&color=fff`} alt="Avatar" width="36" height="36" className="w-full h-full object-cover" />
                   )}
                </div>
             </div>
