@@ -61,6 +61,7 @@ import { SessionTimeoutManager } from './components/SessionTimeoutManager';
 import { NotificationManager } from './components/NotificationManager';
 import { SplashScreen } from './components/SplashScreen';
 import { AnimatePresence } from 'motion/react';
+import { Toaster } from 'react-hot-toast';
 
 const ProtectedRoute = ({ children, adminOnly = false }: { children: React.ReactNode, adminOnly?: boolean }) => {
   const { user, profile, loading, isAdmin } = useAuth();
@@ -85,6 +86,7 @@ export function AppContent() {
 
   return (
     <>
+      <Toaster />
       <AnimatePresence mode="wait">
         {showSplash && <SplashScreen key="splash" />}
       </AnimatePresence>

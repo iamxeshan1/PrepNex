@@ -44,8 +44,8 @@ export default function AdminReviews() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Verfiy: Delete this review?')) return;
+  const handleDelete = async (id: string, confirmed = false) => {
+    if (!confirmed) { uiConfirm('Verfiy: Delete this review?', () => handleDelete(id, true)); return; }
     try {
       await deleteDoc(doc(db, 'reviews', id));
       setReviews(prev => prev.filter(r => r.id !== id));

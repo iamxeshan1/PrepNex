@@ -7,6 +7,7 @@ import { db } from '../lib/firebase';
 import { Logo } from '../components/Logo';
 import { Clock, ChevronRight, ChevronLeft, Send, AlertTriangle, Menu, Bookmark, HelpCircle, XCircle, CheckCircle2, User } from 'lucide-react';
 import { motion } from 'motion/react';
+import { uiConfirm } from '../lib/customUI';
 
 export default function Test() {
   const { testId } = useParams();
@@ -155,11 +156,12 @@ export default function Test() {
     };
   }, [loading, !!testId]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (skipConfirm = false) => {
     if (submitting) return;
     
     // Final check to prevent duplicate clicks if button wasn't disabled fast enough
-    if (window.confirm && !window.confirm('Are you sure you want to submit your answers?')) {
+    if (!skipConfirm) {
+      uiConfirm('Are you sure you want to submit your answers?', () => handleSubmit(true));
       return;
     }
 
@@ -367,7 +369,7 @@ export default function Test() {
             <span className="font-mono text-sm md:text-base font-bold text-slate-700">{formatTime(timeLeft)}</span>
           </div>
           <button 
-            onClick={() => { if(window.confirm('Finish and submit now?')) handleSubmit(); }}
+            onClick={() => handleSubmit()}
             className="bg-[#0f172a] text-white px-4 py-2 md:px-6 md:py-2.5 rounded-md font-medium text-xs md:text-sm hover:bg-slate-800 transition-all"
           >
             Submit Test

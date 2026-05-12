@@ -4,6 +4,7 @@ import { AdminLayout } from '../../components/AdminLayout';
 import { collection, addDoc, getDocs, deleteDoc, doc, query, where, getDoc, writeBatch, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Plus, Trash2, ChevronRight, FileText, Clock, Award, Upload, Download, Info, X, Shield, Edit3, Database, Loader2, Search } from 'lucide-react';
+import { uiConfirm } from '../../lib/customUI';
 
 export default function AdminTests() {
   const { examId, subjectId } = useParams();
@@ -166,9 +167,10 @@ export default function AdminTests() {
     }
   };
 
-  const handleDelete = async (id: string, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    if (window.confirm("Are you sure you want to permanently delete this test and all its questions? This action cannot be undone.")) {
+  const handleDelete = async (id: string, e?: React.MouseEvent | boolean) => {
+    if (typeof e === 'object' && e.stopPropagation) e.stopPropagation();
+    if (e !== true) { uiConfirm("Are you sure you want to permanently delete this test and all its questions? This action cannot be undone.", () => handleDelete(id, true)); return; }
+    if (true) {
       try {
         const qSnap = await getDocs(query(collection(db, 'questions'), where('testId', '==', id)));
         const queries = qSnap.docs.map(qd => deleteDoc(doc(db, 'questions', qd.id)));

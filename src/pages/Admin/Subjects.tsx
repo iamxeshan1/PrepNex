@@ -15,6 +15,7 @@ import {
   ArrowRight,
   BookOpen, Brain, Calculator, Globe, Microscope, History, Map, Cpu, FileText, Palette, Atom, MessageSquare, Languages, FlaskConical, Dna, Binary, Code, Music, HeartPulse, Scale, Briefcase, Church, Sigma, Zap, Gamepad2, Brush, Variable
 } from 'lucide-react';
+import { uiConfirm } from '../../lib/customUI';
 
 const ICON_OPTIONS = [
   { name: 'Brain', icon: Brain },
@@ -146,8 +147,9 @@ export default function AdminSubjects() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to permanently delete this subject and all its associated tests and questions? This action cannot be undone.")) {
+  const handleDelete = async (id: string, confirmed = false) => {
+    if (!confirmed) { uiConfirm("Are you sure you want to permanently delete this subject and all its associated tests and questions? This action cannot be undone.", () => handleDelete(id, true)); return; }
+    if (true) {
       setLoading(true);
       try {
         const testsSnap = await getDocs(query(collection(db, 'tests'), where('subjectId', '==', id)));

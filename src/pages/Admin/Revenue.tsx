@@ -99,8 +99,8 @@ export default function AdminRevenue() {
     }
   };
 
-  const clearTransactions = async () => {
-    if (!window.confirm("Are you sure you want to clear all transaction records? This cannot be undone.")) return;
+  const clearTransactions = async (confirmed = false) => {
+    if (!confirmed) { uiConfirm("Are you sure you want to clear all transaction records? This cannot be undone.", () => clearTransactions(true)); return; }
     try {
       setLoading(true);
       const subsSnap = await getDocs(collection(db, 'subscriptions'));

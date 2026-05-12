@@ -37,6 +37,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { uiConfirm } from '../../lib/customUI';
 
 export default function AdminUsers() {
   const navigate = useNavigate();
@@ -181,9 +182,10 @@ export default function AdminUsers() {
     }
   };
 
-  const handleToggleBlock = async (userId: string, currentStatus: boolean) => {
+  const handleToggleBlock = async (userId: string, currentStatus: boolean, confirmed = false) => {
     try {
-      if (confirm(`Are you sure you want to ${currentStatus ? 'unblock' : 'block'} this user?`)) {
+      if (!confirmed) { uiConfirm(`Are you sure you want to ${currentStatus ? 'unblock' : 'block'} this user?`, () => handleToggleBlock(userId, currentStatus, true)); return; }
+      if (true) {
         await updateDoc(doc(db, 'users', userId), { isBlocked: !currentStatus });
         setUsers(users.map(u => u.id === userId ? { ...u, isBlocked: !currentStatus } : u));
       }
@@ -219,9 +221,10 @@ export default function AdminUsers() {
     }
   };
 
-  const handleTogglePremium = async (userId: string, currentStatus: boolean) => {
+  const handleTogglePremium = async (userId: string, currentStatus: boolean, confirmed = false) => {
     try {
-      if (confirm(`Are you sure you want to ${currentStatus ? 'revoke' : 'grant'} premium access?`)) {
+      if (!confirmed) { uiConfirm(`Are you sure you want to ${currentStatus ? 'revoke' : 'grant'} premium access?`, () => handleTogglePremium(userId, currentStatus, true)); return; }
+      if (true) {
         const expiry = new Date();
         expiry.setFullYear(expiry.getFullYear() + 1);
         await updateDoc(doc(db, 'users', userId), {
@@ -257,8 +260,8 @@ export default function AdminUsers() {
     }
   };
 
-  const revokePurchase = async (purchase: any) => {
-    if (!confirm(`Are you sure you want to revoke this purchase: ${purchase.type || purchase.examId}?`)) return;
+  const revokePurchase = async (purchase: any, confirmed = false) => {
+    if (!confirmed) { uiConfirm(`Are you sure you want to revoke this purchase: ${purchase.type || purchase.examId}?`, () => revokePurchase(purchase, true)); return; }
     try {
       // 1. Delete subscription doc
       await deleteDoc(doc(db, purchase.collection, purchase.id));

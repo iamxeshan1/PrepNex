@@ -15,6 +15,7 @@ import {
 import { motion } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { uiConfirm } from '../lib/customUI';
 
 interface Material {
   id: string;
@@ -54,9 +55,9 @@ export default function StudyMaterial() {
   const handleDownload = (e: React.MouseEvent, url: string) => {
     e.preventDefault();
     if (!user) {
-      if (window.confirm("Premium Content: Please login or create an account to download the study material. Would you like to proceed?")) {
+      uiConfirm("Premium Content: Please login or create an account to download the study material. Would you like to proceed?", () => {
         navigate('/login');
-      }
+      });
       return;
     }
     const finalUrl = url.startsWith('http') ? url : `https://${url}`;

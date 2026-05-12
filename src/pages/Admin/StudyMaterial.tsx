@@ -73,8 +73,8 @@ export default function AdminStudyMaterial() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this study material?')) return;
+  const handleDelete = async (id: string, confirmed = false) => {
+    if (!confirmed) { uiConfirm('Delete this study material?', () => handleDelete(id, true)); return; }
     try {
       await deleteDoc(doc(db, 'study_material', id));
       setMaterials(prev => prev.filter(m => m.id !== id));

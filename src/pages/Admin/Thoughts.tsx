@@ -49,8 +49,9 @@ export default function AdminThoughts() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Delete this thought?')) {
+  const handleDelete = async (id: string, confirmed = false) => {
+    if (!confirmed) { uiConfirm('Delete this thought?', () => handleDelete(id, true)); return; }
+    if (true) {
       await deleteDoc(doc(db, 'thoughts', id));
       fetchThoughts();
     }
