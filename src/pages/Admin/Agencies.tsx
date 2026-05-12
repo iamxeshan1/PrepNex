@@ -142,7 +142,7 @@ export default function AdminAgencies() {
                         <span className="text-sm font-medium text-slate-600">{uploading ? 'Uploading...' : 'Upload Image'}</span>
                         <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} disabled={uploading} />
                       </label>
-                      {logoUrl && <img src={logoUrl} alt="Preview" className="h-12 w-12 rounded-lg object-contain border border-slate-200 bg-white" />}
+                      {logoUrl && <img src={logoUrl} alt="Preview" loading="lazy" decoding="async" width="48" height="48" className="h-12 w-12 rounded-lg object-contain border border-slate-200 bg-white" />}
                     </div>
                  </div>
              </div>
@@ -223,7 +223,7 @@ export default function AdminAgencies() {
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600 font-bold overflow-hidden p-1">
                          {agency.logoUrl ? (
-                           <img src={agency.logoUrl} alt={agency.name} className="w-full h-full object-contain" />
+                           <img src={agency.logoUrl} alt={agency.name} loading="lazy" decoding="async" width="40" height="40" className="w-full h-full object-contain" />
                          ) : (
                            <span>{agency.name.charAt(0)}</span>
                          )}

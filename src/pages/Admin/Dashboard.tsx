@@ -69,22 +69,41 @@ export default function AdminDashboard() {
       setStats(prev => ({ ...prev, exams: snap.docs.filter(d => d.data().status === 'live').length }));
     });
 
-    const subQuery = query(collection(db, 'subscriptions'), orderBy('createdAt', 'desc'), limit(10));
-    const unsubSubs = onSnapshot(subQuery, (snap) => {
-      setRecentSubs(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    // Fetch recent transactions from both subscriptions and premium_subscriptions
+    const fetchRecent = async () => {
+      const [subsSnap, premSnap] = await Promise.all([
+        getDocs(query(collection(db, 'subscriptions'), orderBy('createdAt', 'desc'), limit(10))),
+        getDocs(query(collection(db, 'premium_subscriptions'), orderBy('createdAt', 'desc'), limit(10)))
+      ]);
+      
+      const allSubs = [
+        ...subsSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+        ...premSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+      ].sort((a: any, b: any) => {
+        const da = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : (new Date(a.createdAt).getTime() || 0);
+        const dbTime = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : (new Date(b.createdAt).getTime() || 0);
+        return dbTime - da;
+      }).slice(0, 10);
+      
+      setRecentSubs(allSubs);
       setLoading(false);
-    });
+    };
 
-    // Real revenue calculation (simplified for dashboard)
-    getDocs(collection(db, 'subscriptions')).then(snap => {
-       const total = snap.docs.reduce((acc, d) => acc + (d.data().amount || 0), 0);
-       setStats(prev => ({ ...prev, revenue: total }));
+    fetchRecent();
+
+    // Real revenue calculation from both collections
+    Promise.all([
+      getDocs(collection(db, 'subscriptions')),
+      getDocs(collection(db, 'premium_subscriptions'))
+    ]).then(([subsSnap, premSnap]) => {
+       const subsTotal = subsSnap.docs.reduce((acc, d) => acc + (d.data().amount || 0), 0);
+       const premTotal = premSnap.docs.reduce((acc, d) => acc + (d.data().amount || 0), 0);
+       setStats(prev => ({ ...prev, revenue: subsTotal + premTotal }));
     });
 
     return () => {
       unsubUsers();
       unsubExams();
-      unsubSubs();
     };
   }, []);
 
@@ -196,7 +215,9 @@ export default function AdminDashboard() {
                        <Loader2 className="w-8 h-8 text-slate-300 animate-spin mx-auto mb-4" />
                        <p className="text-sm font-bold text-slate-400">Loading records...</p>
                     </div>
-                 ) : recentSubs.map((sub, i) => (
+                 ) : recentSubs.map((sub, i) => {
+                    const dateObj = sub.createdAt?.seconds ? new Date(sub.createdAt.seconds * 1000) : new Date(sub.createdAt);
+                    return (
                     <div key={sub.id} className="p-4 border border-slate-100 bg-slate-50 flex items-center justify-between hover:bg-slate-100 transition-colors">
                        <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-white border border-slate-200 flex items-center justify-center font-bold text-slate-600 shadow-sm">
@@ -204,7 +225,7 @@ export default function AdminDashboard() {
                           </div>
                           <div>
                              <p className="text-sm font-bold text-slate-900">{sub.userName || 'Anonymous'}</p>
-                             <p className="text-xs font-semibold text-slate-500">{new Date(sub.createdAt).toLocaleDateString()} • {new Date(sub.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                             <p className="text-xs font-semibold text-slate-500">{dateObj.toLocaleDateString()} • {dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
                           </div>
                        </div>
                        <div className="text-right">
@@ -212,7 +233,7 @@ export default function AdminDashboard() {
                           <p className="text-xs font-bold text-slate-400">{sub.planName || 'Plan'}</p>
                        </div>
                     </div>
-                 ))}
+                 )})}
                </div>
             </div>
          </div>

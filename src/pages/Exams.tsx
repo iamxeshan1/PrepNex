@@ -90,7 +90,7 @@ export default function Exams() {
                    <div className="flex items-center gap-3">
                       <div className="w-12 h-12 bg-white border border-slate-100 rounded-xl flex items-center justify-center p-2 group-hover:bg-teal-50 transition-colors shadow-sm shrink-0">
                          {logo ? (
-                            <img src={logo} alt="" className="w-full h-full object-contain" />
+                            <img src={logo} alt="" loading="lazy" decoding="async" width="48" height="48" className="w-full h-full object-contain" />
                          ) : (
                             <Shield className="w-6 h-6 text-slate-300 group-hover:text-[#008770] transition-colors" />
                          )}

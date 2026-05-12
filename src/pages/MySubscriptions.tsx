@@ -126,7 +126,7 @@ export default function MySubscriptions() {
                           <div className="flex items-start gap-4 mb-6">
                               <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0 overflow-hidden">
                                   {exam.logoUrl ? (
-                                      <img src={exam.logoUrl} alt={exam.name || exam.title} className="w-full h-full object-contain bg-white border border-slate-100 rounded-xl" />
+                                      <img src={exam.logoUrl} alt={exam.name || exam.title} loading="lazy" decoding="async" width="48" height="48" className="w-full h-full object-contain bg-white border border-slate-100 rounded-xl" />
                                   ) : (
                                       <Award className="w-6 h-6 text-indigo-500" />
                                   )}

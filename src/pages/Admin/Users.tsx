@@ -33,11 +33,13 @@ import {
   Clock,
   FileText,
   CreditCard,
-  Ticket
+  Ticket,
+  BarChart3
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function AdminUsers() {
+  const navigate = useNavigate();
   const { getItemTitle } = useItemTitles();
   const [users, setUsers] = useState<any[]>([]);
   const [exams, setExams] = useState<any[]>([]);
@@ -366,7 +368,7 @@ export default function AdminUsers() {
                     <td className="p-4 pl-6">
                       <div className="flex items-center gap-4">
                         {user.photoURL ? (
-                          <img src={user.photoURL} alt={user.name} className="w-10 h-10 rounded-lg" />
+                          <img src={user.photoURL} alt={user.name} loading="lazy" decoding="async" width="40" height="40" className="w-10 h-10 rounded-lg object-cover" />
                         ) : (
                           <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center text-teal-600 font-bold uppercase">
                              {user.name?.[0] || 'U'}
@@ -395,7 +397,10 @@ export default function AdminUsers() {
                     </td>
                     <td className="p-4 pr-6 text-right">
                        <div className="flex items-center justify-end gap-2 text-slate-400">
-                        <button onClick={() => { setSelectedUser(user); setEditFormData(user); setShowEditModal(true); }} className="p-2 hover:bg-slate-200 rounded text-slate-600 transition-colors" title="Edit User">
+                          <button onClick={() => navigate(`/admin/users/${user.id}/performance`)} className="p-2 hover:bg-indigo-50 rounded text-indigo-600 transition-colors" title="View Performance">
+                             <BarChart3 className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => { setSelectedUser(user); setEditFormData(user); setShowEditModal(true); }} className="p-2 hover:bg-slate-200 rounded text-slate-600 transition-colors" title="Edit User">
                              <User className="w-4 h-4" />
                           </button>
                           <button onClick={() => viewPurchases(user)} className="p-2 hover:bg-teal-50 rounded text-teal-600 transition-colors" title="View Purchases">

@@ -384,7 +384,7 @@ export default function Test() {
             <div className="p-4 md:p-6 border-b border-slate-200 flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-slate-200 overflow-hidden shrink-0">
                  {profile?.photoURL ? (
-                    <img src={profile.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                    <img src={profile.photoURL} alt="Profile" loading="lazy" decoding="async" width="48" height="48" className="w-full h-full object-cover" />
                  ) : (
                     <div className="w-full h-full bg-slate-200 flex items-center justify-center">
                        <User className="w-6 h-6 text-slate-400" />

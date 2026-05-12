@@ -100,7 +100,7 @@ export default function AgencyExams() {
                 <div className="flex flex-col md:flex-row gap-8 items-start">
                   <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center overflow-hidden p-3 group-hover:bg-primary/5 transition-colors shrink-0">
                     {agency?.logoUrl ? (
-                      <img src={agency.logoUrl} alt={agency.name} className="w-full h-full object-contain" />
+                      <img src={agency.logoUrl} alt={agency.name} loading="lazy" decoding="async" width="80" height="80" className="w-full h-full object-contain" />
                     ) : (
                       <FileText className="w-full h-full text-slate-300 group-hover:text-primary transition-colors" />
                     )}

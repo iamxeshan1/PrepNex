@@ -77,13 +77,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               <div className="flex items-center gap-4">
                 {user ? (
                   <div className="hidden md:flex items-center gap-4">
-                    <button className="relative w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors">
+                    <button className="relative w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors" aria-label="Notifications">
                       <Bell className="w-5 h-5" />
                       <span className="absolute top-2 right-2 w-2 h-2 bg-teal-500 rounded-full border-2 border-white"></span>
                     </button>
                     <button onClick={handleLogout} className="text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">Log Out</button>
                     <Link to="/profile" className="w-9 h-9 rounded-full overflow-hidden border border-slate-200 cursor-pointer hover:border-teal-500 transition-colors">
-                      <img src={`https://ui-avatars.com/api/?name=${user.email || 'User'}&background=0D8ABC&color=fff`} alt="User" className="w-full h-full object-cover" />
+                      <img src={`https://ui-avatars.com/api/?name=${user.email || 'User'}&background=0D8ABC&color=fff`} alt="User" className="w-full h-full object-cover" width="36" height="36" fetchpriority="high" />
                     </Link>
                   </div>
                 ) : (
@@ -97,6 +97,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 <button 
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                   className="lg:hidden w-10 h-10 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors"
+                  aria-label="Toggle menu"
                 >
                   {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                 </button>

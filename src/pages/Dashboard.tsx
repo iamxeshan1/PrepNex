@@ -465,7 +465,7 @@ export default function Dashboard() {
                                     <div className="flex items-start gap-3 mb-6">
                                         <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0 overflow-hidden">
                                             {exam.logoUrl ? (
-                                                <img src={exam.logoUrl} alt={exam.name || exam.title} className="w-full h-full object-contain bg-white border border-slate-100 rounded-xl" />
+                                                <img src={exam.logoUrl} alt={exam.name || exam.title} loading="lazy" decoding="async" width="40" height="40" className="w-full h-full object-contain bg-white border border-slate-100 rounded-xl" />
                                             ) : (
                                                 <Award className="w-5 h-5 text-indigo-500" />
                                             )}

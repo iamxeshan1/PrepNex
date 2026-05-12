@@ -415,7 +415,7 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
                 )}
               </button>
               <div className="flex items-center justify-center gap-4">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/8/89/Razorpay_logo.svg" alt="Razorpay" className="h-4 opacity-50 grayscale hover:grayscale-0 transition-all" />
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/8/89/Razorpay_logo.svg" alt="Razorpay" loading="lazy" decoding="async" width="64" height="16" className="h-4 w-auto opacity-50 grayscale hover:grayscale-0 transition-all" />
                   <p className="text-[9px] text-center text-slate-400 font-black uppercase tracking-widest">
                     SSL Encrypted Safe Payment
                   </p>

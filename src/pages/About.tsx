@@ -135,7 +135,7 @@ export default function About() {
           <section className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center mb-24">
             <div className="relative">
                <div className="aspect-square bg-slate-200 rounded-[4rem] overflow-hidden">
-                 <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&auto=format&fit=crop" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000" alt="Students" />
+                 <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&auto=format&fit=crop" loading="lazy" decoding="async" width="800" height="800" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000" alt="Students" />
                </div>
                <div className="absolute -bottom-10 -right-10 bg-white p-8 rounded-3xl shadow-2xl shadow-slate-200 border border-slate-100 hidden md:block">
                   <div className="flex items-center gap-4">
