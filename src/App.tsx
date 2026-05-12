@@ -59,7 +59,6 @@ const RequestReset = React.lazy(() => import('./pages/RequestReset'));
 import ScrollToTop from './components/ScrollToTop';
 import { SessionTimeoutManager } from './components/SessionTimeoutManager';
 import { NotificationManager } from './components/NotificationManager';
-import { InstallPrompt } from './components/InstallPrompt';
 import { SplashScreen } from './components/SplashScreen';
 import { AnimatePresence } from 'motion/react';
 
@@ -91,7 +90,6 @@ export function AppContent() {
       </AnimatePresence>
       <SessionTimeoutManager />
       <NotificationManager />
-      <InstallPrompt />
       <Router>
         <ScrollToTop />
         <React.Suspense fallback={<div className="flex h-screen items-center justify-center min-h-[50vh]"><div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div></div>}>
