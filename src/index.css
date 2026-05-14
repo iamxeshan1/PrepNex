@@ -26,7 +26,7 @@
   }
 
   body {
-    @apply font-sans bg-background text-[#002f26];
+    @apply font-sans bg-background text-slate-900;
   }
 }
 
