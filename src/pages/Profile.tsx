@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { User, Phone, MapPin, Building, Map, CheckCircle2, AlertCircle } from 'lucide-react';
+import { User, Phone, MapPin, Building, Map, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react';
 import { DashboardSidebar } from '../components/DashboardSidebar';
 import { DashboardTopHeader } from '../components/DashboardTopHeader';
 import { motion } from 'motion/react';
+import { Link } from 'react-router-dom';
 
 const INDIAN_STATES = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
@@ -94,6 +95,9 @@ export default function Profile() {
           <main className="p-4 lg:p-8 overflow-y-auto w-full max-w-4xl mx-auto">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
                   <header className="mb-8">
+                      <Link to="/dashboard" className="text-teal-600 font-bold flex items-center gap-1 mb-2 hover:underline">
+                        <ArrowLeft size={16} /> Back to Dashboard
+                      </Link>
                       <h1 className="text-2xl md:text-3xl font-black text-slate-900 mb-2">My Profile</h1>
                       <p className="text-slate-500 font-medium">Manage your personal details and contact information.</p>
                   </header>

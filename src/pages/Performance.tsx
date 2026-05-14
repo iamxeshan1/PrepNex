@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, TrendingUp, Award, Clock, BookOpen, ChevronRight, BarChart3, Target, Calendar, Filter, Download } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, Award, Clock, BookOpen, ChevronRight, BarChart3, Target, Calendar, Filter, Download, ArrowLeft } from 'lucide-react';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { DashboardSidebar } from '../components/DashboardSidebar';
@@ -147,6 +147,9 @@ export default function Performance() {
           <div className="max-w-7xl mx-auto space-y-8">
             
             {/* Page Header */}
+            <Link to="/dashboard" className="text-teal-600 font-bold flex items-center gap-1 mb-2 hover:underline">
+              <ArrowLeft size={16} /> Back to Dashboard
+            </Link>
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div>
                 <h1 className="text-3xl font-black text-slate-900 mb-2">Performance Analytics</h1>

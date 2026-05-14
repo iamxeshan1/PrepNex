@@ -4,8 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { useItemTitles } from '../hooks/useItemTitles';
 import { db } from '../lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { CreditCard, Receipt, Calendar, Search, Loader2, Download, Tag, FileText } from 'lucide-react';
+import { CreditCard, Receipt, Calendar, Search, Loader2, Download, Tag, FileText, ArrowLeft } from 'lucide-react';
 import { motion } from 'motion/react';
+import { Link } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -163,6 +164,9 @@ export default function Transactions() {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto space-y-6 px-4 sm:px-6">
+        <Link to="/dashboard" className="text-teal-600 font-bold flex items-center gap-1 mb-2 hover:underline">
+          <ArrowLeft size={16} /> Back to Dashboard
+        </Link>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-4 border-b border-slate-200">
           <div>
             <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
