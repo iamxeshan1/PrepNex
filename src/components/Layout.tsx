@@ -54,7 +54,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             {/* Left side: Logo & Links */}
             <div className="flex items-center gap-8 xl:gap-12">
               <Link to="/" className="flex items-center">
-                <span className="font-logo font-black text-4xl tracking-tight text-[#002f26]">Prep<span className="text-teal-600">Next</span></span>
+                <span className="font-logo font-black text-4xl tracking-tight text-black">Prep<span className="text-[#002f26]">Next</span></span>
               </Link>
 
               <div className="hidden lg:flex items-center gap-10">
