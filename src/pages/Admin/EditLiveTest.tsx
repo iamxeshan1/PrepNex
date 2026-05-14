@@ -53,7 +53,7 @@ export default function AdminEditLiveTest() {
   return (
     <AdminLayout title="Edit Live Test" backTo="/admin/live-tests">
       <form onSubmit={handleSave} className="bg-white border border-slate-200 p-8 max-w-2xl mx-auto rounded-xl">
-        <h2 className="text-xl font-bold mb-6 text-slate-900">Edit Test: {test.title}</h2>
+        <h2 className="text-xl font-bold mb-6 text-[#002f26]">Edit Test: {test.title}</h2>
         <div className="space-y-6">
           <div>
             <label className="block text-sm font-semibold mb-1">Test Title</label>
@@ -90,7 +90,7 @@ export default function AdminEditLiveTest() {
                 <input type="number" className="w-full px-4 py-2 border rounded" value={test.price} onChange={e => setTest({...test, price: e.target.value})} />
             </div>
           )}
-          <button type="submit" disabled={saving} className="bg-indigo-700 text-white px-6 py-2 rounded flex items-center gap-2">
+          <button type="submit" disabled={saving} className="bg-teal-700 text-white px-6 py-2 rounded flex items-center gap-2">
             <Save className="w-4 h-4" /> {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>

@@ -152,12 +152,12 @@ export default function AdminSubscriptions() {
     <AdminLayout title="Membership Control">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
         <div>
-           <h2 className="text-3xl font-black text-slate-900 tracking-tight font-display">Subscription Registry</h2>
+           <h2 className="text-3xl font-black text-[#002f26] tracking-tight font-display">Subscription Registry</h2>
            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 italic">Monitor and authorize global membership permissions</p>
         </div>
         <button 
           onClick={exportSubscriptions}
-          className="px-8 py-4 bg-[#0f172a] text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:bg-black transition-all transform hover:-translate-y-1 active:scale-95 flex items-center gap-3"
+          className="px-8 py-4 bg-[#002f26] text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:bg-black transition-all transform hover:-translate-y-1 active:scale-95 flex items-center gap-3"
         >
           <Download className="w-5 h-5 flex-shrink-0" /> Extract Ledger
         </button>
@@ -165,7 +165,7 @@ export default function AdminSubscriptions() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-12">
          {[
-           { label: 'Total Revenue', value: `₹${totalRevenue.toLocaleString()}`, icon: Wallet, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+           { label: 'Total Revenue', value: `₹${totalRevenue.toLocaleString()}`, icon: Wallet, color: 'text-teal-600', bg: 'bg-teal-50' },
            { label: 'Cycle Yield', value: `₹${thisMonthRevenue.toLocaleString()}`, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
            { label: 'Premium Nodes', value: users.filter(u => !!u.subscriptionExpiry).length, icon: CreditCard, color: 'text-amber-600', bg: 'bg-amber-50' }
          ].map((stat, i) => (
@@ -181,7 +181,7 @@ export default function AdminSubscriptions() {
                  <stat.icon className="w-6 h-6" />
               </div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
-              <h4 className="text-3xl font-black text-slate-900 tracking-tight font-display">{stat.value}</h4>
+              <h4 className="text-3xl font-black text-[#002f26] tracking-tight font-display">{stat.value}</h4>
            </motion.div>
          ))}
       </div>
@@ -190,7 +190,7 @@ export default function AdminSubscriptions() {
         <div className="relative w-full md:max-w-md">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
           <input 
-            className="w-full pl-16 pr-6 py-5 bg-white border border-slate-100 rounded-[2rem] outline-none shadow-sm focus:ring-4 focus:ring-indigo-500/5 font-bold text-slate-700"
+            className="w-full pl-16 pr-6 py-5 bg-white border border-slate-100 rounded-[2rem] outline-none shadow-sm focus:ring-4 focus:ring-teal-500/5 font-bold text-slate-700"
             placeholder="Search entity registry..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -202,7 +202,7 @@ export default function AdminSubscriptions() {
             <button
               key={type}
               onClick={() => setFilterType(type)}
-              className={`px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all ${filterType === type ? 'bg-[#0f172a] text-white shadow-lg' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-50'}`}
+              className={`px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all ${filterType === type ? 'bg-[#002f26] text-white shadow-lg' : 'text-slate-400 hover:text-teal-600 hover:bg-slate-50'}`}
             >
               {type} Nodes
             </button>
@@ -234,14 +234,14 @@ export default function AdminSubscriptions() {
                   const isExpired = expiry && expiry < new Date();
 
                   return (
-                    <tr key={user.id} className="hover:bg-indigo-50/20 transition-colors group">
+                    <tr key={user.id} className="hover:bg-teal-50/20 transition-colors group">
                       <td className="px-10 py-8">
                         <div className="flex items-center gap-5">
-                          <div className="w-12 h-12 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 font-black relative overflow-hidden group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500 shadow-inner">
+                          <div className="w-12 h-12 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 font-black relative overflow-hidden group-hover:bg-teal-600 group-hover:text-white transition-all duration-500 shadow-inner">
                             {user.name?.[0].toUpperCase() || '?'}
                           </div>
                           <div>
-                            <p className="font-black text-slate-800 uppercase tracking-tight text-sm leading-none mb-1.5">{user.name || 'Anonymous Node'}</p>
+                            <p className="font-black text-[#001f19] uppercase tracking-tight text-sm leading-none mb-1.5">{user.name || 'Anonymous Node'}</p>
                             <p className="text-[10px] text-slate-400 font-bold tracking-tight italic">{user.email}</p>
                           </div>
                         </div>
@@ -277,7 +277,7 @@ export default function AdminSubscriptions() {
                             <button
                               key={m}
                               onClick={() => setSubscription(user.id, m)}
-                              className="px-4 py-2 bg-white border border-slate-100 text-slate-400 hover:text-indigo-600 hover:border-indigo-100 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all shadow-sm active:scale-95"
+                              className="px-4 py-2 bg-white border border-slate-100 text-slate-400 hover:text-teal-600 hover:border-teal-100 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all shadow-sm active:scale-95"
                               title={`Grant ${m} Month Access`}
                             >
                               +{m}M
@@ -310,7 +310,7 @@ export default function AdminSubscriptions() {
         )}
       </div>
 
-      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-[#0f172a] py-4 px-8 rounded-full shadow-2xl flex items-center gap-6 z-40 border border-slate-800">
+      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-[#002f26] py-4 px-8 rounded-full shadow-2xl flex items-center gap-6 z-40 border border-[#001f19]">
          <div className="flex items-center gap-3">
             <Shield className="w-4 h-4 text-emerald-400" />
             <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Institutional Privacy Enforced</span>

@@ -150,13 +150,13 @@ export default function Helpdesk() {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div>
-                <h1 className="text-3xl font-black text-slate-900 tracking-tight font-display italic uppercase">Resolution Hub</h1>
+                <h1 className="text-3xl font-black text-[#002f26] tracking-tight font-display italic uppercase">Resolution Hub</h1>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Direct protocol access for student support triage</p>
               </div>
               <button 
                 onClick={() => setShowNew(!showNew)}
                 className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-sm transition-all shadow-lg active:scale-95 ${
-                  showNew ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-[#0f172a] text-white hover:bg-black'
+                  showNew ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-[#002f26] text-white hover:bg-black'
                 }`}
               >
                 {showNew ? <><X className="w-4 h-4" /> Cancel Request</> : <><Plus className="w-4 h-4" /> Log New Ticket</>}
@@ -181,7 +181,7 @@ export default function Helpdesk() {
                            <MessageSquare className="w-6 h-6" />
                         </div>
                         <div>
-                           <h3 className="text-xl font-black text-slate-900 uppercase">Draft Protocol</h3>
+                           <h3 className="text-xl font-black text-[#002f26] uppercase">Draft Protocol</h3>
                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Provide detailed parameters for the triage team</p>
                         </div>
                      </div>
@@ -191,7 +191,7 @@ export default function Helpdesk() {
                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Subject Vector</label>
                            <input 
                              type="text" required 
-                             className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-teal-500/10 font-bold text-slate-800 transition-all"
+                             className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-teal-500/10 font-bold text-[#001f19] transition-all"
                              value={subject} onChange={(e) => setSubject(e.target.value)} 
                              placeholder="Ex: Technical latency in mock test portal..."
                            />
@@ -201,7 +201,7 @@ export default function Helpdesk() {
                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Detailed Log</label>
                            <textarea 
                              required rows={4}
-                             className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-teal-500/10 font-bold text-slate-800 transition-all resize-none"
+                             className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-teal-500/10 font-bold text-[#001f19] transition-all resize-none"
                              value={message} onChange={(e) => setMessage(e.target.value)} 
                              placeholder="Provide precise details, steps to reproduce, or queries regarding subscription status..."
                            />
@@ -210,7 +210,7 @@ export default function Helpdesk() {
 
                      <button 
                        type="submit" disabled={submitting}
-                       className="w-full py-5 bg-[#0f172a] text-white rounded-2xl font-black flex justify-center items-center gap-3 hover:bg-black transition-all disabled:opacity-50 text-sm uppercase tracking-widest shadow-xl"
+                       className="w-full py-5 bg-[#002f26] text-white rounded-2xl font-black flex justify-center items-center gap-3 hover:bg-black transition-all disabled:opacity-50 text-sm uppercase tracking-widest shadow-xl"
                      >
                        {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Send className="w-5 h-5" /> Initialize Ticket Dispatch</>}
                      </button>
@@ -229,7 +229,7 @@ export default function Helpdesk() {
               <div className="py-32 text-center bg-white rounded-[4rem] border border-slate-100 shadow-sm relative overflow-hidden">
                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-50 to-transparent opacity-50" />
                  <MessageCircle className="w-20 h-20 text-slate-100 mx-auto mb-6 relative" />
-                 <h3 className="text-xl font-black text-slate-800 uppercase relative">Protocol Repository Empty</h3>
+                 <h3 className="text-xl font-black text-[#001f19] uppercase relative">Protocol Repository Empty</h3>
                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2 relative">No active support threads detected in this sector</p>
                  <button onClick={() => setShowNew(true)} className="mt-8 relative px-8 py-3 bg-teal-50 text-teal-700 font-black text-[10px] rounded-full uppercase tracking-widest hover:bg-teal-100 transition-colors">Initialize First Node</button>
               </div>
@@ -249,11 +249,11 @@ export default function Helpdesk() {
                       <header className="flex flex-col md:flex-row justify-between items-start mb-10 gap-6 pb-8 border-b border-slate-50">
                         <div className="space-y-4">
                            <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 shadow-inner">
+                              <div className="w-12 h-12 bg-teal-50 border border-teal-100 rounded-2xl flex items-center justify-center text-teal-600 shadow-inner">
                                  <MessageSquare className="w-6 h-6" />
                               </div>
                               <div>
-                                 <h3 className="text-2xl font-black text-slate-900 tracking-tight font-display uppercase italic">{ticket.subject}</h3>
+                                 <h3 className="text-2xl font-black text-[#002f26] tracking-tight font-display uppercase italic">{ticket.subject}</h3>
                                  <div className="flex items-center gap-3 mt-1">
                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">ID: {ticket.id}</span>
                                     <div className="w-1 h-1 rounded-full bg-slate-200" />
@@ -265,12 +265,12 @@ export default function Helpdesk() {
                         <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
                           <span className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border flex items-center gap-2 shadow-sm ${
                             ticket.status === 'open' ? 'bg-amber-50 border-amber-100 text-amber-600' : 
-                            ticket.status === 'replied' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' :
+                            ticket.status === 'replied' ? 'bg-teal-50 border-teal-100 text-teal-600' :
                             'bg-emerald-50 border-emerald-100 text-emerald-600'
                           }`}>
                             <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
                               ticket.status === 'open' ? 'bg-amber-500' : 
-                              ticket.status === 'replied' ? 'bg-indigo-500' : 'bg-emerald-500'
+                              ticket.status === 'replied' ? 'bg-teal-500' : 'bg-emerald-500'
                             }`} />
                             {ticket.status} Protocol
                           </span>
@@ -297,15 +297,15 @@ export default function Helpdesk() {
                             <div className={`max-w-[85%] p-7 rounded-[2.5rem] border-2 shadow-sm ${
                               msg.sender === 'user' 
                                 ? 'bg-white border-slate-100 rounded-tl-none' 
-                                : 'bg-[#0f172a] border-[#0f172a] text-white rounded-tr-none'
+                                : 'bg-[#002f26] border-[#002f26] text-white rounded-tr-none'
                             }`}>
                               <div className="flex items-center gap-2 mb-3">
-                                 <div className={`w-1.5 h-1.5 rounded-full ${msg.sender === 'user' ? 'bg-indigo-500' : 'bg-emerald-500'}`} />
+                                 <div className={`w-1.5 h-1.5 rounded-full ${msg.sender === 'user' ? 'bg-teal-500' : 'bg-emerald-500'}`} />
                                  <span className={`text-[8px] font-black uppercase tracking-widest ${msg.sender === 'user' ? 'text-slate-400' : 'text-slate-500'}`}>
                                     {msg.sender === 'user' ? 'Aspirant Response' : 'Institutional protocol'}
                                  </span>
                               </div>
-                              <p className={`text-sm font-bold leading-relaxed ${msg.sender === 'user' ? 'text-slate-800' : 'text-white'}`}>{msg.text}</p>
+                              <p className={`text-sm font-bold leading-relaxed ${msg.sender === 'user' ? 'text-[#001f19]' : 'text-white'}`}>{msg.text}</p>
                               <div className="mt-4 flex items-center justify-between">
                                  <span className={`text-[8px] font-bold ${msg.sender === 'user' ? 'text-slate-300' : 'text-white/40'}`}>
                                     {new Date(msg.createdAt).toLocaleString()}
@@ -323,7 +323,7 @@ export default function Helpdesk() {
                       {ticket.status !== 'closed' ? (
                         <div className="relative group/reply">
                           <textarea 
-                            className="w-full px-8 py-7 bg-white border border-slate-200 rounded-[2.5rem] outline-none focus:ring-8 focus:ring-teal-500/5 font-bold text-slate-800 shadow-xl transition-all h-32 resize-none"
+                            className="w-full px-8 py-7 bg-white border border-slate-200 rounded-[2.5rem] outline-none focus:ring-8 focus:ring-teal-500/5 font-bold text-[#001f19] shadow-xl transition-all h-32 resize-none"
                             placeholder="Input supplemental log data..."
                             value={replyText[ticket.id] || ''}
                             onChange={(e) => setReplyText({ ...replyText, [ticket.id]: e.target.value })}
@@ -339,7 +339,7 @@ export default function Helpdesk() {
                              <button 
                                 onClick={() => handleUserReply(ticket.id)}
                                 disabled={replying === ticket.id || !replyText[ticket.id]}
-                                className="p-5 bg-[#0f172a] text-white rounded-2xl hover:bg-black transition-all disabled:opacity-30 shadow-2xl active:scale-95 transform hover:-translate-x-1"
+                                className="p-5 bg-[#002f26] text-white rounded-2xl hover:bg-black transition-all disabled:opacity-30 shadow-2xl active:scale-95 transform hover:-translate-x-1"
                              >
                                 {replying === ticket.id ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
                              </button>

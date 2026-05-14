@@ -88,7 +88,7 @@ export default function AdminStudyMaterial() {
     m.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const StatCard = ({ title, value, span, colorClass = "text-slate-900" }: any) => (
+  const StatCard = ({ title, value, span, colorClass = "text-[#002f26]" }: any) => (
     <div className="bg-white p-4">
       <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
       <h3 className={`text-3xl font-bold tracking-tight ${colorClass}`}>{value}</h3>
@@ -110,7 +110,7 @@ export default function AdminStudyMaterial() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <StatCard title="Total Resources" value={materials.length} span="In library" colorClass="text-indigo-600" />
+        <StatCard title="Total Resources" value={materials.length} span="In library" colorClass="text-teal-600" />
         <StatCard title="Recent Added" value={materials.filter(m => new Date(m.createdAt) > new Date(Date.now() - 7*24*60*60*1000)).length} span="Last 7 days" colorClass="text-emerald-600" />
         <StatCard title="Categories" value={new Set(materials.map(m => m.category)).size} span="Distinct domains" colorClass="text-amber-600" />
         <StatCard title="Storage" value="-" span="Cloud links" colorClass="text-slate-600" />
@@ -122,7 +122,7 @@ export default function AdminStudyMaterial() {
               <X className="w-5 h-5" />
            </button>
 
-           <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2"><BookOpen className="w-5 h-5 text-teal-600" /> {editingId ? 'Edit Study Material' : 'Add Study Material'}</h3>
+           <h3 className="text-xl font-bold text-[#002f26] mb-6 flex items-center gap-2"><BookOpen className="w-5 h-5 text-teal-600" /> {editingId ? 'Edit Study Material' : 'Add Study Material'}</h3>
 
            <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -214,11 +214,11 @@ export default function AdminStudyMaterial() {
                 <tr key={m.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
                   <td className="p-4 pl-6">
                     <div className="flex items-center gap-4">
-                       <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                       <div className="w-10 h-10 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600">
                           <FileText className="w-5 h-5" />
                        </div>
                        <div>
-                         <p className="font-bold text-slate-900 group-hover:text-teal-700 transition-colors truncate max-w-sm">
+                         <p className="font-bold text-[#002f26] group-hover:text-teal-700 transition-colors truncate max-w-sm">
                            {m.title}
                          </p>
                          <p className="text-xs font-semibold text-slate-500 mt-0.5 truncate max-w-sm">{m.description || 'No description'}</p>
@@ -241,7 +241,7 @@ export default function AdminStudyMaterial() {
                            href={m.url}
                            target="_blank"
                            rel="noreferrer"
-                           className="px-3 py-1.5 bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-700 rounded text-xs font-bold transition-colors flex items-center gap-1"
+                           className="px-3 py-1.5 bg-slate-100 hover:bg-teal-50 text-slate-600 hover:text-teal-700 rounded text-xs font-bold transition-colors flex items-center gap-1"
                         >
                            Open <ExternalLink className="w-3.5 h-3.5" />
                         </a>

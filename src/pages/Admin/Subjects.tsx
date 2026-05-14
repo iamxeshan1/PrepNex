@@ -175,7 +175,7 @@ export default function AdminSubjects() {
     }
   };
 
-  const StatCard = ({ title, value, span, icon: Icon, colorClass = "text-slate-900" }: any) => (
+  const StatCard = ({ title, value, span, icon: Icon, colorClass = "text-[#002f26]" }: any) => (
     <div className="bg-white p-4">
       <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
       <h3 className={`text-3xl font-bold tracking-tight ${colorClass}`}>{value}</h3>
@@ -201,12 +201,12 @@ export default function AdminSubjects() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <StatCard title="Total Subjects" value={subjects.length} span="Academic domains" colorClass="text-teal-600" />
         <StatCard title="Recently Added" value={subjects.filter(s => new Date(s.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length} span="Last 7 days" colorClass="text-amber-600" />
-        <StatCard title="Active Materials" value="-" span="Under development" colorClass="text-indigo-600" />
+        <StatCard title="Active Materials" value="-" span="Under development" colorClass="text-teal-600" />
       </div>
 
       {showForm && (
         <form onSubmit={handleRegister} className="bg-white p-8 mb-8 border-b border-slate-200">
-          <h3 className="text-xl font-bold text-slate-900 mb-6">{selectedSubjectId ? 'Edit Subject' : 'New Subject'}</h3>
+          <h3 className="text-xl font-bold text-[#002f26] mb-6">{selectedSubjectId ? 'Edit Subject' : 'New Subject'}</h3>
           
           <div className="space-y-6">
              <div className="grid grid-cols-1 gap-6">
@@ -226,7 +226,7 @@ export default function AdminSubjects() {
                       <input 
                         required
                         placeholder="e.g. Constitutional Law"
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 font-medium text-slate-900"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 font-medium text-[#002f26]"
                         value={newSubjectName}
                         onChange={(e) => setNewSubjectName(e.target.value)}
                       />
@@ -303,11 +303,11 @@ export default function AdminSubjects() {
                   <tr key={sub.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
                     <td className="p-4 pl-6">
                       <div className="flex items-center gap-4">
-                         <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold overflow-hidden">
+                         <div className="w-10 h-10 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600 font-bold overflow-hidden">
                             <IconComp className="w-5 h-5" />
                          </div>
                          <div>
-                           <p className="font-bold text-slate-900 group-hover:text-teal-700 transition-colors uppercase">
+                           <p className="font-bold text-[#002f26] group-hover:text-teal-700 transition-colors uppercase">
                              {sub.name}
                            </p>
                          </div>

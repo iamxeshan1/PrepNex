@@ -95,7 +95,7 @@ export const NotificationManager = () => {
             </div>
             
             <div className="flex-1 min-w-0 py-1">
-              <h4 className="font-black text-slate-800 leading-tight mb-1 truncate">{toast.title}</h4>
+              <h4 className="font-black text-[#001f19] leading-tight mb-1 truncate">{toast.title}</h4>
               <p className="text-sm text-slate-600 font-medium leading-relaxed line-clamp-2 mb-3">
                 {toast.message}
               </p>

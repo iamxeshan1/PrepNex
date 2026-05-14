@@ -35,7 +35,7 @@ export default function PrivacyPolicy() {
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-full text-blue-600 text-[10px] font-black uppercase tracking-widest mb-6">
               <Shield className="w-3.5 h-3.5" /> Governance
             </div>
-            <h1 className="text-4xl md:text-5xl font-sans font-[800] text-slate-900 tracking-tight mb-4">Privacy Framework</h1>
+            <h1 className="text-4xl md:text-5xl font-sans font-[800] text-[#002f26] tracking-tight mb-4">Privacy Framework</h1>
             <p className="text-slate-500 font-medium">Last comprehensive update: May 01, 2026</p>
           </motion.div>
 
@@ -54,7 +54,7 @@ export default function PrivacyPolicy() {
                     <section.icon className="w-8 h-8" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-[800] text-slate-900 mb-4 tracking-tight uppercase text-xs tracking-[0.2em]">{section.title}</h3>
+                    <h3 className="text-2xl font-[800] text-[#002f26] mb-4 tracking-tight uppercase text-xs tracking-[0.2em]">{section.title}</h3>
                     <p className="text-slate-600 leading-relaxed font-medium text-lg">
                       {section.content}
                     </p>
@@ -67,7 +67,7 @@ export default function PrivacyPolicy() {
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="p-10 md:p-16 bg-[#0f172a] rounded-[2.5rem] text-white overflow-hidden relative"
+              className="p-10 md:p-16 bg-[#002f26] rounded-[2.5rem] text-white overflow-hidden relative"
             >
               <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
               

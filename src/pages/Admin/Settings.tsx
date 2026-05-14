@@ -169,7 +169,7 @@ export default function AdminSettings() {
       <form onSubmit={handleSave} className="max-w-5xl space-y-12 pb-32">
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
            <div>
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight font-display">Core Infrastructure</h2>
+              <h2 className="text-3xl font-black text-[#002f26] tracking-tight font-display">Core Infrastructure</h2>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 italic">Propagating global settings across PrepNext ecosystem</p>
            </div>
            <div className="flex items-center gap-4">
@@ -177,7 +177,7 @@ export default function AdminSettings() {
              <button 
                 type="submit" 
                 disabled={saving || loading}
-                className="px-10 py-5 bg-[#0f172a] text-white rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-2xl hover:bg-black transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
+                className="px-10 py-5 bg-[#002f26] text-white rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-2xl hover:bg-black transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
               >
                 <Save className="w-5 h-5" /> {saving ? 'Indexing...' : 'Commit All Settings'}
               </button>
@@ -204,7 +204,7 @@ export default function AdminSettings() {
 
         {loading && !message && (
           <div className="py-32 flex flex-col items-center justify-center space-y-4 opacity-50 bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
-             <div className="w-12 h-12 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin"></div>
+             <div className="w-12 h-12 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin"></div>
              <p className="text-sm font-black text-slate-400 uppercase tracking-widest">Bridging Cloud Repository...</p>
           </div>
         )}
@@ -214,11 +214,11 @@ export default function AdminSettings() {
               {/* General Platform Controls */}
               <section className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-10 relative overflow-hidden group">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm">
+                  <div className="w-14 h-14 bg-teal-50 border border-teal-100 rounded-2xl flex items-center justify-center text-teal-600 shadow-sm">
                     <Globe className="w-7 h-7" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-slate-900 tracking-tight font-display">Identity & Messaging</h3>
+                    <h3 className="text-xl font-black text-[#002f26] tracking-tight font-display">Identity & Messaging</h3>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Platform-wide content descriptors</p>
                   </div>
                 </div>
@@ -226,18 +226,18 @@ export default function AdminSettings() {
                 <div className="space-y-6">
                    <div className="bg-slate-50 p-8 rounded-3xl border border-slate-200 shadow-inner space-y-6">
                       <div className="space-y-3">
-                         <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest ml-1">Landing Page: Main Hero Heading</label>
+                         <label className="text-[10px] font-black text-teal-600 uppercase tracking-widest ml-1">Landing Page: Main Hero Heading</label>
                          <input 
-                           className="w-full px-8 py-5 bg-white border border-slate-200 rounded-[2rem] outline-none focus:ring-4 focus:ring-indigo-500/10 font-black text-slate-800 text-2xl"
+                           className="w-full px-8 py-5 bg-white border border-slate-200 rounded-[2rem] outline-none focus:ring-4 focus:ring-teal-500/10 font-black text-[#001f19] text-2xl"
                            value={heroHeading} onChange={(e) => setHeroHeading(e.target.value)} 
                            placeholder="Master Exams with | Confidence."
                          />
                          <p className="text-[9px] font-bold text-slate-400 italic px-4">Pro-tip: Use a '|' to separate the main text from the colored highlight word.</p>
                       </div>
                       <div className="space-y-3">
-                         <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest ml-1">Landing Page: Hero Sub-Tagline</label>
+                         <label className="text-[10px] font-black text-teal-600 uppercase tracking-widest ml-1">Landing Page: Hero Sub-Tagline</label>
                          <textarea 
-                           className="w-full px-8 py-5 bg-white border border-slate-200 rounded-[2rem] outline-none focus:ring-4 focus:ring-indigo-500/10 font-bold text-slate-600 text-lg h-32 resize-none"
+                           className="w-full px-8 py-5 bg-white border border-slate-200 rounded-[2rem] outline-none focus:ring-4 focus:ring-teal-500/10 font-bold text-slate-600 text-lg h-32 resize-none"
                            value={heroTagline} onChange={(e) => setHeroTagline(e.target.value)} 
                            placeholder="Get the most comprehensive mock tests and AI-driven performance insights."
                          />
@@ -246,23 +246,23 @@ export default function AdminSettings() {
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-3">
                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Active Aspirant Count</label>
-                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/5 font-bold" value={aspirantCount} onChange={(e) => setAspirantCount(e.target.value)} />
+                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-teal-500/5 font-bold" value={aspirantCount} onChange={(e) => setAspirantCount(e.target.value)} />
                       </div>
                       <div className="space-y-3">
                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Total Mock Tests</label>
-                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/5 font-bold" value={totalTests} onChange={(e) => setTotalTests(e.target.value)} />
+                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-teal-500/5 font-bold" value={totalTests} onChange={(e) => setTotalTests(e.target.value)} />
                       </div>
                       <div className="space-y-3">
                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Exams Indexed</label>
-                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/5 font-bold" value={examsCovered} onChange={(e) => setExamsCovered(e.target.value)} />
+                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-teal-500/5 font-bold" value={examsCovered} onChange={(e) => setExamsCovered(e.target.value)} />
                       </div>
                       <div className="space-y-3">
                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Institutional Success Rate</label>
-                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/5 font-bold" value={successRate} onChange={(e) => setSuccessRate(e.target.value)} />
+                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-teal-500/5 font-bold" value={successRate} onChange={(e) => setSuccessRate(e.target.value)} />
                       </div>
                       <div className="space-y-3">
                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Established Year</label>
-                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/5 font-bold" value={establishedYear} onChange={(e) => setEstablishedYear(e.target.value)} />
+                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-teal-500/5 font-bold" value={establishedYear} onChange={(e) => setEstablishedYear(e.target.value)} />
                       </div>
                    </div>
                 </div>
@@ -275,7 +275,7 @@ export default function AdminSettings() {
                     <Lock className="w-7 h-7" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-slate-900 tracking-tight font-display">Revenue Gateway</h3>
+                    <h3 className="text-xl font-black text-[#002f26] tracking-tight font-display">Revenue Gateway</h3>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Razorpay Secure Bridge Configuration</p>
                   </div>
                 </div>
@@ -316,7 +316,7 @@ export default function AdminSettings() {
                     <Server className="w-7 h-7" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-slate-900 tracking-tight font-display">Communication Stack</h3>
+                    <h3 className="text-xl font-black text-[#002f26] tracking-tight font-display">Communication Stack</h3>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Transactional Email Relay (SMTP)</p>
                   </div>
                 </div>
@@ -336,7 +336,7 @@ export default function AdminSettings() {
 
            <aside className="space-y-8">
               {/* Contact Node */}
-              <div className="bg-[#0f172a] text-white p-8 rounded-[3rem] shadow-2xl relative overflow-hidden group">
+              <div className="bg-[#002f26] text-white p-8 rounded-[3rem] shadow-2xl relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-125 transition-transform duration-700" />
                   <div className="relative space-y-8">
                      <div className="flex items-center gap-4">
@@ -368,7 +368,7 @@ export default function AdminSettings() {
                     <div className="w-12 h-12 bg-secondary/10 rounded-2xl flex items-center justify-center text-secondary">
                        <Share2 className="w-6 h-6" />
                     </div>
-                    <h4 className="text-lg font-black font-display tracking-tight text-slate-900">Social Sync</h4>
+                    <h4 className="text-lg font-black font-display tracking-tight text-[#002f26]">Social Sync</h4>
                  </div>
                  <div className="space-y-4">
                     <div className="relative group/input">
@@ -392,8 +392,8 @@ export default function AdminSettings() {
                        <input className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-bold text-slate-600 text-xs" placeholder="WhatsApp URL" value={socialWhatsapp} onChange={(e) => setSocialWhatsapp(e.target.value)} />
                     </div>
                     <div className="relative group/input">
-                       <MessageSquare className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-500/40 group-focus-within/input:text-indigo-500 transition-colors" />
-                       <input className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-bold text-slate-600 text-xs" placeholder="Discord URL" value={socialDiscord} onChange={(e) => setSocialDiscord(e.target.value)} />
+                       <MessageSquare className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-teal-500/40 group-focus-within/input:text-teal-500 transition-colors" />
+                       <input className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500/20 font-bold text-slate-600 text-xs" placeholder="Discord URL" value={socialDiscord} onChange={(e) => setSocialDiscord(e.target.value)} />
                     </div>
                     <div className="relative group/input">
                        <HelpCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-teal-500/40 group-focus-within/input:text-teal-500 transition-colors" />

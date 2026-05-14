@@ -115,7 +115,7 @@ export default function AdminCoupons() {
 
   const filtered = coupons.filter(c => c.code.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  const StatCard = ({ title, value, span, colorClass = "text-slate-900" }: any) => (
+  const StatCard = ({ title, value, span, colorClass = "text-[#002f26]" }: any) => (
     <div className="bg-white p-4">
       <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
       <h3 className={`text-3xl font-bold tracking-tight ${colorClass}`}>{value}</h3>
@@ -129,7 +129,7 @@ export default function AdminCoupons() {
         <p className="text-slate-500 font-medium">Manage promotional tokens and discount protocols.</p>
         <button 
           onClick={() => setShowAdd(!showAdd)}
-          className="bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-indigo-800 transition-colors"
+          className="bg-teal-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-teal-800 transition-colors"
         >
           {showAdd ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
           {showAdd ? 'Cancel' : 'New Coupon'}
@@ -137,7 +137,7 @@ export default function AdminCoupons() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <StatCard title="Total Coupons" value={coupons.length} span="All time" colorClass="text-indigo-600" />
+        <StatCard title="Total Coupons" value={coupons.length} span="All time" colorClass="text-teal-600" />
         <StatCard title="Active Protocols" value={coupons.filter(c => c.isActive).length} span="Currently active" colorClass="text-emerald-600" />
       </div>
 
@@ -147,14 +147,14 @@ export default function AdminCoupons() {
               <X className="w-5 h-5" />
            </button>
 
-           <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2"><Ticket className="w-5 h-5 text-indigo-600" /> Forge New Token</h3>
+           <h3 className="text-xl font-bold text-[#002f26] mb-6 flex items-center gap-2"><Ticket className="w-5 h-5 text-teal-600" /> Forge New Token</h3>
 
            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
              <div>
                <label className="block text-sm font-semibold text-slate-700 mb-2">Coupon Code</label>
                <input 
                  type="text" required 
-                 className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-indigo-500 focus:border-indigo-500 uppercase font-bold text-slate-800"
+                 className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-teal-500 focus:border-teal-500 uppercase font-bold text-[#001f19]"
                  value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} 
                  placeholder="e.g. ALPHA2024"
                />
@@ -163,7 +163,7 @@ export default function AdminCoupons() {
              <div>
                <label className="block text-sm font-semibold text-slate-700 mb-2">Discount Type</label>
                <select 
-                 className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm font-medium"
+                 className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-teal-500 focus:border-teal-500 text-sm font-medium"
                  value={discountType} onChange={(e) => setDiscountType(e.target.value)}
                >
                  <option value="fixed">Fixed Amount (₹)</option>
@@ -175,7 +175,7 @@ export default function AdminCoupons() {
                <label className="block text-sm font-semibold text-slate-700 mb-2">Discount Value</label>
                <input 
                  type="number" required 
-                 className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-indigo-500 focus:border-indigo-500 font-bold text-slate-800"
+                 className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-teal-500 focus:border-teal-500 font-bold text-[#001f19]"
                  value={discountValue} onChange={(e) => setDiscountValue(e.target.value)} 
                  placeholder={discountType === 'fixed' ? '500' : '20'}
                />
@@ -186,7 +186,7 @@ export default function AdminCoupons() {
                  <label className="block text-sm font-semibold text-slate-700 mb-2">Minimum Amount (Optional)</label>
                  <input 
                    type="number"
-                   className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-indigo-500 focus:border-indigo-500 font-bold text-slate-800"
+                   className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-teal-500 focus:border-teal-500 font-bold text-[#001f19]"
                    value={minAmount} onChange={(e) => setMinAmount(e.target.value)} 
                    placeholder="e.g. 1000"
                  />
@@ -195,13 +195,13 @@ export default function AdminCoupons() {
            </div>
 
            <div className="mt-8 flex items-center gap-6">
-              <button type="submit" className="bg-indigo-700 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-indigo-800 transition-colors flex items-center gap-2">
+              <button type="submit" className="bg-teal-700 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-teal-800 transition-colors flex items-center gap-2">
                 <Zap className="w-4 h-4" /> Create Coupon
               </button>
               <label className="flex items-center gap-3 cursor-pointer">
                  <input 
                    type="checkbox" 
-                   className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                   className="w-5 h-5 rounded text-teal-600 focus:ring-teal-500 border-slate-300"
                    checked={isActive} onChange={(e) => setIsActive(e.target.checked)} 
                  />
                  <span className="text-sm font-bold text-slate-700">Activate Immediately</span>
@@ -220,7 +220,7 @@ export default function AdminCoupons() {
                   placeholder="Search coupons..." 
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium focus:ring-indigo-500 focus:border-indigo-500 bg-white shadow-sm"
+                  className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium focus:ring-teal-500 focus:border-teal-500 bg-white shadow-sm"
                 />
              </div>
            </div>
@@ -228,7 +228,7 @@ export default function AdminCoupons() {
         </div>
 
         {loading ? (
-           <div className="py-20 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin" /></div>
+           <div className="py-20 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin" /></div>
         ) : (
           <table className="w-full text-left border-collapse">
             <thead>
@@ -244,11 +244,11 @@ export default function AdminCoupons() {
                 <tr key={coupon.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
                   <td className="p-4 pl-6">
                     <div className="flex items-center gap-4">
-                       <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 flex items-center justify-center">
+                       <div className="w-10 h-10 rounded-lg bg-teal-50 text-teal-700 border border-teal-100 flex items-center justify-center">
                           <Ticket className="w-5 h-5" />
                        </div>
                        <div>
-                         <p className="font-black text-slate-900 group-hover:text-indigo-700 transition-colors uppercase tracking-wider text-sm mt-0.5">
+                         <p className="font-black text-[#002f26] group-hover:text-teal-700 transition-colors uppercase tracking-wider text-sm mt-0.5">
                            {coupon.code}
                          </p>
                          {coupon.minAmount && (
@@ -258,7 +258,7 @@ export default function AdminCoupons() {
                     </div>
                   </td>
                   <td className="p-4">
-                     <span className="text-sm font-black text-slate-800">
+                     <span className="text-sm font-black text-[#001f19]">
                         {coupon.discountType === 'fixed' ? `₹${coupon.discountValue}` : `${coupon.discountValue}%`} OFF
                      </span>
                   </td>
@@ -274,7 +274,7 @@ export default function AdminCoupons() {
                      <div className="flex items-center justify-end gap-2 text-slate-400">
                         <button 
                            onClick={() => viewCouponUsage(coupon)}
-                           className="p-2 rounded hover:bg-indigo-50 text-indigo-500 transition-colors" 
+                           className="p-2 rounded hover:bg-teal-50 text-teal-500 transition-colors" 
                            title="View Usage"
                         >
                            <Users className="w-4 h-4" />
@@ -304,12 +304,12 @@ export default function AdminCoupons() {
       </div>
 
       {usageModalOpen && selectedCoupon && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#002f26]/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl relative">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-indigo-600" /> 
+                <h2 className="text-xl font-bold text-[#002f26] flex items-center gap-2">
+                  <Users className="w-5 h-5 text-teal-600" /> 
                   Usage: {selectedCoupon.code}
                 </h2>
                 <p className="text-sm font-medium text-slate-500 mt-1">Total uses: {couponUsers.length}</p>
@@ -324,7 +324,7 @@ export default function AdminCoupons() {
             
             <div className="p-4 overflow-y-auto flex-1">
                {loadingUsers ? (
-                  <div className="py-12 flex justify-center"><Loader2 className="w-8 h-8 text-indigo-600 animate-spin" /></div>
+                  <div className="py-12 flex justify-center"><Loader2 className="w-8 h-8 text-teal-600 animate-spin" /></div>
                ) : couponUsers.length > 0 ? (
                   <table className="w-full text-left">
                      <thead className="bg-slate-50 text-xs font-bold text-slate-400 uppercase">
@@ -338,7 +338,7 @@ export default function AdminCoupons() {
                      <tbody>
                         {couponUsers.map((u, i) => (
                            <tr key={u.id + '_' + i} className="border-b border-slate-50 last:border-0 text-sm">
-                              <td className="p-3 font-semibold text-slate-900">{u.userName}</td>
+                              <td className="p-3 font-semibold text-[#002f26]">{u.userName}</td>
                               <td className="p-3 font-medium text-slate-500">{getItemTitle(u.examId || (u.collection === "premium_subscriptions" ? "PREMIUM_PASS" : null), u.type) || u.examId || 'Purchase'}</td>
                               <td className="p-3 font-black text-slate-700">₹{u.amount}</td>
                               <td className="p-3 font-medium text-slate-400">{new Date(u.purchaseDate).toLocaleDateString()}</td>

@@ -59,7 +59,7 @@ export default function AdminReviews() {
     (r.userName?.toLowerCase().includes(searchTerm.toLowerCase()) || r.content?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const StatCard = ({ title, value, span, colorClass = "text-slate-900" }: any) => (
+  const StatCard = ({ title, value, span, colorClass = "text-[#002f26]" }: any) => (
     <div className="bg-white p-4">
       <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
       <h3 className={`text-3xl font-bold tracking-tight ${colorClass}`}>{value}</h3>
@@ -77,7 +77,7 @@ export default function AdminReviews() {
                 key={s}
                 onClick={() => setFilter(s as any)}
                 className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-colors ${
-                  filter === s ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50'
+                  filter === s ? 'bg-teal-50 text-teal-700' : 'text-slate-500 hover:bg-slate-50'
                 }`}
              >
                 {s}
@@ -87,7 +87,7 @@ export default function AdminReviews() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <StatCard title="Total Reviews" value={reviews.length} span="All time" colorClass="text-indigo-600" />
+        <StatCard title="Total Reviews" value={reviews.length} span="All time" colorClass="text-teal-600" />
         <StatCard title="Pending" value={reviews.filter(r => r.status === 'pending').length} span="Awaiting moderation" colorClass="text-amber-600" />
         <StatCard title="Approved" value={reviews.filter(r => r.status === 'approved').length} span="Visible publicly" colorClass="text-emerald-600" />
         <StatCard title="Avg Rating" value={(reviews.reduce((acc, r) => acc + r.rating, 0) / (reviews.length || 1)).toFixed(1)} span="Out of 5.0" colorClass="text-amber-500" />
@@ -103,7 +103,7 @@ export default function AdminReviews() {
                   placeholder="Search reviews..." 
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium focus:ring-indigo-500 focus:border-indigo-500 bg-white shadow-sm"
+                  className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium focus:ring-teal-500 focus:border-teal-500 bg-white shadow-sm"
                 />
              </div>
            </div>
@@ -111,7 +111,7 @@ export default function AdminReviews() {
         </div>
 
         {loading ? (
-           <div className="py-20 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin" /></div>
+           <div className="py-20 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin" /></div>
         ) : (
           <table className="w-full text-left border-collapse">
             <thead>
@@ -127,11 +127,11 @@ export default function AdminReviews() {
                 <tr key={review.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
                   <td className="p-4 pl-6 align-top">
                     <div className="flex items-center gap-3">
-                       <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-sm border border-indigo-100 uppercase">
+                       <div className="w-10 h-10 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center font-bold text-sm border border-teal-100 uppercase">
                           {review.userName?.[0] || 'U'}
                        </div>
                        <div>
-                         <p className="font-bold text-slate-900 group-hover:text-indigo-700 transition-colors">
+                         <p className="font-bold text-[#002f26] group-hover:text-teal-700 transition-colors">
                            {review.userName || 'Anonymous User'}
                          </p>
                          <div className="flex gap-0.5 mt-0.5">

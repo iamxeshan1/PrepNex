@@ -5,8 +5,8 @@
   --font-display: "Inter", sans-serif;
   --font-logo: "League Spartan", sans-serif;
   
-  --color-primary: #0f172a;
-  --color-secondary: #008770;
+  --color-primary: #002f26;
+  --color-secondary: #002f26;
   --color-accent: #3b82f6;
   --color-background: #f8fafc;
   --color-error: #ef4444;
@@ -26,7 +26,7 @@
   }
 
   body {
-    @apply font-sans bg-background text-slate-900;
+    @apply font-sans bg-background text-[#002f26];
   }
 }
 

@@ -87,7 +87,7 @@ const COLOR_VARIANTS = [
   'bg-blue-50 text-blue-500',
   'bg-teal-50 text-teal-500',
   'bg-orange-50 text-orange-500',
-  'bg-indigo-50 text-indigo-500',
+  'bg-teal-50 text-teal-500',
   'bg-rose-50 text-rose-500',
   'bg-purple-50 text-purple-500',
 ];
@@ -181,18 +181,18 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-5xl md:text-6xl font-sans font-[800] text-[#0f172a] mb-8 tracking-tighter max-w-4xl mx-auto leading-[1.15]"
+            className="text-5xl md:text-6xl font-sans font-[800] text-[#002f26] mb-8 tracking-tighter max-w-4xl mx-auto leading-[1.15]"
           >
             {settings.heroHeading ? (
               settings.heroHeading.includes('|') ? (
                 <>
-                  {settings.heroHeading.split('|')[0]} <span className="text-[#008770]">{settings.heroHeading.split('|')[1]}</span>
+                  {settings.heroHeading.split('|')[0]} <span className="text-[#002f26]">{settings.heroHeading.split('|')[1]}</span>
                 </>
               ) : (
                 settings.heroHeading
               )
             ) : (
-              <>Master Exams with <span className="text-[#008770]">Confidence.</span></>
+              <>Master Exams with <span className="text-[#002f26]">Confidence.</span></>
             )}
           </motion.h1>
           
@@ -211,10 +211,10 @@ export default function Home() {
             transition={{ delay: 0.3 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-5"
           >
-            <Link to="/signup" className="w-full sm:w-auto bg-[#006e5d] text-white px-12 py-4.5 rounded-xl font-black text-sm hover:bg-[#005a4d] transition-all shadow-xl shadow-[#008770]/20 active:scale-95 uppercase tracking-widest">
+            <Link to="/signup" className="w-full sm:w-auto bg-[#006e5d] text-white px-12 py-4.5 rounded-xl font-black text-sm hover:bg-[#005a4d] transition-all shadow-xl shadow-[#002f26]/20 active:scale-95 uppercase tracking-widest">
               Start Free Trial
             </Link>
-            <Link to="/exams" className="w-full sm:w-auto bg-white text-slate-800 border-2 border-slate-200 px-12 py-4.5 rounded-xl font-black text-sm hover:border-slate-300 transition-all active:scale-95 uppercase tracking-widest">
+            <Link to="/exams" className="w-full sm:w-auto bg-white text-[#001f19] border-2 border-slate-200 px-12 py-4.5 rounded-xl font-black text-sm hover:border-slate-300 transition-all active:scale-95 uppercase tracking-widest">
               Browse Exams
             </Link>
           </motion.div>
@@ -225,7 +225,7 @@ export default function Home() {
       <section className="py-24 bg-[#f8fafc]">
         <div className="max-w-7xl mx-auto px-4 lg:px-8">
           <div className="mb-16">
-            <h2 className="text-4xl font-sans font-[800] text-[#0f172a] mb-4 tracking-tighter">Top Rated Mock Test Series</h2>
+            <h2 className="text-4xl font-sans font-[800] text-[#002f26] mb-4 tracking-tighter">Top Rated Mock Test Series</h2>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <p className="text-slate-500 font-medium max-w-xl tracking-tight">Curated by subject matter experts following the latest examination patterns.</p>
               
@@ -236,7 +236,7 @@ export default function Home() {
                     onClick={() => setActiveTab(agency.id)}
                     className={`shrink-0 px-6 py-2.5 rounded-full text-[11px] font-black tracking-widest uppercase transition-all ${
                       activeTab === agency.id 
-                        ? 'bg-[#006e5d] text-white shadow-lg shadow-[#008770]/20' 
+                        ? 'bg-[#006e5d] text-white shadow-lg shadow-[#002f26]/20' 
                         : 'bg-white text-slate-400 border border-slate-200 hover:border-slate-300'
                     }`}
                   >
@@ -259,7 +259,7 @@ export default function Home() {
                     key={exam.id}
                     whileHover={{ y: -8 }}
                     onClick={() => navigate(`/exam/${exam.id}`)}
-                    className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-xl hover:border-[#008770]/20 transition-all cursor-pointer group flex flex-col"
+                    className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-xl hover:border-[#002f26]/20 transition-all cursor-pointer group flex flex-col"
                   >
                     <div className="flex justify-between items-start mb-6">
                        <div className="flex items-center gap-3">
@@ -267,10 +267,10 @@ export default function Home() {
                              {logo ? (
                                 <img src={logo} alt="" loading="lazy" decoding="async" width="48" height="48" className="w-full h-full object-contain" />
                              ) : (
-                                <Shield className="w-6 h-6 text-slate-300 group-hover:text-[#008770] transition-colors" />
+                                <Shield className="w-6 h-6 text-slate-300 group-hover:text-[#002f26] transition-colors" />
                              )}
                           </div>
-                          <h3 className="text-lg font-sans font-[800] text-[#0f172a] group-hover:text-[#008770] transition-colors tracking-tighter line-clamp-1">{exam.name}</h3>
+                          <h3 className="text-lg font-sans font-[800] text-[#002f26] group-hover:text-[#002f26] transition-colors tracking-tighter line-clamp-1">{exam.name}</h3>
                        </div>
                        {exam.isPopular && (
                          <span className="bg-[#b91c1c] text-white text-[8px] font-black px-2 py-1 rounded-md tracking-widest uppercase shrink-0">MOST POPULAR</span>
@@ -298,7 +298,7 @@ export default function Home() {
                            <CheckCircle2 className="w-3.5 h-3.5" /> ENROLLED
                         </div>
                       ) : (
-                        <button className="text-[10px] font-black text-[#008770] tracking-[0.05em] uppercase hover:underline transition-all">
+                        <button className="text-[10px] font-black text-[#002f26] tracking-[0.05em] uppercase hover:underline transition-all">
                           {exam.isPaid ? 'ENROLL NOW' : 'TRY FREE'}
                         </button>
                       )}
@@ -309,7 +309,7 @@ export default function Home() {
           </div>
 
           <div className="text-center">
-            <Link to="/exams" className="inline-flex items-center gap-3 bg-white border border-slate-200 text-[#0f172a] px-10 py-3.5 rounded-xl font-[700] text-sm hover:border-slate-300 transition-all group">
+            <Link to="/exams" className="inline-flex items-center gap-3 bg-white border border-slate-200 text-[#002f26] px-10 py-3.5 rounded-xl font-[700] text-sm hover:border-slate-300 transition-all group">
               View All Exams <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
@@ -329,7 +329,7 @@ export default function Home() {
               viewport={{ once: true }}
               className="flex flex-col items-center gap-6"
             >
-              <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-500 shadow-sm border border-indigo-100">
+              <div className="w-12 h-12 bg-teal-50 rounded-2xl flex items-center justify-center text-teal-500 shadow-sm border border-teal-100">
                 <Quote className="w-6 h-6 fill-current" />
               </div>
               <p className="text-xl md:text-2xl font-sans font-[600] text-slate-700 italic leading-relaxed tracking-tight max-w-2xl px-4">
@@ -337,7 +337,7 @@ export default function Home() {
               </p>
               <div className="flex items-center gap-4">
                 <div className="h-[1px] w-8 bg-slate-200" />
-                <span className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.3em] font-sans">
+                <span className="text-[10px] font-black text-teal-600 uppercase tracking-[0.3em] font-sans">
                   {latestThought.author || 'PrepNext Daily Inspiration'}
                 </span>
                 <div className="h-[1px] w-8 bg-slate-200" />
@@ -354,7 +354,7 @@ export default function Home() {
               {/* Left Side: Subject Mastery */}
               <div className="lg:col-span-7">
                 <div className="mb-12 text-center md:text-left">
-                  <h2 className="text-4xl font-sans font-[800] text-[#0f172a] mb-4 tracking-tighter">Individual Subject Mastery</h2>
+                  <h2 className="text-4xl font-sans font-[800] text-[#002f26] mb-4 tracking-tighter">Individual Subject Mastery</h2>
                   <p className="text-slate-500 font-medium tracking-tight">Focus on your weaknesses with targeted modules.</p>
                 </div>
 
@@ -373,7 +373,7 @@ export default function Home() {
                         <div className={`w-14 h-14 ${colorClass} rounded-[1rem] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
                           <IconComp className="w-7 h-7" />
                         </div>
-                        <h4 className="text-base font-sans font-[800] text-[#0f172a] mb-2 tracking-tight">{sub.name}</h4>
+                        <h4 className="text-base font-sans font-[800] text-[#002f26] mb-2 tracking-tight">{sub.name}</h4>
                         <p className="text-[11px] font-medium text-slate-400 line-clamp-2">
                           {sub.description || 'Master the concepts and shortcuts.'}
                         </p>
@@ -385,7 +385,7 @@ export default function Home() {
                 <div className="mt-12 text-center md:text-left">
                    <button 
                     onClick={() => navigate('/subjects')}
-                    className="inline-block px-8 py-3 bg-white border border-slate-200 text-[#0f172a] rounded-full text-xs font-[700] tracking-tight hover:border-slate-400 transition-all uppercase"
+                    className="inline-block px-8 py-3 bg-white border border-slate-200 text-[#002f26] rounded-full text-xs font-[700] tracking-tight hover:border-slate-400 transition-all uppercase"
                    >
                       VIEW ALL SUBJECTS
                    </button>
@@ -394,7 +394,7 @@ export default function Home() {
 
               {/* Right Side: Live Now Sidebar */}
               <div className="lg:col-span-5">
-                 <div className="bg-[#0f172a] rounded-[3rem] p-10 sticky top-28 border border-white/5 shadow-2xl">
+                 <div className="bg-[#002f26] rounded-[3rem] p-10 sticky top-28 border border-white/5 shadow-2xl">
                     <div className="flex items-center justify-between mb-10">
                        <h3 className="text-2xl font-sans font-[800] text-white tracking-tight">Live Now</h3>
                        <div className="flex items-center gap-2 bg-red-600/10 text-red-500 px-4 py-1.5 rounded-full border border-red-500/20">
@@ -445,7 +445,7 @@ export default function Home() {
                                      <p className="text-[10px] font-bold text-[#2dd4bf]">LIVE</p>
                                   </div>
                                </div>
-                               <button className="bg-[#2dd4bf] text-[#0f172a] px-6 py-2.5 rounded-xl text-[10px] font-black hover:bg-[#5eead4] transition-colors uppercase tracking-widest">ENROLL NOW</button>
+                               <button className="bg-[#2dd4bf] text-[#002f26] px-6 py-2.5 rounded-xl text-[10px] font-black hover:bg-[#5eead4] transition-colors uppercase tracking-widest">ENROLL NOW</button>
                             </div>
                          </div>
                        ))}
@@ -462,7 +462,7 @@ export default function Home() {
                       onClick={() => navigate('/premium')}
                       className="bg-[#5eead4]/10 rounded-2xl p-6 border border-[#5eead4]/20 flex items-center gap-5 cursor-pointer hover:bg-[#5eead4]/20 transition-all shadow-lg"
                     >
-                       <div className="w-14 h-14 bg-[#5eead4] rounded-2xl flex items-center justify-center text-[#0f172a]">
+                       <div className="w-14 h-14 bg-[#5eead4] rounded-2xl flex items-center justify-center text-[#002f26]">
                           <Zap className="w-7 h-7 fill-current" />
                        </div>
                        <div>
@@ -481,20 +481,20 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 lg:px-8">
            <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
               <div className="flex items-start gap-10">
-                 <div className="w-16 h-16 bg-[#ccfbf1] rounded-[1.5rem] flex items-center justify-center text-[#008770] shrink-0 transform hover:rotate-6 transition-transform">
+                 <div className="w-16 h-16 bg-[#ccfbf1] rounded-[1.5rem] flex items-center justify-center text-[#002f26] shrink-0 transform hover:rotate-6 transition-transform">
                     <Zap className="w-8 h-8 fill-current" />
                  </div>
                  <div>
-                    <h3 className="text-2xl font-sans font-[800] text-[#0f172a] mb-3 tracking-tight">AI-Powered Analysis</h3>
+                    <h3 className="text-2xl font-sans font-[800] text-[#002f26] mb-3 tracking-tight">AI-Powered Analysis</h3>
                     <p className="text-slate-500 text-sm font-medium leading-[1.8] max-w-sm tracking-tight">Get personalized insights into your performance bottlenecks and time-management skills.</p>
                  </div>
               </div>
               <div className="flex items-start gap-10">
-                 <div className="w-16 h-16 bg-[#ccfbf1] rounded-[1.5rem] flex items-center justify-center text-[#008770] shrink-0 transform hover:-rotate-6 transition-transform">
+                 <div className="w-16 h-16 bg-[#ccfbf1] rounded-[1.5rem] flex items-center justify-center text-[#002f26] shrink-0 transform hover:-rotate-6 transition-transform">
                     <Shield className="w-8 h-8 fill-current" />
                  </div>
                  <div>
-                    <h3 className="text-2xl font-sans font-[800] text-[#0f172a] mb-3 tracking-tight">Expert Authority</h3>
+                    <h3 className="text-2xl font-sans font-[800] text-[#002f26] mb-3 tracking-tight">Expert Authority</h3>
                     <p className="text-slate-500 text-sm font-medium leading-[1.8] max-w-sm tracking-tight">Designed for all competitive exams with comprehensive context and updated current affairs.</p>
                  </div>
               </div>
@@ -508,11 +508,11 @@ export default function Home() {
             <div className="bg-slate-50 rounded-[3.5rem] p-10 md:p-24 relative overflow-hidden border border-slate-100">
                <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                   <div>
-                     <h2 className="text-5xl md:text-6xl font-sans font-[800] text-[#0f172a] mb-8 tracking-tighter leading-none">Ready to Ace Your Exams?</h2>
+                     <h2 className="text-5xl md:text-6xl font-sans font-[800] text-[#002f26] mb-8 tracking-tighter leading-none">Ready to Ace Your Exams?</h2>
                      <p className="text-slate-500 text-lg font-medium leading-relaxed max-w-md tracking-tight">Join thousands of successful candidates who started their journey with PrepNext.</p>
                   </div>
                   <div className="flex flex-col sm:flex-row items-center gap-4 lg:justify-end">
-                     <Link to="/signup" className="w-full sm:w-auto bg-[#006e5d] text-white px-12 py-5 rounded-2xl font-black text-sm hover:bg-[#005a4d] transition-all shadow-xl shadow-[#008770]/20 active:scale-95 uppercase tracking-widest text-center">
+                     <Link to="/signup" className="w-full sm:w-auto bg-[#006e5d] text-white px-12 py-5 rounded-2xl font-black text-sm hover:bg-[#005a4d] transition-all shadow-xl shadow-[#002f26]/20 active:scale-95 uppercase tracking-widest text-center">
                         Claim Your Free Mock
                      </Link>
                   </div>
@@ -522,7 +522,7 @@ export default function Home() {
       </section>
 
       {/* Stats Bar */}
-      <section className="bg-gradient-to-r from-[#004d40] to-[#006e5d] py-20 border-y border-[#008770]/30 shadow-inner">
+      <section className="bg-gradient-to-r from-[#004d40] to-[#006e5d] py-20 border-y border-[#002f26]/30 shadow-inner">
          <div className="max-w-7xl mx-auto px-4 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center divide-y md:divide-y-0 md:divide-x divide-white/20">
                <div className="py-6 md:py-0">

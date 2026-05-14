@@ -17,7 +17,7 @@ export const DashboardTopHeader = ({ user, onMenuClick }: { user: any, onMenuCli
 
       {/* Mobile View: Logo Centered and Bigger */}
       <div className="flex justify-center flex-1 lg:hidden">
-        <span className="font-logo font-black text-3xl tracking-tight text-[#0f172a]">Prep<span className="text-teal-600">Next</span></span>
+        <span className="font-logo font-black text-3xl tracking-tight text-[#002f26]">Prep<span className="text-teal-600">Next</span></span>
       </div>
 
       {/* Desktop Left (Empty space to push items to right on desktop) */}

@@ -270,7 +270,7 @@ export default function Premium() {
           name: user.displayName || '',
           email: user.email || ''
         },
-        theme: { color: "#008770" },
+        theme: { color: "#002f26" },
         modal: {
           ondismiss: () => setPurchaseLoading(false)
         },
@@ -334,7 +334,7 @@ export default function Premium() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-32">
+      <div className="min-h-screen bg-slate-50 font-sans text-[#001f19] pb-32">
         <section className="bg-[#002f26] text-white pt-24 pb-48 relative overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 text-center relative z-10">
             {targetExam && (
@@ -354,7 +354,7 @@ export default function Premium() {
                  : `Join thousands of top scorers. Choose the plan that best fits your timeline and get unlimited access to all tests.`}
             </p>
           </div>
-          <div className="absolute inset-0 bg-[#008770]/20 pointer-events-none mix-blend-overlay"></div>
+          <div className="absolute inset-0 bg-[#002f26]/20 pointer-events-none mix-blend-overlay"></div>
         </section>
 
         <section className="max-w-5xl mx-auto px-4 -mt-32 relative z-20">
@@ -364,34 +364,34 @@ export default function Premium() {
             <div className="flex-1 p-8 md:p-12 border-r border-slate-100">
               {targetExam ? (
                 <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                   <div className="w-20 h-20 bg-[#008770]/10 rounded-[2rem] flex items-center justify-center text-[#008770] mb-6">
+                   <div className="w-20 h-20 bg-[#002f26]/10 rounded-[2rem] flex items-center justify-center text-[#002f26] mb-6">
                       <Layers className="w-10 h-10" />
                    </div>
-                   <h2 className="text-2xl font-black text-slate-800 mb-2">{targetExam.name}</h2>
+                   <h2 className="text-2xl font-black text-[#001f19] mb-2">{targetExam.name}</h2>
                    <p className="text-slate-500 font-medium mb-8">Single exam unlock</p>
-                   <div className="text-5xl font-black text-slate-900 mb-2">₹{basePrice}</div>
+                   <div className="text-5xl font-black text-[#002f26] mb-2">₹{basePrice}</div>
                    {targetExam.price && targetExam.price > 0 && <div className="text-slate-400 line-through font-bold text-lg mb-8">₹{basePrice + 500}</div>}
                 </div>
               ) : (
                 <>
-                  <h2 className="text-2xl font-black text-slate-800 mb-6">Select your plan</h2>
+                  <h2 className="text-2xl font-black text-[#001f19] mb-6">Select your plan</h2>
                   <div className="space-y-4">
                     {plans.map(plan => (
-                       <label key={plan.id} className={`cursor-pointer block relative rounded-2xl border-2 transition-all p-5 hover:border-[#008770]/50 ${selectedPlanId === plan.id ? 'border-[#008770] bg-[#008770]/5' : 'border-slate-100 bg-white'}`}>
+                       <label key={plan.id} className={`cursor-pointer block relative rounded-2xl border-2 transition-all p-5 hover:border-[#002f26]/50 ${selectedPlanId === plan.id ? 'border-[#002f26] bg-[#002f26]/5' : 'border-slate-100 bg-white'}`}>
                           <input type="radio" className="hidden" name="premium_plan" value={plan.id} checked={selectedPlanId === plan.id} onChange={() => setSelectedPlanId(plan.id)} />
                           {plan.isPopular && <div className="absolute -top-3 right-6 bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-sm">Popular</div>}
                           <div className="flex items-center justify-between">
                              <div className="flex items-center gap-4">
-                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedPlanId === plan.id ? 'border-[#008770]' : 'border-slate-300'}`}>
-                                   {selectedPlanId === plan.id && <div className="w-3 h-3 bg-[#008770] rounded-full" />}
+                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedPlanId === plan.id ? 'border-[#002f26]' : 'border-slate-300'}`}>
+                                   {selectedPlanId === plan.id && <div className="w-3 h-3 bg-[#002f26] rounded-full" />}
                                 </div>
                                 <div>
-                                   <div className="text-lg font-black text-slate-800">{plan.name}</div>
+                                   <div className="text-lg font-black text-[#001f19]">{plan.name}</div>
                                    <div className="text-xs font-bold text-slate-500">{plan.months} Month{plan.months > 1 ? 's' : ''}</div>
                                 </div>
                              </div>
                              <div className="text-right">
-                                <div className="text-xl font-black text-slate-900">₹{plan.price}</div>
+                                <div className="text-xl font-black text-[#002f26]">₹{plan.price}</div>
                                 {plan.originalPrice > plan.price && <div className="text-xs font-bold text-slate-400 line-through">₹{plan.originalPrice}</div>}
                              </div>
                           </div>
@@ -404,7 +404,7 @@ export default function Premium() {
             </div>
             
             {/* Right side: Payment / Coupon */}
-            <div className="w-full md:w-[400px] bg-slate-900 p-8 md:p-12 flex flex-col justify-between rounded-r-[2rem] md:rounded-r-[2rem] rounded-b-[2rem] md:rounded-l-none">
+            <div className="w-full md:w-[400px] bg-[#002f26] p-8 md:p-12 flex flex-col justify-between rounded-r-[2rem] md:rounded-r-[2rem] rounded-b-[2rem] md:rounded-l-none">
               <div>
                 <h3 className="text-lg font-black text-white mb-6">Order Summary</h3>
                 <div className="space-y-4 mb-6 text-sm font-semibold text-slate-300">
@@ -430,8 +430,8 @@ export default function Premium() {
                     <div className="space-y-3">
                       <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Have a coupon code?</p>
                       <div className="grid grid-cols-2 gap-2">
-                        <button onClick={() => setHasCoupon(true)} className="py-2.5 bg-slate-800 border border-slate-700 text-white rounded-lg font-bold hover:bg-slate-700 transition-colors">Yes</button>
-                        <button onClick={() => setHasCoupon(false)} className="py-2.5 bg-slate-800 border border-slate-700 text-white rounded-lg font-bold hover:bg-slate-700 transition-colors">No</button>
+                        <button onClick={() => setHasCoupon(true)} className="py-2.5 bg-[#001f19] border border-slate-700 text-white rounded-lg font-bold hover:bg-slate-700 transition-colors">Yes</button>
+                        <button onClick={() => setHasCoupon(false)} className="py-2.5 bg-[#001f19] border border-slate-700 text-white rounded-lg font-bold hover:bg-slate-700 transition-colors">No</button>
                       </div>
                     </div>
                   ) : hasCoupon ? (
@@ -441,7 +441,7 @@ export default function Premium() {
                         <button onClick={() => { setHasCoupon(null); setDiscount(null); setCouponCode(''); }} className="text-[10px] font-bold text-emerald-400 hover:underline">Change</button>
                       </div>
                       <div className="flex gap-2">
-                        <input type="text" placeholder="E.G. PREP20" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} className="flex-1 bg-slate-800 border border-slate-700 focus:border-emerald-500 rounded-xl px-4 py-3 outline-none font-bold text-white uppercase" />
+                        <input type="text" placeholder="E.G. PREP20" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} className="flex-1 bg-[#001f19] border border-slate-700 focus:border-emerald-500 rounded-xl px-4 py-3 outline-none font-bold text-white uppercase" />
                         <button onClick={handleApplyCoupon} disabled={!couponCode || isValidatingCoupon || discount !== null} className="bg-emerald-500 text-white px-5 rounded-xl font-bold text-sm hover:bg-emerald-600 transition-colors disabled:opacity-50">
                           {isValidatingCoupon ? <Loader2 className="animate-spin" size={18} /> : (discount ? 'Applied' : 'Apply')}
                         </button>
@@ -451,7 +451,7 @@ export default function Premium() {
                       )}
                     </div>
                   ) : (
-                    <div className="bg-slate-800 border border-slate-700 p-3 rounded-xl flex justify-between items-center">
+                    <div className="bg-[#001f19] border border-slate-700 p-3 rounded-xl flex justify-between items-center">
                       <p className="text-[11px] font-semibold text-slate-400 italic">No coupon applied</p>
                       <button onClick={() => setHasCoupon(true)} className="text-[11px] font-bold text-emerald-400 hover:underline">Add Coupon</button>
                     </div>
@@ -470,7 +470,7 @@ export default function Premium() {
                 <button
                   onClick={handlePurchase}
                   disabled={purchaseLoading || plans.length === 0}
-                  className="w-full py-4 bg-[#008770] text-white rounded-xl font-black text-lg shadow-lg shadow-[#008770]/30 hover:bg-[#006e5d] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none"
+                  className="w-full py-4 bg-[#002f26] text-white rounded-xl font-black text-lg shadow-lg shadow-[#002f26]/30 hover:bg-[#006e5d] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none"
                 >
                   {purchaseLoading ? 'Processing...' : (finalPrice === 0 ? 'Activate Free' : `Pay ₹${finalPrice}`)}
                 </button>
@@ -487,7 +487,7 @@ export default function Premium() {
 
         <section className="max-w-7xl mx-auto px-4 py-32 mt-12">
            <div className="text-center mb-16">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Everything you need to succeed</h2>
+              <h2 className="text-3xl font-black text-[#002f26] tracking-tight">Everything you need to succeed</h2>
            </div>
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {(premiumFeatures.length > 0 ? premiumFeatures : benefits.map(b => b.title)).map((featureTitle, idx) => {
@@ -497,7 +497,7 @@ export default function Premium() {
                        <div className={`w-12 h-12 ${benefit.color} rounded-xl flex items-center justify-center text-white mb-6`}>
                           <benefit.icon className="w-6 h-6" />
                        </div>
-                       <h3 className="text-lg font-black text-slate-900 mb-2 leading-tight">{featureTitle}</h3>
+                       <h3 className="text-lg font-black text-[#002f26] mb-2 leading-tight">{featureTitle}</h3>
                        <p className="text-sm font-medium text-slate-500 leading-relaxed">
                           Premium feature included in your all-access pass. Get ahead of the competition.
                        </p>

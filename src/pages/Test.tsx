@@ -370,7 +370,7 @@ export default function Test() {
           </div>
           <button 
             onClick={() => handleSubmit()}
-            className="bg-[#0f172a] text-white px-4 py-2 md:px-6 md:py-2.5 rounded-md font-medium text-xs md:text-sm hover:bg-slate-800 transition-all"
+            className="bg-[#002f26] text-white px-4 py-2 md:px-6 md:py-2.5 rounded-md font-medium text-xs md:text-sm hover:bg-[#001f19] transition-all"
           >
             Submit Test
           </button>
@@ -395,14 +395,14 @@ export default function Test() {
               </div>
               <div>
                 <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-0.5">Candidate</p>
-                <h3 className="font-bold text-slate-800 leading-tight">{profile?.name || 'User'}</h3>
+                <h3 className="font-bold text-[#001f19] leading-tight">{profile?.name || 'User'}</h3>
               </div>
             </div>
 
             {/* Palette */}
             <div className="p-4 md:p-6 flex-1 flex flex-col">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="font-bold text-slate-800 tracking-tight">Question Palette</h3>
+                <h3 className="font-bold text-[#001f19] tracking-tight">Question Palette</h3>
                 <span className="text-xs text-slate-500 font-medium">{questions.length} Questions</span>
               </div>
               
@@ -471,7 +471,7 @@ export default function Test() {
 
                  {/* White Card */}
                  <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-[0_2px_8px_rgb(0,0,0,0.04)] border border-slate-200 p-6 md:p-8">
-                    <h3 className="text-lg md:text-xl font-semibold text-slate-900 mb-8 leading-snug">{currentQ.question}</h3>
+                    <h3 className="text-lg md:text-xl font-semibold text-[#002f26] mb-8 leading-snug">{currentQ.question}</h3>
                     {/* Options */}
                     <div className="space-y-4">
                        {currentQ.options.map((option: string, idx: number) => {

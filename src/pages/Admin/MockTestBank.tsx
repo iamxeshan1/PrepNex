@@ -194,7 +194,7 @@ export default function MockTestBank() {
            <button onClick={downloadSample} className="px-5 py-2.5 bg-white border border-slate-300 rounded-lg font-semibold text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
               <Download className="w-4 h-4" /> Download Template
            </button>
-           <button onClick={() => setShowImport(!showImport)} className="px-5 py-2.5 bg-indigo-50 border border-indigo-200 rounded-lg font-semibold text-sm text-indigo-700 hover:bg-indigo-100 transition-colors flex items-center gap-2">
+           <button onClick={() => setShowImport(!showImport)} className="px-5 py-2.5 bg-teal-50 border border-teal-200 rounded-lg font-semibold text-sm text-teal-700 hover:bg-teal-100 transition-colors flex items-center gap-2">
               <Upload className="w-4 h-4" /> Bulk Upload CSV
            </button>
            <button onClick={() => setShowAddForm(true)} className="px-5 py-2.5 bg-teal-700 text-white rounded-lg font-semibold text-sm shadow-sm hover:bg-teal-800 transition-colors flex items-center gap-2">
@@ -207,10 +207,10 @@ export default function MockTestBank() {
         <div className="bg-white border text-center border-slate-200 p-12 rounded-xl mb-8">
           <input type="file" accept=".xlsx, .xls, .csv" onChange={handleFileUpload} id="master-q-upload" className="hidden" />
           <label htmlFor="master-q-upload" className="cursor-pointer inline-flex flex-col items-center">
-            <div className={`w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 mb-4 ${importing ? 'animate-bounce' : ''}`}>
+            <div className={`w-16 h-16 bg-teal-50 rounded-full flex items-center justify-center text-teal-600 mb-4 ${importing ? 'animate-bounce' : ''}`}>
               <Database className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900">{importing ? 'Importing Data...' : 'Click to Upload Dataset'}</h3>
+            <h3 className="text-xl font-bold text-[#002f26]">{importing ? 'Importing Data...' : 'Click to Upload Dataset'}</h3>
             <p className="text-sm font-medium text-slate-500 mt-2">XLSX or CSV files following the template format</p>
           </label>
         </div>
@@ -222,7 +222,7 @@ export default function MockTestBank() {
               <X className="w-5 h-5" />
            </button>
 
-           <h3 className="text-xl font-bold text-slate-900 mb-6">{editingQuestionId ? 'Edit Question' : 'New Question'}</h3>
+           <h3 className="text-xl font-bold text-[#002f26] mb-6">{editingQuestionId ? 'Edit Question' : 'New Question'}</h3>
 
            <div className="space-y-6">
               <div>
@@ -362,7 +362,7 @@ export default function MockTestBank() {
               <input 
                  type="text" 
                  placeholder="Search question bank..."
-                 className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-slate-900 placeholder:text-slate-400"
+                 className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-[#002f26] placeholder:text-slate-400"
                  value={searchTerm}
                  onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -387,7 +387,7 @@ export default function MockTestBank() {
                                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-bold">{q.level || 'Standard'}</span>
                                {q.previouslyAskedIn && <span className="text-xs font-semibold text-slate-400">({q.previouslyAskedIn})</span>}
                             </div>
-                            <p className="text-base font-bold text-slate-900 mb-4 whitespace-pre-wrap">{q.question}</p>
+                            <p className="text-base font-bold text-[#002f26] mb-4 whitespace-pre-wrap">{q.question}</p>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                                {q.options.map((opt: string, i: number) => {

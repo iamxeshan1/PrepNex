@@ -158,7 +158,7 @@ export default function AdminQuestions() {
     return `/admin`;
   };
 
-  const StatCard = ({ title, value, span, trend, colorClass = "text-slate-900" }: any) => (
+  const StatCard = ({ title, value, span, trend, colorClass = "text-[#002f26]" }: any) => (
     <div className="bg-white p-6 rounded-xl border border-slate-200">
       <p className="text-sm font-medium text-slate-500 mb-2">{title}</p>
       <h3 className={`text-4xl font-bold tracking-tight mb-2 ${colorClass}`}>{value}</h3>
@@ -179,7 +179,7 @@ export default function AdminQuestions() {
           </button>
           <button 
             onClick={() => { if(showAddForm) { resetForm(); setShowAddForm(false); } else { setShowAddForm(true); } }}
-            className="bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-indigo-800 transition-colors"
+            className="bg-teal-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-teal-800 transition-colors"
           >
             {showAddForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
             {showAddForm ? 'Cancel Entry' : 'Add Question'}
@@ -188,7 +188,7 @@ export default function AdminQuestions() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <StatCard title="Total Questions" value={questions.length} span="In this section" colorClass="text-indigo-600" />
+        <StatCard title="Total Questions" value={questions.length} span="In this section" colorClass="text-teal-600" />
         <StatCard title="Avg. Difficulty" value="Medium" span="Based on distribution" colorClass="text-teal-600" />
         <StatCard title="Completion" value="100%" span="All required fields set" colorClass="text-emerald-600" />
         <div className="bg-[#111827] text-white p-6 rounded-xl relative overflow-hidden flex flex-col justify-between">
@@ -199,20 +199,20 @@ export default function AdminQuestions() {
            <p className="text-xs text-slate-300 relative z-10 w-3/4">
              Questions securely stored and indexed within your designated cloud segment.
            </p>
-           <Database className="absolute bottom-4 right-4 w-20 h-20 text-slate-800" />
+           <Database className="absolute bottom-4 right-4 w-20 h-20 text-[#001f19]" />
         </div>
       </div>
 
       {showAddForm && (
         <form onSubmit={handleSaveQuestion} className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm mb-8">
-            <h3 className="text-xl font-bold text-slate-900 mb-6">{editingQuestionId ? 'Revise Content' : 'New Question Content'}</h3>
+            <h3 className="text-xl font-bold text-[#002f26] mb-6">{editingQuestionId ? 'Revise Content' : 'New Question Content'}</h3>
             <div className="space-y-6">
                <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Question Body</label>
                   <textarea 
                     required 
                     placeholder="Enter question text..."
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 font-medium min-h-[100px]"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-slate-50 font-medium min-h-[100px]"
                     value={question} onChange={(e) => setQuestion(e.target.value)} 
                   />
                </div>
@@ -220,7 +220,7 @@ export default function AdminQuestions() {
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">Difficulty</label>
-                    <select className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white" value={level} onChange={(e) => setLevel(e.target.value)}>
+                    <select className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white" value={level} onChange={(e) => setLevel(e.target.value)}>
                       <option value="Easy">Easy</option>
                       <option value="Medium">Medium</option>
                       <option value="Hard">Hard</option>
@@ -231,7 +231,7 @@ export default function AdminQuestions() {
                     <label className="block text-sm font-semibold text-slate-700 mb-2">Legacy Reference (Optional)</label>
                     <input 
                       placeholder="e.g. UPSC Prelims 2021"
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
                       value={previouslyAskedIn} onChange={(e) => setPreviouslyAskedIn(e.target.value)}
                     />
                  </div>
@@ -241,14 +241,14 @@ export default function AdminQuestions() {
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">Domain / Subject</label>
-                      <select className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white" value={subjectId} onChange={(e) => { setSubjectId(e.target.value); if(e.target.value) setNewSubjectName(''); }}>
+                      <select className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white" value={subjectId} onChange={(e) => { setSubjectId(e.target.value); if(e.target.value) setNewSubjectName(''); }}>
                         <option value="">Select Domain</option>
                         {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                       </select>
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">Create New Domain</label>
-                      <input placeholder="Type domain name..." className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" value={newSubjectName} onChange={(e) => { setNewSubjectName(e.target.value); if(e.target.value) setSubjectId(''); }} />
+                      <input placeholder="Type domain name..." className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" value={newSubjectName} onChange={(e) => { setNewSubjectName(e.target.value); if(e.target.value) setSubjectId(''); }} />
                     </div>
                  </div>
                )}
@@ -262,7 +262,7 @@ export default function AdminQuestions() {
                            <button 
                              type="button" 
                              onClick={() => setCorrect(opt)}
-                             className={`w-8 h-8 rounded-md flex items-center justify-center font-bold text-sm ${correct === opt && opt !== '' ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-500 hover:bg-slate-300'}`}
+                             className={`w-8 h-8 rounded-md flex items-center justify-center font-bold text-sm ${correct === opt && opt !== '' ? 'bg-teal-600 text-white' : 'bg-slate-200 text-slate-500 hover:bg-slate-300'}`}
                              title="Mark as correct"
                            >
                              {String.fromCharCode(65 + i)}
@@ -271,7 +271,7 @@ export default function AdminQuestions() {
                          <input 
                            required 
                            placeholder={`Option ${i+1}`}
-                           className={`w-full py-3 pl-12 pr-4 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 font-medium ${correct === opt && opt !== '' ? 'border-indigo-400 bg-indigo-50/30' : 'border-slate-300'}`}
+                           className={`w-full py-3 pl-12 pr-4 border rounded-lg focus:ring-teal-500 focus:border-teal-500 font-medium ${correct === opt && opt !== '' ? 'border-teal-400 bg-teal-50/30' : 'border-slate-300'}`}
                            value={opt} onChange={(e) => {
                               const newOpt = [...options];
                               newOpt[i] = e.target.value;
@@ -287,13 +287,13 @@ export default function AdminQuestions() {
                  <label className="block text-sm font-semibold text-slate-700 mb-2">Rationalization / Explanation</label>
                  <textarea 
                    placeholder="A logic-based solution..."
-                   className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 font-medium min-h-[80px]"
+                   className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 font-medium min-h-[80px]"
                    value={explanation} onChange={(e) => setExplanation(e.target.value)} 
                  />
                </div>
             </div>
             <div className="mt-8 flex gap-3">
-               <button type="submit" className="bg-indigo-700 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-indigo-800 transition-colors">
+               <button type="submit" className="bg-teal-700 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-teal-800 transition-colors">
                  {editingQuestionId ? 'Save Revisions' : 'Compile Entry'}
                </button>
             </div>
@@ -310,7 +310,7 @@ export default function AdminQuestions() {
                   placeholder="Search questions..." 
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium focus:ring-indigo-500 focus:border-indigo-500 bg-white shadow-sm"
+                  className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium focus:ring-teal-500 focus:border-teal-500 bg-white shadow-sm"
                 />
              </div>
            </div>
@@ -318,7 +318,7 @@ export default function AdminQuestions() {
         </div>
 
         {loading ? (
-           <div className="py-20 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin" /></div>
+           <div className="py-20 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin" /></div>
         ) : (
           <table className="w-full text-left border-collapse">
             <thead>
@@ -338,12 +338,12 @@ export default function AdminQuestions() {
                       {idx + 1}
                     </td>
                     <td className="p-4 align-top">
-                       <p className="text-sm font-bold text-slate-900 mb-2 line-clamp-2 leading-relaxed">{q.question}</p>
+                       <p className="text-sm font-bold text-[#002f26] mb-2 line-clamp-2 leading-relaxed">{q.question}</p>
                        <div className="flex flex-col gap-1 mt-1">
                           {q.options && q.options.map((opt: string, optI: number) => {
                              const isCorrect = String(opt) === String(q.correctAnswer);
                              return (
-                               <div key={optI} className={`text-xs flex items-start gap-2 ${isCorrect ? 'text-indigo-700 font-bold bg-indigo-50 px-2 py-0.5 rounded -ml-2' : 'text-slate-500'}`}>
+                               <div key={optI} className={`text-xs flex items-start gap-2 ${isCorrect ? 'text-teal-700 font-bold bg-teal-50 px-2 py-0.5 rounded -ml-2' : 'text-slate-500'}`}>
                                   <span>{String.fromCharCode(65 + optI)}.</span>
                                   <span>{opt}</span>
                                </div>
@@ -354,7 +354,7 @@ export default function AdminQuestions() {
                     <td className="p-4 align-top">
                        <div className="flex flex-col gap-2">
                           {sub && <span className="inline-flex max-w-max items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">{sub.name}</span>}
-                          <span className="inline-flex max-w-max items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-700">{q.level || 'Standard'}</span>
+                          <span className="inline-flex max-w-max items-center px-2 py-0.5 rounded text-[10px] font-bold bg-teal-100 text-teal-700">{q.level || 'Standard'}</span>
                           {q.previouslyAskedIn && <span className="text-[10px] text-slate-400 font-semibold">{q.previouslyAskedIn}</span>}
                        </div>
                     </td>

@@ -69,7 +69,7 @@ export default function ManageLiveTest() {
             <tbody>
                 {students.map((s) => (
                     <tr key={s.id} className="border-b">
-                        <td className="p-3 font-bold text-indigo-600">{s.rank}</td>
+                        <td className="p-3 font-bold text-teal-600">{s.rank}</td>
                         <td className="p-3 font-semibold">{s.name}</td>
                         <td className="p-3">{s.score}</td>
                     </tr>

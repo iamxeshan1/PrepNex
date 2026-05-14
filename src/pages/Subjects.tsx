@@ -83,7 +83,7 @@ const COLOR_VARIANTS = [
   'bg-blue-50 text-blue-500',
   'bg-teal-50 text-teal-500',
   'bg-orange-50 text-orange-500',
-  'bg-indigo-50 text-indigo-500',
+  'bg-teal-50 text-teal-500',
   'bg-rose-50 text-rose-500',
   'bg-purple-50 text-purple-500',
 ];
@@ -159,13 +159,13 @@ export default function Subjects() {
                     {IconComp && <IconComp className="w-10 h-10 text-primary" />}
                   </div>
                   <div>
-                    <h1 className="text-2xl font-sans font-[800] text-[#0f172a] tracking-tight mb-2">{selectedSubject.name}</h1>
+                    <h1 className="text-2xl font-sans font-[800] text-[#002f26] tracking-tight mb-2">{selectedSubject.name}</h1>
                     <p className="text-sm text-slate-500 font-medium leading-relaxed">{selectedSubject.description || 'Focused training module for competitive excellence.'}</p>
                   </div>
                 </div>
 
                 <div className="space-y-6">
-                  <h2 className="text-xl font-sans font-[800] text-[#0f172a] tracking-tight px-2">Available Practice Sets</h2>
+                  <h2 className="text-xl font-sans font-[800] text-[#002f26] tracking-tight px-2">Available Practice Sets</h2>
                   <div className="flex flex-col gap-4">
                     {tests.map((test) => (
                       <div key={test.id} className="bg-white p-5 rounded-[1.25rem] border border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200 transition-all group flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -175,7 +175,7 @@ export default function Subjects() {
                           </div>
                           <div>
                             <div className="flex items-center gap-3 mb-1.5">
-                              <h4 className="font-sans font-[800] text-[#0f172a] text-[15px] tracking-tight group-hover:text-primary transition-colors">{test.title}</h4>
+                              <h4 className="font-sans font-[800] text-[#002f26] text-[15px] tracking-tight group-hover:text-primary transition-colors">{test.title}</h4>
                               {!test.isFree && (
                                 <span className="text-[9px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full uppercase tracking-widest">Premium</span>
                               )}
@@ -189,7 +189,7 @@ export default function Subjects() {
                         
                         <Link 
                           to={`/test/${test.id}`}
-                          className={`flex items-center justify-center w-full sm:w-auto px-8 py-3 rounded-[0.75rem] font-sans font-[800] text-xs uppercase tracking-widest transition-all ${test.isFree ? 'bg-[#0f172a] text-white hover:bg-primary' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+                          className={`flex items-center justify-center w-full sm:w-auto px-8 py-3 rounded-[0.75rem] font-sans font-[800] text-xs uppercase tracking-widest transition-all ${test.isFree ? 'bg-[#002f26] text-white hover:bg-primary' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
                         >
                           {test.isFree ? 'Start Test' : 'Unlock Pro'}
                         </Link>
@@ -268,7 +268,7 @@ export default function Subjects() {
                       <div className={`w-14 h-14 ${colorClass} rounded-[1rem] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
                         <IconComp className="w-7 h-7" />
                       </div>
-                      <h4 className="text-base font-sans font-[800] text-[#0f172a] mb-2 tracking-tight">{subject.name}</h4>
+                      <h4 className="text-base font-sans font-[800] text-[#002f26] mb-2 tracking-tight">{subject.name}</h4>
                       <p className="text-[11px] font-medium text-slate-400 line-clamp-2">
                         {subject.description || 'Master the concepts and shortcuts.'}
                       </p>

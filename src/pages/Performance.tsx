@@ -149,14 +149,14 @@ export default function Performance() {
             {/* Page Header */}
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-black text-[#0f172a] mb-2">Performance Analytics</h1>
+                <h1 className="text-3xl font-black text-[#002f26] mb-2">Performance Analytics</h1>
                 <p className="text-slate-500 font-medium">Deep dive into your preparation metrics and test history.</p>
               </div>
               <div className="flex items-center gap-3">
                  <button className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 flex items-center gap-2">
                     <Filter className="w-4 h-4" /> Reset Filters
                  </button>
-                 <button className="px-4 py-2 bg-[#0f172a] text-white rounded-xl text-xs font-bold flex items-center gap-2">
+                 <button className="px-4 py-2 bg-[#002f26] text-white rounded-xl text-xs font-bold flex items-center gap-2">
                     <Download className="w-4 h-4" /> Export Report
                  </button>
               </div>
@@ -165,7 +165,7 @@ export default function Performance() {
             {/* Quick Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { label: 'Total Attempts', value: stats.totalTests, icon: BookOpen, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+                { label: 'Total Attempts', value: stats.totalTests, icon: BookOpen, color: 'text-teal-600', bg: 'bg-teal-50' },
                 { label: 'Avg Accuracy', value: `${stats.accuracy}%`, icon: Target, color: 'text-teal-600', bg: 'bg-teal-50' },
                 { label: 'Best Subject', value: stats.bestSubject, icon: Award, color: 'text-amber-600', bg: 'bg-amber-50' },
                 { label: 'Improvement Area', value: stats.weakestSubject, icon: TrendingUp, color: 'text-red-600', bg: 'bg-red-50' }
@@ -181,7 +181,7 @@ export default function Performance() {
                     <stat.icon className="w-5 h-5" />
                   </div>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
-                  <h3 className="text-xl font-black text-[#0f172a] truncate">{stat.value}</h3>
+                  <h3 className="text-xl font-black text-[#002f26] truncate">{stat.value}</h3>
                 </motion.div>
               ))}
             </div>
@@ -191,7 +191,7 @@ export default function Performance() {
               {/* Score Trend */}
               <div className="lg:col-span-2 bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm">
                 <div className="flex justify-between items-center mb-10">
-                  <h3 className="text-lg font-black text-[#0f172a] flex items-center gap-2">
+                  <h3 className="text-lg font-black text-[#002f26] flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-teal-600" /> Score Trend
                   </h3>
                   <div className="flex items-center gap-4">
@@ -241,7 +241,7 @@ export default function Performance() {
 
               {/* Subject Mastery Radar */}
               <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col">
-                <h3 className="text-lg font-black text-[#0f172a] mb-10 flex items-center gap-2">
+                <h3 className="text-lg font-black text-[#002f26] mb-10 flex items-center gap-2">
                   <Award className="w-5 h-5 text-amber-500" /> Subject Mastery
                 </h3>
                 <div className="flex-1 min-h-[300px]">
@@ -255,7 +255,7 @@ export default function Performance() {
                           type="category" 
                           axisLine={false} 
                           tickLine={false} 
-                          tick={{ fontSize: 10, fontWeight: 700, fill: '#0f172a' }}
+                          tick={{ fontSize: 10, fontWeight: 700, fill: '#002f26' }}
                           width={80}
                         />
                         <Tooltip 
@@ -281,8 +281,8 @@ export default function Performance() {
             {/* Test History */}
             <section className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
                <div className="p-6 md:p-8 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <h3 className="text-lg font-black text-[#0f172a] flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-indigo-500" /> Recent Attempts
+                  <h3 className="text-lg font-black text-[#002f26] flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-teal-500" /> Recent Attempts
                   </h3>
                   <div className="flex overflow-x-auto gap-2 scrollbar-hide pb-2 md:pb-0">
                      {['All Tests', 'Exams', 'Subject Wise', 'Live Tests'].map(f => (
@@ -317,7 +317,7 @@ export default function Performance() {
                                       {res.type === 'live' ? <TrendingUp className="w-4 h-4" /> : <BookOpen className="w-4 h-4" />}
                                    </div>
                                    <div>
-                                      <p className="font-bold text-slate-800 text-sm">{res.testTitle || 'Mock Test Attempt'}</p>
+                                      <p className="font-bold text-[#001f19] text-sm">{res.testTitle || 'Mock Test Attempt'}</p>
                                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{res.type || 'Standard'}</p>
                                    </div>
                                 </div>

@@ -182,7 +182,7 @@ export default function LiveTestDetail() {
               </div>
             </div>
 
-            <div className="bg-slate-900 rounded-3xl p-8 border border-slate-800 text-center">
+            <div className="bg-[#002f26] rounded-3xl p-8 border border-[#001f19] text-center">
               <ShieldCheck className="w-12 h-12 text-blue-400 mx-auto mb-4 opacity-50" />
               <h2 className="text-2xl font-black text-white mb-2">Enrollment Details</h2>
               <p className="text-slate-400 mb-6 max-w-lg mx-auto">
@@ -210,7 +210,7 @@ export default function LiveTestDetail() {
                       placeholder="Have a coupon code?" 
                       value={couponCode} 
                       onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                      className="flex-1 px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl outline-none focus:border-blue-500 font-bold tracking-widest text-sm text-white placeholder-slate-500 uppercase"
+                      className="flex-1 px-4 py-3 bg-[#001f19] border border-slate-700 rounded-xl outline-none focus:border-blue-500 font-bold tracking-widest text-sm text-white placeholder-slate-500 uppercase"
                     />
                     <button 
                       onClick={handleApplyCoupon}

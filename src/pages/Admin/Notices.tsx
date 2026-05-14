@@ -53,7 +53,7 @@ export default function AdminNotices() {
 
   const filtered = notices.filter(n => n.title.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  const StatCard = ({ title, value, span, colorClass = "text-slate-900" }: any) => (
+  const StatCard = ({ title, value, span, colorClass = "text-[#002f26]" }: any) => (
     <div className="bg-white p-6 border border-slate-200">
       <p className="text-sm font-medium text-slate-500 mb-2">{title}</p>
       <h3 className={`text-4xl font-bold tracking-tight mb-2 ${colorClass}`}>{value}</h3>
@@ -67,7 +67,7 @@ export default function AdminNotices() {
         <p className="text-slate-500 font-medium">Publish global announcements and platform alerts.</p>
         <button 
           onClick={() => setShowAddForm(!showAddForm)}
-          className="bg-indigo-700 text-white px-5 py-2.5 font-semibold text-sm flex items-center gap-2 hover:bg-indigo-800 transition-colors"
+          className="bg-teal-700 text-white px-5 py-2.5 font-semibold text-sm flex items-center gap-2 hover:bg-teal-800 transition-colors"
         >
           {showAddForm ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
           {showAddForm ? 'Cancel Dispatch' : 'New Announcement'}
@@ -75,7 +75,7 @@ export default function AdminNotices() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <StatCard title="Total Notices" value={notices.length} span="All time" colorClass="text-indigo-600" />
+        <StatCard title="Total Notices" value={notices.length} span="All time" colorClass="text-teal-600" />
         <StatCard title="Recent" value={notices.filter(n => new Date(n.createdAt).getTime() > Date.now() - 7*86400000).length} span="Last 7 days" colorClass="text-emerald-600" />
         <StatCard title="Critical" value={notices.filter(n => n.type === 'warning').length} span="Warnings issued" colorClass="text-amber-600" />
         <StatCard title="Updates" value={notices.filter(n => n.type === 'update').length} span="System changes" colorClass="text-teal-600" />
@@ -87,7 +87,7 @@ export default function AdminNotices() {
               <X className="w-5 h-5" />
            </button>
 
-           <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2"><Megaphone className="w-5 h-5 text-indigo-600" /> Compose Notice</h3>
+           <h3 className="text-xl font-bold text-[#002f26] mb-6 flex items-center gap-2"><Megaphone className="w-5 h-5 text-teal-600" /> Compose Notice</h3>
 
            <div className="space-y-6">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -96,14 +96,14 @@ export default function AdminNotices() {
                  <input 
                    required 
                    placeholder="e.g. Server Maintenance or Exam Shift"
-                   className="w-full px-4 py-3 border border-slate-300 focus:ring-indigo-500 focus:border-indigo-500 font-medium bg-slate-50"
+                   className="w-full px-4 py-3 border border-slate-300 focus:ring-teal-500 focus:border-teal-500 font-medium bg-slate-50"
                    value={title} onChange={(e) => setTitle(e.target.value)} 
                  />
                </div>
                <div>
                  <label className="block text-sm font-semibold text-slate-700 mb-2">Notice Type</label>
                  <select 
-                    className="w-full px-4 py-3 border border-slate-300 focus:ring-indigo-500 focus:border-indigo-500 font-medium bg-slate-50"
+                    className="w-full px-4 py-3 border border-slate-300 focus:ring-teal-500 focus:border-teal-500 font-medium bg-slate-50"
                     value={type} onChange={(e: any) => setType(e.target.value)}
                  >
                     <option value="info">Information</option>
@@ -117,14 +117,14 @@ export default function AdminNotices() {
                <textarea 
                  required 
                  placeholder="Compose the detailed announcement content here..."
-                 className="w-full px-4 py-3 border border-slate-300 focus:ring-indigo-500 focus:border-indigo-500 font-medium min-h-[120px] bg-slate-50"
+                 className="w-full px-4 py-3 border border-slate-300 focus:ring-teal-500 focus:border-teal-500 font-medium min-h-[120px] bg-slate-50"
                  value={content} onChange={(e) => setContent(e.target.value)} 
                />
              </div>
            </div>
 
            <div className="mt-8">
-              <button type="submit" className="bg-indigo-700 text-white px-6 py-2.5 font-semibold hover:bg-indigo-800 transition-colors flex items-center gap-2">
+              <button type="submit" className="bg-teal-700 text-white px-6 py-2.5 font-semibold hover:bg-teal-800 transition-colors flex items-center gap-2">
                 <Megaphone className="w-4 h-4" /> Publish Notice
               </button>
            </div>
@@ -141,7 +141,7 @@ export default function AdminNotices() {
                   placeholder="Search notices..." 
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium focus:ring-indigo-500 focus:border-indigo-500 bg-white shadow-sm"
+                  className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium focus:ring-teal-500 focus:border-teal-500 bg-white shadow-sm"
                 />
              </div>
            </div>
@@ -149,7 +149,7 @@ export default function AdminNotices() {
         </div>
 
         {loading ? (
-           <div className="py-20 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin" /></div>
+           <div className="py-20 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin" /></div>
         ) : (
           <table className="w-full text-left border-collapse">
             <thead>
@@ -166,7 +166,7 @@ export default function AdminNotices() {
                   <td className="p-4 pl-6">
                     <div className="flex items-start gap-4">
                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-                         notice.type === 'info' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' :
+                         notice.type === 'info' ? 'bg-teal-50 text-teal-600 border border-teal-100' :
                          notice.type === 'warning' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
                          'bg-emerald-50 text-emerald-600 border border-emerald-100'
                        }`}>
@@ -175,7 +175,7 @@ export default function AdminNotices() {
                           <Zap className="w-5 h-5" />}
                        </div>
                        <div>
-                         <p className="font-bold text-slate-900 group-hover:text-indigo-700 transition-colors max-w-lg truncate">
+                         <p className="font-bold text-[#002f26] group-hover:text-teal-700 transition-colors max-w-lg truncate">
                            {notice.title}
                          </p>
                          <p className="text-xs font-semibold text-slate-500 mt-0.5 line-clamp-1 max-w-lg">{notice.content}</p>
@@ -184,7 +184,7 @@ export default function AdminNotices() {
                   </td>
                   <td className="p-4">
                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest ${
-                         notice.type === 'info' ? 'bg-indigo-50 text-indigo-700' :
+                         notice.type === 'info' ? 'bg-teal-50 text-teal-700' :
                          notice.type === 'warning' ? 'bg-amber-50 text-amber-700' :
                          'bg-emerald-50 text-emerald-700'
                      }`}>

@@ -107,7 +107,7 @@ export default function AdminDashboard() {
     };
   }, []);
 
-  const StatCard = ({ title, value, span, icon: Icon, colorIcon, colorClass = "text-slate-900" }: any) => (
+  const StatCard = ({ title, value, span, icon: Icon, colorIcon, colorClass = "text-[#002f26]" }: any) => (
     <div className="bg-white p-6 border border-slate-200">
       <div className="flex items-center justify-between mb-2">
          <p className="text-sm font-medium text-slate-500">{title}</p>
@@ -133,7 +133,7 @@ export default function AdminDashboard() {
           value={stats.users.toLocaleString()} 
           span="+14% from last month" 
           icon={Users} 
-          colorIcon="text-indigo-500" 
+          colorIcon="text-teal-500" 
         />
         <StatCard 
           title="Revenue" 
@@ -164,12 +164,12 @@ export default function AdminDashboard() {
            <div className="bg-white p-8 border border-slate-200 shadow-sm relative overflow-hidden">
               <header className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-6">
                  <div>
-                    <h3 className="text-lg font-bold text-slate-900">Revenue & Engagement</h3>
+                    <h3 className="text-lg font-bold text-[#002f26]">Revenue & Engagement</h3>
                     <p className="text-sm font-medium text-slate-500 mt-1">Daily trend of active users and successful transactions.</p>
                  </div>
                  <div className="flex bg-slate-100 p-1 border border-slate-200">
                     {['7D', '30D', '90D', 'ALL'].map(t => (
-                       <button key={t} className={`px-4 py-1.5 text-sm font-bold transition-all ${t === '30D' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                       <button key={t} className={`px-4 py-1.5 text-sm font-bold transition-all ${t === '30D' ? 'bg-white text-[#002f26] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
                           {t}
                        </button>
                     ))}
@@ -201,7 +201,7 @@ export default function AdminDashboard() {
             <div className="bg-white p-6 border border-slate-200 flex flex-col min-h-[450px]">
                <div className="flex justify-between items-center mb-6">
                  <div>
-                   <h3 className="text-lg font-bold text-slate-900">Recent Transactions</h3>
+                   <h3 className="text-lg font-bold text-[#002f26]">Recent Transactions</h3>
                    <p className="text-sm font-medium text-slate-500">Latest active plan purchases</p>
                  </div>
                  <button className="text-teal-600 hover:text-teal-700 p-2 border border-slate-200">
@@ -224,7 +224,7 @@ export default function AdminDashboard() {
                              {(sub.userName?.[0] || 'U').toUpperCase()}
                           </div>
                           <div>
-                             <p className="text-sm font-bold text-slate-900">{sub.userName || 'Anonymous'}</p>
+                             <p className="text-sm font-bold text-[#002f26]">{sub.userName || 'Anonymous'}</p>
                              <p className="text-xs font-semibold text-slate-500">{dateObj.toLocaleDateString()} • {dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
                           </div>
                        </div>

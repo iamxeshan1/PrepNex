@@ -77,13 +77,13 @@ export default function AdminHelpdesk() {
     <AdminLayout title="Resolve Hub">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
         <div>
-           <h2 className="text-3xl font-black text-slate-900 tracking-tight font-display">Student Support Ledger</h2>
+           <h2 className="text-3xl font-black text-[#002f26] tracking-tight font-display">Student Support Ledger</h2>
            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 italic">Real-time triage for institutional queries</p>
         </div>
         <div className="flex items-center gap-4">
            <div className="px-6 py-4 bg-white border border-slate-100 rounded-[1.5rem] shadow-sm flex flex-col items-center">
               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Open Cases</span>
-              <span className="text-lg font-black text-[#0f172a] font-display">{tickets.length}</span>
+              <span className="text-lg font-black text-[#002f26] font-display">{tickets.length}</span>
            </div>
         </div>
       </div>
@@ -115,11 +115,11 @@ export default function AdminHelpdesk() {
                   <header className="flex flex-col md:flex-row justify-between items-start mb-8 gap-6 pb-6 border-b border-slate-50">
                     <div className="space-y-4">
                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-center text-indigo-600">
+                          <div className="w-10 h-10 bg-teal-50 border border-teal-100 rounded-xl flex items-center justify-center text-teal-600">
                              <User className="w-5 h-5" />
                           </div>
                           <div>
-                             <h3 className="text-xl font-black text-slate-900 tracking-tight font-display uppercase">{ticket.subject}</h3>
+                             <h3 className="text-xl font-black text-[#002f26] tracking-tight font-display uppercase">{ticket.subject}</h3>
                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{ticket.userName} • {ticket.userEmail}</p>
                           </div>
                        </div>
@@ -127,11 +127,11 @@ export default function AdminHelpdesk() {
                     <div className="flex items-center gap-4">
                       <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border flex items-center gap-2 ${
                         ticket.status === 'open' ? 'bg-amber-50 border-amber-100 text-amber-600' : 
-                        ticket.status === 'replied' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' :
+                        ticket.status === 'replied' ? 'bg-teal-50 border-teal-100 text-teal-600' :
                         'bg-emerald-50 border-emerald-100 text-emerald-600'
                       }`}>
                         <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
-                          ticket.status === 'open' ? 'bg-amber-500' : 'bg-indigo-500'
+                          ticket.status === 'open' ? 'bg-amber-500' : 'bg-teal-500'
                         }`} />
                         {ticket.status} Dispatch
                       </span>
@@ -165,15 +165,15 @@ export default function AdminHelpdesk() {
                         <div className={`max-w-[85%] p-6 rounded-[2rem] border-2 shadow-sm ${
                           msg.sender === 'user' 
                             ? 'bg-white border-slate-100 rounded-tl-none' 
-                            : 'bg-[#0f172a] border-[#0f172a] text-white rounded-tr-none'
+                            : 'bg-[#002f26] border-[#002f26] text-white rounded-tr-none'
                         }`}>
                           <div className="flex items-center gap-2 mb-2">
-                             <div className={`w-1.5 h-1.5 rounded-full ${msg.sender === 'user' ? 'bg-indigo-500' : 'bg-emerald-500'}`} />
+                             <div className={`w-1.5 h-1.5 rounded-full ${msg.sender === 'user' ? 'bg-teal-500' : 'bg-emerald-500'}`} />
                              <span className={`text-[8px] font-black uppercase tracking-widest ${msg.sender === 'user' ? 'text-slate-400' : 'text-slate-500'}`}>
                                 {msg.sender === 'user' ? 'Aspirant Response' : 'Institutional Protocol'}
                              </span>
                           </div>
-                          <p className={`text-sm font-bold leading-relaxed ${msg.sender === 'user' ? 'text-slate-800' : 'text-white'}`}>{msg.text}</p>
+                          <p className={`text-sm font-bold leading-relaxed ${msg.sender === 'user' ? 'text-[#001f19]' : 'text-white'}`}>{msg.text}</p>
                           <div className="mt-3 flex items-center gap-2">
                              <span className={`text-[8px] font-bold ${msg.sender === 'user' ? 'text-slate-300' : 'text-white/40'}`}>
                                 {new Date(msg.createdAt).toLocaleString()}
@@ -186,7 +186,7 @@ export default function AdminHelpdesk() {
 
                   <div className="relative group/reply">
                     <textarea 
-                      className="w-full px-8 py-6 bg-white border border-slate-200 rounded-[2rem] outline-none focus:ring-4 focus:ring-indigo-500/5 font-bold text-slate-800 shadow-xl transition-all h-28 resize-none"
+                      className="w-full px-8 py-6 bg-white border border-slate-200 rounded-[2rem] outline-none focus:ring-4 focus:ring-teal-500/5 font-bold text-[#001f19] shadow-xl transition-all h-28 resize-none"
                       placeholder="Input resolving protocol message..."
                       value={replyText[ticket.id] || ''}
                       onChange={(e) => setReplyText({ ...replyText, [ticket.id]: e.target.value })}
@@ -194,7 +194,7 @@ export default function AdminHelpdesk() {
                     <button 
                       onClick={() => handleReply(ticket.id)}
                       disabled={submitting === ticket.id || !replyText[ticket.id]}
-                      className="absolute right-4 bottom-4 p-5 bg-[#0f172a] text-white rounded-2xl hover:bg-black transition-all disabled:opacity-30 shadow-2xl active:scale-95 transform hover:-translate-x-1"
+                      className="absolute right-4 bottom-4 p-5 bg-[#002f26] text-white rounded-2xl hover:bg-black transition-all disabled:opacity-30 shadow-2xl active:scale-95 transform hover:-translate-x-1"
                     >
                       {submitting === ticket.id ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
                     </button>

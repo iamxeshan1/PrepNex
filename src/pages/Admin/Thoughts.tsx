@@ -62,7 +62,7 @@ export default function AdminThoughts() {
     t.author.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const StatCard = ({ title, value, span, colorClass = "text-slate-900" }: any) => (
+  const StatCard = ({ title, value, span, colorClass = "text-[#002f26]" }: any) => (
     <div className="bg-white p-6 rounded-xl border border-slate-200">
       <p className="text-sm font-medium text-slate-500 mb-2">{title}</p>
       <h3 className={`text-4xl font-bold tracking-tight mb-2 ${colorClass}`}>{value}</h3>
@@ -76,7 +76,7 @@ export default function AdminThoughts() {
         <p className="text-slate-500 font-medium">Manage daily inspirational quotes and thoughts.</p>
         <button 
           onClick={() => setShowAddForm(!showAddForm)}
-          className="bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-indigo-800 transition-colors"
+          className="bg-teal-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-teal-800 transition-colors"
         >
           {showAddForm ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
           {showAddForm ? 'Cancel Entry' : 'Add Thought'}
@@ -84,7 +84,7 @@ export default function AdminThoughts() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <StatCard title="Total Quotes" value={thoughts.length} span="In library" colorClass="text-indigo-600" />
+        <StatCard title="Total Quotes" value={thoughts.length} span="In library" colorClass="text-teal-600" />
         <StatCard title="Recent Authors" value={new Set(thoughts.map(t => t.author)).size} span="Distinct authors" colorClass="text-emerald-600" />
       </div>
 
@@ -94,7 +94,7 @@ export default function AdminThoughts() {
               <X className="w-5 h-5" />
            </button>
 
-           <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2"><Quote className="w-5 h-5 text-indigo-600" /> Compose Thought</h3>
+           <h3 className="text-xl font-bold text-[#002f26] mb-6 flex items-center gap-2"><Quote className="w-5 h-5 text-teal-600" /> Compose Thought</h3>
 
            <div className="space-y-6">
              <div>
@@ -102,7 +102,7 @@ export default function AdminThoughts() {
                <textarea 
                  required
                  placeholder="Type the motivational anchor..."
-                 className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 font-medium bg-slate-50 min-h-[100px]"
+                 className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 font-medium bg-slate-50 min-h-[100px]"
                  value={text} onChange={(e) => setText(e.target.value)}
                />
              </div>
@@ -113,7 +113,7 @@ export default function AdminThoughts() {
                   <input 
                     required
                     placeholder="Author Identity"
-                    className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 font-medium bg-slate-50"
+                    className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 font-medium bg-slate-50"
                     value={author} onChange={(e) => setAuthor(e.target.value)}
                   />
                </div>
@@ -124,7 +124,7 @@ export default function AdminThoughts() {
               <button 
                 type="submit" 
                 disabled={loading}
-                className="bg-indigo-700 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-indigo-800 transition-colors flex items-center gap-2 disabled:opacity-50"
+                className="bg-teal-700 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-teal-800 transition-colors flex items-center gap-2 disabled:opacity-50"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-4 h-4" /> Save Thought</>}
               </button>
@@ -142,7 +142,7 @@ export default function AdminThoughts() {
                   placeholder="Search thoughts & authors..." 
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium focus:ring-indigo-500 focus:border-indigo-500 bg-white shadow-sm"
+                  className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium focus:ring-teal-500 focus:border-teal-500 bg-white shadow-sm"
                 />
              </div>
            </div>
@@ -150,7 +150,7 @@ export default function AdminThoughts() {
         </div>
 
         {fetching ? (
-           <div className="py-20 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin" /></div>
+           <div className="py-20 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin" /></div>
         ) : (
           <table className="w-full text-left border-collapse">
             <thead>
@@ -166,11 +166,11 @@ export default function AdminThoughts() {
                 <tr key={thought.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
                   <td className="p-4 pl-6">
                     <div className="flex items-start gap-4">
-                       <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 bg-indigo-50 text-indigo-600 border border-indigo-100">
+                       <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 bg-teal-50 text-teal-600 border border-teal-100">
                          <Quote className="w-5 h-5" />
                        </div>
                        <div>
-                         <p className="font-bold text-slate-900 group-hover:text-indigo-700 transition-colors italic leading-relaxed max-w-2xl">
+                         <p className="font-bold text-[#002f26] group-hover:text-teal-700 transition-colors italic leading-relaxed max-w-2xl">
                            "{thought.text}"
                          </p>
                        </div>

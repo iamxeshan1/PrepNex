@@ -90,7 +90,7 @@ export default function AdminAgencies() {
     }
   };
 
-  const StatCard = ({ title, value, span, icon: Icon, colorClass = "text-slate-900" }: any) => (
+  const StatCard = ({ title, value, span, icon: Icon, colorClass = "text-[#002f26]" }: any) => (
     <div className="bg-white p-4">
       <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
       <h3 className={`text-3xl font-bold tracking-tight ${colorClass}`}>{value}</h3>
@@ -122,7 +122,7 @@ export default function AdminAgencies() {
 
       {showForm && (
         <form onSubmit={handleSave} className="bg-white p-8 mb-8 border-b border-slate-200">
-          <h3 className="text-xl font-bold text-slate-900 mb-6">{editingId ? 'Edit Agency' : 'New Agency'}</h3>
+          <h3 className="text-xl font-bold text-[#002f26] mb-6">{editingId ? 'Edit Agency' : 'New Agency'}</h3>
           
           <div className="space-y-6">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -230,7 +230,7 @@ export default function AdminAgencies() {
                          )}
                       </div>
                       <div>
-                         <p className="font-bold text-slate-900 group-hover:text-teal-700 transition-colors uppercase">
+                         <p className="font-bold text-[#002f26] group-hover:text-teal-700 transition-colors uppercase">
                            {agency.name}
                          </p>
                       </div>

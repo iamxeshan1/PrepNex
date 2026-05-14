@@ -297,7 +297,7 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-[#002f26]/60 backdrop-blur-sm">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -305,7 +305,7 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
           className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100"
         >
           {/* Header */}
-          <div className="bg-indigo-600 p-6 text-white relative">
+          <div className="bg-teal-600 p-6 text-white relative">
             <button 
               onClick={onClose}
               className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full transition-colors"
@@ -313,7 +313,7 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
               <X size={20} />
             </button>
             <h3 className="text-xl font-bold mb-1">Confirm Enrollment</h3>
-            <p className="text-indigo-100 text-sm opacity-80 truncate">{item.name}</p>
+            <p className="text-teal-100 text-sm opacity-80 truncate">{item.name}</p>
           </div>
 
           <div className="p-6 space-y-6">
@@ -324,7 +324,7 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
                 {discount && (
                   <p className="text-sm text-slate-400 line-through">₹{item.price}</p>
                 )}
-                <p className="text-3xl font-black text-slate-900">₹{finalPrice}</p>
+                <p className="text-3xl font-black text-[#002f26]">₹{finalPrice}</p>
               </div>
               <div className="text-right">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-full uppercase tracking-wide">
@@ -341,7 +341,7 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
                 <div className="grid grid-cols-2 gap-3">
                   <button 
                     onClick={() => setHasCoupon(true)}
-                    className="py-3 bg-indigo-50 text-indigo-600 rounded-xl font-bold border-2 border-transparent hover:border-indigo-200 transition-all flex items-center justify-center gap-2"
+                    className="py-3 bg-teal-50 text-teal-600 rounded-xl font-bold border-2 border-transparent hover:border-teal-200 transition-all flex items-center justify-center gap-2"
                   >
                     <Ticket size={18} /> Yes
                   </button>
@@ -357,10 +357,10 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
               <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
                 <div className="flex justify-between items-center">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                    <Ticket size={14} className="text-indigo-500" />
+                    <Ticket size={14} className="text-teal-500" />
                     Enter Coupon Code
                   </label>
-                  <button onClick={() => setHasCoupon(null)} className="text-[10px] font-bold text-indigo-500 hover:underline">Change</button>
+                  <button onClick={() => setHasCoupon(null)} className="text-[10px] font-bold text-teal-500 hover:underline">Change</button>
                 </div>
                 <div className="flex gap-2">
                   <input 
@@ -368,12 +368,12 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
                     placeholder="E.G. PREP20"
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                    className="flex-1 bg-slate-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-xl px-4 py-3 outline-none font-bold text-slate-700 uppercase transition-all"
+                    className="flex-1 bg-slate-50 border-2 border-transparent focus:border-teal-500 focus:bg-white rounded-xl px-4 py-3 outline-none font-bold text-slate-700 uppercase transition-all"
                   />
                   <button 
                     onClick={handleApplyCoupon}
                     disabled={!couponCode || isValidatingCoupon || discount !== null}
-                    className="bg-slate-900 text-white px-5 rounded-xl font-bold text-sm hover:bg-slate-800 transition-colors disabled:opacity-50"
+                    className="bg-[#002f26] text-white px-5 rounded-xl font-bold text-sm hover:bg-[#001f19] transition-colors disabled:opacity-50"
                   >
                     {isValidatingCoupon ? <Loader2 className="animate-spin" size={18} /> : (discount ? 'Applied' : 'Apply')}
                   </button>
@@ -395,7 +395,7 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
             ) : (
                 <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl">
                     <p className="text-xs font-bold text-slate-500 italic">Proceeding at standard price</p>
-                    <button onClick={() => setHasCoupon(true)} className="text-xs font-black text-indigo-600 hover:underline flex items-center gap-1">
+                    <button onClick={() => setHasCoupon(true)} className="text-xs font-black text-teal-600 hover:underline flex items-center gap-1">
                         <Ticket size={14} /> Use Coupon
                     </button>
                 </div>
@@ -413,7 +413,7 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
               <button 
                 onClick={handlePayment}
                 disabled={isProcessing || (hasCoupon === true && discount === null && couponCode.length > 0)}
-                className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold text-lg shadow-lg shadow-indigo-100 hover:bg-indigo-700 hover:shadow-indigo-200 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                className="w-full py-4 bg-teal-600 text-white rounded-2xl font-bold text-lg shadow-lg shadow-teal-100 hover:bg-teal-700 hover:shadow-teal-200 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
               >
                 {isProcessing ? (
                   <Loader2 className="animate-spin" size={24} />

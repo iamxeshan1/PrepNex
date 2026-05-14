@@ -79,7 +79,7 @@ export default function Profile() {
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-slate-900/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-[#002f26]/50 z-40 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -94,7 +94,7 @@ export default function Profile() {
           <main className="p-4 lg:p-8 overflow-y-auto w-full max-w-4xl mx-auto">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
                   <header className="mb-8">
-                      <h1 className="text-2xl md:text-3xl font-black text-slate-900 mb-2">My Profile</h1>
+                      <h1 className="text-2xl md:text-3xl font-black text-[#002f26] mb-2">My Profile</h1>
                       <p className="text-slate-500 font-medium">Manage your personal details and contact information.</p>
                   </header>
 

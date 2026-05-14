@@ -77,8 +77,8 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
                 to={item.path}
                 className={`flex items-center gap-3 px-6 py-2.5 text-sm font-semibold transition-all relative outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-teal-500 mx-2 ${
                   active
-                    ? 'text-white bg-slate-800'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                    ? 'text-white bg-[#001f19]'
+                    : 'text-slate-400 hover:text-white hover:bg-[#001f19]/50'
                 }`}
               >
                 {active && (
@@ -122,7 +122,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex font-sans text-slate-800">
+    <div className="min-h-screen bg-slate-50 flex font-sans text-[#001f19]">
       {/* Sidebar */}
       <aside className="w-[280px] bg-[#111827] flex flex-col shrink-0 relative z-40 text-slate-300 shadow-2xl">
         <header className="p-6 pb-4">
@@ -139,18 +139,18 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
 
         <nav className="flex-1 overflow-y-auto py-4 custom-scrollbar">
           <NavGroup id="management" label="App Management" items={managementItems} />
-          <div className="my-4 border-t border-slate-800 mx-6"></div>
+          <div className="my-4 border-t border-[#001f19] mx-6"></div>
           <NavGroup id="content" label="Database & Content" items={contentItems} />
-          <div className="my-4 border-t border-slate-800 mx-6"></div>
+          <div className="my-4 border-t border-[#001f19] mx-6"></div>
           <NavGroup id="business" label="Business & Ops" items={businessItems} />
-          <div className="my-4 border-t border-slate-800 mx-6"></div>
+          <div className="my-4 border-t border-[#001f19] mx-6"></div>
           <NavGroup id="system" label="System Controls" items={systemItems} />
         </nav>
 
-        <footer className="p-4 border-t border-slate-800 bg-slate-900/50">
+        <footer className="p-4 border-t border-[#001f19] bg-[#002f26]/50">
            <Link 
              to="/admin/helpdesk"
-             className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+             className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-[#001f19] rounded-lg transition-colors"
            >
              <HelpCircle className="w-4 h-4" />
              <span>Support Tickets</span>
@@ -226,7 +226,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
                       <ArrowLeft className="w-5 h-5" />
                     </button>
                   )}
-                  {title && <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">{title}</h2>}
+                  {title && <h2 className="text-2xl lg:text-3xl font-bold text-[#002f26] tracking-tight">{title}</h2>}
                 </div>
                 {children}
               </motion.div>

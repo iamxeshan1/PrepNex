@@ -44,7 +44,7 @@ export default function About() {
       <div className="pt-24 pb-20 px-4 bg-slate-50">
         <div className="max-w-7xl mx-auto">
           {/* Hero Section */}
-          <section className="relative mb-24 overflow-hidden rounded-[3rem] bg-[#0f172a] text-white p-8 md:p-20">
+          <section className="relative mb-24 overflow-hidden rounded-[3rem] bg-[#002f26] text-white p-8 md:p-20">
             <div className="absolute top-0 right-0 w-96 h-96 bg-[#2dd4bf]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
             
@@ -89,8 +89,8 @@ export default function About() {
                 </div>
                 <div className="space-y-4">
                   <div className="bg-teal-500 p-8 rounded-3xl shadow-2xl shadow-teal-500/20">
-                    <h3 className="text-4xl font-black text-[#0f172a] mb-1">{settings.successRate || '98%'}</h3>
-                    <p className="text-xs font-bold text-[#0f172a]/70 uppercase tracking-widest">Accuracy</p>
+                    <h3 className="text-4xl font-black text-[#002f26] mb-1">{settings.successRate || '98%'}</h3>
+                    <p className="text-xs font-bold text-[#002f26]/70 uppercase tracking-widest">Accuracy</p>
                   </div>
                   <div className="bg-white/5 border border-white/10 p-8 rounded-3xl backdrop-blur-sm">
                     <h3 className="text-4xl font-black text-teal-400 mb-1">24/7</h3>
@@ -105,7 +105,7 @@ export default function About() {
           <section className="mb-24">
             <div className="text-center mb-16">
               <h2 className="text-[10px] font-black text-teal-600 uppercase tracking-[0.4em] mb-4">Our Core Philosophy</h2>
-              <h3 className="text-4xl font-sans font-[800] text-slate-900 tracking-tight">The PrepNext Foundation</h3>
+              <h3 className="text-4xl font-sans font-[800] text-[#002f26] tracking-tight">The PrepNext Foundation</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -123,7 +123,7 @@ export default function About() {
                     <div className="w-16 h-16 bg-slate-50 flex items-center justify-center rounded-2xl mb-8 group-hover:bg-teal-600 group-hover:text-white transition-all duration-500">
                       <Icon className="w-8 h-8" />
                     </div>
-                    <h3 className="text-xl font-[800] text-slate-900 tracking-tight mb-4">{v.title}</h3>
+                    <h3 className="text-xl font-[800] text-[#002f26] tracking-tight mb-4">{v.title}</h3>
                     <p className="text-slate-500 leading-relaxed font-medium text-sm">{v.content}</p>
                   </motion.div>
                 );
@@ -144,14 +144,14 @@ export default function About() {
                      </div>
                      <div>
                         <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Quality Assurance</p>
-                        <p className="text-lg font-bold text-slate-900 tracking-tight">Verified Content</p>
+                        <p className="text-lg font-bold text-[#002f26] tracking-tight">Verified Content</p>
                      </div>
                   </div>
                </div>
             </div>
             
             <div className="space-y-8">
-              <h2 className="text-4xl md:text-5xl font-sans font-[800] text-slate-900 tracking-tight leading-tight">
+              <h2 className="text-4xl md:text-5xl font-sans font-[800] text-[#002f26] tracking-tight leading-tight">
                 Why we built <span className="text-teal-600">PrepNext?</span>
               </h2>
               <p className="text-lg text-slate-600 font-medium leading-relaxed">

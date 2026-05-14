@@ -141,7 +141,7 @@ export default function AgencyExams() {
                       </div>
                     </div>
                     {isEnrolled ? (
-                      <div className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.25em] bg-slate-800 text-white opacity-80 cursor-default">
+                      <div className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.25em] bg-[#001f19] text-white opacity-80 cursor-default">
                         <CheckCircle2 className="w-4 h-4" /> ENROLLED
                       </div>
                     ) : (

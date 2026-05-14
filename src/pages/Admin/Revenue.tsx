@@ -150,7 +150,7 @@ export default function AdminRevenue() {
         </div>
         <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">{title}</p>
       </div>
-      <h3 className="text-3xl font-black text-slate-900 tracking-tight">₹{value.toLocaleString()}</h3>
+      <h3 className="text-3xl font-black text-[#002f26] tracking-tight">₹{value.toLocaleString()}</h3>
     </div>
   );
 
@@ -163,8 +163,8 @@ export default function AdminRevenue() {
 
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm mb-10">
         <div className="p-8 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="text-xl font-black text-slate-900">Revenue Trends</h3>
-          <button onClick={exportTransactions} className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-800">
+          <h3 className="text-xl font-black text-[#002f26]">Revenue Trends</h3>
+          <button onClick={exportTransactions} className="flex items-center gap-2 px-4 py-2 bg-[#002f26] text-white rounded-lg text-sm font-semibold hover:bg-[#001f19]">
             <Download className="w-4 h-4" /> Export Data
           </button>
         </div>
@@ -184,7 +184,7 @@ export default function AdminRevenue() {
 
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
         <div className="p-8 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="text-xl font-black text-slate-900">Recent Transactions</h3>
+          <h3 className="text-xl font-black text-[#002f26]">Recent Transactions</h3>
           <div className="flex gap-2">
             <button onClick={clearTransactions} className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-700 rounded-lg text-sm font-semibold hover:bg-rose-100">
               Clear All
@@ -215,13 +215,13 @@ export default function AdminRevenue() {
             <tbody className="divide-y divide-slate-100">
               {filteredTransactions.map(tx => (
                 <tr key={tx.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-8 py-4 font-bold text-slate-900">{tx.userName}</td>
+                  <td className="px-8 py-4 font-bold text-[#002f26]">{tx.userName}</td>
                   <td className="px-8 py-4 text-[10px] text-slate-500 font-mono">
                     <p className="font-bold text-slate-700">{tx.paymentId !== 'N/A' ? tx.paymentId : 'INTERNAL'}</p>
                     <p className="opacity-50">Ref: {tx.id.slice(-8).toUpperCase()}</p>
                   </td>
                   <td className="px-8 py-4 text-sm text-slate-600">{tx.date.toLocaleDateString()}</td>
-                  <td className="px-8 py-4 font-bold text-slate-900">₹{tx.amount.toLocaleString()}</td>
+                  <td className="px-8 py-4 font-bold text-[#002f26]">₹{tx.amount.toLocaleString()}</td>
                   <td className="px-8 py-4 text-sm font-medium text-slate-500">{tx.coupon}</td>
                   <td className="px-8 py-4">
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${(tx.status?.toLowerCase() === 'completed' || tx.status === 'Success') ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>

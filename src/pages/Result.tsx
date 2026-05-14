@@ -79,7 +79,7 @@ export default function Result() {
       <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center text-red-500">
         <AlertCircle className="w-10 h-10" />
       </div>
-      <h2 className="text-xl font-bold text-slate-800">{error || 'Result not found'}</h2>
+      <h2 className="text-xl font-bold text-[#001f19]">{error || 'Result not found'}</h2>
       <Link to="/dashboard" className="px-6 py-2 bg-primary text-white rounded-xl font-bold text-sm">Return to Dashboard</Link>
     </div>
   </Layout>;
@@ -155,7 +155,7 @@ export default function Result() {
                   <div key={subjId} className="group">
                     <div className="flex justify-between items-end mb-2">
                       <div>
-                        <h4 className="text-sm font-bold text-slate-800">{subjectMap[subjId] || 'Subject'}</h4>
+                        <h4 className="text-sm font-bold text-[#001f19]">{subjectMap[subjId] || 'Subject'}</h4>
                         {isWeak && <p className="text-[10px] uppercase font-black tracking-widest text-red-500 mt-1">Needs Improvement</p>}
                       </div>
                       <div className="text-right">

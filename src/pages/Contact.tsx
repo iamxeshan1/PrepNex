@@ -61,7 +61,7 @@ export default function Contact() {
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-teal-50 border border-teal-100 rounded-full text-teal-600 text-[10px] font-black uppercase tracking-widest mb-6">
               <MessageSquare className="w-3.5 h-3.5" /> Support Console
             </div>
-            <h1 className="text-4xl md:text-6xl font-sans font-[800] text-slate-900 tracking-tight mb-4">How can we help?</h1>
+            <h1 className="text-4xl md:text-6xl font-sans font-[800] text-[#002f26] tracking-tight mb-4">How can we help?</h1>
             <p className="text-slate-500 font-medium max-w-xl mx-auto text-lg leading-relaxed">
               Whether you need technical support or have questions about our premium plans, our team is ready to assist.
             </p>
@@ -70,7 +70,7 @@ export default function Contact() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
             {/* Info Column */}
             <div className="lg:col-span-5 space-y-8">
-              <div className="bg-[#0f172a] p-10 rounded-[3rem] text-white relative overflow-hidden">
+              <div className="bg-[#002f26] p-10 rounded-[3rem] text-white relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                 
                 <h3 className="text-2xl font-black mb-10 tracking-tight relative z-10">Direct Channels</h3>
@@ -145,7 +145,7 @@ export default function Contact() {
                     <div className="w-20 h-20 bg-teal-50 text-teal-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
                       <CheckCircle2 className="w-10 h-10" />
                     </div>
-                    <h3 className="text-3xl font-[800] text-slate-900 mb-4 tracking-tight">Message Received!</h3>
+                    <h3 className="text-3xl font-[800] text-[#002f26] mb-4 tracking-tight">Message Received!</h3>
                     <p className="text-slate-500 font-medium">We've logged your request. Our team will get back to you shortly.</p>
                     <button 
                       onClick={() => setSubmitted(false)}
@@ -208,7 +208,7 @@ export default function Contact() {
                       />
                     </div>
 
-                    <button className="w-full bg-[#0f172a] text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-3 shadow-xl shadow-slate-200">
+                    <button className="w-full bg-[#002f26] text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#001f19] transition-all flex items-center justify-center gap-3 shadow-xl shadow-slate-200">
                       Transmit Message <Send className="w-4 h-4" />
                     </button>
                     

@@ -355,7 +355,7 @@ export default function Dashboard() {
 
                   {/* Welcome Panel */}
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 bg-[#0f172a] text-white p-6 md:p-10 rounded-[2rem] flex flex-col justify-center relative overflow-hidden">
+                    <div className="lg:col-span-2 bg-[#002f26] text-white p-6 md:p-10 rounded-[2rem] flex flex-col justify-center relative overflow-hidden">
                       <h1 className="text-2xl md:text-4xl font-black mb-3">Welcome back, {profile?.name || 'Aspirant'}!</h1>
                       <p className="text-slate-400 mb-6 md:mb-8 text-sm md:text-base max-w-lg">You're in the top 5% of aspirants this week. Keep up the momentum to secure your spot.</p>
                       <div className="flex flex-col sm:flex-row gap-4">
@@ -373,7 +373,7 @@ export default function Dashboard() {
                         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between">
                             <div>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">PREPSCORE</p>
-                                <h3 className="text-2xl font-black text-[#0f172a]">{prepScore}<span className="text-sm text-slate-400 ml-1">/1000</span></h3>
+                                <h3 className="text-2xl font-black text-[#002f26]">{prepScore}<span className="text-sm text-slate-400 ml-1">/1000</span></h3>
                             </div>
                             <div className="w-12 h-12 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center">
                                 <TrendingUp className="w-6 h-6" />
@@ -382,7 +382,7 @@ export default function Dashboard() {
                         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between">
                             <div>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">GLOBAL RANK</p>
-                                <h3 className="text-2xl font-black text-[#0f172a]">#{globalRank.toLocaleString()}<span className="text-sm text-slate-400 ml-1">/45.2k</span></h3>
+                                <h3 className="text-2xl font-black text-[#002f26]">#{globalRank.toLocaleString()}<span className="text-sm text-slate-400 ml-1">/45.2k</span></h3>
                             </div>
                             <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
                                 <Award className="w-6 h-6" />
@@ -395,7 +395,7 @@ export default function Dashboard() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                      <div className="flex flex-col gap-4">
                         <div className="flex justify-between items-center mb-2">
-                           <h3 className="text-lg font-black text-[#0f172a]">Upcoming Live Tests</h3>
+                           <h3 className="text-lg font-black text-[#002f26]">Upcoming Live Tests</h3>
                            <Link to="/live-tests" className="text-teal-600 text-[10px] font-black uppercase tracking-wider hover:underline">View All</Link>
                         </div>
                         {upcomingTests.length > 0 ? upcomingTests.map((t) => {
@@ -429,7 +429,7 @@ export default function Dashboard() {
                                       </p>
                                   </div>
                               </div>
-                              <h4 className="font-bold text-slate-800 text-base mb-1">{t.title}</h4>
+                              <h4 className="font-bold text-[#001f19] text-base mb-1">{t.title}</h4>
                               <p className="text-sm text-slate-500 mb-6 line-clamp-1">{t.description || 'General Live Test'}</p>
                               
                               {isEnrolled ? (
@@ -456,7 +456,7 @@ export default function Dashboard() {
                      </div>
                      <div className="flex flex-col gap-4">
                         <div className="flex justify-between items-center mb-2">
-                           <h3 className="text-lg font-black text-[#0f172a]">Active Subscriptions</h3>
+                           <h3 className="text-lg font-black text-[#002f26]">Active Subscriptions</h3>
                            {activeExams.length > 4 && (
                                <Link to="/my-subscriptions" className="text-teal-600 text-[10px] font-black uppercase tracking-wider hover:underline flex items-center gap-1">
                                    View All ({activeExams.length})
@@ -467,15 +467,15 @@ export default function Dashboard() {
                             {activeExams.length > 0 ? activeExams.slice(0, 4).map((exam) => (
                                 <div key={exam.id} className="bg-white p-5 rounded-3xl border border-slate-100 flex flex-col justify-between hover:border-teal-100 hover:shadow-sm transition group">
                                     <div className="flex items-start gap-3 mb-6">
-                                        <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0 overflow-hidden">
+                                        <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center shrink-0 overflow-hidden">
                                             {exam.logoUrl ? (
                                                 <img src={exam.logoUrl} alt={exam.name || exam.title} loading="lazy" decoding="async" width="40" height="40" className="w-full h-full object-contain bg-white border border-slate-100 rounded-xl" />
                                             ) : (
-                                                <Award className="w-5 h-5 text-indigo-500" />
+                                                <Award className="w-5 h-5 text-teal-500" />
                                             )}
                                         </div>
                                         <div>
-                                            <h4 className="text-sm font-bold text-slate-800 leading-tight mb-1 line-clamp-2 group-hover:text-teal-700 transition">{exam.name || exam.title}</h4>
+                                            <h4 className="text-sm font-bold text-[#001f19] leading-tight mb-1 line-clamp-2 group-hover:text-teal-700 transition">{exam.name || exam.title}</h4>
                                             <p className="text-[10px] text-slate-500 font-medium">{exam.type === 'live_test' ? 'Live Test Access' : 'Subscription Active'}</p>
                                         </div>
                                     </div>
@@ -498,10 +498,10 @@ export default function Dashboard() {
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                       <div className="lg:col-span-2 bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col">
                           <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-black text-[#0f172a] flex items-center gap-2">
-                                <Megaphone className="w-5 h-5 text-indigo-600" /> Platform Announcements
+                            <h3 className="text-lg font-black text-[#002f26] flex items-center gap-2">
+                                <Megaphone className="w-5 h-5 text-teal-600" /> Platform Announcements
                             </h3>
-                            <button onClick={() => navigate('/announcements')} className="text-indigo-600 text-[10px] font-black uppercase tracking-wider hover:underline">View All Updates</button>
+                            <button onClick={() => navigate('/announcements')} className="text-teal-600 text-[10px] font-black uppercase tracking-wider hover:underline">View All Updates</button>
                           </div>
                           
                           <div className="space-y-4 flex-1">
@@ -510,14 +510,14 @@ export default function Dashboard() {
                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                                    notice.type === 'warning' ? 'bg-amber-100 text-amber-600' :
                                    notice.type === 'update' ? 'bg-teal-100 text-teal-600' :
-                                   'bg-indigo-100 text-indigo-600'
+                                   'bg-teal-100 text-teal-600'
                                  }`}>
                                     {notice.type === 'warning' ? <AlertTriangle className="w-5 h-5" /> : 
                                      notice.type === 'update' ? <Zap className="w-5 h-5" /> : 
                                      <Info className="w-5 h-5" />}
                                  </div>
                                  <div className="flex-1 min-w-0">
-                                    <h4 className="font-bold text-slate-800 text-sm truncate">{notice.title}</h4>
+                                    <h4 className="font-bold text-[#001f19] text-sm truncate">{notice.title}</h4>
                                     <p className="text-xs text-slate-500 line-clamp-1">{notice.content}</p>
                                  </div>
                                  <div className="text-right shrink-0">
@@ -533,7 +533,7 @@ export default function Dashboard() {
                           </div>
                       </div>
                       <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col">
-                          <h3 className="text-lg font-black text-[#0f172a] mb-6">Discover New</h3>
+                          <h3 className="text-lg font-black text-[#002f26] mb-6">Discover New</h3>
                           <div className="space-y-4 flex-1">
                               {discoverExams.length > 0 ? discoverExams.map(ex => (
                                   <div key={ex.id} onClick={() => navigate(`/exam/${ex.id}`)} className="p-4 border rounded-2xl flex items-center justify-between hover:bg-slate-50 cursor-pointer">
@@ -550,7 +550,7 @@ export default function Dashboard() {
                   
                   {/* Subject Performance Analysis */}
                   <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm">
-                    <h3 className="text-lg font-black text-[#0f172a] mb-6">Subject Performance Analysis</h3>
+                    <h3 className="text-lg font-black text-[#002f26] mb-6">Subject Performance Analysis</h3>
                     {subjectPerformance.length > 0 ? (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {subjectPerformance.map((subj, idx) => (
@@ -596,7 +596,7 @@ export default function Dashboard() {
                         <button onClick={handleDoubtClick} className="bg-[#4a2406] text-white p-4 rounded-2xl font-bold text-center flex items-center justify-center gap-2">
                              <HelpCircle className="w-5 h-5"/> Doubt Hub
                         </button>
-                        <Link to="/helpdesk" className="bg-[#0f172a] text-white p-4 rounded-2xl font-bold text-center flex items-center justify-center gap-2 transition hover:bg-black">
+                        <Link to="/helpdesk" className="bg-[#002f26] text-white p-4 rounded-2xl font-bold text-center flex items-center justify-center gap-2 transition hover:bg-black">
                              <MessageCircle className="w-5 h-5"/> Support Ticket
                         </Link>
                     </div>

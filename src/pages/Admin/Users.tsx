@@ -299,7 +299,7 @@ export default function AdminUsers() {
     u.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const StatCard = ({ title, value, span, trend, colorClass = "text-slate-900" }: any) => (
+  const StatCard = ({ title, value, span, trend, colorClass = "text-[#002f26]" }: any) => (
     <div className="bg-white p-6 rounded-xl border border-slate-200">
       <p className="text-sm font-medium text-slate-500 mb-2">{title}</p>
       <h3 className={`text-4xl font-bold tracking-tight mb-2 ${colorClass}`}>{value}</h3>
@@ -378,7 +378,7 @@ export default function AdminUsers() {
                           </div>
                         )}
                         <div>
-                           <p className="font-bold text-slate-900 group-hover:text-teal-700 transition-colors flex items-center gap-2">
+                           <p className="font-bold text-[#002f26] group-hover:text-teal-700 transition-colors flex items-center gap-2">
                              {user.name || 'Anonymous User'}
                              {user.role === 'admin' && <span className="bg-rose-100 text-rose-700 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">Admin</span>}
                            </p>
@@ -393,14 +393,14 @@ export default function AdminUsers() {
                       </span>
                     </td>
                     <td className="p-4">
-                      <p className="text-slate-800">{user.address || 'No Address'}, {user.state || 'No State'}</p>
+                      <p className="text-[#001f19]">{user.address || 'No Address'}, {user.state || 'No State'}</p>
                     </td>
                     <td className="p-4">
                       <p className="text-xs font-medium text-slate-600">{user.lastLogin || user.lastActive ? new Date(user.lastLogin || user.lastActive).toLocaleString() : 'Never'}</p>
                     </td>
                     <td className="p-4 pr-6 text-right">
                        <div className="flex items-center justify-end gap-2 text-slate-400">
-                          <button onClick={() => navigate(`/admin/users/${user.id}/performance`)} className="p-2 hover:bg-indigo-50 rounded text-indigo-600 transition-colors" title="View Performance">
+                          <button onClick={() => navigate(`/admin/users/${user.id}/performance`)} className="p-2 hover:bg-teal-50 rounded text-teal-600 transition-colors" title="View Performance">
                              <BarChart3 className="w-4 h-4" />
                           </button>
                           <button onClick={() => { setSelectedUser(user); setEditFormData(user); setShowEditModal(true); }} className="p-2 hover:bg-slate-200 rounded text-slate-600 transition-colors" title="Edit User">
@@ -431,11 +431,11 @@ export default function AdminUsers() {
       </div>
 
       {showEditModal && selectedUser && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-[#002f26]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-200">
             <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
                <div>
-                  <h2 className="text-xl font-bold text-slate-900">Edit Student Details</h2>
+                  <h2 className="text-xl font-bold text-[#002f26]">Edit Student Details</h2>
                   <p className="text-sm text-slate-500">Update information for {selectedUser.name}</p>
                </div>
                <button onClick={() => setShowEditModal(false)} className="p-2 bg-white border border-slate-200 rounded-md text-slate-400 hover:text-slate-600 transition-all">
@@ -476,11 +476,11 @@ export default function AdminUsers() {
         </div>
       )}
       {showPrivilegeModal && selectedUser && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-[#002f26]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-200">
             <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
                <div>
-                  <h2 className="text-xl font-bold text-slate-900">{selectedUser.name}</h2>
+                  <h2 className="text-xl font-bold text-[#002f26]">{selectedUser.name}</h2>
                   <p className="text-sm font-medium text-slate-500">{selectedUser.email}</p>
                </div>
                <button onClick={() => setShowPrivilegeModal(false)} className="p-2 bg-white border border-slate-200 rounded-md text-slate-400 hover:text-slate-600 transition-all">
@@ -489,7 +489,7 @@ export default function AdminUsers() {
             </div>
 
             <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
-              <div className="p-6 bg-slate-900 rounded-xl text-white">
+              <div className="p-6 bg-[#002f26] rounded-xl text-white">
                  <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-4">
                        <Crown className="w-8 h-8 text-amber-400" />
@@ -519,7 +519,7 @@ export default function AdminUsers() {
                      return (
                        <div key={exam.id} className="p-4 rounded-xl border border-slate-200 flex items-center justify-between bg-white hover:border-teal-200 transition-colors">
                          <div>
-                           <p className="text-sm font-bold text-slate-900">{exam.name}</p>
+                           <p className="text-sm font-bold text-[#002f26]">{exam.name}</p>
                            <p className="text-xs font-semibold text-slate-500 mt-1">{agencies.find((a: any) => a.id === exam.agencyId)?.name || 'General'}</p>
                          </div>
                          {isGranted ? (
@@ -539,7 +539,7 @@ export default function AdminUsers() {
             </div>
             
             <div className="p-6 border-t border-slate-200 bg-slate-50 flex justify-end">
-               <button onClick={() => setShowPrivilegeModal(false)} className="px-6 py-2.5 bg-slate-900 text-white rounded-lg font-semibold hover:bg-slate-800 transition-colors">
+               <button onClick={() => setShowPrivilegeModal(false)} className="px-6 py-2.5 bg-[#002f26] text-white rounded-lg font-semibold hover:bg-[#001f19] transition-colors">
                   Close
                </button>
             </div>
@@ -548,13 +548,13 @@ export default function AdminUsers() {
       )}
 
       {showDeleteModal && selectedUser && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-[#002f26]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white max-w-sm w-full rounded-2xl p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-200">
             <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center mb-4">
               <Trash2 className="w-6 h-6 text-rose-600" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Delete User</h3>
-            <p className="text-slate-500 text-sm mb-6">Are you sure you want to delete <span className="font-bold text-slate-900">{selectedUser.name}</span>? This action cannot be undone.</p>
+            <h3 className="text-lg font-bold text-[#002f26] mb-2">Delete User</h3>
+            <p className="text-slate-500 text-sm mb-6">Are you sure you want to delete <span className="font-bold text-[#002f26]">{selectedUser.name}</span>? This action cannot be undone.</p>
             <div className="flex gap-3">
               <button 
                 onClick={() => { setShowDeleteModal(false); setSelectedUser(null); }}
@@ -574,11 +574,11 @@ export default function AdminUsers() {
       )}
 
       {showPurchasesModal && selectedUser && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-[#002f26]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-3xl rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-200 flex flex-col max-h-[85vh]">
             <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
                <div>
-                  <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-[#002f26] flex items-center gap-2">
                     <CreditCard className="w-5 h-5 text-teal-600" /> 
                     Purchases & Subscriptions
                   </h2>
@@ -607,13 +607,13 @@ export default function AdminUsers() {
                                     {new Date(purchase.purchaseDate || purchase.date || Date.now()).toLocaleDateString()}
                                  </span>
                               </div>
-                              <p className="text-base font-bold text-slate-900">{getItemTitle(purchase.examId || (purchase.collection === "premium_subscriptions" ? "PREMIUM_PASS" : null), purchase.type) || purchase.examId || 'Purchase'}</p>
+                              <p className="text-base font-bold text-[#002f26]">{getItemTitle(purchase.examId || (purchase.collection === "premium_subscriptions" ? "PREMIUM_PASS" : null), purchase.type) || purchase.examId || 'Purchase'}</p>
                               {purchase.paymentId && <p className="text-xs font-medium text-slate-500 mt-1">Ref: {purchase.paymentId}</p>}
                            </div>
                            
                            <div className="flex items-center gap-6">
                               <div className="text-right">
-                                 <p className="text-lg font-black text-slate-900">₹{purchase.amount || 0}</p>
+                                 <p className="text-lg font-black text-[#002f26]">₹{purchase.amount || 0}</p>
                                  {purchase.couponCode && purchase.couponCode !== 'NONE' && (
                                     <p className="text-[10px] font-bold text-emerald-600 uppercase">Code: {purchase.couponCode}</p>
                                  )}

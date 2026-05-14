@@ -42,7 +42,7 @@ export default function Announcements() {
       case 'update':
         return { bg: 'bg-teal-50', text: 'text-teal-600', border: 'border-teal-100', icon: Zap };
       default:
-        return { bg: 'bg-indigo-50', text: 'text-indigo-600', border: 'border-indigo-100', icon: Info };
+        return { bg: 'bg-teal-50', text: 'text-teal-600', border: 'border-teal-100', icon: Info };
     }
   };
 
@@ -59,11 +59,11 @@ export default function Announcements() {
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-xl font-black text-slate-900 tracking-tight">Announcements</h1>
+              <h1 className="text-xl font-black text-[#002f26] tracking-tight">Announcements</h1>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Global Platform Updates</p>
             </div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+          <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600">
             <Bell className="w-5 h-5" />
           </div>
         </div>
@@ -72,7 +72,7 @@ export default function Announcements() {
       <main className="max-w-5xl mx-auto px-4 py-12">
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-4 text-slate-400 font-medium">
-            <div className="w-10 h-10 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin" />
+            <div className="w-10 h-10 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin" />
             <p>Fetching latest updates...</p>
           </div>
         ) : notices.length > 0 ? (
@@ -104,7 +104,7 @@ export default function Announcements() {
                           {format(date, 'MMMM dd, yyyy')}
                         </span>
                       </div>
-                      <h2 className="text-xl md:text-2xl font-black text-slate-900 mb-3 group-hover:text-indigo-700 transition-colors">
+                      <h2 className="text-xl md:text-2xl font-black text-[#002f26] mb-3 group-hover:text-teal-700 transition-colors">
                         {notice.title}
                       </h2>
                       <div className="text-slate-600 font-medium leading-relaxed whitespace-pre-wrap">
@@ -121,7 +121,7 @@ export default function Announcements() {
             <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
                <Megaphone className="w-10 h-10" />
             </div>
-            <h3 className="text-xl font-black text-slate-900 mb-2">No Announcements Yet</h3>
+            <h3 className="text-xl font-black text-[#002f26] mb-2">No Announcements Yet</h3>
             <p className="text-slate-500 font-medium">We'll post updates here as they become available.</p>
           </div>
         )}

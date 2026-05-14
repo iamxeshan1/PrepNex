@@ -79,7 +79,7 @@ export default function MySubscriptions() {
             <div className="max-w-6xl mx-auto space-y-8">
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-200">
                 <div>
-                  <h1 className="text-3xl font-black text-[#0f172a] flex items-center gap-3 tracking-tight">
+                  <h1 className="text-3xl font-black text-[#002f26] flex items-center gap-3 tracking-tight">
                     <span className="bg-teal-50 p-2.5 rounded-2xl text-teal-600">
                       <BookOpenText className="w-8 h-8" />
                     </span>
@@ -102,7 +102,7 @@ export default function MySubscriptions() {
                    <div className="w-20 h-20 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
                      <Award className="w-10 h-10 text-slate-300" />
                    </div>
-                   <h3 className="text-2xl font-bold text-[#0f172a] mb-3">No Active Subscriptions</h3>
+                   <h3 className="text-2xl font-bold text-[#002f26] mb-3">No Active Subscriptions</h3>
                    <p className="text-slate-500 font-medium max-w-sm mx-auto text-lg mb-6">
                      You don't have any active subscriptions yet. Explore our exams and start learning!
                    </p>
@@ -124,15 +124,15 @@ export default function MySubscriptions() {
                           className="bg-white p-6 rounded-[2rem] border border-slate-100 flex flex-col justify-between hover:border-teal-100 hover:shadow-sm transition group"
                       >
                           <div className="flex items-start gap-4 mb-6">
-                              <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0 overflow-hidden">
+                              <div className="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center shrink-0 overflow-hidden">
                                   {exam.logoUrl ? (
                                       <img src={exam.logoUrl} alt={exam.name || exam.title} loading="lazy" decoding="async" width="48" height="48" className="w-full h-full object-contain bg-white border border-slate-100 rounded-xl" />
                                   ) : (
-                                      <Award className="w-6 h-6 text-indigo-500" />
+                                      <Award className="w-6 h-6 text-teal-500" />
                                   )}
                               </div>
                               <div className="flex-1 min-w-0 pt-1">
-                                  <h4 className="text-base font-bold text-slate-800 leading-tight mb-1 line-clamp-2 group-hover:text-teal-700 transition">{exam.name || exam.title}</h4>
+                                  <h4 className="text-base font-bold text-[#001f19] leading-tight mb-1 line-clamp-2 group-hover:text-teal-700 transition">{exam.name || exam.title}</h4>
                                   <p className="text-[10px] text-slate-500 font-medium">{exam.type === 'live_test' ? 'Live Test Access' : 'Subscription Active'}</p>
                               </div>
                           </div>
