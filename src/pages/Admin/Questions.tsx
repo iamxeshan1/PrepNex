@@ -134,7 +134,7 @@ export default function AdminQuestions() {
   };
 
   const handleDelete = async (id: string, confirmed = false) => {
-    if (!confirmed) { uiConfirm('Delete this question permanently?', () => handleDelete(id, true)); return; }
+    if (!window.confirm('Delete this question permanently?')) return;
     if (true) {
       await deleteDoc(doc(db, 'questions', id));
       setQuestions(questions.filter(q => q.id !== id));

@@ -4,7 +4,7 @@ import { db } from '../../lib/firebase';
 import { collection, getDocs, doc, setDoc, deleteDoc, addDoc, query, where, writeBatch } from 'firebase/firestore';
 import { Plus, Trash2, Clock, Users, Calendar, Award, X, Database, Loader2, Zap, Layout, Shield, Search, ArrowRight, CheckCircle2, Ticket, FileText } from 'lucide-react';
 import { AdminLayout } from '../../components/AdminLayout';
-import { uiConfirm } from '../../lib/customUI';
+
 
 export default function AdminLiveTests() {
   const [liveTests, setLiveTests] = useState<any[]>([]);
@@ -133,7 +133,7 @@ export default function AdminLiveTests() {
   useEffect(() => { fetchLiveTests(); }, []);
 
   const handleDelete = async (id: string, confirmed = false) => {
-    if (!confirmed) { uiConfirm("Are you sure you want to permanently delete this live test and all its questions? This action cannot be undone.", () => handleDelete(id, true)); return; }
+    if (!window.confirm("Are you sure you want to permanently delete this live test and all its questions? This action cannot be undone.")) return;
     if (true) {
       try {
         const qSnap = await getDocs(query(collection(db, 'questions'), where('testId', '==', id)));

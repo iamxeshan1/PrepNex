@@ -111,6 +111,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
 
   const businessItems = [
     { label: 'Revenue & Finance', path: '/admin/revenue', icon: Banknote },
+    { label: 'Premium Plans', path: '/admin/premium', icon: Sparkles },
     { label: 'Coupons / Offers', path: '/admin/coupons', icon: Ticket },
   ];
 

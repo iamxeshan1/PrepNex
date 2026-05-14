@@ -67,7 +67,7 @@ export default function AdminAgencies() {
   };
 
   const handleDelete = async (id: string, confirmed = false) => {
-    if (!confirmed) { uiConfirm("Are you sure you want to permanently delete this agency and all its exams, tests, and questions? This action cannot be undone.", () => handleDelete(id, true)); return; }
+    if (!window.confirm("Are you sure you want to permanently delete this agency and all its exams, tests, and questions? This action cannot be undone.")) return;
     if (true) {
       try {
         const examsSnap = await getDocs(query(collection(db, 'exams'), where('agencyId', '==', id)));

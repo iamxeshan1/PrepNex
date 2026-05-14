@@ -62,7 +62,7 @@ export default function PushNotifications() {
   };
 
   const handleDelete = async (id: string, confirmed = false) => {
-    if (!confirmed) { uiConfirm('Verify: Permanently clear this notification node from history?', () => handleDelete(id, true)); return; }
+    if (!window.confirm('Verify: Permanently clear this notification node from history?')) return;
     try {
       await deleteDoc(doc(db, 'notifications', id));
     } catch (error) {

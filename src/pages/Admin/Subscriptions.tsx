@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { motion, AnimatePresence } from 'motion/react';
-import { uiConfirm } from '../../lib/customUI';
+
 
 export default function AdminSubscriptions() {
   const [users, setUsers] = useState<any[]>([]);
@@ -99,7 +99,7 @@ export default function AdminSubscriptions() {
   };
 
   const revokeAccess = async (userId: string, confirmed = false) => {
-    if (!confirmed) { uiConfirm("Verify: Revoke premium access for this entity?", () => revokeAccess(userId, true)); return; }
+    if (!window.confirm("Verify: Revoke premium access for this entity?")) return;
     try {
       await updateDoc(doc(db, 'users', userId), {
         subscriptionExpiry: null,

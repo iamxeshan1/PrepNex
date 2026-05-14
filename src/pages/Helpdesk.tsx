@@ -117,7 +117,7 @@ export default function Helpdesk() {
   };
 
   const handleDispose = async (ticketId: string, confirmed = false) => {
-    if (!confirmed) { uiConfirm('Are you sure you want to dispose of this ticket? This will permanently remove it.', () => handleDispose(ticketId, true)); return; }
+    if (!window.confirm('Are you sure you want to dispose of this ticket? This will permanently remove it.')) return;
     
     setReplying(ticketId); // Reusing replying for general loading
     try {

@@ -14,7 +14,7 @@ import {
   Activity,
   FileText
 } from 'lucide-react';
-import { uiConfirm } from '../../lib/customUI';
+
 
 export default function AdminExams() {
   const [exams, setExams] = useState<any[]>([]);
@@ -95,7 +95,7 @@ export default function AdminExams() {
   };
 
   const handleDelete = async (id: string, confirmed = false) => {
-    if (!confirmed) { uiConfirm("Are you sure you want to permanently delete this exam and all its associated tests and questions? This action cannot be undone.", () => handleDelete(id, true)); return; }
+    if (!window.confirm("Are you sure you want to permanently delete this exam and all its associated tests and questions? This action cannot be undone.")) return;
     if (true) {
       try {
         const testsSnap = await getDocs(query(collection(db, 'tests'), where('examId', '==', id)));

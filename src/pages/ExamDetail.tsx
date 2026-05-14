@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { getTestsByExamId, createSubscription, getResultsByTestId } from '../services/db';
 import { doc, getDoc, getDocs, query, collection, documentId, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { ChevronLeft, Lock, Play, Clock, FileText, CheckCircle2, ShoppingBag, Award, History, Building2, Shield } from 'lucide-react';
+import { ChevronLeft, Lock, Play, Clock, FileText, CheckCircle2, ShoppingBag, Award, History, Building2, Shield, Crown } from 'lucide-react';
 import CheckoutModal from '../components/CheckoutModal';
 
 export default function ExamDetail() {
@@ -227,9 +227,18 @@ export default function ExamDetail() {
                         <CheckCircle2 className="w-4 h-4" /> Enrolled
                     </button>
                   ) : (
-                    <button onClick={handlePurchaseClick} className="w-full py-4 bg-[#008770] text-white font-black rounded-xl hover:bg-[#006e5d] transition-all flex items-center justify-center gap-2">{exam.isPaid ? 'Enroll Now' : 'Enroll Free'} <ChevronLeft className="w-4 h-4 rotate-180" /></button>
+                    <div className="space-y-3">
+                      <button onClick={handlePurchaseClick} className="w-full py-4 bg-[#008770] text-white font-black rounded-xl hover:bg-[#006e5d] transition-all flex items-center justify-center gap-2">{exam.isPaid ? 'Enroll Now' : 'Enroll Free'} <ChevronLeft className="w-4 h-4 rotate-180" /></button>
+                      <button onClick={() => navigate('/premium')} className="w-full py-4 bg-amber-500/10 text-amber-500 border-2 border-amber-500/20 font-black rounded-xl hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all flex items-center justify-center gap-2 group">
+                         Unlock ALL Exams with Premium
+                         <Crown className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                      </button>
+                    </div>
                   )}
-                  <p className="text-[10px] text-center text-slate-600 mt-4">Secure 256-bit SSL encrypted payment</p>
+                  <div className="mt-4 flex flex-col items-center gap-2">
+                    <p className="text-[10px] text-center text-slate-500">Secure 256-bit SSL encrypted payment by</p>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/8/89/Razorpay_logo.svg" alt="Razorpay" className="h-3 opacity-60 hover:opacity-100 transition-opacity brightness-0 invert" />
+                  </div>
                </div>
                
                {/* Included Card */}

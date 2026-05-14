@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { Helmet, HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SettingsProvider } from './context/SettingsContext';
@@ -298,11 +299,32 @@ export function AppContent() {
 }
 
 export default function App() {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "PrepNext",
+    "url": "https://www.prepnext.in/",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://www.prepnext.in/exams?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  };
+
   return (
-    <SettingsProvider>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </SettingsProvider>
+    <HelmetProvider>
+      <Helmet>
+        <title>PrepNext - Mock Tests & Study Material</title>
+        <meta property="og:site_name" content="PrepNext" />
+        <script type="application/ld+json">
+          {JSON.stringify(schema)}
+        </script>
+      </Helmet>
+      <SettingsProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </SettingsProvider>
+    </HelmetProvider>
   );
 }

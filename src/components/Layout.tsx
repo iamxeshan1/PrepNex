@@ -272,30 +272,62 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 </div>
               </div>
               
-              <div className="col-span-1 md:col-span-3">
-                <h4 className="text-white font-sans font-bold mb-6 uppercase text-xs tracking-[0.2em]">Explore</h4>
-                <ul className="space-y-3">
-                  <li><Link to="/exams" className="text-slate-400 hover:text-teal-400 text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-teal-500" /> Exam Library</Link></li>
-                  <li><Link to="/subjects" className="text-slate-400 hover:text-teal-400 text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-teal-500" /> Subject Catalog</Link></li>
-                  <li><Link to="/live-tests" className="text-slate-400 hover:text-teal-400 text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-teal-500" /> Live Tests</Link></li>
-                  <li><Link to="/study-material" className="text-slate-400 hover:text-teal-400 text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-teal-500" /> Study Material</Link></li>
-                  {socialLinks.doubtLink && (
-                    <li className="pt-2"><a href={socialLinks.doubtLink} target="_blank" rel="noreferrer" className="text-teal-400 py-1.5 px-3 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-xs font-bold transition-colors inline-flex items-center gap-1.5"><MessageCircle className="w-3.5 h-3.5" /> Doubt Clearing Hub</a></li>
-                  )}
-                </ul>
-              </div>
+              <div className="col-span-1 md:col-span-5 grid grid-cols-2 gap-8 md:gap-12">
+                <div className="col-span-1 md:col-span-1">
+                  <h4 className="text-white font-sans font-bold mb-6 uppercase text-xs tracking-[0.2em]">Explore</h4>
+                  <ul className="space-y-3">
+                    <li><Link to="/exams" className="text-slate-400 hover:text-teal-400 text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-teal-500" /> Exam Library</Link></li>
+                    <li><Link to="/subjects" className="text-slate-400 hover:text-teal-400 text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-teal-500" /> Subject Catalog</Link></li>
+                    <li><Link to="/live-tests" className="text-slate-400 hover:text-teal-400 text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-teal-500" /> Live Tests</Link></li>
+                    <li><Link to="/study-material" className="text-slate-400 hover:text-teal-400 text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-teal-500" /> Study Material</Link></li>
+                    {socialLinks.doubtLink && (
+                      <li className="pt-2"><a href={socialLinks.doubtLink} target="_blank" rel="noreferrer" className="text-teal-400 py-1.5 px-3 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-xs font-bold transition-colors inline-flex items-center gap-1.5"><MessageCircle className="w-3.5 h-3.5" /> Doubt Clearing Hub</a></li>
+                    )}
+                  </ul>
+                </div>
 
-              <div className="col-span-1 md:col-span-2">
-                <h4 className="text-white font-sans font-bold mb-6 uppercase text-xs tracking-[0.2em]">Company</h4>
-                <ul className="space-y-3">
-                  <li><Link to="/about" className="text-slate-400 hover:text-teal-400 text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-teal-500" /> About Us</Link></li>
-                  <li><Link to="/privacy-policy" className="text-slate-400 hover:text-teal-400 text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-teal-500" /> Privacy Policy</Link></li>
-                  <li><Link to="/contact" className="text-slate-400 hover:text-teal-400 text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-teal-500" /> Contact Support</Link></li>
-                </ul>
+                <div className="col-span-1 md:col-span-1">
+                  <h4 className="text-white font-sans font-bold mb-6 uppercase text-xs tracking-[0.2em]">Company</h4>
+                  <ul className="space-y-3">
+                    <li><Link to="/about" className="text-slate-400 hover:text-teal-400 text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-teal-500" /> About Us</Link></li>
+                    <li><Link to="/privacy-policy" className="text-slate-400 hover:text-teal-400 text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-teal-500" /> Privacy Policy</Link></li>
+                    <li><Link to="/contact" className="text-slate-400 hover:text-teal-400 text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-teal-500" /> Contact Support</Link></li>
+                  </ul>
+                </div>
               </div>
             </div>
           
-          <div className="pt-8 border-t border-white/5 relative flex justify-center">
+          <div className="pt-10 pb-6 border-t border-white/5 relative flex flex-col items-center justify-center gap-6">
+            <div className="flex flex-col items-center gap-3">
+               <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">100% Secure Payments Accepted</p>
+               <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
+                  <div className="h-6 px-2 bg-white rounded flex items-center justify-center">
+                     <img src="https://upload.wikimedia.org/wikipedia/commons/8/89/Razorpay_logo.svg" alt="Razorpay" className="h-2.5" />
+                  </div>
+                  <div className="h-6 px-2 bg-white rounded flex items-center justify-center">
+                     <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg" alt="UPI" className="h-3.5" />
+                  </div>
+                  <div className="h-6 px-2 bg-white rounded flex items-center justify-center">
+                     <img src="https://upload.wikimedia.org/wikipedia/commons/c/cb/Rupay-Logo.png" alt="RuPay" className="h-3" />
+                  </div>
+                  <div className="h-6 px-2 bg-white rounded flex items-center justify-center">
+                     <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="MasterCard" className="h-3.5" />
+                  </div>
+                  <div className="h-6 px-2 bg-white rounded flex items-center justify-center">
+                     <img src="https://upload.wikimedia.org/wikipedia/commons/9/98/Visa_Inc._logo_%282005%E2%80%932014%29.svg" alt="Visa" className="h-2.5" />
+                  </div>
+                  <div className="h-6 px-2 bg-white rounded flex items-center justify-center">
+                     <img src="https://upload.wikimedia.org/wikipedia/en/5/58/State_Bank_of_India_logo.svg" alt="SBI" className="h-3.5" />
+                  </div>
+                  <div className="h-6 px-2 bg-white rounded flex items-center justify-center">
+                     <img src="https://upload.wikimedia.org/wikipedia/commons/b/b2/Punjab_National_Bank_new_logo.svg" alt="PNB" className="h-3.5" />
+                  </div>
+                  <div className="h-6 px-2 bg-white rounded flex items-center justify-center">
+                     <img src="https://upload.wikimedia.org/wikipedia/en/1/12/Jammu_%26_Kashmir_Bank_Logo.svg" alt="J&K Bank" className="h-2.5" />
+                  </div>
+               </div>
+            </div>
+
             <p className="text-slate-500/70 text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] text-center">
               © 2026 PREPNEXT EDTECH. MADE WITH CONVICTION.
             </p>

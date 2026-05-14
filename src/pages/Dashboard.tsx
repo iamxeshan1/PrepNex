@@ -60,7 +60,11 @@ export default function Dashboard() {
                       // If it was a premium pass
                       ...(itemId === "PREMIUM_PASS" ? { 
                         isPremium: true, 
-                        subscriptionExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() 
+                        subscriptionExpiry: (() => {
+                          const d = new Date();
+                          d.setMonth(d.getMonth() + parseInt(params.get('months') || '12', 10));
+                          return d.toISOString();
+                        })()
                       } : {})
                     }, { merge: true });
                   }

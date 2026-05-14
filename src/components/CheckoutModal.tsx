@@ -11,6 +11,7 @@ interface CheckoutModalProps {
     name: string;
     price: number;
     description?: string;
+    metadata?: any;
   };
   onSuccess?: () => void;
 }
@@ -90,7 +91,11 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
            
            if (item.id === "PREMIUM_PASS") {
              const expiryDate = new Date();
-             expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+             if (item.metadata?.months) {
+               expiryDate.setMonth(expiryDate.getMonth() + parseInt(item.metadata.months, 10));
+             } else {
+               expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+             }
              await setDoc(doc(db, "users", user.uid), {
                 isPremium: true,
                 subscriptionExpiry: expiryDate.toISOString()
@@ -157,6 +162,7 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
         body: JSON.stringify({
           amount: finalPrice,
           itemId: item.id,
+          months: item.metadata?.months,
           couponCode: discount ? couponCode.trim() : null
         })
       });
@@ -226,6 +232,7 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
                 razorpay_signature: response.razorpay_signature,
                 userId: user.uid,
                 itemId: item.id,
+                months: item.metadata?.months,
                 clientFallbackAmount: finalPrice,
                 clientFallbackUserName: user.displayName || user.email?.split('@')[0] || "User"
               })
@@ -236,6 +243,9 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
             if (verifyResponse.ok) {
               // Redirect to dashboard with success param
               let successUrl = `/dashboard?payment_success=true&itemId=${item.id}&userId=${user.uid}&paymentId=${response.razorpay_payment_id}&orderId=${response.razorpay_order_id}&needs_client_update=${verifyData.needsClientUpdate || false}`;
+              if (item.metadata?.months) {
+                successUrl += `&months=${item.metadata.months}`;
+              }
               if (verifyData.needsClientUpdate) {
                 successUrl += `&amount=${verifyData.amount || finalPrice || 0}&userName=${encodeURIComponent(verifyData.userName || user.displayName || user.email?.split('@')[0] || 'User')}`;
               }

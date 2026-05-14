@@ -44,7 +44,7 @@ export default function AdminNotices() {
   };
 
   const handleDelete = async (id: string, confirmed = false) => {
-    if (!confirmed) { uiConfirm('Delete this notice?', () => handleDelete(id, true)); return; }
+    if (!window.confirm('Delete this notice?')) return;
     if (true) {
       await deleteDoc(doc(db, 'notices', id));
       fetchNotices();

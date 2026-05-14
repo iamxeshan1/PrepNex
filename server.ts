@@ -430,8 +430,18 @@ app.get("/api/health-check", async (req, res) => {
 
         if (itemId === "PREMIUM_PASS") {
           const settingsDoc = await database.collection("settings").doc("general").get();
-          originalPrice = parseInt(settingsDoc.data()?.premiumPrice || "599");
-          itemName = settingsDoc.data()?.premiumTitle || "Unlimited 1-Year Pass";
+          const baseMonthlyPrice = parseInt(settingsDoc.data()?.baseMonthlyPrice || "499");
+          const discountTiers = settingsDoc.data()?.discountTiers || [];
+          const months = parseInt(req.body.months || "12", 10);
+          
+          let applicableDiscount = 0;
+          for (const tier of discountTiers) {
+             if (months >= tier.months && tier.discountPercentage > applicableDiscount) {
+                applicableDiscount = tier.discountPercentage;
+             }
+          }
+          originalPrice = Math.round(months * baseMonthlyPrice * (1 - applicableDiscount / 100));
+          itemName = settingsDoc.data()?.premiumTitle || "Premium Pass";
         } else {
           const examDoc = await database.collection("exams").doc(itemId).get();
           if (examDoc.exists) {
@@ -601,7 +611,8 @@ app.get("/api/health-check", async (req, res) => {
           
           if (itemId === "PREMIUM_PASS") {
             const expiry = new Date();
-            expiry.setFullYear(expiry.getFullYear() + 1);
+            const months = parseInt(req.body.months || "12", 10);
+            expiry.setMonth(expiry.getMonth() + months);
             await userRef.update({ isPremium: true, subscriptionExpiry: expiry.toISOString() });
             
             // Add to premium_subscriptions for Revenue tab category
@@ -745,7 +756,8 @@ app.get("/api/health-check", async (req, res) => {
 
             if (itemId === "PREMIUM_PASS") {
               const expiryDate = new Date();
-              expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+              const months = parseInt(req.body.months || "12", 10);
+              expiryDate.setMonth(expiryDate.getMonth() + months);
               
               await userRef.update({
                 isPremium: true,

@@ -37,7 +37,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { uiConfirm } from '../../lib/customUI';
+
 
 export default function AdminUsers() {
   const navigate = useNavigate();
@@ -184,7 +184,7 @@ export default function AdminUsers() {
 
   const handleToggleBlock = async (userId: string, currentStatus: boolean, confirmed = false) => {
     try {
-      if (!confirmed) { uiConfirm(`Are you sure you want to ${currentStatus ? 'unblock' : 'block'} this user?`, () => handleToggleBlock(userId, currentStatus, true)); return; }
+      if (!window.confirm(`Are you sure you want to ${currentStatus ? 'unblock' : 'block'} this user?`)) return;
       if (true) {
         await updateDoc(doc(db, 'users', userId), { isBlocked: !currentStatus });
         setUsers(users.map(u => u.id === userId ? { ...u, isBlocked: !currentStatus } : u));
@@ -223,7 +223,7 @@ export default function AdminUsers() {
 
   const handleTogglePremium = async (userId: string, currentStatus: boolean, confirmed = false) => {
     try {
-      if (!confirmed) { uiConfirm(`Are you sure you want to ${currentStatus ? 'revoke' : 'grant'} premium access?`, () => handleTogglePremium(userId, currentStatus, true)); return; }
+      if (!window.confirm(`Are you sure you want to ${currentStatus ? 'revoke' : 'grant'} premium access?`)) return;
       if (true) {
         const expiry = new Date();
         expiry.setFullYear(expiry.getFullYear() + 1);
@@ -261,7 +261,7 @@ export default function AdminUsers() {
   };
 
   const revokePurchase = async (purchase: any, confirmed = false) => {
-    if (!confirmed) { uiConfirm(`Are you sure you want to revoke this purchase: ${purchase.type || purchase.examId}?`, () => revokePurchase(purchase, true)); return; }
+    if (!window.confirm(`Are you sure you want to revoke this purchase: ${purchase.type || purchase.examId}?`)) return;
     try {
       // 1. Delete subscription doc
       await deleteDoc(doc(db, purchase.collection, purchase.id));

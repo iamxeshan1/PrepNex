@@ -64,7 +64,7 @@ export default function AdminCoupons() {
   };
 
   const handleDelete = async (id: string, confirmed = false) => {
-    if (!confirmed) { uiConfirm("Delete this coupon?", () => handleDelete(id, true)); return; }
+    if (!window.confirm("Delete this coupon?")) return;
     try {
       await deleteDoc(doc(db, 'coupons', id));
       fetchCoupons();
