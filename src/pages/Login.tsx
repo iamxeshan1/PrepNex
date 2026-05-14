@@ -45,6 +45,7 @@ export default function Login() {
           userId: user.uid,
           name: user.displayName || 'Aspirant',
           email: user.email,
+          photoURL: user.photoURL,
           role: user.email === 'iamxeshan1@gmail.com' || user.email === 'prepnextedtech@gmail.com' ? 'admin' : 'student',
           purchasedExams: [],
           testsAttempted: 0,

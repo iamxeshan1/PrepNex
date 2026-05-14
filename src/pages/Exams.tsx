@@ -88,7 +88,7 @@ export default function Exams() {
               >
                 <div className="flex justify-between items-start mb-6">
                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-white border border-slate-100 rounded-xl flex items-center justify-center p-2 group-hover:bg-teal-50 transition-colors shadow-sm shrink-0">
+                      <div className="w-12 h-12 bg-white border border-slate-100 rounded-xl flex items-center justify-center p-2 group-hover:bg-[#006e5d]/5 transition-colors shadow-sm shrink-0">
                          {logo ? (
                             <img src={logo} alt="" loading="lazy" decoding="async" width="48" height="48" className="w-full h-full object-contain" />
                          ) : (

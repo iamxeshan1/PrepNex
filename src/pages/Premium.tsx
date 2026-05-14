@@ -334,7 +334,7 @@ export default function Premium() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-slate-50 font-sans text-[#001f19] pb-32">
+      <div className="min-h-screen bg-slate-50 font-sans text-[#002f26] pb-32">
         <section className="bg-[#002f26] text-white pt-24 pb-48 relative overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 text-center relative z-10">
             {targetExam && (
@@ -367,14 +367,14 @@ export default function Premium() {
                    <div className="w-20 h-20 bg-[#002f26]/10 rounded-[2rem] flex items-center justify-center text-slate-900 mb-6">
                       <Layers className="w-10 h-10" />
                    </div>
-                   <h2 className="text-2xl font-black text-[#001f19] mb-2">{targetExam.name}</h2>
+                   <h2 className="text-2xl font-black text-[#002f26] mb-2">{targetExam.name}</h2>
                    <p className="text-slate-500 font-medium mb-8">Single exam unlock</p>
                    <div className="text-5xl font-black text-slate-900 mb-2">₹{basePrice}</div>
                    {targetExam.price && targetExam.price > 0 && <div className="text-slate-400 line-through font-bold text-lg mb-8">₹{basePrice + 500}</div>}
                 </div>
               ) : (
                 <>
-                  <h2 className="text-2xl font-black text-[#001f19] mb-6">Select your plan</h2>
+                  <h2 className="text-2xl font-black text-[#002f26] mb-6">Select your plan</h2>
                   <div className="space-y-4">
                     {plans.map(plan => (
                        <label key={plan.id} className={`cursor-pointer block relative rounded-2xl border-2 transition-all p-5 hover:border-[#006e5d]/50 ${selectedPlanId === plan.id ? 'border-[#006e5d] bg-[#006e5d]/5' : 'border-slate-100 bg-white'}`}>
@@ -386,7 +386,7 @@ export default function Premium() {
                                    {selectedPlanId === plan.id && <div className="w-3 h-3 bg-[#006e5d] rounded-full" />}
                                 </div>
                                 <div>
-                                   <div className="text-lg font-black text-[#001f19]">{plan.name}</div>
+                                   <div className="text-lg font-black text-[#002f26]">{plan.name}</div>
                                    <div className="text-xs font-bold text-slate-500">{plan.months} Month{plan.months > 1 ? 's' : ''}</div>
                                 </div>
                              </div>

@@ -18,7 +18,9 @@ export default function LiveTestDetail() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
 
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  
+  const isEnrolled = test?.enrolledUsers?.includes(user?.uid) || profile?.isPremium;
   
   const getBasePrice = () => test?.price || 0;
   
@@ -183,67 +185,101 @@ export default function LiveTestDetail() {
             </div>
 
             <div className="bg-[#064e40] rounded-3xl p-8 border border-[#001f19] text-center">
-              <ShieldCheck className="w-12 h-12 text-blue-400 mx-auto mb-4 opacity-50" />
-              <h2 className="text-2xl font-black text-white mb-2">Enrollment Details</h2>
-              <p className="text-slate-400 mb-6 max-w-lg mx-auto">
-                This is a premium live mock test. Enrollment requires payment. Integrated payment gateways (such as Stripe or Razorpay) would process the transaction.
-              </p>
-              
-              <div className="flex flex-col items-center gap-2 w-full max-w-sm mx-auto mb-6">
-                {appliedCoupon ? (
-                  <div className="flex items-center justify-between w-full p-4 bg-emerald-900/30 border border-emerald-500/30 rounded-2xl">
-                    <div className="flex items-center gap-3">
-                      <Tag className="w-5 h-5 text-emerald-400" />
-                      <div className="text-left">
-                        <p className="text-sm font-bold text-emerald-300 uppercase tracking-wide">{appliedCoupon.code}</p>
-                        <p className="text-xs font-bold text-emerald-500">Saved ₹{getBasePrice() - getFinalPrice()}</p>
+              {profile?.isPremium ? (
+                <div className="mb-8">
+                  <div className="w-16 h-16 bg-amber-500/20 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Zap className="w-8 h-8" />
+                  </div>
+                  <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">You are a Premium User!</h2>
+                  <p className="text-slate-400 mb-6 max-w-lg mx-auto">
+                    Your Ultimate Pass is active. You don't have to enroll or pay for this live test separately. You have full access to all premium features.
+                  </p>
+                  <button 
+                    onClick={() => navigate(`/test/${test.id}`)}
+                    className="w-full md:w-auto px-12 py-4 bg-emerald-500 text-white rounded-xl font-bold hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/20"
+                  >
+                    Start Test Now
+                  </button>
+                </div>
+              ) : isEnrolled ? (
+                <div className="mb-8">
+                  <ShieldCheck className="w-12 h-12 text-blue-400 mx-auto mb-4 opacity-50" />
+                  <h2 className="text-2xl font-black text-white mb-2">You are Enrolled!</h2>
+                  <p className="text-slate-400 mb-6 max-w-lg mx-auto">
+                    You have successfully enrolled in this live test. You can start the test when it begins.
+                  </p>
+                  <button 
+                     onClick={() => navigate(`/test/${test.id}`)}
+                     className="w-full md:w-auto px-12 py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-all"
+                  >
+                    Go to Test
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <ShieldCheck className="w-12 h-12 text-blue-400 mx-auto mb-4 opacity-50" />
+                  <h2 className="text-2xl font-black text-white mb-2">Enrollment Details</h2>
+                  <p className="text-slate-400 mb-6 max-w-lg mx-auto">
+                    This is a premium live mock test. Enrollment requires payment. Integrated payment gateways (such as Stripe or Razorpay) would process the transaction.
+                  </p>
+                  
+                  <div className="flex flex-col items-center gap-2 w-full max-w-sm mx-auto mb-6">
+                    {appliedCoupon ? (
+                      <div className="flex items-center justify-between w-full p-4 bg-emerald-900/30 border border-emerald-500/30 rounded-2xl">
+                        <div className="flex items-center gap-3">
+                          <Tag className="w-5 h-5 text-emerald-400" />
+                          <div className="text-left">
+                            <p className="text-sm font-bold text-emerald-300 uppercase tracking-wide">{appliedCoupon.code}</p>
+                            <p className="text-xs font-bold text-emerald-500">Saved ₹{getBasePrice() - getFinalPrice()}</p>
+                          </div>
+                        </div>
+                        <button onClick={handleRemoveCoupon} className="p-2 text-emerald-400 hover:bg-emerald-900/50 rounded-xl transition-all">
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
+                    ) : (
+                      <div className="flex items-center gap-2 w-full">
+                        <input 
+                          type="text" 
+                          placeholder="Have a coupon code?" 
+                          value={couponCode} 
+                          onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                          className="flex-1 px-4 py-3 bg-[#001f19] border border-slate-700 rounded-xl outline-none focus:border-blue-500 font-bold tracking-widest text-sm text-white placeholder-slate-500 uppercase"
+                        />
+                        <button 
+                          onClick={handleApplyCoupon}
+                          disabled={!couponCode || couponLoading}
+                          className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-all disabled:opacity-50 text-sm"
+                        >
+                          {couponLoading ? '...' : 'Apply'}
+                        </button>
+                      </div>
+                    )}
+                    {couponError && <p className="text-xs font-bold text-rose-400">{couponError}</p>}
+                  </div>
+
+                  <div className="text-3xl font-black text-white mb-2">
+                    ₹{getFinalPrice()}
+                  </div>
+                  {appliedCoupon && (
+                    <p className="text-sm font-bold text-slate-500 line-through mb-6">₹{getBasePrice()}</p>
+                  )}
+                  {!appliedCoupon && <div className="h-4 mb-6"></div>}
+
+                  <button 
+                    onClick={handlePurchase}
+                    disabled={purchaseLoading}
+                    className="w-full md:w-auto px-12 py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-all font-logo disabled:opacity-50"
+                  >
+                    {purchaseLoading ? 'Processing...' : (getFinalPrice() === 0 ? 'Enroll Now (Free)' : 'Proceed to Payment')}
+                  </button>
+                  {getFinalPrice() > 0 && (
+                    <div className="mt-4 flex flex-col items-center gap-2">
+                        <p className="text-[10px] text-center text-slate-500 uppercase tracking-widest font-black">Secure Payment Gateway By</p>
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/8/89/Razorpay_logo.svg" alt="Razorpay" className="h-3 opacity-60 hover:opacity-100 transition-opacity brightness-0 invert" />
                     </div>
-                    <button onClick={handleRemoveCoupon} className="p-2 text-emerald-400 hover:bg-emerald-900/50 rounded-xl transition-all">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 w-full">
-                    <input 
-                      type="text" 
-                      placeholder="Have a coupon code?" 
-                      value={couponCode} 
-                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                      className="flex-1 px-4 py-3 bg-[#001f19] border border-slate-700 rounded-xl outline-none focus:border-blue-500 font-bold tracking-widest text-sm text-white placeholder-slate-500 uppercase"
-                    />
-                    <button 
-                      onClick={handleApplyCoupon}
-                      disabled={!couponCode || couponLoading}
-                      className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-all disabled:opacity-50 text-sm"
-                    >
-                      {couponLoading ? '...' : 'Apply'}
-                    </button>
-                  </div>
-                )}
-                {couponError && <p className="text-xs font-bold text-rose-400">{couponError}</p>}
-              </div>
-
-              <div className="text-3xl font-black text-white mb-2">
-                ₹{getFinalPrice()}
-              </div>
-              {appliedCoupon && (
-                <p className="text-sm font-bold text-slate-500 line-through mb-6">₹{getBasePrice()}</p>
-              )}
-              {!appliedCoupon && <div className="h-4 mb-6"></div>}
-
-              <button 
-                onClick={handlePurchase}
-                disabled={purchaseLoading}
-                className="w-full md:w-auto px-12 py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-all font-logo disabled:opacity-50"
-              >
-                {purchaseLoading ? 'Processing...' : (getFinalPrice() === 0 ? 'Enroll Now (Free)' : 'Proceed to Payment')}
-              </button>
-              {getFinalPrice() > 0 && (
-                 <div className="mt-4 flex flex-col items-center gap-2">
-                    <p className="text-[10px] text-center text-slate-500 uppercase tracking-widest font-black">Secure Payment Gateway By</p>
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/8/89/Razorpay_logo.svg" alt="Razorpay" className="h-3 opacity-60 hover:opacity-100 transition-opacity brightness-0 invert" />
-                 </div>
+                  )}
+                </>
               )}
             </div>
           </div>

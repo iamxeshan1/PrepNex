@@ -60,6 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               userId: authUser.uid,
               name: authUser.displayName || authUser.email?.split('@')[0] || 'User',
               email: authUser.email,
+              photoURL: authUser.photoURL,
               role: isAdminEmail ? 'admin' : 'student',
               isPremium: false,
               premiumExpiry: null,

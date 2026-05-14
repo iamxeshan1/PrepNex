@@ -222,7 +222,22 @@ export default function ExamDetail() {
                      {exam.isPaid && <span className="text-slate-500 line-through">₹{Number(exam.price || 499) + 500}</span>}
                      {exam.isPaid && <span className="bg-[#10b981] text-white text-[10px] font-black px-2 py-1 rounded uppercase tracking-widest">Off</span>}
                   </div>
-                  {isEnrolledInExam ? (
+                  {profile?.isPremium ? (
+                    <div className="space-y-4">
+                      <div className="bg-[#003d32] border border-[#006e5d] rounded-2xl p-6 text-center">
+                        <div className="w-12 h-12 bg-amber-500/20 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <Crown className="w-6 h-6" />
+                        </div>
+                        <h4 className="text-lg font-black text-white mb-2 uppercase tracking-tight">You are a Premium User!</h4>
+                        <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                          Your Ultimate Pass is active. You don't have to buy this exam or enroll separately. You have full access to everything.
+                        </p>
+                      </div>
+                      <button disabled className="w-full py-4 bg-[#001f19] text-white font-black rounded-xl flex items-center justify-center gap-2 opacity-80 cursor-not-allowed">
+                          <CheckCircle2 className="w-4 h-4" /> Access Granted
+                      </button>
+                    </div>
+                  ) : isEnrolledInExam ? (
                     <button disabled className="w-full py-4 bg-[#001f19] text-white font-black rounded-xl flex items-center justify-center gap-2 opacity-80 cursor-not-allowed">
                         <CheckCircle2 className="w-4 h-4" /> Enrolled
                     </button>

@@ -199,11 +199,13 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
                   <p className="text-[10px] font-bold text-slate-500">Super Admin</p>
                </div>
                <div className="w-9 h-9 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden">
-                  {profile?.profilePicture ? (
-                    <img src={profile.profilePicture} alt="Avatar" width="36" height="36" className="w-full h-full object-cover" />
-                  ) : (
-                    <img src={`https://ui-avatars.com/api/?name=${profile?.fullName || 'Admin'}&background=0f766e&color=fff`} alt="Avatar" width="36" height="36" className="w-full h-full object-cover" />
-                  )}
+                  <img 
+                    src={profile?.photoURL || profile?.profilePicture || `https://ui-avatars.com/api/?name=${profile?.name || 'Admin'}&background=0f766e&color=fff`} 
+                    alt="Avatar" 
+                    width="36" 
+                    height="36" 
+                    className="w-full h-full object-cover" 
+                  />
                </div>
             </div>
           </div>

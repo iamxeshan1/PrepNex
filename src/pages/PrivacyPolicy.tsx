@@ -88,7 +88,7 @@ export default function PrivacyPolicy() {
                   ].map((item, i) => (
                     <div key={i} className="space-y-2">
                       <div className="flex items-center gap-3">
-                         <CheckCircle2 className="w-4 h-4 text-teal-400" />
+                         <CheckCircle2 className="w-4 h-4 text-[#006e5d]" />
                          <span className="font-bold text-white text-lg tracking-tight">{item.label}</span>
                       </div>
                       <p className="text-slate-400 text-sm font-medium pl-7">{item.desc}</p>

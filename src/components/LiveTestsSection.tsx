@@ -122,7 +122,7 @@ export default function LiveTestsSection() {
               const upcomingEnrollment = now < enrollStart;
               const waitingForStart = now > enrollEnd && now < testStart;
               
-              const isEnrolled = test.enrolledUsers?.includes(user?.uid);
+              const isEnrolled = test.enrolledUsers?.includes(user?.uid) || profile?.isPremium;
               const collectionName = test.isScheduled ? 'tests' : 'liveTests';
 
               return (

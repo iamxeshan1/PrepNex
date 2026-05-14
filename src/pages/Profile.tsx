@@ -103,6 +103,33 @@ export default function Profile() {
                   </header>
 
                   <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                    <div className="p-8 border-b border-slate-100 bg-slate-50/50">
+                        <div className="flex flex-col md:flex-row items-center gap-6">
+                            <div className="relative group">
+                                <div className="w-24 h-24 rounded-[2rem] border-4 border-white shadow-xl overflow-hidden bg-white">
+                                    <img 
+                                      src={profile?.photoURL || `https://ui-avatars.com/api/?name=${profile?.name || user?.email || 'User'}&background=006e5d&color=fff`} 
+                                      className="w-full h-full object-cover" 
+                                      alt="Profile" 
+                                    />
+                                </div>
+                            </div>
+                            <div className="text-center md:text-left">
+                                <h3 className="text-xl font-black text-slate-900">{profile?.name || 'Aspirant'}</h3>
+                                <p className="text-sm font-medium text-slate-500">{profile?.email}</p>
+                                <div className="mt-2 flex flex-wrap justify-center md:justify-start gap-2">
+                                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${profile?.isPremium ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
+                                        {profile?.isPremium ? 'Premium Member' : 'Free Member'}
+                                    </span>
+                                    {profile?.role === 'admin' && (
+                                        <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-[10px] font-black uppercase tracking-widest">
+                                            Administrator
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
                       {error && (
                         <div className="p-4 rounded-xl bg-red-50 text-red-600 text-sm flex items-center gap-2 border border-red-100 font-medium">

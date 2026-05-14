@@ -82,8 +82,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                       <span className="absolute top-2 right-2 w-2 h-2 bg-[#006e5d] rounded-full border-2 border-white"></span>
                     </button>
                     <button onClick={handleLogout} className="text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">Log Out</button>
-                    <Link to="/profile" className="w-9 h-9 rounded-full overflow-hidden border border-slate-200 cursor-pointer hover:border-[#006e5d] transition-colors">
-                      <img src={`https://ui-avatars.com/api/?name=${user.email || 'User'}&background=0D8ABC&color=fff`} alt="User" className="w-full h-full object-cover" width="36" height="36" fetchPriority="high" />
+                    <Link to="/profile" className="w-9 h-9 rounded-full overflow-hidden border border-slate-200 cursor-pointer hover:border-[#006e5d] transition-colors bg-slate-50">
+                      <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email || 'User'}&background=006e5d&color=fff`} alt="User" className="w-full h-full object-cover" width="36" height="36" fetchPriority="high" />
                     </Link>
                   </div>
                 ) : (
@@ -175,12 +175,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                     <div className="space-y-4">
                       <div className="flex items-center gap-3 p-3">
                         <img 
-                          src={`https://ui-avatars.com/api/?name=${user.email || 'User'}&background=0D8ABC&color=fff`} 
+                          src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email || 'User'}&background=006e5d&color=fff`} 
                           alt="User" 
                           width="32"
                           height="32"
                           loading="lazy"
-                          className="w-8 h-8 rounded-full" 
+                          className="w-8 h-8 rounded-full object-cover bg-slate-50" 
                         />
                         <span className="text-sm font-bold text-slate-900 truncate">{user.email}</span>
                       </div>
