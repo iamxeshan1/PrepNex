@@ -480,7 +480,7 @@ export default function Test() {
                            <button
                              key={idx}
                              onClick={() => setAnswers(prev => ({ ...prev, [currentQ.id]: option }))}
-                             className={`w-full p-4 md:p-5 text-left rounded-lg border transition-all flex items-center gap-4 ${
+                             className={`w-full p-5 text-left rounded-lg border transition-all flex items-center gap-4 ${
                                isSelected 
                                  ? 'border-[#006e5d] bg-[#006e5d]/5' 
                                  : 'border-slate-200 hover:border-slate-300 bg-white'
