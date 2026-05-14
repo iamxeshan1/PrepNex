@@ -304,7 +304,7 @@ export default function AdminCoupons() {
       </div>
 
       {usageModalOpen && selectedCoupon && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#002f26]/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#064e40]/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl relative">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <div>

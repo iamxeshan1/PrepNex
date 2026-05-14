@@ -70,7 +70,7 @@ export default function Contact() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
             {/* Info Column */}
             <div className="lg:col-span-5 space-y-8">
-              <div className="bg-[#002f26] p-10 rounded-[3rem] text-white relative overflow-hidden">
+              <div className="bg-[#064e40] p-10 rounded-[3rem] text-white relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                 
                 <h3 className="text-2xl font-black mb-10 tracking-tight relative z-10">Direct Channels</h3>
@@ -208,7 +208,7 @@ export default function Contact() {
                       />
                     </div>
 
-                    <button className="w-full bg-[#002f26] text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#001f19] transition-all flex items-center justify-center gap-3 shadow-xl shadow-slate-200">
+                    <button className="w-full bg-[#064e40] text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#001f19] transition-all flex items-center justify-center gap-3 shadow-xl shadow-slate-200">
                       Transmit Message <Send className="w-4 h-4" />
                     </button>
                     

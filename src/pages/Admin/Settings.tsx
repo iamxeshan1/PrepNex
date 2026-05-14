@@ -177,7 +177,7 @@ export default function AdminSettings() {
              <button 
                 type="submit" 
                 disabled={saving || loading}
-                className="px-10 py-5 bg-[#002f26] text-white rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-2xl hover:bg-black transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
+                className="px-10 py-5 bg-[#064e40] text-white rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-2xl hover:bg-black transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
               >
                 <Save className="w-5 h-5" /> {saving ? 'Indexing...' : 'Commit All Settings'}
               </button>
@@ -336,7 +336,7 @@ export default function AdminSettings() {
 
            <aside className="space-y-8">
               {/* Contact Node */}
-              <div className="bg-[#002f26] text-white p-8 rounded-[3rem] shadow-2xl relative overflow-hidden group">
+              <div className="bg-[#064e40] text-white p-8 rounded-[3rem] shadow-2xl relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-125 transition-transform duration-700" />
                   <div className="relative space-y-8">
                      <div className="flex items-center gap-4">

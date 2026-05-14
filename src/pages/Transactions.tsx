@@ -190,7 +190,7 @@ export default function Transactions() {
             {filtered.length > 0 && (
               <button
                 onClick={downloadAllTransactions}
-                className="flex shrink-0 items-center gap-2 px-4 py-2.5 bg-[#002f26] text-white rounded-xl text-sm font-semibold hover:bg-[#001f19] transition-colors shadow-sm"
+                className="flex shrink-0 items-center gap-2 px-4 py-2.5 bg-[#064e40] text-white rounded-xl text-sm font-semibold hover:bg-[#001f19] transition-colors shadow-sm"
               >
                 <Download className="w-4 h-4" />
                 <span className="hidden sm:inline">Export PDF</span>

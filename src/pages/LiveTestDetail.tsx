@@ -182,7 +182,7 @@ export default function LiveTestDetail() {
               </div>
             </div>
 
-            <div className="bg-[#002f26] rounded-3xl p-8 border border-[#001f19] text-center">
+            <div className="bg-[#064e40] rounded-3xl p-8 border border-[#001f19] text-center">
               <ShieldCheck className="w-12 h-12 text-blue-400 mx-auto mb-4 opacity-50" />
               <h2 className="text-2xl font-black text-white mb-2">Enrollment Details</h2>
               <p className="text-slate-400 mb-6 max-w-lg mx-auto">

@@ -211,7 +211,7 @@ export default function Home() {
             transition={{ delay: 0.3 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-5"
           >
-            <Link to="/signup" className="w-full sm:w-auto bg-[#006e5d] text-white px-12 py-4.5 rounded-xl font-black text-sm hover:bg-[#005a4d] transition-all shadow-xl shadow-[#002f26]/20 active:scale-95 uppercase tracking-widest">
+            <Link to="/signup" className="w-full sm:w-auto bg-[#006e5d] text-white px-12 py-4.5 rounded-xl font-black text-sm hover:bg-[#005a4d] transition-all shadow-xl shadow-[#064e40]/20 active:scale-95 uppercase tracking-widest">
               Start Free Trial
             </Link>
             <Link to="/exams" className="w-full sm:w-auto bg-white text-[#001f19] border-2 border-slate-200 px-12 py-4.5 rounded-xl font-black text-sm hover:border-slate-300 transition-all active:scale-95 uppercase tracking-widest">
@@ -236,7 +236,7 @@ export default function Home() {
                     onClick={() => setActiveTab(agency.id)}
                     className={`shrink-0 px-6 py-2.5 rounded-full text-[11px] font-black tracking-widest uppercase transition-all ${
                       activeTab === agency.id 
-                        ? 'bg-[#006e5d] text-white shadow-lg shadow-[#002f26]/20' 
+                        ? 'bg-[#006e5d] text-white shadow-lg shadow-[#064e40]/20' 
                         : 'bg-white text-slate-400 border border-slate-200 hover:border-slate-300'
                     }`}
                   >
@@ -259,7 +259,7 @@ export default function Home() {
                     key={exam.id}
                     whileHover={{ y: -8 }}
                     onClick={() => navigate(`/exam/${exam.id}`)}
-                    className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-xl hover:border-[#002f26]/20 transition-all cursor-pointer group flex flex-col"
+                    className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-xl hover:border-[#064e40]/20 transition-all cursor-pointer group flex flex-col"
                   >
                     <div className="flex justify-between items-start mb-6">
                        <div className="flex items-center gap-3">
@@ -445,7 +445,7 @@ export default function Home() {
                                      <p className="text-[10px] font-bold text-[#2dd4bf]">LIVE</p>
                                   </div>
                                </div>
-                               <button className="bg-[#2dd4bf] text-slate-900 px-6 py-2.5 rounded-xl text-[10px] font-black hover:bg-[#5eead4] transition-colors uppercase tracking-widest">ENROLL NOW</button>
+                               <button className="bg-[#002f26] text-white px-6 py-2.5 rounded-xl text-[10px] font-black hover:bg-[#001f19] transition-colors uppercase tracking-widest">ENROLL NOW</button>
                             </div>
                          </div>
                        ))}
@@ -512,7 +512,7 @@ export default function Home() {
                      <p className="text-slate-500 text-lg font-medium leading-relaxed max-w-md tracking-tight">Join thousands of successful candidates who started their journey with PrepNext.</p>
                   </div>
                   <div className="flex flex-col sm:flex-row items-center gap-4 lg:justify-end">
-                     <Link to="/signup" className="w-full sm:w-auto bg-[#006e5d] text-white px-12 py-5 rounded-2xl font-black text-sm hover:bg-[#005a4d] transition-all shadow-xl shadow-[#002f26]/20 active:scale-95 uppercase tracking-widest text-center">
+                     <Link to="/signup" className="w-full sm:w-auto bg-[#006e5d] text-white px-12 py-5 rounded-2xl font-black text-sm hover:bg-[#005a4d] transition-all shadow-xl shadow-[#064e40]/20 active:scale-95 uppercase tracking-widest text-center">
                         Claim Your Free Mock
                      </Link>
                   </div>
@@ -522,7 +522,7 @@ export default function Home() {
       </section>
 
       {/* Stats Bar */}
-      <section className="bg-gradient-to-r from-[#004d40] to-[#006e5d] py-20 border-y border-[#002f26]/30 shadow-inner">
+      <section className="bg-gradient-to-r from-[#004d40] to-[#006e5d] py-20 border-y border-[#064e40]/30 shadow-inner">
          <div className="max-w-7xl mx-auto px-4 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center divide-y md:divide-y-0 md:divide-x divide-white/20">
                <div className="py-6 md:py-0">

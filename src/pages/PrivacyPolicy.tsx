@@ -67,7 +67,7 @@ export default function PrivacyPolicy() {
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="p-10 md:p-16 bg-[#002f26] rounded-[2.5rem] text-white overflow-hidden relative"
+              className="p-10 md:p-16 bg-[#064e40] rounded-[2.5rem] text-white overflow-hidden relative"
             >
               <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
               

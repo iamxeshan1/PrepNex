@@ -156,7 +156,7 @@ export default function Helpdesk() {
               <button 
                 onClick={() => setShowNew(!showNew)}
                 className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-sm transition-all shadow-lg active:scale-95 ${
-                  showNew ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-[#002f26] text-white hover:bg-black'
+                  showNew ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-[#064e40] text-white hover:bg-black'
                 }`}
               >
                 {showNew ? <><X className="w-4 h-4" /> Cancel Request</> : <><Plus className="w-4 h-4" /> Log New Ticket</>}
@@ -210,7 +210,7 @@ export default function Helpdesk() {
 
                      <button 
                        type="submit" disabled={submitting}
-                       className="w-full py-5 bg-[#002f26] text-white rounded-2xl font-black flex justify-center items-center gap-3 hover:bg-black transition-all disabled:opacity-50 text-sm uppercase tracking-widest shadow-xl"
+                       className="w-full py-5 bg-[#064e40] text-white rounded-2xl font-black flex justify-center items-center gap-3 hover:bg-black transition-all disabled:opacity-50 text-sm uppercase tracking-widest shadow-xl"
                      >
                        {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Send className="w-5 h-5" /> Initialize Ticket Dispatch</>}
                      </button>
@@ -297,7 +297,7 @@ export default function Helpdesk() {
                             <div className={`max-w-[85%] p-7 rounded-[2.5rem] border-2 shadow-sm ${
                               msg.sender === 'user' 
                                 ? 'bg-white border-slate-100 rounded-tl-none' 
-                                : 'bg-[#002f26] border-[#002f26] text-white rounded-tr-none'
+                                : 'bg-[#064e40] border-[#064e40] text-white rounded-tr-none'
                             }`}>
                               <div className="flex items-center gap-2 mb-3">
                                  <div className={`w-1.5 h-1.5 rounded-full ${msg.sender === 'user' ? 'bg-teal-500' : 'bg-emerald-500'}`} />
@@ -339,7 +339,7 @@ export default function Helpdesk() {
                              <button 
                                 onClick={() => handleUserReply(ticket.id)}
                                 disabled={replying === ticket.id || !replyText[ticket.id]}
-                                className="p-5 bg-[#002f26] text-white rounded-2xl hover:bg-black transition-all disabled:opacity-30 shadow-2xl active:scale-95 transform hover:-translate-x-1"
+                                className="p-5 bg-[#064e40] text-white rounded-2xl hover:bg-black transition-all disabled:opacity-30 shadow-2xl active:scale-95 transform hover:-translate-x-1"
                              >
                                 {replying === ticket.id ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
                              </button>

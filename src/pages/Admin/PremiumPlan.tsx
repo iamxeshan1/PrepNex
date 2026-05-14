@@ -142,7 +142,7 @@ export default function PremiumPlanManagement() {
                       <h3 className="text-xl font-black text-slate-900 tracking-tight font-display uppercase">Subscription Plans</h3>
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Define specific durations, pricing, and discounts</p>
                    </div>
-                   <button type="button" onClick={addPlan} className="flex items-center gap-2 px-5 py-3 bg-[#002f26] text-white rounded-xl text-xs font-bold hover:bg-[#001f19] transition-colors">
+                   <button type="button" onClick={addPlan} className="flex items-center gap-2 px-5 py-3 bg-[#064e40] text-white rounded-xl text-xs font-bold hover:bg-[#001f19] transition-colors">
                       <Plus className="w-4 h-4" /> Add custom plan
                    </button>
                 </header>
@@ -213,7 +213,7 @@ export default function PremiumPlanManagement() {
          </div>
 
          <div className="lg:col-span-1 space-y-10 sticky top-24">
-            <div className="bg-[#002f26] p-10 rounded-[3.5rem] text-white shadow-2xl relative overflow-hidden group">
+            <div className="bg-[#064e40] p-10 rounded-[3.5rem] text-white shadow-2xl relative overflow-hidden group">
                <Rocket className="w-10 h-10 mb-6 opacity-50" />
                <h4 className="text-2xl font-black tracking-tight font-display uppercase leading-tight mb-4 text-amber-400">Deploy Changes</h4>
                <p className="text-sm font-medium text-slate-400 italic leading-relaxed pr-6 mb-10">Premium plans scale dynamically based on selected duration. Clients automatically calculate exact prices.</p>

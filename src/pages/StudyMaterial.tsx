@@ -163,7 +163,7 @@ export default function StudyMaterial() {
                           </div>
                           <button 
                             onClick={(e) => handleDownload(e, m.url)}
-                            className="flex items-center gap-3 px-6 py-3 bg-[#002f26] text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-teal-600 transition-all active:scale-95 shadow-lg shadow-[#002f26]/10 hover:shadow-teal-500/20"
+                            className="flex items-center gap-3 px-6 py-3 bg-[#064e40] text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-teal-600 transition-all active:scale-95 shadow-lg shadow-[#064e40]/10 hover:shadow-teal-500/20"
                           >
                             Access PDF <Download className="w-3.5 h-3.5" />
                           </button>

@@ -2,7 +2,7 @@ import React from 'react';
 import toast from 'react-hot-toast';
 
 export const CustomAlert = ({ message, t }: { message: string, t: any }) => (
-  <div className="bg-white rounded-2xl shadow-xl min-w-[320px] max-w-sm overflow-hidden ring-1 ring-[#002f26]/5 origin-bottom relative animate-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=closed]:fade-out-0 fade-in-0 duration-200">
+  <div className="bg-white rounded-2xl shadow-xl min-w-[320px] max-w-sm overflow-hidden ring-1 ring-[#064e40]/5 origin-bottom relative animate-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=closed]:fade-out-0 fade-in-0 duration-200">
     <div className="p-6">
         <h3 className="font-bold text-slate-900 text-lg mb-2">Notification</h3>
         <p className="text-slate-500 text-sm leading-relaxed">{message}</p>
@@ -19,7 +19,7 @@ export const CustomAlert = ({ message, t }: { message: string, t: any }) => (
 );
 
 export const CustomConfirm = ({ message, t, onConfirm }: { message: string, t: any, onConfirm: () => void }) => (
-  <div className="bg-white rounded-2xl shadow-xl min-w-[320px] max-w-sm overflow-hidden ring-1 ring-[#002f26]/5 origin-bottom relative animate-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=closed]:fade-out-0 fade-in-0 duration-200">
+  <div className="bg-white rounded-2xl shadow-xl min-w-[320px] max-w-sm overflow-hidden ring-1 ring-[#064e40]/5 origin-bottom relative animate-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=closed]:fade-out-0 fade-in-0 duration-200">
     <div className="p-6">
         <h3 className="font-bold text-slate-900 text-lg mb-2">Please Confirm</h3>
         <p className="text-slate-500 text-sm leading-relaxed">{message}</p>

@@ -42,7 +42,7 @@ export default function LiveTests() {
     <Layout>
       <div className="bg-[#f8fafc] min-h-screen">
         {/* Header Section */}
-        <section className="bg-[#002f26] pt-24 pb-32 relative overflow-hidden">
+        <section className="bg-[#064e40] pt-24 pb-32 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(45,212,191,0.1),transparent)]" />
           <div className="max-w-7xl mx-auto px-4 lg:px-8 relative z-10 text-center">
             <motion.div
@@ -183,7 +183,7 @@ export default function LiveTests() {
                           className={`w-full py-4 rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all flex items-center justify-center gap-2 ${
                             isEnded 
                               ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
-                              : 'bg-[#002f26] text-white hover:bg-[#001f19] shadow-xl shadow-slate-200'
+                              : 'bg-[#064e40] text-white hover:bg-[#001f19] shadow-xl shadow-slate-200'
                           }`}
                           disabled={isEnded}
                         >
@@ -207,7 +207,7 @@ export default function LiveTests() {
         {/* Premium Upgrade CTA */}
         <section className="bg-white py-24">
           <div className="max-w-7xl mx-auto px-4 lg:px-8">
-            <div className="bg-[#002f26] rounded-[3.5rem] p-12 md:p-20 relative overflow-hidden">
+            <div className="bg-[#064e40] rounded-[3.5rem] p-12 md:p-20 relative overflow-hidden">
               <div className="absolute left-0 top-0 w-full h-full bg-[radial-gradient(circle_at_100%_0%,rgba(45,212,191,0.15),transparent)] pointer-events-none" />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
                 <div>

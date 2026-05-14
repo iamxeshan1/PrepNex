@@ -136,7 +136,7 @@ export default function PushNotifications() {
               <div className="pt-6 border-t border-slate-50">
                  <button
                    type="submit" disabled={sending}
-                   className="w-full py-5 bg-[#002f26] text-white rounded-[2rem] font-black uppercase tracking-[0.3em] text-[10px] shadow-2xl hover:bg-black transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-4 disabled:opacity-50"
+                   className="w-full py-5 bg-[#064e40] text-white rounded-[2rem] font-black uppercase tracking-[0.3em] text-[10px] shadow-2xl hover:bg-black transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-4 disabled:opacity-50"
                  >
                    {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                    {sending ? 'Projecting Signal...' : 'Initiate Broadcast Cycle'}

@@ -54,7 +54,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             {/* Left side: Logo & Links */}
             <div className="flex items-center gap-8 xl:gap-12">
               <Link to="/" className="flex items-center">
-                <span className="font-logo font-black text-4xl tracking-tight text-[#002f26]">PrepNext</span>
+                <span className="font-logo font-black text-4xl tracking-tight text-[#064e40]">PrepNext</span>
               </Link>
 
               <div className="hidden lg:flex items-center gap-10">
@@ -83,7 +83,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                     </button>
                     <button onClick={handleLogout} className="text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">Log Out</button>
                     <Link to="/profile" className="w-9 h-9 rounded-full overflow-hidden border border-slate-200 cursor-pointer hover:border-teal-500 transition-colors">
-                      <img src={`https://ui-avatars.com/api/?name=${user.email || 'User'}&background=0D8ABC&color=fff`} alt="User" className="w-full h-full object-cover" width="36" height="36" fetchpriority="high" />
+                      <img src={`https://ui-avatars.com/api/?name=${user.email || 'User'}&background=0D8ABC&color=fff`} alt="User" className="w-full h-full object-cover" width="36" height="36" fetchPriority="high" />
                     </Link>
                   </div>
                 ) : (
@@ -222,7 +222,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       </main>
 
       {/* Footer */}
-      <footer className="bg-[#002f26] py-20 relative overflow-hidden mt-12">
+      <footer className="bg-[#064e40] py-20 relative overflow-hidden mt-12">
         {/* Glow Effects */}
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03] mix-blend-overlay"></div>
         <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-teal-500/10 blur-[120px] pointer-events-none" />
@@ -232,7 +232,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             <div className="grid grid-cols-1 md:grid-cols-9 gap-12 mb-16">
               <div className="col-span-1 md:col-span-4">
                 <Link to="/" className="inline-block mb-6">
-                  <span className="font-logo font-black text-3xl tracking-tight text-white drop-shadow-md">Prep<span className="text-teal-400">Next</span></span>
+                  <span className="font-logo font-black text-3xl tracking-tight text-white drop-shadow-md">PrepNext</span>
                 </Link>
                 <p className="text-slate-400 text-sm font-medium leading-relaxed pr-8 lg:pr-12 mb-8">
                   Empowering candidates through technology-led education and rigorous exam preparation frameworks.

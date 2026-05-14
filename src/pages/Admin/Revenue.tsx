@@ -164,7 +164,7 @@ export default function AdminRevenue() {
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm mb-10">
         <div className="p-8 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-xl font-black text-slate-900">Revenue Trends</h3>
-          <button onClick={exportTransactions} className="flex items-center gap-2 px-4 py-2 bg-[#002f26] text-white rounded-lg text-sm font-semibold hover:bg-[#001f19]">
+          <button onClick={exportTransactions} className="flex items-center gap-2 px-4 py-2 bg-[#064e40] text-white rounded-lg text-sm font-semibold hover:bg-[#001f19]">
             <Download className="w-4 h-4" /> Export Data
           </button>
         </div>

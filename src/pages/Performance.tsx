@@ -156,7 +156,7 @@ export default function Performance() {
                  <button className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 flex items-center gap-2">
                     <Filter className="w-4 h-4" /> Reset Filters
                  </button>
-                 <button className="px-4 py-2 bg-[#002f26] text-white rounded-xl text-xs font-bold flex items-center gap-2">
+                 <button className="px-4 py-2 bg-[#064e40] text-white rounded-xl text-xs font-bold flex items-center gap-2">
                     <Download className="w-4 h-4" /> Export Report
                  </button>
               </div>
@@ -255,7 +255,7 @@ export default function Performance() {
                           type="category" 
                           axisLine={false} 
                           tickLine={false} 
-                          tick={{ fontSize: 10, fontWeight: 700, fill: '#002f26' }}
+                          tick={{ fontSize: 10, fontWeight: 700, fill: '#064e40' }}
                           width={80}
                         />
                         <Tooltip 

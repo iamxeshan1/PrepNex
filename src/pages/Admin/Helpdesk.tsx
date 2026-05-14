@@ -165,7 +165,7 @@ export default function AdminHelpdesk() {
                         <div className={`max-w-[85%] p-6 rounded-[2rem] border-2 shadow-sm ${
                           msg.sender === 'user' 
                             ? 'bg-white border-slate-100 rounded-tl-none' 
-                            : 'bg-[#002f26] border-[#002f26] text-white rounded-tr-none'
+                            : 'bg-[#064e40] border-[#064e40] text-white rounded-tr-none'
                         }`}>
                           <div className="flex items-center gap-2 mb-2">
                              <div className={`w-1.5 h-1.5 rounded-full ${msg.sender === 'user' ? 'bg-teal-500' : 'bg-emerald-500'}`} />
@@ -194,7 +194,7 @@ export default function AdminHelpdesk() {
                     <button 
                       onClick={() => handleReply(ticket.id)}
                       disabled={submitting === ticket.id || !replyText[ticket.id]}
-                      className="absolute right-4 bottom-4 p-5 bg-[#002f26] text-white rounded-2xl hover:bg-black transition-all disabled:opacity-30 shadow-2xl active:scale-95 transform hover:-translate-x-1"
+                      className="absolute right-4 bottom-4 p-5 bg-[#064e40] text-white rounded-2xl hover:bg-black transition-all disabled:opacity-30 shadow-2xl active:scale-95 transform hover:-translate-x-1"
                     >
                       {submitting === ticket.id ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
                     </button>

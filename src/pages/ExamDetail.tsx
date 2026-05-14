@@ -194,7 +194,7 @@ export default function ExamDetail() {
                              {!test.isFree && !unlocked && <span className="text-[10px] font-black uppercase text-amber-600 bg-amber-50 px-2.5 py-1.5 rounded-lg">Premium</span>}
                           </div>
                           {unlocked ? (
-                            <button onClick={() => navigate(`/test/${test.id}`)} className="px-5 py-2.5 sm:px-6 sm:py-3 bg-[#002f26] text-white font-black rounded-xl text-sm hover:bg-[#006e5d] transition-all whitespace-nowrap">Start</button>
+                            <button onClick={() => navigate(`/test/${test.id}`)} className="px-5 py-2.5 sm:px-6 sm:py-3 bg-[#064e40] text-white font-black rounded-xl text-sm hover:bg-[#006e5d] transition-all whitespace-nowrap">Start</button>
                           ) : (
                             <button className="px-5 py-2.5 sm:px-6 sm:py-3 bg-slate-50 text-slate-500 font-bold rounded-xl text-sm border border-slate-200 flex items-center justify-center w-full sm:w-auto gap-2 whitespace-nowrap"><Lock className="w-4 h-4" /> Locked</button>
                           )}
@@ -210,7 +210,7 @@ export default function ExamDetail() {
           <div className="lg:col-span-1 lg:row-span-2 order-2 lg:order-none">
              <div className="sticky top-24 space-y-8">
                {/* Premium Access Card */}
-               <div className="bg-[#002f26] rounded-3xl p-8 text-white">
+               <div className="bg-[#064e40] rounded-3xl p-8 text-white">
                   <div className="flex items-center gap-2 text-[#f59e0b] text-[10px] font-black uppercase tracking-widest mb-4">
                      <Award className="w-4 h-4" />
                      <span>Premium Access</span>
@@ -228,7 +228,7 @@ export default function ExamDetail() {
                     </button>
                   ) : (
                     <div className="space-y-3">
-                      <button onClick={handlePurchaseClick} className="w-full py-4 bg-[#002f26] text-white font-black rounded-xl hover:bg-[#006e5d] transition-all flex items-center justify-center gap-2">{exam.isPaid ? 'Enroll Now' : 'Enroll Free'} <ChevronLeft className="w-4 h-4 rotate-180" /></button>
+                      <button onClick={handlePurchaseClick} className="w-full py-4 bg-teal-600 text-white font-black rounded-xl hover:bg-teal-700 transition-all flex items-center justify-center gap-2">{exam.isPaid ? 'Enroll Now' : 'Enroll Free'} <ChevronLeft className="w-4 h-4 rotate-180" /></button>
                       <button onClick={() => navigate('/premium')} className="w-full py-4 bg-amber-500/10 text-amber-500 border-2 border-amber-500/20 font-black rounded-xl hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all flex items-center justify-center gap-2 group">
                          Unlock ALL Exams with Premium
                          <Crown className="w-4 h-4 group-hover:scale-110 transition-transform" />

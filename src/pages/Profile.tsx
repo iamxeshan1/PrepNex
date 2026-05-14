@@ -79,7 +79,7 @@ export default function Profile() {
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-[#002f26]/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-[#064e40]/50 z-40 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}

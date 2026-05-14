@@ -270,7 +270,7 @@ export default function Premium() {
           name: user.displayName || '',
           email: user.email || ''
         },
-        theme: { color: "#002f26" },
+        theme: { color: "#064e40" },
         modal: {
           ondismiss: () => setPurchaseLoading(false)
         },
@@ -335,7 +335,7 @@ export default function Premium() {
   return (
     <Layout>
       <div className="min-h-screen bg-slate-50 font-sans text-[#001f19] pb-32">
-        <section className="bg-[#002f26] text-white pt-24 pb-48 relative overflow-hidden">
+        <section className="bg-[#064e40] text-white pt-24 pb-48 relative overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 text-center relative z-10">
             {targetExam && (
               <Link to={`/exam/${examId}`} className="inline-flex items-center gap-2 text-white/70 hover:text-white font-bold text-xs uppercase tracking-widest mb-6 transition-colors">
@@ -354,7 +354,7 @@ export default function Premium() {
                  : `Join thousands of top scorers. Choose the plan that best fits your timeline and get unlimited access to all tests.`}
             </p>
           </div>
-          <div className="absolute inset-0 bg-[#002f26]/20 pointer-events-none mix-blend-overlay"></div>
+          <div className="absolute inset-0 bg-[#064e40]/20 pointer-events-none mix-blend-overlay"></div>
         </section>
 
         <section className="max-w-5xl mx-auto px-4 -mt-32 relative z-20">
@@ -364,7 +364,7 @@ export default function Premium() {
             <div className="flex-1 p-8 md:p-12 border-r border-slate-100">
               {targetExam ? (
                 <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                   <div className="w-20 h-20 bg-[#002f26]/10 rounded-[2rem] flex items-center justify-center text-slate-900 mb-6">
+                   <div className="w-20 h-20 bg-[#064e40]/10 rounded-[2rem] flex items-center justify-center text-slate-900 mb-6">
                       <Layers className="w-10 h-10" />
                    </div>
                    <h2 className="text-2xl font-black text-[#001f19] mb-2">{targetExam.name}</h2>
@@ -377,13 +377,13 @@ export default function Premium() {
                   <h2 className="text-2xl font-black text-[#001f19] mb-6">Select your plan</h2>
                   <div className="space-y-4">
                     {plans.map(plan => (
-                       <label key={plan.id} className={`cursor-pointer block relative rounded-2xl border-2 transition-all p-5 hover:border-[#002f26]/50 ${selectedPlanId === plan.id ? 'border-[#002f26] bg-[#002f26]/5' : 'border-slate-100 bg-white'}`}>
+                       <label key={plan.id} className={`cursor-pointer block relative rounded-2xl border-2 transition-all p-5 hover:border-[#064e40]/50 ${selectedPlanId === plan.id ? 'border-[#064e40] bg-[#064e40]/5' : 'border-slate-100 bg-white'}`}>
                           <input type="radio" className="hidden" name="premium_plan" value={plan.id} checked={selectedPlanId === plan.id} onChange={() => setSelectedPlanId(plan.id)} />
                           {plan.isPopular && <div className="absolute -top-3 right-6 bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-sm">Popular</div>}
                           <div className="flex items-center justify-between">
                              <div className="flex items-center gap-4">
-                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedPlanId === plan.id ? 'border-[#002f26]' : 'border-slate-300'}`}>
-                                   {selectedPlanId === plan.id && <div className="w-3 h-3 bg-[#002f26] rounded-full" />}
+                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedPlanId === plan.id ? 'border-[#064e40]' : 'border-slate-300'}`}>
+                                   {selectedPlanId === plan.id && <div className="w-3 h-3 bg-[#064e40] rounded-full" />}
                                 </div>
                                 <div>
                                    <div className="text-lg font-black text-[#001f19]">{plan.name}</div>
@@ -404,7 +404,7 @@ export default function Premium() {
             </div>
             
             {/* Right side: Payment / Coupon */}
-            <div className="w-full md:w-[400px] bg-[#002f26] p-8 md:p-12 flex flex-col justify-between rounded-r-[2rem] md:rounded-r-[2rem] rounded-b-[2rem] md:rounded-l-none">
+            <div className="w-full md:w-[400px] bg-[#064e40] p-8 md:p-12 flex flex-col justify-between rounded-r-[2rem] md:rounded-r-[2rem] rounded-b-[2rem] md:rounded-l-none">
               <div>
                 <h3 className="text-lg font-black text-white mb-6">Order Summary</h3>
                 <div className="space-y-4 mb-6 text-sm font-semibold text-slate-300">
@@ -470,7 +470,7 @@ export default function Premium() {
                 <button
                   onClick={handlePurchase}
                   disabled={purchaseLoading || plans.length === 0}
-                  className="w-full py-4 bg-[#002f26] text-white rounded-xl font-black text-lg shadow-lg shadow-[#002f26]/30 hover:bg-[#006e5d] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none"
+                  className="w-full py-4 bg-[#064e40] text-white rounded-xl font-black text-lg shadow-lg shadow-[#064e40]/30 hover:bg-[#006e5d] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none"
                 >
                   {purchaseLoading ? 'Processing...' : (finalPrice === 0 ? 'Activate Free' : `Pay ₹${finalPrice}`)}
                 </button>

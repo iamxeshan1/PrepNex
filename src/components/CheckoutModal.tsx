@@ -305,7 +305,7 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
           className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100"
         >
           {/* Header */}
-          <div className="bg-teal-600 p-6 text-white relative">
+          <div className="bg-[#002f26] p-6 text-white relative">
             <button 
               onClick={onClose}
               className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full transition-colors"
@@ -338,7 +338,7 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
             {hasCoupon === null ? (
               <div className="space-y-4">
                 <p className="text-center text-sm font-bold text-slate-600">Do you have a coupon code?</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <button 
                     onClick={() => setHasCoupon(true)}
                     className="py-3 bg-teal-50 text-teal-600 rounded-xl font-bold border-2 border-transparent hover:border-teal-200 transition-all flex items-center justify-center gap-2"

@@ -44,7 +44,7 @@ export default function About() {
       <div className="pt-24 pb-20 px-4 bg-slate-50">
         <div className="max-w-7xl mx-auto">
           {/* Hero Section */}
-          <section className="relative mb-24 overflow-hidden rounded-[3rem] bg-[#002f26] text-white p-8 md:p-20">
+          <section className="relative mb-24 overflow-hidden rounded-[3rem] bg-[#064e40] text-white p-8 md:p-20">
             <div className="absolute top-0 right-0 w-96 h-96 bg-[#2dd4bf]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
             

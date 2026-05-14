@@ -157,7 +157,7 @@ export default function AdminSubscriptions() {
         </div>
         <button 
           onClick={exportSubscriptions}
-          className="px-8 py-4 bg-[#002f26] text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:bg-black transition-all transform hover:-translate-y-1 active:scale-95 flex items-center gap-3"
+          className="px-8 py-4 bg-[#064e40] text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:bg-black transition-all transform hover:-translate-y-1 active:scale-95 flex items-center gap-3"
         >
           <Download className="w-5 h-5 flex-shrink-0" /> Extract Ledger
         </button>
@@ -202,7 +202,7 @@ export default function AdminSubscriptions() {
             <button
               key={type}
               onClick={() => setFilterType(type)}
-              className={`px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all ${filterType === type ? 'bg-[#002f26] text-white shadow-lg' : 'text-slate-400 hover:text-teal-600 hover:bg-slate-50'}`}
+              className={`px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all ${filterType === type ? 'bg-[#064e40] text-white shadow-lg' : 'text-slate-400 hover:text-teal-600 hover:bg-slate-50'}`}
             >
               {type} Nodes
             </button>
@@ -310,7 +310,7 @@ export default function AdminSubscriptions() {
         )}
       </div>
 
-      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-[#002f26] py-4 px-8 rounded-full shadow-2xl flex items-center gap-6 z-40 border border-[#001f19]">
+      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-[#064e40] py-4 px-8 rounded-full shadow-2xl flex items-center gap-6 z-40 border border-[#001f19]">
          <div className="flex items-center gap-3">
             <Shield className="w-4 h-4 text-emerald-400" />
             <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Institutional Privacy Enforced</span>

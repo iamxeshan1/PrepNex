@@ -370,7 +370,7 @@ export default function Test() {
           </div>
           <button 
             onClick={() => handleSubmit()}
-            className="bg-[#002f26] text-white px-4 py-2 md:px-6 md:py-2.5 rounded-md font-medium text-xs md:text-sm hover:bg-[#001f19] transition-all"
+            className="bg-[#064e40] text-white px-4 py-2 md:px-6 md:py-2.5 rounded-md font-medium text-xs md:text-sm hover:bg-[#001f19] transition-all"
           >
             Submit Test
           </button>

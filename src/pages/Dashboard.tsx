@@ -355,7 +355,7 @@ export default function Dashboard() {
 
                   {/* Welcome Panel */}
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 bg-[#002f26] text-white p-6 md:p-10 rounded-[2rem] flex flex-col justify-center relative overflow-hidden">
+                    <div className="lg:col-span-2 bg-[#064e40] text-white p-6 md:p-10 rounded-[2rem] flex flex-col justify-center relative overflow-hidden">
                       <h1 className="text-2xl md:text-4xl font-black mb-3">Welcome back, {profile?.name || 'Aspirant'}!</h1>
                       <p className="text-slate-400 mb-6 md:mb-8 text-sm md:text-base max-w-lg">You're in the top 5% of aspirants this week. Keep up the momentum to secure your spot.</p>
                       <div className="flex flex-col sm:flex-row gap-4">
@@ -596,7 +596,7 @@ export default function Dashboard() {
                         <button onClick={handleDoubtClick} className="bg-[#4a2406] text-white p-4 rounded-2xl font-bold text-center flex items-center justify-center gap-2">
                              <HelpCircle className="w-5 h-5"/> Doubt Hub
                         </button>
-                        <Link to="/helpdesk" className="bg-[#002f26] text-white p-4 rounded-2xl font-bold text-center flex items-center justify-center gap-2 transition hover:bg-black">
+                        <Link to="/helpdesk" className="bg-[#064e40] text-white p-4 rounded-2xl font-bold text-center flex items-center justify-center gap-2 transition hover:bg-black">
                              <MessageCircle className="w-5 h-5"/> Support Ticket
                         </Link>
                     </div>

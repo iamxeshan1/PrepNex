@@ -220,7 +220,7 @@ export default function UserPerformance() {
                       type="category" 
                       axisLine={false} 
                       tickLine={false} 
-                      tick={{ fontSize: 10, fontWeight: 700, fill: '#002f26' }}
+                      tick={{ fontSize: 10, fontWeight: 700, fill: '#064e40' }}
                       width={80}
                     />
                     <Tooltip 

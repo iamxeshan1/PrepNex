@@ -431,7 +431,7 @@ export default function AdminUsers() {
       </div>
 
       {showEditModal && selectedUser && (
-        <div className="fixed inset-0 bg-[#002f26]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-[#064e40]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-200">
             <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
                <div>
@@ -476,7 +476,7 @@ export default function AdminUsers() {
         </div>
       )}
       {showPrivilegeModal && selectedUser && (
-        <div className="fixed inset-0 bg-[#002f26]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-[#064e40]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-200">
             <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
                <div>
@@ -489,7 +489,7 @@ export default function AdminUsers() {
             </div>
 
             <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
-              <div className="p-6 bg-[#002f26] rounded-xl text-white">
+              <div className="p-6 bg-[#064e40] rounded-xl text-white">
                  <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-4">
                        <Crown className="w-8 h-8 text-amber-400" />
@@ -539,7 +539,7 @@ export default function AdminUsers() {
             </div>
             
             <div className="p-6 border-t border-slate-200 bg-slate-50 flex justify-end">
-               <button onClick={() => setShowPrivilegeModal(false)} className="px-6 py-2.5 bg-[#002f26] text-white rounded-lg font-semibold hover:bg-[#001f19] transition-colors">
+               <button onClick={() => setShowPrivilegeModal(false)} className="px-6 py-2.5 bg-[#064e40] text-white rounded-lg font-semibold hover:bg-[#001f19] transition-colors">
                   Close
                </button>
             </div>
@@ -548,7 +548,7 @@ export default function AdminUsers() {
       )}
 
       {showDeleteModal && selectedUser && (
-        <div className="fixed inset-0 bg-[#002f26]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-[#064e40]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white max-w-sm w-full rounded-2xl p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-200">
             <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center mb-4">
               <Trash2 className="w-6 h-6 text-rose-600" />
@@ -574,7 +574,7 @@ export default function AdminUsers() {
       )}
 
       {showPurchasesModal && selectedUser && (
-        <div className="fixed inset-0 bg-[#002f26]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-[#064e40]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-3xl rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-200 flex flex-col max-h-[85vh]">
             <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
                <div>

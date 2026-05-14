@@ -147,7 +147,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
           <NavGroup id="system" label="System Controls" items={systemItems} />
         </nav>
 
-        <footer className="p-4 border-t border-[#001f19] bg-[#002f26]/50">
+        <footer className="p-4 border-t border-[#001f19] bg-[#064e40]/50">
            <Link 
              to="/admin/helpdesk"
              className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-[#001f19] rounded-lg transition-colors"
