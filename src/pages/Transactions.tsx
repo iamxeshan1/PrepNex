@@ -65,7 +65,7 @@ export default function Transactions() {
       const doc = new jsPDF();
       
       // -- Branded Header Background --
-      doc.setFillColor(13, 148, 136); // Teal 600
+      doc.setFillColor(0, 110, 93); // #006e5d
       doc.rect(0, 0, 220, 40, 'F');
       
       // "PrepNext" Logo Text
@@ -150,7 +150,7 @@ export default function Transactions() {
       doc.text("For support, contact support@prepnext.com", 14, finalY + 21);
       
       // Bottom accent bar
-      doc.setFillColor(13, 148, 136); // Teal 600
+      doc.setFillColor(0, 110, 93); // #006e5d
       const pageHeight = doc.internal.pageSize.height || 297;
       doc.rect(0, pageHeight - 5, 220, 5, 'F');
       
@@ -164,13 +164,13 @@ export default function Transactions() {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto space-y-6 px-4 sm:px-6">
-        <Link to="/dashboard" className="text-teal-600 font-bold flex items-center gap-1 mb-2 hover:underline">
+        <Link to="/dashboard" className="text-[#006e5d] font-bold flex items-center gap-1 mb-2 hover:underline">
           <ArrowLeft size={16} /> Back to Dashboard
         </Link>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-4 border-b border-slate-200">
           <div>
             <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
-              <span className="bg-teal-50 p-2 rounded-xl text-teal-600">
+              <span className="bg-[#006e5d]/5 p-2 rounded-xl text-[#006e5d]">
                 <Receipt className="w-7 h-7" />
               </span>
               Transactions
@@ -182,19 +182,19 @@ export default function Transactions() {
           
           <div className="flex items-center gap-4 w-full md:w-auto">
             <div className="relative group flex-1 md:w-64">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#006e5d] transition-colors" />
               <input 
                 type="text"
                 placeholder="Search transactions..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 font-medium text-sm transition-all placeholder:text-slate-400"
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#006e5d]/20 focus:border-[#006e5d] font-medium text-sm transition-all placeholder:text-slate-400"
               />
             </div>
             {filtered.length > 0 && (
               <button
                 onClick={downloadAllTransactions}
-                className="flex shrink-0 items-center gap-2 px-4 py-2.5 bg-[#064e40] text-white rounded-xl text-sm font-semibold hover:bg-[#001f19] transition-colors shadow-sm"
+                className="flex shrink-0 items-center gap-2 px-4 py-2.5 bg-[#006e5d] text-white rounded-xl text-sm font-semibold hover:bg-[#005a4d] transition-colors shadow-sm"
               >
                 <Download className="w-4 h-4" />
                 <span className="hidden sm:inline">Export PDF</span>
@@ -206,7 +206,7 @@ export default function Transactions() {
         {loading ? (
            <div className="flex justify-center py-32">
               <div className="bg-white p-3 rounded-full shadow-sm border border-slate-100">
-                <Loader2 className="w-6 h-6 text-teal-600 animate-spin" />
+                <Loader2 className="w-6 h-6 text-[#006e5d] animate-spin" />
               </div>
            </div>
         ) : filtered.length === 0 ? (
@@ -255,7 +255,7 @@ export default function Transactions() {
                         </td>
                         <td className="px-6 py-4 align-middle">
                           <div>
-                            <span className="font-semibold text-slate-900 group-hover:text-teal-700 transition-colors block">
+                            <span className="font-semibold text-slate-900 group-hover:text-[#006e5d] transition-colors block">
                               {title}
                             </span>
                             {tx.couponCode && tx.couponCode !== 'NONE' && (

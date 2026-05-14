@@ -44,9 +44,9 @@ export default function About() {
       <div className="pt-24 pb-20 px-4 bg-slate-50">
         <div className="max-w-7xl mx-auto">
           {/* Hero Section */}
-          <section className="relative mb-24 overflow-hidden rounded-[3rem] bg-[#064e40] text-white p-8 md:p-20">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-[#2dd4bf]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+          <section className="relative mb-24 overflow-hidden rounded-[3rem] bg-[#002f26] text-white p-8 md:p-20">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-[#006e5d]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#006e5d]/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
             
             <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
               <motion.div
@@ -54,18 +54,18 @@ export default function About() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-teal-500/10 border border-teal-500/20 rounded-full text-[#2dd4bf] text-[10px] font-black uppercase tracking-widest mb-6">
-                  <span className="w-2 h-2 bg-teal-500 rounded-full animate-pulse" /> Established {settings.establishedYear || '2026'}
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#006e5d]/10 border border-[#006e5d]/20 rounded-full text-[#006e5d] text-[10px] font-black uppercase tracking-widest mb-6">
+                  <span className="w-2 h-2 bg-[#006e5d] rounded-full animate-pulse" /> Established {settings.establishedYear || '2026'}
                 </div>
                 <h1 className="text-4xl md:text-6xl font-sans font-[800] tracking-tight mb-8 leading-[1.1]">
                   Revolutionizing <br/>
-                  <span className="text-teal-400">Competitive Trials</span>
+                  <span className="text-[#006e5d]">Competitive Trials</span>
                 </h1>
                 <p className="text-lg text-slate-400 font-medium leading-relaxed mb-10 max-w-lg">
                   PrepNext is a premier ed-tech ecosystem designed to bridge the gap between traditional learning and modern examination standards.
                 </p>
                 <div className="flex flex-wrap gap-4">
-                  <Link to="/signup" className="bg-teal-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-teal-700 transition-all flex items-center gap-2 shadow-xl shadow-teal-900/20">
+                  <Link to="/signup" className="bg-[#006e5d] text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#005a4d] transition-all flex items-center gap-2 shadow-xl shadow-[#002f26]/20">
                     Get Started <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
@@ -79,21 +79,21 @@ export default function About() {
               >
                 <div className="space-y-4 pt-8">
                   <div className="bg-white/5 border border-white/10 p-8 rounded-3xl backdrop-blur-sm">
-                    <h3 className="text-4xl font-black text-teal-400 mb-1">{settings.aspirantCount || '50k+'}</h3>
+                    <h3 className="text-4xl font-black text-[#006e5d] mb-1">{settings.aspirantCount || '50k+'}</h3>
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Students</p>
                   </div>
                   <div className="bg-white/5 border border-white/10 p-8 rounded-3xl backdrop-blur-sm">
-                    <h3 className="text-4xl font-black text-teal-400 mb-1">{settings.totalTests || '1.2k+'}</h3>
+                    <h3 className="text-4xl font-black text-[#006e5d] mb-1">{settings.totalTests || '1.2k+'}</h3>
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Mocks</p>
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <div className="bg-teal-500 p-8 rounded-3xl shadow-2xl shadow-teal-500/20">
+                  <div className="bg-[#006e5d] p-8 rounded-3xl shadow-2xl shadow-[#006e5d]/20">
                     <h3 className="text-4xl font-black text-slate-900 mb-1">{settings.successRate || '98%'}</h3>
                     <p className="text-xs font-bold text-slate-900/70 uppercase tracking-widest">Accuracy</p>
                   </div>
                   <div className="bg-white/5 border border-white/10 p-8 rounded-3xl backdrop-blur-sm">
-                    <h3 className="text-4xl font-black text-teal-400 mb-1">24/7</h3>
+                    <h3 className="text-4xl font-black text-[#006e5d] mb-1">24/7</h3>
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Mentorship</p>
                   </div>
                 </div>
@@ -104,7 +104,7 @@ export default function About() {
           {/* Core Values */}
           <section className="mb-24">
             <div className="text-center mb-16">
-              <h2 className="text-[10px] font-black text-teal-600 uppercase tracking-[0.4em] mb-4">Our Core Philosophy</h2>
+              <h2 className="text-[10px] font-black text-[#006e5d] uppercase tracking-[0.4em] mb-4">Our Core Philosophy</h2>
               <h3 className="text-4xl font-sans font-[800] text-slate-900 tracking-tight">The PrepNext Foundation</h3>
             </div>
             
@@ -120,7 +120,7 @@ export default function About() {
                     transition={{ delay: i * 0.1 }}
                     className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group"
                   >
-                    <div className="w-16 h-16 bg-slate-50 flex items-center justify-center rounded-2xl mb-8 group-hover:bg-teal-600 group-hover:text-white transition-all duration-500">
+                    <div className="w-16 h-16 bg-slate-50 flex items-center justify-center rounded-2xl mb-8 group-hover:bg-[#006e5d] group-hover:text-white transition-all duration-500">
                       <Icon className="w-8 h-8" />
                     </div>
                     <h3 className="text-xl font-[800] text-slate-900 tracking-tight mb-4">{v.title}</h3>
@@ -137,9 +137,9 @@ export default function About() {
                <div className="aspect-square bg-slate-200 rounded-[4rem] overflow-hidden">
                  <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&auto=format&fit=crop" loading="lazy" decoding="async" width="800" height="800" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000" alt="Students" />
                </div>
-               <div className="absolute -bottom-10 -right-10 bg-white p-8 rounded-3xl shadow-2xl shadow-slate-200 border border-slate-100 hidden md:block">
+                <div className="absolute -bottom-10 -right-10 bg-white p-8 rounded-3xl shadow-2xl shadow-slate-200 border border-slate-100 hidden md:block">
                   <div className="flex items-center gap-4">
-                     <div className="w-12 h-12 bg-teal-100 rounded-2xl flex items-center justify-center text-teal-600">
+                     <div className="w-12 h-12 bg-[#006e5d]/10 rounded-2xl flex items-center justify-center text-[#006e5d]">
                         <CheckCircle2 className="w-6 h-6" />
                      </div>
                      <div>
@@ -152,7 +152,7 @@ export default function About() {
             
             <div className="space-y-8">
               <h2 className="text-4xl md:text-5xl font-sans font-[800] text-slate-900 tracking-tight leading-tight">
-                Why we built <span className="text-teal-600">PrepNext?</span>
+                Why we built <span className="text-[#006e5d]">PrepNext?</span>
               </h2>
               <p className="text-lg text-slate-600 font-medium leading-relaxed">
                 We observed a significant gap in the quality of test series accessible to aspirants. PrepNext was born out of the need for high-fidelity simulations that actually reflect the complexity of real examinations.
@@ -165,7 +165,7 @@ export default function About() {
                   "Expert curated subject matter"
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
-                    <CheckCircle2 className="w-5 h-5 text-teal-600" />
+                    <CheckCircle2 className="w-5 h-5 text-[#006e5d]" />
                     <span className="text-sm font-bold text-slate-700 uppercase tracking-tight">{item}</span>
                   </div>
                 ))}

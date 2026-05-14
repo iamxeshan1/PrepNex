@@ -62,7 +62,7 @@ export default function Exams() {
               onClick={() => setActiveTab(agency.id)}
               className={`shrink-0 px-6 py-2.5 rounded-full text-[11px] font-black tracking-widest uppercase transition-all ${
                 activeTab === agency.id 
-                  ? 'bg-[#006e5d] text-white shadow-lg shadow-[#064e40]/20' 
+                  ? 'bg-[#006e5d] text-white shadow-lg shadow-[#006e5d]/20' 
                   : 'bg-white text-slate-400 border border-slate-200 hover:border-slate-300'
               }`}
             >
@@ -84,7 +84,7 @@ export default function Exams() {
                  key={exam.id}
                  whileHover={{ y: -8 }}
                  onClick={() => navigate(`/exam/${exam.id}`)} 
-                 className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-xl hover:border-[#064e40]/20 transition-all cursor-pointer group flex flex-col"
+                 className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-xl hover:border-[#006e5d]/20 transition-all cursor-pointer group flex flex-col"
               >
                 <div className="flex justify-between items-start mb-6">
                    <div className="flex items-center gap-3">
@@ -101,7 +101,7 @@ export default function Exams() {
                      <span className="bg-[#b91c1c] text-white text-[8px] font-black px-2 py-1 rounded-md tracking-widest uppercase shrink-0">MOST POPULAR</span>
                    )}
                    {exam.isNew && (
-                     <span className="bg-[#ccfbf1] text-[#0f766e] text-[8px] font-black px-2 py-1 rounded-md tracking-widest uppercase shrink-0">NEW BATCH</span>
+                     <span className="bg-[#006e5d]/10 text-[#006e5d] text-[8px] font-black px-2 py-1 rounded-md tracking-widest uppercase shrink-0">NEW BATCH</span>
                    )}
                 </div>
                 
@@ -123,7 +123,7 @@ export default function Exams() {
                        <CheckCircle2 className="w-3.5 h-3.5" /> ENROLLED
                     </div>
                   ) : (
-                    <button className="px-4 py-2 bg-teal-600 text-white rounded-lg text-[10px] font-black tracking-[0.05em] uppercase hover:bg-teal-700 transition-all">
+                    <button className="px-4 py-2 bg-[#006e5d] text-white rounded-lg text-[10px] font-black tracking-[0.05em] uppercase hover:bg-[#005a4d] transition-all">
                       {exam.isPaid ? 'ENROLL NOW' : 'TRY FREE'}
                     </button>
                   )}
@@ -133,19 +133,19 @@ export default function Exams() {
           ) : (
             <div className="col-span-full py-20 text-center bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl">
                <p className="text-slate-500 font-bold">No exams found.</p>
-               <button onClick={() => setActiveTab('All')} className="mt-4 text-teal-600 font-bold hover:underline">Clear all filters</button>
+               <button onClick={() => setActiveTab('All')} className="mt-4 text-[#006e5d] font-bold hover:underline">Clear all filters</button>
             </div>
           )}
         </div>
 
         {/* Unlock Pass Section */}
-        <div className="bg-[#064e40] rounded-[2rem] p-12 text-white flex flex-col md:flex-row items-center justify-between gap-12 overflow-hidden relative">
+        <div className="bg-[#002f26] rounded-[2rem] p-12 text-white flex flex-col md:flex-row items-center justify-between gap-12 overflow-hidden relative">
           <div className="relative z-10 max-w-lg">
             <h2 className="text-4xl font-display font-black tracking-tight mb-6">Unlock All Exams with One Pass</h2>
             <p className="text-slate-400 font-medium text-base mb-8">Get unlimited access to 500+ test series, previous year papers, and detailed performance analytics.</p>
-            <button onClick={() => navigate('/premium')} className="bg-[#064e40] hover:bg-[#006e5d] text-white font-black px-8 py-4 rounded-xl transition-all shadow-lg shadow-[#064e40]/20">Get Ultimate Pass</button>
+            <button onClick={() => navigate('/premium')} className="bg-[#006e5d] hover:bg-[#005a4d] text-white font-black px-8 py-4 rounded-xl transition-all shadow-lg shadow-[#006e5d]/20">Get Ultimate Pass</button>
           </div>
-          <div className="relative z-10 hidden md:block w-72 h-48 bg-[#001f19] rounded-xl opacity-50 flex items-center justify-center">
+          <div className="relative z-10 hidden md:block w-72 h-48 bg-[#002f26] rounded-xl opacity-50 flex items-center justify-center">
             {/* Replace with an image placeholder or illustration */}
             <FileText className="w-16 h-16 text-slate-600" />
           </div>

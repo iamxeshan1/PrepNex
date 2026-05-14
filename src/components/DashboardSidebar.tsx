@@ -35,7 +35,7 @@ export const DashboardSidebar = () => {
     <div className="w-full h-full bg-white border-r border-slate-100 p-6 flex flex-col justify-between">
       <div>
         <Link to="/" className="flex items-center mb-10 px-2 lg:px-4">
-            <span className="font-logo font-black text-2xl lg:text-3xl tracking-tight text-[#064e40]">PrepNext</span>
+            <span className="font-logo font-black text-2xl lg:text-3xl tracking-tight text-[#002f26]">PrepNext</span>
         </Link>
         <nav className="space-y-2">
           {navItems.map((item) => (
@@ -43,7 +43,7 @@ export const DashboardSidebar = () => {
               key={item.name} 
               to={item.path}
               className={`flex items-center gap-3 px-2 lg:px-4 py-3 rounded-2xl font-bold transition-all ${
-                isActive(item.path) ? 'bg-teal-50 text-teal-700' : 'text-slate-500 hover:bg-slate-50 hover:text-black'
+                isActive(item.path) ? 'bg-[#006e5d]/5 text-[#006e5d]' : 'text-slate-500 hover:bg-slate-50 hover:text-black'
               }`}
             >
               <item.icon className="w-5 h-5" />

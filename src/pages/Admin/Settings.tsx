@@ -177,7 +177,7 @@ export default function AdminSettings() {
              <button 
                 type="submit" 
                 disabled={saving || loading}
-                className="px-10 py-5 bg-[#064e40] text-white rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-2xl hover:bg-black transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
+                className="px-10 py-5 bg-[#006e5d] text-white rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-2xl hover:bg-black transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
               >
                 <Save className="w-5 h-5" /> {saving ? 'Indexing...' : 'Commit All Settings'}
               </button>
@@ -204,7 +204,7 @@ export default function AdminSettings() {
 
         {loading && !message && (
           <div className="py-32 flex flex-col items-center justify-center space-y-4 opacity-50 bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
-             <div className="w-12 h-12 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin"></div>
+             <div className="w-12 h-12 border-4 border-slate-200 border-t-[#006e5d] rounded-full animate-spin"></div>
              <p className="text-sm font-black text-slate-400 uppercase tracking-widest">Bridging Cloud Repository...</p>
           </div>
         )}
@@ -214,7 +214,7 @@ export default function AdminSettings() {
               {/* General Platform Controls */}
               <section className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-10 relative overflow-hidden group">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-teal-50 border border-teal-100 rounded-2xl flex items-center justify-center text-teal-600 shadow-sm">
+                  <div className="w-14 h-14 bg-[#006e5d]/5 border border-[#006e5d]/10 rounded-2xl flex items-center justify-center text-[#006e5d] shadow-sm">
                     <Globe className="w-7 h-7" />
                   </div>
                   <div>
@@ -226,18 +226,18 @@ export default function AdminSettings() {
                 <div className="space-y-6">
                    <div className="bg-slate-50 p-8 rounded-3xl border border-slate-200 shadow-inner space-y-6">
                       <div className="space-y-3">
-                         <label className="text-[10px] font-black text-teal-600 uppercase tracking-widest ml-1">Landing Page: Main Hero Heading</label>
+                         <label className="text-[10px] font-black text-[#006e5d] uppercase tracking-widest ml-1">Landing Page: Main Hero Heading</label>
                          <input 
-                           className="w-full px-8 py-5 bg-white border border-slate-200 rounded-[2rem] outline-none focus:ring-4 focus:ring-teal-500/10 font-black text-[#001f19] text-2xl"
+                           className="w-full px-8 py-5 bg-white border border-slate-200 rounded-[2rem] outline-none focus:ring-4 focus:ring-[#006e5d]/10 font-black text-[#001f19] text-2xl"
                            value={heroHeading} onChange={(e) => setHeroHeading(e.target.value)} 
                            placeholder="Master Exams with | Confidence."
                          />
                          <p className="text-[9px] font-bold text-slate-400 italic px-4">Pro-tip: Use a '|' to separate the main text from the colored highlight word.</p>
                       </div>
                       <div className="space-y-3">
-                         <label className="text-[10px] font-black text-teal-600 uppercase tracking-widest ml-1">Landing Page: Hero Sub-Tagline</label>
+                         <label className="text-[10px] font-black text-[#006e5d] uppercase tracking-widest ml-1">Landing Page: Hero Sub-Tagline</label>
                          <textarea 
-                           className="w-full px-8 py-5 bg-white border border-slate-200 rounded-[2rem] outline-none focus:ring-4 focus:ring-teal-500/10 font-bold text-slate-600 text-lg h-32 resize-none"
+                           className="w-full px-8 py-5 bg-white border border-slate-200 rounded-[2rem] outline-none focus:ring-4 focus:ring-[#006e5d]/10 font-bold text-slate-600 text-lg h-32 resize-none"
                            value={heroTagline} onChange={(e) => setHeroTagline(e.target.value)} 
                            placeholder="Get the most comprehensive mock tests and AI-driven performance insights."
                          />
@@ -246,23 +246,23 @@ export default function AdminSettings() {
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-3">
                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Active Aspirant Count</label>
-                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-teal-500/5 font-bold" value={aspirantCount} onChange={(e) => setAspirantCount(e.target.value)} />
+                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-[#006e5d]/5 font-bold" value={aspirantCount} onChange={(e) => setAspirantCount(e.target.value)} />
                       </div>
                       <div className="space-y-3">
                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Total Mock Tests</label>
-                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-teal-500/5 font-bold" value={totalTests} onChange={(e) => setTotalTests(e.target.value)} />
+                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-[#006e5d]/5 font-bold" value={totalTests} onChange={(e) => setTotalTests(e.target.value)} />
                       </div>
                       <div className="space-y-3">
                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Exams Indexed</label>
-                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-teal-500/5 font-bold" value={examsCovered} onChange={(e) => setExamsCovered(e.target.value)} />
+                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-[#006e5d]/5 font-bold" value={examsCovered} onChange={(e) => setExamsCovered(e.target.value)} />
                       </div>
                       <div className="space-y-3">
                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Institutional Success Rate</label>
-                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-teal-500/5 font-bold" value={successRate} onChange={(e) => setSuccessRate(e.target.value)} />
+                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-[#006e5d]/5 font-bold" value={successRate} onChange={(e) => setSuccessRate(e.target.value)} />
                       </div>
                       <div className="space-y-3">
                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Established Year</label>
-                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-teal-500/5 font-bold" value={establishedYear} onChange={(e) => setEstablishedYear(e.target.value)} />
+                         <input className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-[#006e5d]/5 font-bold" value={establishedYear} onChange={(e) => setEstablishedYear(e.target.value)} />
                       </div>
                    </div>
                 </div>
@@ -336,7 +336,7 @@ export default function AdminSettings() {
 
            <aside className="space-y-8">
               {/* Contact Node */}
-              <div className="bg-[#064e40] text-white p-8 rounded-[3rem] shadow-2xl relative overflow-hidden group">
+              <div className="bg-[#002f26] text-white p-8 rounded-[3rem] shadow-2xl relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-125 transition-transform duration-700" />
                   <div className="relative space-y-8">
                      <div className="flex items-center gap-4">
@@ -392,12 +392,12 @@ export default function AdminSettings() {
                        <input className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 font-bold text-slate-600 text-xs" placeholder="WhatsApp URL" value={socialWhatsapp} onChange={(e) => setSocialWhatsapp(e.target.value)} />
                     </div>
                     <div className="relative group/input">
-                       <MessageSquare className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-teal-500/40 group-focus-within/input:text-teal-500 transition-colors" />
-                       <input className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500/20 font-bold text-slate-600 text-xs" placeholder="Discord URL" value={socialDiscord} onChange={(e) => setSocialDiscord(e.target.value)} />
+                       <MessageSquare className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#006e5d]/40 group-focus-within/input:text-[#006e5d] transition-colors" />
+                       <input className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-[#006e5d]/20 font-bold text-slate-600 text-xs" placeholder="Discord URL" value={socialDiscord} onChange={(e) => setSocialDiscord(e.target.value)} />
                     </div>
                     <div className="relative group/input">
-                       <HelpCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-teal-500/40 group-focus-within/input:text-teal-500 transition-colors" />
-                       <input className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500/20 font-bold text-slate-600 text-xs" placeholder="Doubt Clearing URL (WhatsApp/Telegram)" value={doubtLink} onChange={(e) => setDoubtLink(e.target.value)} />
+                       <HelpCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#006e5d]/40 group-focus-within/input:text-[#006e5d] transition-colors" />
+                       <input className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-[#006e5d]/20 font-bold text-slate-600 text-xs" placeholder="Doubt Clearing URL (WhatsApp/Telegram)" value={doubtLink} onChange={(e) => setDoubtLink(e.target.value)} />
                     </div>
                  </div>
                  <div className="pt-2">

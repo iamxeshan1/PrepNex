@@ -128,7 +128,7 @@ export default function AdminExams() {
         <p className="text-slate-500 font-medium">Manage and monitor high-stakes recruitment and entrance examinations.</p>
         <button 
           onClick={() => { if(showAddForm) { resetForm(); setShowAddForm(false); } else { setShowAddForm(true); } }}
-          className="bg-teal-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-teal-800 transition-colors"
+          className="bg-[#006e5d] text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-[#005a4d] transition-colors"
         >
           {showAddForm ? <X className="w-4 h-4" /> : <Plus className="w-5 h-5" />}
           {showAddForm ? 'Cancel Form' : 'Create New Exam'}
@@ -157,18 +157,18 @@ export default function AdminExams() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Exam Name</label>
-                <input required placeholder="e.g. UPSC CSE" className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" value={name} onChange={(e) => setName(e.target.value)} />
+                <input required placeholder="e.g. UPSC CSE" className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-[#006e5d] focus:border-[#006e5d]" value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Organization</label>
-                <select required className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white" value={agencyId} onChange={(e) => setAgencyId(e.target.value)}>
+                <select required className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-[#006e5d] focus:border-[#006e5d] bg-white" value={agencyId} onChange={(e) => setAgencyId(e.target.value)}>
                   <option value="">Select Governing Body</option>
                   {agencies.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                 </select>
               </div>
               <div>
                  <label className="block text-sm font-semibold text-slate-700 mb-2">Category</label>
-                 <select className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white uppercase" value={cat} onChange={(e) => setCat(e.target.value)}>
+                 <select className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-[#006e5d] focus:border-[#006e5d] bg-white uppercase" value={cat} onChange={(e) => setCat(e.target.value)}>
                     <option value="GOVERNMENT">Government</option>
                     <option value="MEDICAL">Medical</option>
                     <option value="STAFF SELECTION">Staff Selection</option>
@@ -177,7 +177,7 @@ export default function AdminExams() {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Access Type</label>
-                <select className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white" value={isPaid ? 'paid' : 'free'} onChange={(e) => setIsPaid(e.target.value === 'paid')}>
+                <select className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-[#006e5d] focus:border-[#006e5d] bg-white" value={isPaid ? 'paid' : 'free'} onChange={(e) => setIsPaid(e.target.value === 'paid')}>
                   <option value="free">Free Access</option>
                   <option value="paid">Paid Premium</option>
                 </select>
@@ -185,19 +185,19 @@ export default function AdminExams() {
               {isPaid && (
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Price (INR)</label>
-                  <input type="number" className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" value={price} onChange={(e) => setPrice(e.target.value)} />
+                  <input type="number" className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-[#006e5d] focus:border-[#006e5d]" value={price} onChange={(e) => setPrice(e.target.value)} />
                 </div>
               )}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Status</label>
-                <select className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white" value={status} onChange={(e) => setStatus(e.target.value)}>
+                <select className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-[#006e5d] focus:border-[#006e5d] bg-white" value={status} onChange={(e) => setStatus(e.target.value)}>
                   <option value="draft">Draft</option>
                   <option value="live">Published</option>
                 </select>
               </div>
             </div>
             <div className="mt-8 flex gap-3">
-               <button type="submit" className="bg-teal-700 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-teal-800 transition-colors">
+               <button type="submit" className="bg-[#006e5d] text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-[#005a4d] transition-colors">
                  {editingId ? 'Save Changes' : 'Create Exam'}
                </button>
             </div>
@@ -218,7 +218,7 @@ export default function AdminExams() {
         </div>
         
         {loading ? (
-           <div className="py-20 flex justify-center"><Loader2 className="animate-spin text-teal-600 w-8 h-8" /></div>
+           <div className="py-20 flex justify-center"><Loader2 className="animate-spin text-[#006e5d] w-8 h-8" /></div>
         ) : (
           <table className="w-full text-left border-collapse">
             <thead>
@@ -238,11 +238,11 @@ export default function AdminExams() {
                   <tr key={exam.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
                     <td className="p-4 pl-6">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center text-teal-600">
+                        <div className="w-10 h-10 rounded-lg bg-[#006e5d]/5 flex items-center justify-center text-[#006e5d]">
                            <FileText className="w-5 h-5" />
                         </div>
                         <div>
-                           <Link to={`/admin/tests/${exam.id}`} className="font-bold text-slate-900 group-hover:text-teal-700 transition-colors">
+                           <Link to={`/admin/tests/${exam.id}`} className="font-bold text-slate-900 group-hover:text-[#006e5d] transition-colors">
                              {exam.name}
                            </Link>
                            <p className="text-xs font-medium text-slate-400 mt-0.5">ID: {exam.id.slice(0,12).toUpperCase()}</p>

@@ -163,17 +163,17 @@ export default function AdminLiveTests() {
         <p className="text-slate-500 font-medium">Manage globally scheduled live examinations.</p>
         <button 
           onClick={openComposition}
-          className="bg-teal-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-teal-800 transition-colors"
+          className="bg-[#006e5d] text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-[#005a4d] transition-colors"
         >
           <Plus className="w-5 h-5" /> Create Live Test
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <StatCard title="Total Live Tests" value={liveTests.length} span="Scheduled & Past" colorClass="text-teal-600" />
+        <StatCard title="Total Live Tests" value={liveTests.length} span="Scheduled & Past" colorClass="text-[#006e5d]" />
         <StatCard title="Upcoming" value={liveTests.filter(t => new Date(t.startTime) > new Date()).length} span="Future activations" colorClass="text-emerald-600" />
         <StatCard title="Paid Tests" value={liveTests.filter(t => !t.isFree).length} span="Premium access" colorClass="text-amber-600" />
-        <StatCard title="Total Enrolled" value={liveTests.reduce((acc, t) => acc + (t.enrolledUsers?.length || 0), 0)} span="Across all tests" colorClass="text-teal-600" />
+        <StatCard title="Total Enrolled" value={liveTests.reduce((acc, t) => acc + (t.enrolledUsers?.length || 0), 0)} span="Across all tests" colorClass="text-[#006e5d]" />
       </div>
 
       {showCompositionModal && (
@@ -182,7 +182,7 @@ export default function AdminLiveTests() {
               <X className="w-5 h-5" />
            </button>
 
-           <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2"><Zap className="w-5 h-5 text-teal-600" /> Compose Live Exam</h3>
+           <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2"><Zap className="w-5 h-5 text-[#006e5d]" /> Compose Live Exam</h3>
 
            <div className="space-y-6">
               <div>
@@ -190,7 +190,7 @@ export default function AdminLiveTests() {
                  <input 
                     required 
                     placeholder="e.g. Grand Mock 2025"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 font-medium bg-slate-50"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-[#006e5d] focus:border-[#006e5d] font-medium bg-slate-50"
                     value={compData.title} onChange={e => setCompData({...compData, title: e.target.value})} 
                  />
               </div>
@@ -199,7 +199,7 @@ export default function AdminLiveTests() {
                  <label className="block text-sm font-semibold text-slate-700 mb-2">Instructional Description</label>
                  <textarea 
                     placeholder="Briefing for candidates..."
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 font-medium min-h-[80px]"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-[#006e5d] focus:border-[#006e5d] font-medium min-h-[80px]"
                     value={compData.description} onChange={e => setCompData({...compData, description: e.target.value})} 
                  />
               </div>
@@ -208,7 +208,7 @@ export default function AdminLiveTests() {
                  <label className="block text-sm font-semibold text-slate-700 mb-2">Category</label>
                  <input 
                     placeholder="e.g. Quantitative Aptitude"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 font-medium bg-slate-50"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-[#006e5d] focus:border-[#006e5d] font-medium bg-slate-50"
                     value={compData.category} onChange={e => setCompData({...compData, category: e.target.value})} 
                  />
               </div>
@@ -216,30 +216,30 @@ export default function AdminLiveTests() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                  <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">Duration (Min)</label>
-                    <input type="number" className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500" value={compData.duration} onChange={e => setCompData({...compData, duration: e.target.value})} />
+                    <input type="number" className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-[#006e5d]" value={compData.duration} onChange={e => setCompData({...compData, duration: e.target.value})} />
                  </div>
                  <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">Total Marks</label>
-                    <input type="number" className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500" value={compData.totalMarks} onChange={e => setCompData({...compData, totalMarks: e.target.value})} />
+                    <input type="number" className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-[#006e5d]" value={compData.totalMarks} onChange={e => setCompData({...compData, totalMarks: e.target.value})} />
                  </div>
                  <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">Marks/Q</label>
-                    <input type="number" step="0.1" className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500" value={compData.positiveMarks} onChange={e => setCompData({...compData, positiveMarks: e.target.value})} />
+                    <input type="number" step="0.1" className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-[#006e5d]" value={compData.positiveMarks} onChange={e => setCompData({...compData, positiveMarks: e.target.value})} />
                  </div>
                  <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">Negative/Q</label>
-                    <input type="number" step="0.1" className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500" value={compData.negativeMarks} onChange={e => setCompData({...compData, negativeMarks: e.target.value})} />
+                    <input type="number" step="0.1" className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-[#006e5d]" value={compData.negativeMarks} onChange={e => setCompData({...compData, negativeMarks: e.target.value})} />
                  </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-teal-50/50 p-6 rounded-lg border border-teal-100">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-[#006e5d]/5 p-6 rounded-lg border border-[#006e5d]/10">
                  <div>
-                    <label className="block text-sm font-semibold text-teal-900 mb-2">Test Start Time</label>
-                    <input type="datetime-local" className="w-full px-4 py-2.5 border border-teal-200 rounded-lg focus:ring-teal-500 bg-white" value={compData.startTime} onChange={e => setCompData({...compData, startTime: e.target.value})} />
+                    <label className="block text-sm font-semibold text-[#006e5d] mb-2">Test Start Time</label>
+                    <input type="datetime-local" className="w-full px-4 py-2.5 border border-[#006e5d]/20 rounded-lg focus:ring-[#006e5d] bg-white text-[#002f26]" value={compData.startTime} onChange={e => setCompData({...compData, startTime: e.target.value})} />
                  </div>
                  <div>
-                    <label className="block text-sm font-semibold text-teal-900 mb-2">Test End Time</label>
-                    <input type="datetime-local" className="w-full px-4 py-2.5 border border-teal-200 rounded-lg focus:ring-teal-500 bg-white" value={compData.endTime} onChange={e => setCompData({...compData, endTime: e.target.value})} />
+                    <label className="block text-sm font-semibold text-[#006e5d] mb-2">Test End Time</label>
+                    <input type="datetime-local" className="w-full px-4 py-2.5 border border-[#006e5d]/20 rounded-lg focus:ring-[#006e5d] bg-white text-[#002f26]" value={compData.endTime} onChange={e => setCompData({...compData, endTime: e.target.value})} />
                  </div>
               </div>
 
@@ -247,7 +247,7 @@ export default function AdminLiveTests() {
                  <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">Access Control</label>
                     <select 
-                       className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500 bg-white"
+                       className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-[#006e5d] bg-white"
                        value={compData.isFree ? "free" : "paid"}
                        onChange={e => setCompData({...compData, isFree: e.target.value === 'free', price: e.target.value === 'free' ? '0' : compData.price})}
                     >
@@ -258,7 +258,7 @@ export default function AdminLiveTests() {
                  {!compData.isFree && (
                    <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">Price (₹)</label>
-                      <input type="number" className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-teal-500" value={compData.price} onChange={e => setCompData({...compData, price: e.target.value})} />
+                      <input type="number" className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-[#006e5d]" value={compData.price} onChange={e => setCompData({...compData, price: e.target.value})} />
                    </div>
                  )}
               </div>
@@ -269,7 +269,7 @@ export default function AdminLiveTests() {
                 <label className="block text-sm font-semibold text-slate-700">Withdrawal Strategy (Add Subjects)</label>
                 <div className="flex items-center gap-3">
                   <select 
-                    className="px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm font-semibold outline-none focus:border-teal-500 transition-all"
+                    className="px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm font-semibold outline-none focus:border-[#006e5d] transition-all"
                     value={selectedSub}
                     onChange={e => setSelectedSub(e.target.value)}
                   >
@@ -355,7 +355,7 @@ export default function AdminLiveTests() {
               <button 
                 type="submit" 
                 disabled={composing || Object.keys(composition).length === 0}
-                className="w-full py-3 bg-teal-700 text-white rounded-lg font-bold hover:bg-teal-800 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3 bg-[#006e5d] text-white rounded-lg font-bold hover:bg-[#005a4d] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {composing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
                 {composing ? 'Deploying...' : 'Submit Live Exam'}
@@ -374,7 +374,7 @@ export default function AdminLiveTests() {
                   placeholder="Search live tests..." 
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium focus:ring-teal-500 focus:border-teal-500 bg-white shadow-sm"
+                  className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium focus:ring-[#006e5d] focus:border-[#006e5d] bg-white shadow-sm"
                 />
              </div>
            </div>
@@ -382,7 +382,7 @@ export default function AdminLiveTests() {
         </div>
 
         {loading ? (
-           <div className="py-20 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin" /></div>
+           <div className="py-20 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-[#006e5d] rounded-full animate-spin" /></div>
         ) : (
           <table className="w-full text-left border-collapse">
             <thead>
@@ -399,11 +399,11 @@ export default function AdminLiveTests() {
                 <tr key={test.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
                   <td className="p-4 pl-6">
                     <div className="flex items-center gap-4">
-                       <div className="w-10 h-10 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600">
+                       <div className="w-10 h-10 rounded-lg bg-[#006e5d]/5 border border-[#006e5d]/10 flex items-center justify-center text-[#006e5d]">
                           <Zap className="w-5 h-5" />
                        </div>
                        <div>
-                         <p className="font-bold text-slate-900 group-hover:text-teal-700 transition-colors">
+                         <p className="font-bold text-slate-900 group-hover:text-[#006e5d] transition-colors">
                            {test.title}
                          </p>
                          <p className="text-xs font-semibold text-slate-500 mt-0.5"><Clock className="w-3 h-3 inline mr-1 text-slate-400" /> {test.duration}m | {test.totalMarks}M</p>
@@ -426,7 +426,7 @@ export default function AdminLiveTests() {
                   <td className="p-4">
                     <button 
                       onClick={() => fetchEnrolledStudents(test)} 
-                      className="px-3 py-1.5 bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-teal-700 rounded-md text-xs font-bold transition-colors flex items-center gap-2"
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-[#006e5d]/5 text-slate-700 hover:text-[#006e5d] rounded-md text-xs font-bold transition-colors flex items-center gap-2"
                     >
                       <Users className="w-3.5 h-3.5" /> {(test.enrolledUsers?.length || 0)} Users
                     </button>
@@ -435,7 +435,7 @@ export default function AdminLiveTests() {
                      <div className="flex items-center justify-end gap-2 text-slate-400">
                         <Link 
                            to={`/admin/live-test/manage/${test.id}`}
-                           className="px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded text-xs font-bold transition-colors"
+                           className="px-3 py-1.5 bg-[#006e5d]/5 hover:bg-[#006e5d]/10 text-[#006e5d] rounded text-xs font-bold transition-colors"
                         >
                            Manage
                         </Link>
@@ -463,22 +463,22 @@ export default function AdminLiveTests() {
       </div>
 
       {selectedTestForUsers && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#002f26]/50 backdrop-blur-sm">
           <div className="bg-white rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
             <div className="flex justify-between items-center p-4 border-b border-slate-200">
-              <h3 className="font-bold text-[#001f19]">Enrolled Students</h3>
+              <h3 className="font-bold text-[#002f26]">Enrolled Students</h3>
               <button onClick={() => setSelectedTestForUsers(null)} className="p-1 hover:bg-slate-100 rounded text-slate-500">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-4 max-h-96 overflow-y-auto">
               {loadingEnrolled ? (
-                <div className="py-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-teal-600" /></div>
+                <div className="py-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#006e5d]" /></div>
               ) : enrolledStudentNames.length > 0 ? (
                 <ul className="space-y-2">
                   {enrolledStudentNames.map((name, i) => (
                     <li key={i} className="px-4 py-3 bg-slate-50 border border-slate-100 rounded-lg text-sm font-semibold text-slate-700 flex items-center gap-3">
-                       <span className="w-6 h-6 rounded bg-teal-100 text-teal-600 flex items-center justify-center text-xs">{i+1}</span>
+                       <span className="w-6 h-6 rounded bg-[#006e5d]/10 text-[#006e5d] flex items-center justify-center text-xs">{i+1}</span>
                        {name}
                     </li>
                   ))}

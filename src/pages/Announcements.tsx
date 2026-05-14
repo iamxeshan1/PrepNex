@@ -40,9 +40,9 @@ export default function Announcements() {
       case 'warning':
         return { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-100', icon: AlertTriangle };
       case 'update':
-        return { bg: 'bg-teal-50', text: 'text-teal-600', border: 'border-teal-100', icon: Zap };
+        return { bg: 'bg-[#006e5d]/10', text: 'text-[#006e5d]', border: 'border-[#006e5d]/20', icon: Zap };
       default:
-        return { bg: 'bg-teal-50', text: 'text-teal-600', border: 'border-teal-100', icon: Info };
+        return { bg: 'bg-[#006e5d]/10', text: 'text-[#006e5d]', border: 'border-[#006e5d]/20', icon: Info };
     }
   };
 
@@ -63,7 +63,7 @@ export default function Announcements() {
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Global Platform Updates</p>
             </div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600">
+          <div className="w-10 h-10 rounded-xl bg-[#006e5d]/10 flex items-center justify-center text-[#006e5d]">
             <Bell className="w-5 h-5" />
           </div>
         </div>
@@ -72,7 +72,7 @@ export default function Announcements() {
       <main className="max-w-5xl mx-auto px-4 py-12">
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-4 text-slate-400 font-medium">
-            <div className="w-10 h-10 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin" />
+            <div className="w-10 h-10 border-4 border-slate-200 border-t-[#006e5d] rounded-full animate-spin" />
             <p>Fetching latest updates...</p>
           </div>
         ) : notices.length > 0 ? (
@@ -104,7 +104,7 @@ export default function Announcements() {
                           {format(date, 'MMMM dd, yyyy')}
                         </span>
                       </div>
-                      <h2 className="text-xl md:text-2xl font-black text-slate-900 mb-3 group-hover:text-teal-700 transition-colors">
+                      <h2 className="text-xl md:text-2xl font-black text-slate-900 mb-3 group-hover:text-[#005a4d] transition-colors">
                         {notice.title}
                       </h2>
                       <div className="text-slate-600 font-medium leading-relaxed whitespace-pre-wrap">

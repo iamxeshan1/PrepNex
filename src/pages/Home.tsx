@@ -85,9 +85,9 @@ const COLOR_VARIANTS = [
   'bg-emerald-50 text-emerald-500',
   'bg-amber-50 text-amber-500',
   'bg-blue-50 text-blue-500',
-  'bg-teal-50 text-teal-500',
+  'bg-[#006e5d]/5 text-[#006e5d]',
   'bg-orange-50 text-orange-500',
-  'bg-teal-50 text-teal-500',
+  'bg-[#006e5d]/5 text-[#006e5d]',
   'bg-rose-50 text-rose-500',
   'bg-purple-50 text-purple-500',
 ];
@@ -172,9 +172,9 @@ export default function Home() {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 bg-[#ccfbf1] text-[#0f766e] px-4 py-2 rounded-full text-[10px] font-black tracking-widest uppercase mb-8"
+            className="inline-flex items-center gap-2 bg-[#006e5d]/10 text-[#006e5d] px-4 py-2 rounded-full text-[10px] font-black tracking-widest uppercase mb-8"
           >
-            <Zap className="w-3 h-3 fill-[#0f766e]" /> The Trusted Learning Partner
+            <Zap className="w-3 h-3 fill-[#006e5d]" /> The Trusted Learning Partner
           </motion.div>
           
           <motion.h1 
@@ -211,10 +211,10 @@ export default function Home() {
             transition={{ delay: 0.3 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-5"
           >
-            <Link to="/signup" className="w-full sm:w-auto bg-[#006e5d] text-white px-12 py-4.5 rounded-xl font-black text-sm hover:bg-[#005a4d] transition-all shadow-xl shadow-[#064e40]/20 active:scale-95 uppercase tracking-widest">
+            <Link to="/signup" className="w-full sm:w-auto bg-[#006e5d] text-white px-12 py-4.5 rounded-xl font-black text-sm hover:bg-[#005a4d] transition-all shadow-xl shadow-[#006e5d]/20 active:scale-95 uppercase tracking-widest">
               Start Free Trial
             </Link>
-            <Link to="/exams" className="w-full sm:w-auto bg-white text-[#001f19] border-2 border-slate-200 px-12 py-4.5 rounded-xl font-black text-sm hover:border-slate-300 transition-all active:scale-95 uppercase tracking-widest">
+            <Link to="/exams" className="w-full sm:w-auto bg-white text-[#002f26] border-2 border-slate-200 px-12 py-4.5 rounded-xl font-black text-sm hover:border-slate-300 transition-all active:scale-95 uppercase tracking-widest">
               Browse Exams
             </Link>
           </motion.div>
@@ -231,15 +231,15 @@ export default function Home() {
               
               <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
                 {agencies.map((agency) => (
-                  <button
-                    key={agency.id}
-                    onClick={() => setActiveTab(agency.id)}
-                    className={`shrink-0 px-6 py-2.5 rounded-full text-[11px] font-black tracking-widest uppercase transition-all ${
-                      activeTab === agency.id 
-                        ? 'bg-[#006e5d] text-white shadow-lg shadow-[#064e40]/20' 
-                        : 'bg-white text-slate-400 border border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
+                    <button
+                      key={agency.id}
+                      onClick={() => setActiveTab(agency.id)}
+                      className={`shrink-0 px-6 py-2.5 rounded-full text-[11px] font-black tracking-widest uppercase transition-all ${
+                        activeTab === agency.id 
+                          ? 'bg-[#006e5d] text-white shadow-lg shadow-[#006e5d]/20' 
+                          : 'bg-white text-slate-400 border border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
                     {agency.name}
                   </button>
                 ))}
@@ -259,11 +259,11 @@ export default function Home() {
                     key={exam.id}
                     whileHover={{ y: -8 }}
                     onClick={() => navigate(`/exam/${exam.id}`)}
-                    className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-xl hover:border-[#064e40]/20 transition-all cursor-pointer group flex flex-col"
+                    className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-xl hover:border-[#006e5d]/20 transition-all cursor-pointer group flex flex-col"
                   >
                     <div className="flex justify-between items-start mb-6">
                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-white border border-slate-100 rounded-xl flex items-center justify-center p-2 group-hover:bg-teal-50 transition-colors shadow-sm shrink-0">
+                           <div className="w-12 h-12 bg-white border border-slate-100 rounded-xl flex items-center justify-center p-2 group-hover:bg-[#006e5d]/5 transition-colors shadow-sm shrink-0">
                              {logo ? (
                                 <img src={logo} alt="" loading="lazy" decoding="async" width="48" height="48" className="w-full h-full object-contain" />
                              ) : (
@@ -276,7 +276,7 @@ export default function Home() {
                          <span className="bg-[#b91c1c] text-white text-[8px] font-black px-2 py-1 rounded-md tracking-widest uppercase shrink-0">MOST POPULAR</span>
                        )}
                        {exam.isNew && (
-                         <span className="bg-[#ccfbf1] text-[#0f766e] text-[8px] font-black px-2 py-1 rounded-md tracking-widest uppercase shrink-0">NEW BATCH</span>
+                         <span className="bg-[#006e5d]/10 text-[#006e5d] text-[8px] font-black px-2 py-1 rounded-md tracking-widest uppercase shrink-0">NEW BATCH</span>
                        )}
                     </div>
                     
@@ -329,7 +329,7 @@ export default function Home() {
               viewport={{ once: true }}
               className="flex flex-col items-center gap-6"
             >
-              <div className="w-12 h-12 bg-teal-50 rounded-2xl flex items-center justify-center text-teal-500 shadow-sm border border-teal-100">
+              <div className="w-12 h-12 bg-[#006e5d]/10 rounded-2xl flex items-center justify-center text-[#006e5d] shadow-sm border border-[#006e5d]/20">
                 <Quote className="w-6 h-6 fill-current" />
               </div>
               <p className="text-xl md:text-2xl font-sans font-[600] text-slate-700 italic leading-relaxed tracking-tight max-w-2xl px-4">
@@ -337,7 +337,7 @@ export default function Home() {
               </p>
               <div className="flex items-center gap-4">
                 <div className="h-[1px] w-8 bg-slate-200" />
-                <span className="text-[10px] font-black text-teal-600 uppercase tracking-[0.3em] font-sans">
+                <span className="text-[10px] font-black text-[#006e5d] uppercase tracking-[0.3em] font-sans">
                   {latestThought.author || 'PrepNext Daily Inspiration'}
                 </span>
                 <div className="h-[1px] w-8 bg-slate-200" />
@@ -413,22 +413,22 @@ export default function Home() {
                            className="bg-white/5 border border-white/10 rounded-[2rem] p-8 hover:bg-white/10 transition-colors cursor-pointer group"
                          >
                             <div className="flex justify-between items-start mb-2">
-                               <span className="text-[9px] font-black text-[#2dd4bf] block tracking-[0.2em] uppercase">{live.category || 'GENERAL'}</span>
+                               <span className="text-[9px] font-black text-[#006e5d] block tracking-[0.2em] uppercase">{live.category || 'GENERAL'}</span>
                                <span className={`text-[9px] font-black px-2 py-1 rounded bg-white/10 ${live.isFree ? 'text-emerald-400' : 'text-amber-400'} uppercase tracking-widest`}>
                                  {live.isFree ? 'FREE' : `₹${live.price}`}
                                </span>
                             </div>
-                            <h4 className="text-lg font-bold text-white mb-2 line-clamp-1 group-hover:text-[#2dd4bf] transition-colors">{live.title}</h4>
+                            <h4 className="text-lg font-bold text-white mb-2 line-clamp-1 group-hover:text-[#006e5d] transition-colors">{live.title}</h4>
                             
                             <div className="flex flex-wrap gap-4 mb-6">
                                <div className="flex items-center gap-1.5 text-slate-400">
-                                  <Calendar className="w-3.5 h-3.5 text-[#2dd4bf]" />
+                                  <Calendar className="w-3.5 h-3.5 text-[#006e5d]" />
                                   <span className="text-[10px] font-bold uppercase tracking-wider">
                                      {new Date(live.startTime).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} - {new Date(live.endTime).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
                                   </span>
                                </div>
                                <div className="flex items-center gap-1.5 text-slate-400">
-                                  <Clock className="w-3.5 h-3.5 text-[#2dd4bf]" />
+                                  <Clock className="w-3.5 h-3.5 text-[#006e5d]" />
                                   <span className="text-[10px] font-bold uppercase tracking-wider">
                                      {new Date(live.startTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                                   </span>
@@ -442,10 +442,10 @@ export default function Home() {
                                   </div>
                                   <div>
                                      <p className="text-[11px] font-bold text-slate-300 mb-0.5">{(live.enrolledUsers?.length || 0) + 120}+ ENROLLED</p>
-                                     <p className="text-[10px] font-bold text-[#2dd4bf]">LIVE</p>
+                                     <p className="text-[10px] font-bold text-[#006e5d]">LIVE</p>
                                   </div>
                                </div>
-                               <button className="bg-[#002f26] text-white px-6 py-2.5 rounded-xl text-[10px] font-black hover:bg-[#001f19] transition-colors uppercase tracking-widest">ENROLL NOW</button>
+                               <button className="bg-[#002f26] text-white px-6 py-2.5 rounded-xl text-[10px] font-black hover:bg-[#002f26]/80 transition-colors uppercase tracking-widest">ENROLL NOW</button>
                             </div>
                          </div>
                        ))}
@@ -460,14 +460,14 @@ export default function Home() {
 
                     <div 
                       onClick={() => navigate('/premium')}
-                      className="bg-[#5eead4]/10 rounded-2xl p-6 border border-[#5eead4]/20 flex items-center gap-5 cursor-pointer hover:bg-[#5eead4]/20 transition-all shadow-lg"
+                      className="bg-[#006e5d]/10 rounded-2xl p-6 border border-[#006e5d]/20 flex items-center gap-5 cursor-pointer hover:bg-[#006e5d]/20 transition-all shadow-lg"
                     >
-                       <div className="w-14 h-14 bg-[#5eead4] rounded-2xl flex items-center justify-center text-slate-900">
+                       <div className="w-14 h-14 bg-[#006e5d] rounded-2xl flex items-center justify-center text-white">
                           <Zap className="w-7 h-7 fill-current" />
                        </div>
                        <div>
                           <h5 className="text-white font-sans font-bold text-sm mb-1 uppercase tracking-widest">GO PRO</h5>
-                          <p className="text-[#5eead4]/70 text-[10px] font-bold uppercase tracking-wider">Unlock all premium live sessions.</p>
+                          <p className="text-[#006e5d]/70 text-[10px] font-bold uppercase tracking-wider">Unlock all premium live sessions.</p>
                        </div>
                     </div>
                  </div>
@@ -481,7 +481,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 lg:px-8">
            <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
               <div className="flex items-start gap-10">
-                 <div className="w-16 h-16 bg-[#ccfbf1] rounded-[1.5rem] flex items-center justify-center text-slate-900 shrink-0 transform hover:rotate-6 transition-transform">
+                 <div className="w-16 h-16 bg-[#006e5d]/10 rounded-[1.5rem] flex items-center justify-center text-[#006e5d] shrink-0 transform hover:rotate-6 transition-transform">
                     <Zap className="w-8 h-8 fill-current" />
                  </div>
                  <div>
@@ -490,7 +490,7 @@ export default function Home() {
                  </div>
               </div>
               <div className="flex items-start gap-10">
-                 <div className="w-16 h-16 bg-[#ccfbf1] rounded-[1.5rem] flex items-center justify-center text-slate-900 shrink-0 transform hover:-rotate-6 transition-transform">
+                 <div className="w-16 h-16 bg-[#006e5d]/10 rounded-[1.5rem] flex items-center justify-center text-[#006e5d] shrink-0 transform hover:-rotate-6 transition-transform">
                     <Shield className="w-8 h-8 fill-current" />
                  </div>
                  <div>
@@ -512,7 +512,7 @@ export default function Home() {
                      <p className="text-slate-500 text-lg font-medium leading-relaxed max-w-md tracking-tight">Join thousands of successful candidates who started their journey with PrepNext.</p>
                   </div>
                   <div className="flex flex-col sm:flex-row items-center gap-4 lg:justify-end">
-                     <Link to="/signup" className="w-full sm:w-auto bg-[#006e5d] text-white px-12 py-5 rounded-2xl font-black text-sm hover:bg-[#005a4d] transition-all shadow-xl shadow-[#064e40]/20 active:scale-95 uppercase tracking-widest text-center">
+                     <Link to="/signup" className="w-full sm:w-auto bg-[#006e5d] text-white px-12 py-5 rounded-2xl font-black text-sm hover:bg-[#005a4d] transition-all shadow-xl shadow-[#006e5d]/20 active:scale-95 uppercase tracking-widest text-center">
                         Claim Your Free Mock
                      </Link>
                   </div>
@@ -522,7 +522,7 @@ export default function Home() {
       </section>
 
       {/* Stats Bar */}
-      <section className="bg-gradient-to-r from-[#004d40] to-[#006e5d] py-20 border-y border-[#064e40]/30 shadow-inner">
+      <section className="bg-gradient-to-r from-[#002f26] to-[#006e5d] py-20 border-y border-[#006e5d]/30 shadow-inner">
          <div className="max-w-7xl mx-auto px-4 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center divide-y md:divide-y-0 md:divide-x divide-white/20">
                <div className="py-6 md:py-0">

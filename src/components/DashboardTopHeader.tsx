@@ -17,7 +17,7 @@ export const DashboardTopHeader = ({ user, onMenuClick }: { user: any, onMenuCli
 
       {/* Mobile View: Logo Centered and Bigger */}
       <div className="flex justify-center flex-1 lg:hidden">
-        <span className="font-logo font-black text-3xl tracking-tight text-[#064e40]">PrepNext</span>
+        <span className="font-logo font-black text-3xl tracking-tight text-[#002f26]">PrepNext</span>
       </div>
 
       {/* Desktop Left (Empty space to push items to right on desktop) */}
@@ -29,7 +29,7 @@ export const DashboardTopHeader = ({ user, onMenuClick }: { user: any, onMenuCli
         <div className="hidden lg:flex items-center gap-6">
             <button className="relative p-2 hover:bg-slate-50 rounded-full" aria-label="Notifications">
                 <Bell className="w-5 h-5 text-slate-500" />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-teal-500 rounded-full border-2 border-white"></span>
+                <span className="absolute top-2 right-2 w-2 h-2 bg-[#006e5d] rounded-full border-2 border-white"></span>
             </button>
             <div className="w-10 h-10 rounded-full border border-slate-200 overflow-hidden">
                  <img src={`https://ui-avatars.com/api/?name=${user?.email || 'User'}&background=0D8ABC&color=fff`} className="w-full h-full object-cover" width="40" height="40" fetchPriority="high" alt="User" />

@@ -54,20 +54,20 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             {/* Left side: Logo & Links */}
             <div className="flex items-center gap-8 xl:gap-12">
               <Link to="/" className="flex items-center">
-                <span className="font-logo font-black text-4xl tracking-tight text-[#064e40]">PrepNext</span>
+                <span className="font-logo font-black text-4xl tracking-tight text-[#006e5d]">PrepNext</span>
               </Link>
 
               <div className="hidden lg:flex items-center gap-10">
-                <Link to="/exams" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/exams') ? 'text-teal-600' : 'text-slate-600 hover:text-slate-900'}`}>Exams</Link>
-                <Link to="/subjects" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/subjects') ? 'text-teal-600' : 'text-slate-600 hover:text-slate-900'}`}>Subjects</Link>
-                <Link to="/live-tests" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/live-tests') ? 'text-teal-600' : 'text-slate-600 hover:text-slate-900'}`}>Live Tests</Link>
-                <Link to="/announcements" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/announcements') ? 'text-teal-600' : 'text-slate-600 hover:text-slate-900'}`}>Announcements</Link>
-                <Link to="/study-material" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/study-material') ? 'text-teal-600' : 'text-slate-600 hover:text-slate-900'}`}>Study Material</Link>
+                <Link to="/exams" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/exams') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Exams</Link>
+                <Link to="/subjects" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/subjects') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Subjects</Link>
+                <Link to="/live-tests" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/live-tests') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Live Tests</Link>
+                <Link to="/announcements" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/announcements') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Announcements</Link>
+                <Link to="/study-material" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/study-material') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Study Material</Link>
                 {user && (
-                  <Link to="/dashboard" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/dashboard') ? 'text-teal-600' : 'text-slate-600 hover:text-slate-900'}`}>My Library</Link>
+                  <Link to="/dashboard" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/dashboard') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>My Library</Link>
                 )}
                 {isAdmin && (
-                  <Link to="/admin" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/admin') ? 'text-teal-600' : 'text-slate-600 hover:text-slate-900'}`}>Admin Panel</Link>
+                  <Link to="/admin" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/admin') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Admin Panel</Link>
                 )}
               </div>
             </div>
@@ -79,17 +79,17 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   <div className="hidden md:flex items-center gap-4">
                     <button className="relative w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors" aria-label="Notifications">
                       <Bell className="w-5 h-5" />
-                      <span className="absolute top-2 right-2 w-2 h-2 bg-teal-500 rounded-full border-2 border-white"></span>
+                      <span className="absolute top-2 right-2 w-2 h-2 bg-[#006e5d] rounded-full border-2 border-white"></span>
                     </button>
                     <button onClick={handleLogout} className="text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">Log Out</button>
-                    <Link to="/profile" className="w-9 h-9 rounded-full overflow-hidden border border-slate-200 cursor-pointer hover:border-teal-500 transition-colors">
+                    <Link to="/profile" className="w-9 h-9 rounded-full overflow-hidden border border-slate-200 cursor-pointer hover:border-[#006e5d] transition-colors">
                       <img src={`https://ui-avatars.com/api/?name=${user.email || 'User'}&background=0D8ABC&color=fff`} alt="User" className="w-full h-full object-cover" width="36" height="36" fetchPriority="high" />
                     </Link>
                   </div>
                 ) : (
                   <div className="hidden md:flex items-center gap-4">
                     <Link to="/login" className="text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">Log In</Link>
-                    <Link to="/signup" className="text-sm font-bold bg-teal-700 text-white px-5 py-2.5 rounded-xl hover:bg-teal-800 transition-colors shadow-sm">Get Started</Link>
+                    <Link to="/signup" className="text-sm font-bold bg-[#006e5d] text-white px-5 py-2.5 rounded-xl hover:bg-[#005a4d] transition-colors shadow-sm">Get Started</Link>
                   </div>
                 )}
                 
@@ -119,35 +119,35 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 <Link 
                   to="/exams" 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/exams') ? 'bg-teal-50 text-teal-600' : 'text-slate-600'}`}
+                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/exams') ? 'bg-[#006e5d]/10 text-[#006e5d]' : 'text-slate-600'}`}
                 >
                   Exams
                 </Link>
                 <Link 
                   to="/subjects" 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/subjects') ? 'bg-teal-50 text-teal-600' : 'text-slate-600'}`}
+                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/subjects') ? 'bg-[#006e5d]/10 text-[#006e5d]' : 'text-slate-600'}`}
                 >
                   Subjects
                 </Link>
                 <Link 
                   to="/live-tests" 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/live-tests') ? 'bg-teal-50 text-teal-600' : 'text-slate-600'}`}
+                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/live-tests') ? 'bg-[#006e5d]/10 text-[#006e5d]' : 'text-slate-600'}`}
                 >
                   Live Tests
                 </Link>
                 <Link 
                   to="/announcements" 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/announcements') ? 'bg-teal-50 text-teal-600' : 'text-slate-600'}`}
+                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/announcements') ? 'bg-[#006e5d]/10 text-[#006e5d]' : 'text-slate-600'}`}
                 >
                   Announcements
                 </Link>
                 <Link 
                   to="/study-material" 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/study-material') ? 'bg-teal-50 text-teal-600' : 'text-slate-600'}`}
+                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/study-material') ? 'bg-[#006e5d]/10 text-[#006e5d]' : 'text-slate-600'}`}
                 >
                   Study Material
                 </Link>
@@ -155,7 +155,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   <Link 
                     to="/dashboard" 
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`block text-sm font-bold p-3 rounded-xl ${isActive('/dashboard') ? 'bg-teal-50 text-teal-600' : 'text-slate-600'}`}
+                    className={`block text-sm font-bold p-3 rounded-xl ${isActive('/dashboard') ? 'bg-[#006e5d]/10 text-[#006e5d]' : 'text-slate-600'}`}
                   >
                     My Library
                   </Link>
@@ -164,7 +164,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   <Link 
                     to="/admin" 
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`block text-sm font-bold p-3 rounded-xl ${isActive('/admin') ? 'bg-teal-50 text-teal-600' : 'text-slate-600'}`}
+                    className={`block text-sm font-bold p-3 rounded-xl ${isActive('/admin') ? 'bg-[#006e5d]/10 text-[#006e5d]' : 'text-slate-600'}`}
                   >
                     Admin Panel
                   </Link>
@@ -200,13 +200,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                       >
                         Log In
                       </Link>
-                      <Link 
-                        to="/signup" 
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="text-center text-sm font-bold p-3 rounded-xl text-white bg-teal-700"
-                      >
-                        Sign Up
-                      </Link>
+            <Link 
+            to="/signup" 
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="text-center text-sm font-bold p-3 rounded-xl text-white bg-[#006e5d]"
+          >
+            Sign Up
+          </Link>
                     </div>
                   )}
                 </div>
@@ -222,11 +222,11 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       </main>
 
       {/* Footer */}
-      <footer className="bg-[#064e40] py-20 relative overflow-hidden mt-12">
+      <footer className="bg-[#002f26] py-20 relative overflow-hidden mt-12">
         {/* Glow Effects */}
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03] mix-blend-overlay"></div>
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-teal-500/10 blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-500/10 blur-[120px] pointer-events-none" />
+        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[#006e5d]/10 blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[#006e5d]/10 blur-[120px] pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 lg:px-8 relative z-10">
             <div className="grid grid-cols-1 md:grid-cols-9 gap-12 mb-16">
@@ -276,12 +276,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 <div className="col-span-1 md:col-span-1">
                   <h4 className="text-white font-sans font-bold mb-6 uppercase text-xs tracking-[0.2em]">Explore</h4>
                   <ul className="space-y-3">
-                    <li><Link to="/exams" className="text-slate-400 hover:text-teal-400 text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-teal-500" /> Exam Library</Link></li>
-                    <li><Link to="/subjects" className="text-slate-400 hover:text-teal-400 text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-teal-500" /> Subject Catalog</Link></li>
-                    <li><Link to="/live-tests" className="text-slate-400 hover:text-teal-400 text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-teal-500" /> Live Tests</Link></li>
-                    <li><Link to="/study-material" className="text-slate-400 hover:text-teal-400 text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-teal-500" /> Study Material</Link></li>
+                    <li><Link to="/exams" className="text-slate-400 hover:text-[#006e5d] text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-[#006e5d]" /> Exam Library</Link></li>
+                    <li><Link to="/subjects" className="text-slate-400 hover:text-[#006e5d] text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-[#006e5d]" /> Subject Catalog</Link></li>
+                    <li><Link to="/live-tests" className="text-slate-400 hover:text-[#006e5d] text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-[#006e5d]" /> Live Tests</Link></li>
+                    <li><Link to="/study-material" className="text-slate-400 hover:text-[#006e5d] text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-[#006e5d]" /> Study Material</Link></li>
                     {socialLinks.doubtLink && (
-                      <li className="pt-2"><a href={socialLinks.doubtLink} target="_blank" rel="noreferrer" className="text-teal-400 py-1.5 px-3 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-xs font-bold transition-colors inline-flex items-center gap-1.5"><MessageCircle className="w-3.5 h-3.5" /> Doubt Clearing Hub</a></li>
+                      <li className="pt-2"><a href={socialLinks.doubtLink} target="_blank" rel="noreferrer" className="text-[#006e5d] py-1.5 px-3 rounded-lg bg-[#006e5d]/10 hover:bg-[#006e5d]/20 text-xs font-bold transition-colors inline-flex items-center gap-1.5"><MessageCircle className="w-3.5 h-3.5" /> Doubt Clearing Hub</a></li>
                     )}
                   </ul>
                 </div>
@@ -289,9 +289,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 <div className="col-span-1 md:col-span-1">
                   <h4 className="text-white font-sans font-bold mb-6 uppercase text-xs tracking-[0.2em]">Company</h4>
                   <ul className="space-y-3">
-                    <li><Link to="/about" className="text-slate-400 hover:text-teal-400 text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-teal-500" /> About Us</Link></li>
-                    <li><Link to="/privacy-policy" className="text-slate-400 hover:text-teal-400 text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-teal-500" /> Privacy Policy</Link></li>
-                    <li><Link to="/contact" className="text-slate-400 hover:text-teal-400 text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-teal-500" /> Contact Support</Link></li>
+                    <li><Link to="/about" className="text-slate-400 hover:text-[#006e5d] text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-[#006e5d]" /> About Us</Link></li>
+                    <li><Link to="/privacy-policy" className="text-slate-400 hover:text-[#006e5d] text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-[#006e5d]" /> Privacy Policy</Link></li>
+                    <li><Link to="/contact" className="text-slate-400 hover:text-[#006e5d] text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-[#006e5d]" /> Contact Support</Link></li>
                   </ul>
                 </div>
               </div>

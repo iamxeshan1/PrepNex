@@ -81,9 +81,9 @@ const COLOR_VARIANTS = [
   'bg-emerald-50 text-emerald-500',
   'bg-amber-50 text-amber-500',
   'bg-blue-50 text-blue-500',
-  'bg-teal-50 text-teal-500',
+  'bg-[#006e5d]/10 text-[#006e5d]',
   'bg-orange-50 text-orange-500',
-  'bg-teal-50 text-teal-500',
+  'bg-[#006e5d]/10 text-[#006e5d]',
   'bg-rose-50 text-rose-500',
   'bg-purple-50 text-purple-500',
 ];
@@ -189,7 +189,7 @@ export default function Subjects() {
                         
                         <Link 
                           to={`/test/${test.id}`}
-                          className={`flex items-center justify-center w-full sm:w-auto px-8 py-3 rounded-[0.75rem] font-sans font-[800] text-xs uppercase tracking-widest transition-all ${test.isFree ? 'bg-[#064e40] text-white hover:bg-primary' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+                          className={`flex items-center justify-center w-full sm:w-auto px-8 py-3 rounded-[0.75rem] font-sans font-[800] text-xs uppercase tracking-widest transition-all ${test.isFree ? 'bg-[#006e5d] text-white hover:bg-[#005a4d]' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
                         >
                           {test.isFree ? 'Start Test' : 'Unlock Pro'}
                         </Link>

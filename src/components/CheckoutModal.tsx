@@ -413,7 +413,7 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
               <button 
                 onClick={handlePayment}
                 disabled={isProcessing || (hasCoupon === true && discount === null && couponCode.length > 0)}
-                className="w-full py-4 bg-teal-600 text-white rounded-2xl font-bold text-lg shadow-lg shadow-teal-100 hover:bg-teal-700 hover:shadow-teal-200 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                className="w-full py-4 bg-[#006e5d] text-white rounded-2xl font-bold text-lg shadow-lg shadow-[#064e40]/20 hover:bg-[#005a4d] transition-all flex items-center justify-center gap-2 disabled:opacity-70"
               >
                 {isProcessing ? (
                   <Loader2 className="animate-spin" size={24} />

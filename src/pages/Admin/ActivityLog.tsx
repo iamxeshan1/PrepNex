@@ -78,11 +78,11 @@ export default function AdminActivityLog() {
            <button 
              onClick={fetchLogs} 
              disabled={loading}
-             className="w-14 h-14 bg-white border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 hover:text-teal-600 hover:border-teal-100 transition-all shadow-sm active:scale-95 group"
+             className="w-14 h-14 bg-white border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 hover:text-[#006e5d] hover:border-[#006e5d]/20 transition-all shadow-sm active:scale-95 group"
            >
              <RotateCcw className={`w-6 h-6 ${loading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-700'}`} />
            </button>
-           <div className="w-14 h-14 bg-teal-600 text-white rounded-2xl flex items-center justify-center shadow-xl shadow-teal-100">
+           <div className="w-14 h-14 bg-[#006e5d] text-white rounded-2xl flex items-center justify-center shadow-xl shadow-[#006e5d]/10">
              <Activity className="w-7 h-7" />
            </div>
         </div>
@@ -93,10 +93,10 @@ export default function AdminActivityLog() {
             <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 -translate-y-1/2 translate-x-1/2 rounded-full" />
             <div className="relative">
                <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-2 mb-2"><Shield className="w-3.5 h-3.5" /> Retention Policy</span>
-               <h4 className="text-xl font-black text-[#001f19] tracking-tight">30-Day Auto Purge</h4>
+               <h4 className="text-xl font-black text-[#002f26] tracking-tight">30-Day Auto Purge</h4>
             </div>
          </div>
-         <div className="bg-teal-600 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-teal-100 relative overflow-hidden group">
+         <div className="bg-[#006e5d] p-8 rounded-[2.5rem] text-white shadow-2xl shadow-[#006e5d]/10 relative overflow-hidden group">
             <div className="absolute bottom-0 right-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-700" />
             <div className="relative">
                <span className="text-[8px] font-black text-white/50 uppercase tracking-widest flex items-center gap-2 mb-2"><Sparkles className="w-3.5 h-3.5" /> Registry Density</span>
@@ -107,7 +107,7 @@ export default function AdminActivityLog() {
             <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 -translate-y-1/2 translate-x-1/2 rounded-full" />
             <div className="relative">
                <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-2 mb-2"><Clock className="w-3.5 h-3.5" /> Global Sync</span>
-               <h4 className="text-xl font-black text-[#001f19] tracking-tight">Real-time Hooking</h4>
+               <h4 className="text-xl font-black text-[#002f26] tracking-tight">Real-time Hooking</h4>
             </div>
          </div>
       </div>
@@ -140,11 +140,11 @@ export default function AdminActivityLog() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.01 }}
                     key={log.id} 
-                    className="group border-b border-slate-50 hover:bg-teal-50/10 transition-colors"
+                    className="group border-b border-slate-50 hover:bg-[#006e5d]/5 transition-colors"
                   >
                     <td className="py-6 px-10">
                       <div className="flex items-center gap-4">
-                         <div className="w-10 h-10 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center text-[10px] font-black text-slate-400 group-hover:bg-teal-600 group-hover:text-white transition-all shadow-inner">
+                         <div className="w-10 h-10 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center text-[10px] font-black text-slate-400 group-hover:bg-[#006e5d] group-hover:text-white transition-all shadow-inner">
                             {log.userName?.[0].toUpperCase() || '?'}
                          </div>
                          <div>

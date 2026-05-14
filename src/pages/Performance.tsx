@@ -126,7 +126,7 @@ export default function Performance() {
         <div className="flex-1 flex flex-col">
           <DashboardTopHeader user={profile} />
           <div className="flex-1 flex items-center justify-center">
-             <div className="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin" />
+             <div className="w-12 h-12 border-4 border-[#006e5d] border-t-transparent rounded-full animate-spin" />
           </div>
         </div>
      </div>
@@ -147,7 +147,7 @@ export default function Performance() {
           <div className="max-w-7xl mx-auto space-y-8">
             
             {/* Page Header */}
-            <Link to="/dashboard" className="text-teal-600 font-bold flex items-center gap-1 mb-2 hover:underline">
+            <Link to="/dashboard" className="text-[#006e5d] font-bold flex items-center gap-1 mb-2 hover:underline">
               <ArrowLeft size={16} /> Back to Dashboard
             </Link>
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -159,7 +159,7 @@ export default function Performance() {
                  <button className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 flex items-center gap-2">
                     <Filter className="w-4 h-4" /> Reset Filters
                  </button>
-                 <button className="px-4 py-2 bg-[#064e40] text-white rounded-xl text-xs font-bold flex items-center gap-2">
+                 <button className="px-4 py-2 bg-[#006e5d] text-white rounded-xl text-xs font-bold flex items-center gap-2">
                     <Download className="w-4 h-4" /> Export Report
                  </button>
               </div>
@@ -168,8 +168,8 @@ export default function Performance() {
             {/* Quick Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { label: 'Total Attempts', value: stats.totalTests, icon: BookOpen, color: 'text-teal-600', bg: 'bg-teal-50' },
-                { label: 'Avg Accuracy', value: `${stats.accuracy}%`, icon: Target, color: 'text-teal-600', bg: 'bg-teal-50' },
+                { label: 'Total Attempts', value: stats.totalTests, icon: BookOpen, color: 'text-[#006e5d]', bg: 'bg-[#006e5d]/5' },
+                { label: 'Avg Accuracy', value: `${stats.accuracy}%`, icon: Target, color: 'text-[#006e5d]', bg: 'bg-[#006e5d]/5' },
                 { label: 'Best Subject', value: stats.bestSubject, icon: Award, color: 'text-amber-600', bg: 'bg-amber-50' },
                 { label: 'Improvement Area', value: stats.weakestSubject, icon: TrendingUp, color: 'text-red-600', bg: 'bg-red-50' }
               ].map((stat, i) => (
@@ -192,14 +192,14 @@ export default function Performance() {
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Score Trend */}
-              <div className="lg:col-span-2 bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm">
+               <div className="lg:col-span-2 bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm">
                 <div className="flex justify-between items-center mb-10">
                   <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-teal-600" /> Score Trend
+                    <TrendingUp className="w-5 h-5 text-[#006e5d]" /> Score Trend
                   </h3>
                   <div className="flex items-center gap-4">
                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-teal-500" />
+                        <div className="w-3 h-3 rounded-full bg-[#006e5d]" />
                         <span className="text-[10px] font-bold text-slate-400 uppercase">Correct %</span>
                      </div>
                   </div>
@@ -227,9 +227,9 @@ export default function Performance() {
                         <Line 
                           type="monotone" 
                           dataKey="score" 
-                          stroke="#0d9488" 
+                          stroke="#006e5d" 
                           strokeWidth={4} 
-                          dot={{ r: 6, fill: '#0d9488', strokeWidth: 2, stroke: '#fff' }} 
+                          dot={{ r: 6, fill: '#006e5d', strokeWidth: 2, stroke: '#fff' }} 
                           activeDot={{ r: 8, strokeWidth: 0 }}
                         />
                       </LineChart>
@@ -326,7 +326,7 @@ export default function Performance() {
                                 </div>
                              </td>
                              <td className="px-8 py-6 text-center">
-                                <span className={`text-sm font-black ${isExcellent ? 'text-teal-600' : isWarning ? 'text-red-500' : 'text-slate-700'}`}>
+                                 <span className={`text-sm font-black ${isExcellent ? 'text-[#006e5d]' : isWarning ? 'text-red-500' : 'text-slate-700'}`}>
                                    {res.score}%
                                 </span>
                              </td>
@@ -349,7 +349,7 @@ export default function Performance() {
                              <td className="px-8 py-6 text-right">
                                 <button 
                                   onClick={() => navigate(`/result/${res.id}`)}
-                                  className="text-[10px] font-black text-teal-600 uppercase tracking-widest hover:bg-teal-50 px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1"
+                                  className="text-[10px] font-black text-[#006e5d] uppercase tracking-widest hover:bg-teal-50 px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1"
                                 >
                                    Review <ChevronRight className="w-3.5 h-3.5" />
                                 </button>

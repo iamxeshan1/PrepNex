@@ -115,7 +115,7 @@ export default function AdminHelpdesk() {
                   <header className="flex flex-col md:flex-row justify-between items-start mb-8 gap-6 pb-6 border-b border-slate-50">
                     <div className="space-y-4">
                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-teal-50 border border-teal-100 rounded-xl flex items-center justify-center text-teal-600">
+                          <div className="w-10 h-10 bg-[#006e5d]/5 border border-[#006e5d]/10 rounded-xl flex items-center justify-center text-[#006e5d]">
                              <User className="w-5 h-5" />
                           </div>
                           <div>
@@ -127,11 +127,11 @@ export default function AdminHelpdesk() {
                     <div className="flex items-center gap-4">
                       <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border flex items-center gap-2 ${
                         ticket.status === 'open' ? 'bg-amber-50 border-amber-100 text-amber-600' : 
-                        ticket.status === 'replied' ? 'bg-teal-50 border-teal-100 text-teal-600' :
+                        ticket.status === 'replied' ? 'bg-[#006e5d]/5 border-[#006e5d]/10 text-[#006e5d]' :
                         'bg-emerald-50 border-emerald-100 text-emerald-600'
                       }`}>
                         <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
-                          ticket.status === 'open' ? 'bg-amber-500' : 'bg-teal-500'
+                          ticket.status === 'open' ? 'bg-amber-500' : 'bg-[#006e5d]'
                         }`} />
                         {ticket.status} Dispatch
                       </span>
@@ -165,15 +165,15 @@ export default function AdminHelpdesk() {
                         <div className={`max-w-[85%] p-6 rounded-[2rem] border-2 shadow-sm ${
                           msg.sender === 'user' 
                             ? 'bg-white border-slate-100 rounded-tl-none' 
-                            : 'bg-[#064e40] border-[#064e40] text-white rounded-tr-none'
+                            : 'bg-[#006e5d] border-[#006e5d] text-white rounded-tr-none'
                         }`}>
                           <div className="flex items-center gap-2 mb-2">
-                             <div className={`w-1.5 h-1.5 rounded-full ${msg.sender === 'user' ? 'bg-teal-500' : 'bg-emerald-500'}`} />
+                             <div className={`w-1.5 h-1.5 rounded-full ${msg.sender === 'user' ? 'bg-[#006e5d]' : 'bg-emerald-500'}`} />
                              <span className={`text-[8px] font-black uppercase tracking-widest ${msg.sender === 'user' ? 'text-slate-400' : 'text-slate-500'}`}>
                                 {msg.sender === 'user' ? 'Aspirant Response' : 'Institutional Protocol'}
                              </span>
                           </div>
-                          <p className={`text-sm font-bold leading-relaxed ${msg.sender === 'user' ? 'text-[#001f19]' : 'text-white'}`}>{msg.text}</p>
+                          <p className={`text-sm font-bold leading-relaxed ${msg.sender === 'user' ? 'text-[#002f26]' : 'text-white'}`}>{msg.text}</p>
                           <div className="mt-3 flex items-center gap-2">
                              <span className={`text-[8px] font-bold ${msg.sender === 'user' ? 'text-slate-300' : 'text-white/40'}`}>
                                 {new Date(msg.createdAt).toLocaleString()}
@@ -186,7 +186,7 @@ export default function AdminHelpdesk() {
 
                   <div className="relative group/reply">
                     <textarea 
-                      className="w-full px-8 py-6 bg-white border border-slate-200 rounded-[2rem] outline-none focus:ring-4 focus:ring-teal-500/5 font-bold text-[#001f19] shadow-xl transition-all h-28 resize-none"
+                      className="w-full px-8 py-6 bg-white border border-slate-200 rounded-[2rem] outline-none focus:ring-4 focus:ring-[#006e5d]/5 font-bold text-[#002f26] shadow-xl transition-all h-28 resize-none"
                       placeholder="Input resolving protocol message..."
                       value={replyText[ticket.id] || ''}
                       onChange={(e) => setReplyText({ ...replyText, [ticket.id]: e.target.value })}
@@ -194,7 +194,7 @@ export default function AdminHelpdesk() {
                     <button 
                       onClick={() => handleReply(ticket.id)}
                       disabled={submitting === ticket.id || !replyText[ticket.id]}
-                      className="absolute right-4 bottom-4 p-5 bg-[#064e40] text-white rounded-2xl hover:bg-black transition-all disabled:opacity-30 shadow-2xl active:scale-95 transform hover:-translate-x-1"
+                      className="absolute right-4 bottom-4 p-5 bg-[#006e5d] text-white rounded-2xl hover:bg-black transition-all disabled:opacity-30 shadow-2xl active:scale-95 transform hover:-translate-x-1"
                     >
                       {submitting === ticket.id ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
                     </button>

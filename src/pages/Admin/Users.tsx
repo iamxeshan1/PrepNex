@@ -312,7 +312,7 @@ export default function AdminUsers() {
     <AdminLayout title="User Management">
       <div className="flex justify-between items-center mb-6">
         <p className="text-slate-500 font-medium">Manage student accounts, premium access, and learning progress.</p>
-        <button className="bg-teal-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-teal-800 transition-colors">
+        <button className="bg-[#006e5d] text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-[#005a4d] transition-colors">
            <Download className="w-5 h-5" /> Export Data
         </button>
       </div>
@@ -334,7 +334,7 @@ export default function AdminUsers() {
                   placeholder="Search students..." 
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium focus:ring-teal-500 focus:border-teal-500 bg-white shadow-sm"
+                  className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium focus:ring-[#006e5d] focus:border-[#006e5d] bg-white shadow-sm"
                 />
              </div>
              <button className="px-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium text-slate-700 bg-white shadow-sm flex items-center gap-2 hover:bg-slate-50">
@@ -345,7 +345,7 @@ export default function AdminUsers() {
         </div>
         
         {loading ? (
-           <div className="py-20 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin" /></div>
+           <div className="py-20 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-[#006e5d] rounded-full animate-spin" /></div>
         ) : (
           <table className="w-full text-left border-collapse">
             <thead>
@@ -373,12 +373,12 @@ export default function AdminUsers() {
                         {user.photoURL ? (
                           <img src={user.photoURL} alt={user.name} loading="lazy" decoding="async" width="40" height="40" className="w-10 h-10 rounded-lg object-cover" />
                         ) : (
-                          <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center text-teal-600 font-bold uppercase">
+                          <div className="w-10 h-10 rounded-lg bg-[#006e5d]/5 flex items-center justify-center text-[#006e5d] font-bold uppercase">
                              {user.name?.[0] || 'U'}
                           </div>
                         )}
                         <div>
-                           <p className="font-bold text-slate-900 group-hover:text-teal-700 transition-colors flex items-center gap-2">
+                           <p className="font-bold text-slate-900 group-hover:text-[#006e5d] transition-colors flex items-center gap-2">
                              {user.name || 'Anonymous User'}
                              {user.role === 'admin' && <span className="bg-rose-100 text-rose-700 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">Admin</span>}
                            </p>
@@ -431,7 +431,7 @@ export default function AdminUsers() {
       </div>
 
       {showEditModal && selectedUser && (
-        <div className="fixed inset-0 bg-[#064e40]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-[#002f26]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-200">
             <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
                <div>
@@ -446,37 +446,37 @@ export default function AdminUsers() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold mb-1 text-slate-700">Full Name</label>
-                    <input className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" value={editFormData.name || ''} onChange={e => setEditFormData({...editFormData, name: e.target.value})} />
+                    <input className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#006e5d] focus:border-transparent" value={editFormData.name || ''} onChange={e => setEditFormData({...editFormData, name: e.target.value})} />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold mb-1 text-slate-700">Phone</label>
-                    <input className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" value={editFormData.phone || ''} onChange={e => setEditFormData({...editFormData, phone: e.target.value})} />
+                    <input className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#006e5d] focus:border-transparent" value={editFormData.phone || ''} onChange={e => setEditFormData({...editFormData, phone: e.target.value})} />
                   </div>
                 </div>
                 <div>
                    <label className="block text-sm font-semibold mb-1 text-slate-700">Email Address</label>
-                   <input className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" value={editFormData.email || ''} onChange={e => setEditFormData({...editFormData, email: e.target.value})} />
+                   <input className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#006e5d] focus:border-transparent" value={editFormData.email || ''} onChange={e => setEditFormData({...editFormData, email: e.target.value})} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                      <label className="block text-sm font-semibold mb-1 text-slate-700">Address</label>
-                     <input className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" value={editFormData.address || ''} onChange={e => setEditFormData({...editFormData, address: e.target.value})} />
+                     <input className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#006e5d] focus:border-transparent" value={editFormData.address || ''} onChange={e => setEditFormData({...editFormData, address: e.target.value})} />
                   </div>
                   <div>
                      <label className="block text-sm font-semibold mb-1 text-slate-700">State</label>
-                     <input className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" value={editFormData.state || ''} onChange={e => setEditFormData({...editFormData, state: e.target.value})} />
+                     <input className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#006e5d] focus:border-transparent" value={editFormData.state || ''} onChange={e => setEditFormData({...editFormData, state: e.target.value})} />
                   </div>
                 </div>
                 <div className="pt-6 flex justify-end gap-3 border-t border-slate-100">
                    <button type="button" onClick={() => setShowEditModal(false)} className="px-6 py-2.5 bg-slate-100 rounded-lg text-slate-700 font-semibold hover:bg-slate-200 transition-colors">Cancel</button>
-                   <button type="submit" className="px-6 py-2.5 bg-teal-700 text-white rounded-lg font-semibold hover:bg-teal-800 transition-colors">Save Changes</button>
+                   <button type="submit" className="px-6 py-2.5 bg-[#006e5d] text-white rounded-lg font-semibold hover:bg-[#005a4d] transition-colors">Save Changes</button>
                 </div>
             </form>
           </div>
         </div>
       )}
       {showPrivilegeModal && selectedUser && (
-        <div className="fixed inset-0 bg-[#064e40]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-[#002f26]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-200">
             <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
                <div>
@@ -489,7 +489,7 @@ export default function AdminUsers() {
             </div>
 
             <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
-              <div className="p-6 bg-[#064e40] rounded-xl text-white">
+              <div className="p-6 bg-[#002f26] rounded-xl text-white">
                  <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-4">
                        <Crown className="w-8 h-8 text-amber-400" />
@@ -503,7 +503,7 @@ export default function AdminUsers() {
                       className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                         selectedUser.isPremium 
                           ? 'bg-rose-500 text-white hover:bg-rose-600' 
-                          : 'bg-teal-600 text-white hover:bg-teal-700'
+                          : 'bg-[#006e5d] text-white hover:bg-[#005a4d]'
                       }`}
                     >
                       {selectedUser.isPremium ? 'Revoke Pass' : 'Activate Pass'}
@@ -517,7 +517,7 @@ export default function AdminUsers() {
                    {exams.map(exam => {
                      const isGranted = (selectedUser.freeExams || []).includes(exam.id);
                      return (
-                       <div key={exam.id} className="p-4 rounded-xl border border-slate-200 flex items-center justify-between bg-white hover:border-teal-200 transition-colors">
+                       <div key={exam.id} className="p-4 rounded-xl border border-slate-200 flex items-center justify-between bg-white hover:border-[#006e5d]/20 transition-colors">
                          <div>
                            <p className="text-sm font-bold text-slate-900">{exam.name}</p>
                            <p className="text-xs font-semibold text-slate-500 mt-1">{agencies.find((a: any) => a.id === exam.agencyId)?.name || 'General'}</p>
@@ -539,7 +539,7 @@ export default function AdminUsers() {
             </div>
             
             <div className="p-6 border-t border-slate-200 bg-slate-50 flex justify-end">
-               <button onClick={() => setShowPrivilegeModal(false)} className="px-6 py-2.5 bg-[#064e40] text-white rounded-lg font-semibold hover:bg-[#001f19] transition-colors">
+               <button onClick={() => setShowPrivilegeModal(false)} className="px-6 py-2.5 bg-[#002f26] text-white rounded-lg font-semibold hover:bg-[#001f19] transition-colors">
                   Close
                </button>
             </div>
@@ -548,7 +548,7 @@ export default function AdminUsers() {
       )}
 
       {showDeleteModal && selectedUser && (
-        <div className="fixed inset-0 bg-[#064e40]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-[#002f26]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white max-w-sm w-full rounded-2xl p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-200">
             <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center mb-4">
               <Trash2 className="w-6 h-6 text-rose-600" />
@@ -574,12 +574,12 @@ export default function AdminUsers() {
       )}
 
       {showPurchasesModal && selectedUser && (
-        <div className="fixed inset-0 bg-[#064e40]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-[#002f26]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-3xl rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-200 flex flex-col max-h-[85vh]">
             <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
                <div>
                   <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                    <CreditCard className="w-5 h-5 text-teal-600" /> 
+                    <CreditCard className="w-5 h-5 text-[#006e5d]" /> 
                     Purchases & Subscriptions
                   </h2>
                   <p className="text-sm font-medium text-slate-500 mt-1">{selectedUser.name} ({selectedUser.email})</p>
@@ -591,15 +591,15 @@ export default function AdminUsers() {
 
             <div className="p-6 overflow-y-auto flex-1">
                {loadingPurchases ? (
-                  <div className="py-12 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin" /></div>
+                  <div className="py-12 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-[#006e5d] rounded-full animate-spin" /></div>
                ) : userPurchases.length > 0 ? (
                   <div className="space-y-4">
                      {userPurchases.map((purchase, index) => (
-                        <div key={purchase.id || index} className="p-4 rounded-xl border border-slate-200 flex items-center justify-between bg-white hover:border-teal-200 transition-colors">
+                        <div key={purchase.id || index} className="p-4 rounded-xl border border-slate-200 flex items-center justify-between bg-white hover:border-[#006e5d]/20 transition-colors">
                            <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
                                  <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${
-                                    purchase.collection === 'premium_subscriptions' ? 'bg-amber-100 text-amber-700' : 'bg-teal-100 text-teal-700'
+                                    purchase.collection === 'premium_subscriptions' ? 'bg-amber-100 text-amber-700' : 'bg-[#006e5d]/10 text-[#006e5d]'
                                  }`}>
                                     {purchase.collection === 'premium_subscriptions' ? 'Premium Pass' : 'Exam/Test'}
                                  </span>

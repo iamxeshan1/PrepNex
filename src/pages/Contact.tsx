@@ -58,7 +58,7 @@ export default function Contact() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-20"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-teal-50 border border-teal-100 rounded-full text-teal-600 text-[10px] font-black uppercase tracking-widest mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#006e5d]/5 border border-[#006e5d]/10 rounded-full text-[#006e5d] text-[10px] font-black uppercase tracking-widest mb-6">
               <MessageSquare className="w-3.5 h-3.5" /> Support Console
             </div>
             <h1 className="text-4xl md:text-6xl font-sans font-[800] text-slate-900 tracking-tight mb-4">How can we help?</h1>
@@ -70,14 +70,14 @@ export default function Contact() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
             {/* Info Column */}
             <div className="lg:col-span-5 space-y-8">
-              <div className="bg-[#064e40] p-10 rounded-[3rem] text-white relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+              <div className="bg-[#002f26] p-10 rounded-[3rem] text-white relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-[#006e5d]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                 
                 <h3 className="text-2xl font-black mb-10 tracking-tight relative z-10">Direct Channels</h3>
                 
                 <div className="space-y-8 relative z-10">
                   <div className="flex items-center gap-5 group">
-                    <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-teal-400 group-hover:bg-teal-500 group-hover:text-white transition-all duration-300">
+                    <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-[#006e5d] group-hover:bg-[#006e5d] group-hover:text-white transition-all duration-300">
                       <Mail className="w-6 h-6" />
                     </div>
                     <div>
@@ -87,7 +87,7 @@ export default function Contact() {
                   </div>
 
                   <div className="flex items-center gap-5 group">
-                    <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-teal-400 group-hover:bg-teal-500 group-hover:text-white transition-all duration-300">
+                    <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-[#006e5d] group-hover:bg-[#006e5d] group-hover:text-white transition-all duration-300">
                       <Phone className="w-6 h-6" />
                     </div>
                     <div>
@@ -97,7 +97,7 @@ export default function Contact() {
                   </div>
 
                   <div className="flex items-center gap-5 group">
-                    <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-teal-400 group-hover:bg-teal-500 group-hover:text-white transition-all duration-300">
+                    <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-[#006e5d] group-hover:bg-[#006e5d] group-hover:text-white transition-all duration-300">
                       <MapPin className="w-6 h-6" />
                     </div>
                     <div>
@@ -108,11 +108,11 @@ export default function Contact() {
 
                   {settings?.doubtLink && (
                     <div className="flex items-center gap-5 group cursor-pointer" onClick={() => window.open(settings.doubtLink, '_blank')}>
-                      <div className="w-14 h-14 bg-teal-500/10 border border-teal-500/20 rounded-2xl flex items-center justify-center text-teal-400 group-hover:bg-teal-500 group-hover:text-white transition-all duration-300">
+                      <div className="w-14 h-14 bg-[#006e5d]/10 border border-[#006e5d]/20 rounded-2xl flex items-center justify-center text-[#006e5d] group-hover:bg-[#006e5d] group-hover:text-white transition-all duration-300">
                         <MessageSquare className="w-6 h-6" />
                       </div>
                       <div>
-                        <p className="text-[10px] font-black text-teal-400 uppercase tracking-widest mb-1">Interactive Doubts</p>
+                        <p className="text-[10px] font-black text-[#006e5d] uppercase tracking-widest mb-1">Interactive Doubts</p>
                         <p className="text-lg font-bold text-white max-w-xs hover:underline transition-all">Join Doubt Clearing Hub</p>
                       </div>
                     </div>
@@ -121,13 +121,13 @@ export default function Contact() {
 
                 <div className="mt-12 pt-10 border-t border-white/5">
                   <div className="flex items-center gap-4 mb-4">
-                    <Clock className="w-5 h-5 text-teal-400" />
+                    <Clock className="w-5 h-5 text-[#006e5d]" />
                     <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Response Window</h4>
                   </div>
                   <div className="space-y-2 text-sm font-medium text-slate-300">
                     <p>Weekdays: 09:00 AM — 08:00 PM</p>
                     <p>Saturdays: 10:00 AM — 04:00 PM</p>
-                    <p className="text-teal-400/60 mt-4 text-xs italic">Emergency tickets are processed 24/7</p>
+                    <p className="text-[#006e5d]/60 mt-4 text-xs italic">Emergency tickets are processed 24/7</p>
                   </div>
                 </div>
               </div>
@@ -142,14 +142,14 @@ export default function Contact() {
                     animate={{ opacity: 1, scale: 1 }}
                     className="text-center py-12"
                   >
-                    <div className="w-20 h-20 bg-teal-50 text-teal-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                    <div className="w-20 h-20 bg-[#006e5d]/5 text-[#006e5d] rounded-3xl flex items-center justify-center mx-auto mb-6">
                       <CheckCircle2 className="w-10 h-10" />
                     </div>
                     <h3 className="text-3xl font-[800] text-slate-900 mb-4 tracking-tight">Message Received!</h3>
                     <p className="text-slate-500 font-medium">We've logged your request. Our team will get back to you shortly.</p>
                     <button 
                       onClick={() => setSubmitted(false)}
-                      className="mt-8 text-teal-600 font-black text-xs uppercase tracking-widest hover:underline"
+                      className="mt-8 text-[#006e5d] font-black text-xs uppercase tracking-widest hover:underline"
                     >
                       Send another message
                     </button>
@@ -165,7 +165,7 @@ export default function Contact() {
                           placeholder="John Doe" 
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500/30 font-bold text-slate-600 transition-all"
+                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-[#006e5d]/20 focus:border-[#006e5d]/30 font-bold text-slate-600 transition-all"
                         />
                       </div>
                       <div className="space-y-3">
@@ -176,7 +176,7 @@ export default function Contact() {
                           placeholder="john@example.com" 
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500/30 font-bold text-slate-600 transition-all"
+                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-[#006e5d]/20 focus:border-[#006e5d]/30 font-bold text-slate-600 transition-all"
                         />
                       </div>
                     </div>
@@ -186,7 +186,7 @@ export default function Contact() {
                       <select 
                         value={formData.subject}
                         onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500/30 font-bold text-slate-600 transition-all appearance-none cursor-pointer"
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-[#006e5d]/20 focus:border-[#006e5d]/30 font-bold text-slate-600 transition-all appearance-none cursor-pointer"
                       >
                         <option>General Support</option>
                         <option>Premium Billing</option>
@@ -204,11 +204,11 @@ export default function Contact() {
                         placeholder="How can we assist you today?" 
                         value={formData.message}
                         onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500/30 font-bold text-slate-600 transition-all resize-none"
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-[#006e5d]/20 focus:border-[#006e5d]/30 font-bold text-slate-600 transition-all resize-none"
                       />
                     </div>
 
-                    <button className="w-full bg-[#064e40] text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#001f19] transition-all flex items-center justify-center gap-3 shadow-xl shadow-slate-200">
+                    <button className="w-full bg-[#006e5d] text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#005a4d] transition-all flex items-center justify-center gap-3 shadow-xl shadow-slate-200">
                       Transmit Message <Send className="w-4 h-4" />
                     </button>
                     

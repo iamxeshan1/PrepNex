@@ -293,10 +293,10 @@ export default function Test() {
     return (
       <div className="min-h-screen bg-[#F8F9FE] flex flex-col items-center justify-center p-6 text-center">
         <div className="bg-white p-12 rounded-[3.5rem] shadow-2xl shadow-[#002D62]/10 border border-slate-100 max-w-xl w-full">
-           <div className="w-44 h-44 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-8 animate-pulse">
-              <Clock className="w-20 h-20 text-[#002D62] animate-spin duration-[10000ms]" />
+           <div className="w-44 h-44 bg-[#006e5d]/10 rounded-full flex items-center justify-center mx-auto mb-8 animate-pulse">
+              <Clock className="w-20 h-20 text-[#006e5d] animate-spin duration-[10000ms]" />
            </div>
-           <h2 className="text-4xl font-black text-[#002D62] tracking-tight mb-2 uppercase">Scheduled Test</h2>
+           <h2 className="text-4xl font-black text-[#006e5d] tracking-tight mb-2 uppercase">Scheduled Test</h2>
            <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mb-12">{test?.title}</p>
            
            <div className="grid grid-cols-4 gap-4 mb-12">
@@ -307,7 +307,7 @@ export default function Test() {
                { val: secs, label: 'Sec' }
              ].map((time, i) => (
                <div key={i} className="flex flex-col">
-                 <div className="bg-[#002D62]/5 border border-[#002D62]/10 rounded-[1.5rem] p-5 text-3xl font-black text-[#002D62]">{time.val.toString().padStart(2, '0')}</div>
+                 <div className="bg-[#006e5d]/5 border border-[#006e5d]/10 rounded-[1.5rem] p-5 text-3xl font-black text-[#006e5d]">{time.val.toString().padStart(2, '0')}</div>
                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-3">{time.label}</span>
                </div>
              ))}
@@ -318,7 +318,7 @@ export default function Test() {
              <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest">Starts @ {new Date(scheduledStartTime!).toLocaleString()}</p>
            </div>
            
-           <Link to="/dashboard" className="block w-full py-6 bg-[#002D62] text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] shadow-2xl shadow-blue-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+           <Link to="/dashboard" className="block w-full py-6 bg-[#006e5d] text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] shadow-2xl shadow-[#002f26]/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
              Wait in Lobby
            </Link>
         </div>
@@ -370,7 +370,7 @@ export default function Test() {
           </div>
           <button 
             onClick={() => handleSubmit()}
-            className="bg-[#064e40] text-white px-4 py-2 md:px-6 md:py-2.5 rounded-md font-medium text-xs md:text-sm hover:bg-[#001f19] transition-all"
+            className="bg-[#006e5d] text-white px-4 py-2 md:px-6 md:py-2.5 rounded-md font-medium text-xs md:text-sm hover:bg-[#005a4d] transition-all"
           >
             Submit Test
           </button>
@@ -415,7 +415,7 @@ export default function Test() {
                   
                   let classes = "bg-white border-slate-200 text-slate-600"; 
                   if (hasAnswered) {
-                      classes = "bg-[#065f46] border-[#065f46] text-white"; 
+                      classes = "bg-[#006e5d] border-[#006e5d] text-white"; 
                   } else if (isMarked) {
                       classes = "bg-orange-500 border-orange-500 text-white";
                   } else if (isVisited) {
@@ -423,7 +423,7 @@ export default function Test() {
                   }
                   
                   if (isCurrent) {
-                      classes = "bg-white border-[#065f46] text-[#065f46] font-bold";
+                      classes = "bg-white border-[#006e5d] text-[#006e5d] font-bold";
                   }
                   
                   return (
@@ -440,7 +440,7 @@ export default function Test() {
 
               {/* Legend */}
               <div className="mt-auto grid grid-cols-2 gap-y-4 gap-x-2 text-[10px] md:text-xs font-bold text-slate-700 bg-white p-4 rounded-lg border border-slate-200">
-                 <div className="flex items-center gap-2"><div className="w-4 h-4 bg-[#065f46] rounded-sm" /> ATTEMPTED</div>
+                 <div className="flex items-center gap-2"><div className="w-4 h-4 bg-[#006e5d] rounded-sm" /> ATTEMPTED</div>
                  <div className="flex items-center gap-2"><div className="w-4 h-4 bg-white border border-slate-200 rounded-sm" /> NOT VISITED</div>
                  <div className="flex items-center gap-2"><div className="w-4 h-4 bg-orange-500 rounded-sm" /> MARKED</div>
                  <div className="flex items-center gap-2"><div className="w-4 h-4 bg-slate-100 border border-slate-200 rounded-sm" /> NOT ATTEMPTED</div>
@@ -457,7 +457,7 @@ export default function Test() {
                     <div className="flex items-center gap-2 text-xs md:text-sm text-slate-700 font-medium">
                        <span>{currentQ.subjectName || test?.title || 'General Studies'}</span>
                        <ChevronRight className="w-4 h-4 text-slate-400" />
-                       <span className="font-semibold text-[#065f46]">Question {currentIdx + 1}</span>
+                       <span className="font-semibold text-[#006e5d]">Question {currentIdx + 1}</span>
                     </div>
                     <div className="flex items-center gap-3 md:gap-4 text-xs md:text-sm font-bold">
                        <span className="text-emerald-600 flex items-center gap-1">
@@ -482,14 +482,14 @@ export default function Test() {
                              onClick={() => setAnswers(prev => ({ ...prev, [currentQ.id]: option }))}
                              className={`w-full p-4 md:p-5 text-left rounded-lg border transition-all flex items-center gap-4 ${
                                isSelected 
-                                 ? 'border-[#065f46] bg-[#f0fdf4]' 
+                                 ? 'border-[#006e5d] bg-[#006e5d]/5' 
                                  : 'border-slate-200 hover:border-slate-300 bg-white'
                              }`}
                            >
-                             <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? 'border-[#065f46]' : 'border-slate-300'}`}>
-                               {isSelected && <div className="w-2.5 h-2.5 bg-[#065f46] rounded-full" />}
+                             <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? 'border-[#006e5d]' : 'border-slate-300'}`}>
+                               {isSelected && <div className="w-2.5 h-2.5 bg-[#006e5d] rounded-full" />}
                              </div>
-                             <span className={`text-sm md:text-base font-medium ${isSelected ? 'text-[#065f46]' : 'text-slate-700'}`}>{option}</span>
+                             <span className={`text-sm md:text-base font-medium ${isSelected ? 'text-[#006e5d]' : 'text-slate-700'}`}>{option}</span>
                            </button>
                          );
                        })}
@@ -504,7 +504,7 @@ export default function Test() {
            <div className="flex items-center gap-3 w-full sm:w-auto">
               <button 
                 onClick={() => setAnswers(prev => { const next = { ...prev }; delete next[currentQ.id]; return next; })}
-                className="flex-1 sm:flex-none text-xs md:text-sm font-bold text-[#065f46] border border-[#065f46] px-3 md:px-6 py-2.5 min-h-[44px] rounded hover:bg-emerald-50 transition-colors text-center whitespace-nowrap"
+                className="flex-1 sm:flex-none text-xs md:text-sm font-bold text-[#006e5d] border border-[#006e5d] px-3 md:px-6 py-2.5 min-h-[44px] rounded hover:bg-[#006e5d]/5 transition-colors text-center whitespace-nowrap"
               >
                  Clear Response
               </button>
@@ -525,7 +525,7 @@ export default function Test() {
               </button>
               <button 
                  onClick={handleNext}
-                 className="flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 text-xs md:text-sm font-bold text-white bg-[#065f46] px-4 md:px-8 py-2.5 min-h-[44px] rounded hover:bg-[#044e3a] transition-colors"
+                 className="flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 text-xs md:text-sm font-bold text-white bg-[#006e5d] px-4 md:px-8 py-2.5 min-h-[44px] rounded hover:bg-[#005a4d] transition-colors"
               >
                  Save & Next <ChevronRight className="w-4 h-4" />
               </button>

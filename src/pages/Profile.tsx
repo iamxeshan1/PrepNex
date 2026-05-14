@@ -80,7 +80,7 @@ export default function Profile() {
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-[#064e40]/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-[#002f26]/50 z-40 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -95,7 +95,7 @@ export default function Profile() {
           <main className="p-4 lg:p-8 overflow-y-auto w-full max-w-4xl mx-auto">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
                   <header className="mb-8">
-                      <Link to="/dashboard" className="text-teal-600 font-bold flex items-center gap-1 mb-2 hover:underline">
+                      <Link to="/dashboard" className="text-[#006e5d] font-bold flex items-center gap-1 mb-2 hover:underline">
                         <ArrowLeft size={16} /> Back to Dashboard
                       </Link>
                       <h1 className="text-2xl md:text-3xl font-black text-slate-900 mb-2">My Profile</h1>
@@ -112,7 +112,7 @@ export default function Profile() {
                       )}
                       
                       {success && (
-                        <div className="p-4 rounded-xl bg-teal-50 text-teal-700 text-sm flex items-center gap-2 border border-teal-100 font-medium">
+                        <div className="p-4 rounded-xl bg-[#006e5d]/5 text-[#006e5d] text-sm flex items-center gap-2 border border-[#006e5d]/10 font-medium">
                           <CheckCircle2 size={18} />
                           {success}
                         </div>
@@ -126,9 +126,9 @@ export default function Profile() {
                             <input
                               type="text"
                               required
-                              value={formData.name}
+                               value={formData.name}
                               onChange={e => setFormData({ ...formData, name: e.target.value })}
-                              className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-teal-500 transition-all outline-none text-slate-700 font-bold"
+                              className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#006e5d] transition-all outline-none text-slate-700 font-bold"
                               placeholder="Enter your full name"
                             />
                           </div>
@@ -144,7 +144,7 @@ export default function Profile() {
                               pattern="[0-9]{10}"
                               value={formData.phone}
                               onChange={e => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                              className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-teal-500 transition-all outline-none text-slate-700 font-bold"
+                              className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#006e5d] transition-all outline-none text-slate-700 font-bold"
                               placeholder="10-digit mobile number"
                             />
                           </div>
@@ -185,9 +185,9 @@ export default function Profile() {
                               <input
                                 type="text"
                                 required
-                                value={formData.district}
+                                 value={formData.district}
                                 onChange={e => setFormData({ ...formData, district: e.target.value })}
-                                className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-teal-500 transition-all outline-none text-slate-700 font-bold"
+                                className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#006e5d] transition-all outline-none text-slate-700 font-bold"
                                 placeholder="District"
                               />
                             </div>
@@ -201,7 +201,7 @@ export default function Profile() {
                                 required
                                 value={formData.state}
                                 onChange={e => setFormData({ ...formData, state: e.target.value })}
-                                className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-teal-500 transition-all outline-none text-slate-700 font-bold appearance-none"
+                                className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#006e5d] transition-all outline-none text-slate-700 font-bold appearance-none"
                               >
                                 <option value="">Select State</option>
                                 {INDIAN_STATES.map(state => (
@@ -217,7 +217,7 @@ export default function Profile() {
                           <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="w-full md:w-auto px-8 py-3.5 bg-teal-600 text-white rounded-xl font-bold text-sm shadow-sm hover:bg-teal-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none"
+                            className="w-full md:w-auto px-8 py-3.5 bg-[#006e5d] text-white rounded-xl font-bold text-sm shadow-sm hover:bg-[#005a4d] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none"
                           >
                             {isSubmitting ? (
                               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

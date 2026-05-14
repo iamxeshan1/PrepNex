@@ -341,7 +341,7 @@ export default function Dashboard() {
                                <p className="text-sm text-emerald-700 font-medium">Your enrollment has been confirmed. You can now access your materials.</p>
                                {paymentSuccessInfo.paymentId && (
                                  <div className="mt-4 inline-flex flex-wrap items-center gap-3">
-                                   <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest bg-white/50 px-3 py-1 rounded-full border border-emerald-100">
+                                   <span className="text-[10px] font-black text-[#006e5d] uppercase tracking-widest bg-white/50 px-3 py-1 rounded-full border border-emerald-100">
                                      Transaction ID: {paymentSuccessInfo.paymentId}
                                    </span>
                                    <p className="text-[9px] text-emerald-400 font-bold italic">Keep this for your records.</p>
@@ -355,11 +355,11 @@ export default function Dashboard() {
 
                   {/* Welcome Panel */}
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 bg-[#064e40] text-white p-6 md:p-10 rounded-[2rem] flex flex-col justify-center relative overflow-hidden">
+                    <div className="lg:col-span-2 bg-[#002f26] text-white p-6 md:p-10 rounded-[2rem] flex flex-col justify-center relative overflow-hidden">
                       <h1 className="text-2xl md:text-4xl font-black mb-3">Welcome back, {profile?.name || 'Aspirant'}!</h1>
                       <p className="text-slate-400 mb-6 md:mb-8 text-sm md:text-base max-w-lg">You're in the top 5% of aspirants this week. Keep up the momentum to secure your spot.</p>
                       <div className="flex flex-col sm:flex-row gap-4">
-                        <button onClick={() => navigate('/exams')} className="bg-teal-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 justify-center hover:bg-teal-700 transition">
+                        <button onClick={() => navigate('/exams')} className="bg-[#006e5d] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 justify-center hover:bg-[#005a4d] transition">
                            <Zap className="w-4 h-4" /> Resume Mock Test
                         </button>
                         <button onClick={() => navigate('/performance')} className="bg-white/10 text-white px-6 py-3 rounded-2xl font-bold justify-center hover:bg-white/20 transition">
@@ -375,7 +375,7 @@ export default function Dashboard() {
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">PREPSCORE</p>
                                 <h3 className="text-2xl font-black text-slate-900">{prepScore}<span className="text-sm text-slate-400 ml-1">/1000</span></h3>
                             </div>
-                            <div className="w-12 h-12 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-full bg-[#006e5d]/10 text-[#006e5d] flex items-center justify-center">
                                 <TrendingUp className="w-6 h-6" />
                             </div>
                         </div>
@@ -396,7 +396,7 @@ export default function Dashboard() {
                      <div className="flex flex-col gap-4">
                         <div className="flex justify-between items-center mb-2">
                            <h3 className="text-lg font-black text-slate-900">Upcoming Live Tests</h3>
-                           <Link to="/live-tests" className="text-teal-600 text-[10px] font-black uppercase tracking-wider hover:underline">View All</Link>
+                           <Link to="/live-tests" className="text-[#006e5d] text-[10px] font-black uppercase tracking-wider hover:underline">View All</Link>
                         </div>
                         {upcomingTests.length > 0 ? upcomingTests.map((t) => {
                             const now = new Date().getTime();
@@ -420,7 +420,7 @@ export default function Dashboard() {
                                   )}
                                   <div className="text-right">
                                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{isTestActive ? 'Ends In' : 'Starts In'}</p>
-                                      <p className="text-lg font-black text-teal-700 font-mono tracking-tight">
+                                      <p className="text-lg font-black text-[#006e5d] font-mono tracking-tight">
                                           {isTestActive ? Math.floor(Math.max(0, testEnd - now) / 60000) + 'm left' : (
                                               timeLeftSec > 86400 
                                               ? `${Math.floor(timeLeftSec/86400)}d ${Math.floor((timeLeftSec%86400)/3600)}h` 
@@ -434,7 +434,7 @@ export default function Dashboard() {
                               
                               {isEnrolled ? (
                                   isTestActive ? (
-                                      <button onClick={() => navigate(`/test/${t.id}`)} className="w-full bg-teal-700 text-white font-black py-3 text-sm rounded-2xl hover:bg-teal-800 transition-colors uppercase tracking-widest">
+                                      <button onClick={() => navigate(`/test/${t.id}`)} className="w-full bg-[#006e5d] text-white font-black py-3 text-sm rounded-2xl hover:bg-[#005a4d] transition-colors uppercase tracking-widest">
                                           Enter Test 
                                       </button>
                                   ) : (
@@ -443,7 +443,7 @@ export default function Dashboard() {
                                       </button>
                                   )
                               ) : (
-                                  <button onClick={() => navigate(`/live-test/${t.id}`)} className="w-full border-2 border-teal-700 text-teal-700 font-black py-3 text-[10px] rounded-2xl hover:bg-teal-50 transition-colors uppercase tracking-widest">
+                                  <button onClick={() => navigate(`/live-test/${t.id}`)} className="w-full border-2 border-[#006e5d] text-[#006e5d] font-black py-3 text-[10px] rounded-2xl hover:bg-[#006e5d]/5 transition-colors uppercase tracking-widest">
                                       Details & Enroll
                                   </button>
                               )}
@@ -458,7 +458,7 @@ export default function Dashboard() {
                         <div className="flex justify-between items-center mb-2">
                            <h3 className="text-lg font-black text-slate-900">Active Subscriptions</h3>
                            {activeExams.length > 4 && (
-                               <Link to="/my-subscriptions" className="text-teal-600 text-[10px] font-black uppercase tracking-wider hover:underline flex items-center gap-1">
+                               <Link to="/my-subscriptions" className="text-[#006e5d] text-[10px] font-black uppercase tracking-wider hover:underline flex items-center gap-1">
                                    View All ({activeExams.length})
                                </Link>
                            )}
@@ -467,27 +467,27 @@ export default function Dashboard() {
                             {activeExams.length > 0 ? activeExams.slice(0, 4).map((exam) => (
                                 <div key={exam.id} className="bg-white p-5 rounded-3xl border border-slate-100 flex flex-col justify-between hover:border-teal-100 hover:shadow-sm transition group">
                                     <div className="flex items-start gap-3 mb-6">
-                                        <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center shrink-0 overflow-hidden">
+                                        <div className="w-10 h-10 rounded-xl bg-[#006e5d]/5 flex items-center justify-center shrink-0 overflow-hidden">
                                             {exam.logoUrl ? (
                                                 <img src={exam.logoUrl} alt={exam.name || exam.title} loading="lazy" decoding="async" width="40" height="40" className="w-full h-full object-contain bg-white border border-slate-100 rounded-xl" />
                                             ) : (
-                                                <Award className="w-5 h-5 text-teal-500" />
+                                                <Award className="w-5 h-5 text-[#006e5d]" />
                                             )}
                                         </div>
                                         <div>
-                                            <h4 className="text-sm font-bold text-[#001f19] leading-tight mb-1 line-clamp-2 group-hover:text-teal-700 transition">{exam.name || exam.title}</h4>
+                                            <h4 className="text-sm font-bold text-[#001f19] leading-tight mb-1 line-clamp-2 group-hover:text-[#006e5d] transition">{exam.name || exam.title}</h4>
                                             <p className="text-[10px] text-slate-500 font-medium">{exam.type === 'live_test' ? 'Live Test Access' : 'Subscription Active'}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between pt-4 border-t border-slate-50">
                                         <span className="text-xs font-bold text-slate-700">One Time</span>
-                                        <button onClick={() => navigate(exam.type === 'live_test' ? `/live-test/${exam.id}` : `/exam/${exam.id}`)} className="text-[10px] font-black text-teal-700 tracking-wider hover:text-teal-800">MANAGE</button>
+                                        <button onClick={() => navigate(exam.type === 'live_test' ? `/live-test/${exam.id}` : `/exam/${exam.id}`)} className="text-[10px] font-black text-[#006e5d] tracking-wider hover:text-[#005a4d]">MANAGE</button>
                                     </div>
                                 </div>
                             )) : (
                                 <div className="col-span-1 md:col-span-2 bg-white p-6 rounded-3xl border border-slate-100 text-center flex flex-col items-center justify-center min-h-[140px]">
                                     <p className="text-slate-500 text-sm font-medium mb-4">No active subscriptions found.</p>
-                                    <Link to="/exams" className="text-teal-600 bg-teal-50 px-4 py-2 rounded-xl text-xs font-bold hover:bg-teal-100 transition">Browse Exams</Link>
+                                    <Link to="/exams" className="text-[#006e5d] bg-[#006e5d]/5 px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#006e5d]/10 transition">Browse Exams</Link>
                                 </div>
                             )}
                         </div>
@@ -499,9 +499,9 @@ export default function Dashboard() {
                       <div className="lg:col-span-2 bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col">
                           <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                                <Megaphone className="w-5 h-5 text-teal-600" /> Platform Announcements
+                                <Megaphone className="w-5 h-5 text-[#006e5d]" /> Platform Announcements
                             </h3>
-                            <button onClick={() => navigate('/announcements')} className="text-teal-600 text-[10px] font-black uppercase tracking-wider hover:underline">View All Updates</button>
+                            <button onClick={() => navigate('/announcements')} className="text-[#006e5d] text-[10px] font-black uppercase tracking-wider hover:underline">View All Updates</button>
                           </div>
                           
                           <div className="space-y-4 flex-1">
@@ -509,8 +509,8 @@ export default function Dashboard() {
                               <div key={notice.id} className="p-4 rounded-3xl border border-slate-50 bg-slate-50/30 group hover:bg-slate-50 transition-all flex items-start gap-4">
                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                                    notice.type === 'warning' ? 'bg-amber-100 text-amber-600' :
-                                   notice.type === 'update' ? 'bg-teal-100 text-teal-600' :
-                                   'bg-teal-100 text-teal-600'
+                                   notice.type === 'update' ? 'bg-[#006e5d]/10 text-[#006e5d]' :
+                                   'bg-[#006e5d]/10 text-[#006e5d]'
                                  }`}>
                                     {notice.type === 'warning' ? <AlertTriangle className="w-5 h-5" /> : 
                                      notice.type === 'update' ? <Zap className="w-5 h-5" /> : 
@@ -544,7 +544,7 @@ export default function Dashboard() {
                                   <p className="text-sm text-slate-500">No new exams available right now.</p>
                               )}
                           </div>
-                          <button onClick={() => navigate('/exams')} className="w-full mt-4 py-3 bg-teal-50 text-teal-700 font-bold rounded-2xl text-sm">Browse Categories</button>
+                          <button onClick={() => navigate('/exams')} className="w-full mt-4 py-3 bg-[#006e5d]/5 text-[#006e5d] font-bold rounded-2xl text-sm">Browse Categories</button>
                       </div>
                   </div>
                   
@@ -557,14 +557,14 @@ export default function Dashboard() {
                                  <div key={idx} className="border rounded-2xl p-6">
                                       <div className="flex justify-between items-center mb-2">
                                          <p className="text-sm font-bold text-slate-500">{subj.subject}</p>
-                                         <span className={`text-[10px] font-black px-2 py-1 rounded-lg ${subj.status === 'bad' ? 'bg-red-50 text-red-700' : 'bg-teal-50 text-teal-700'}`}>
+                                         <span className={`text-[10px] font-black px-2 py-1 rounded-lg ${subj.status === 'bad' ? 'bg-red-50 text-red-700' : 'bg-[#006e5d]/10 text-[#006e5d]'}`}>
                                              {subj.status === 'bad' ? 'NEEDS ATTENTION' : 'TOP PERFORMER'}
                                          </span>
                                       </div>
                                       <div className="h-2 bg-slate-100 rounded-full w-full">
-                                          <div className={`h-full rounded-full ${subj.status === 'bad' ? 'bg-red-500' : 'bg-teal-500'}`} style={{ width: `${subj.accuracy}%` }}/>
+                                          <div className={`h-full rounded-full ${subj.status === 'bad' ? 'bg-red-500' : 'bg-[#006e5d]'}`} style={{ width: `${subj.accuracy}%` }}/>
                                       </div>
-                                      <p className={`text-xs font-black mt-2 ${subj.status === 'bad' ? 'text-red-600' : 'text-teal-600'}`}>{subj.accuracy}% Accuracy</p>
+                                      <p className={`text-xs font-black mt-2 ${subj.status === 'bad' ? 'text-red-600' : 'text-[#006e5d]'}`}>{subj.accuracy}% Accuracy</p>
                                  </div>
                             ))}
                         </div>
@@ -577,15 +577,15 @@ export default function Dashboard() {
 
                   {/* Projected Score Improvement & Quick Access */}
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10">
-                    <div className="lg:col-span-2 bg-teal-50 p-6 md:p-8 rounded-[2rem] border border-teal-100 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="lg:col-span-2 bg-[#006e5d]/5 p-6 md:p-8 rounded-[2rem] border border-[#006e5d]/10 flex flex-col md:flex-row items-center justify-between gap-4">
                          <div>
-                            <h3 className="font-black text-teal-900 mb-2">Projected Score Improvement</h3>
-                            <p className="text-sm text-teal-700">Focusing on Quantitative Aptitude could add 45 points.</p>
+                            <h3 className="font-black text-[#002f26] mb-2">Projected Score Improvement</h3>
+                            <p className="text-sm text-[#006e5d]">Focusing on Quantitative Aptitude could add 45 points.</p>
                          </div>
                          <button 
                              onClick={() => lowestSubject && navigate(`/subject-tests/${lowestSubject.subjectId}`)}
                              disabled={!lowestSubject}
-                             className="bg-teal-600 text-white font-black px-6 py-3 rounded-2xl w-full md:w-auto disabled:opacity-50 disabled:bg-slate-400"
+                             className="bg-[#006e5d] text-white font-black px-6 py-3 rounded-2xl w-full md:w-auto disabled:opacity-50 disabled:bg-slate-400"
                          >
                             {lowestSubject ? `Practice ${lowestSubject.subject}` : 'No Subject Found'}
                          </button>
@@ -596,7 +596,7 @@ export default function Dashboard() {
                         <button onClick={handleDoubtClick} className="bg-[#4a2406] text-white p-4 rounded-2xl font-bold text-center flex items-center justify-center gap-2">
                              <HelpCircle className="w-5 h-5"/> Doubt Hub
                         </button>
-                        <Link to="/helpdesk" className="bg-[#064e40] text-white p-4 rounded-2xl font-bold text-center flex items-center justify-center gap-2 transition hover:bg-black">
+                        <Link to="/helpdesk" className="bg-[#002f26] text-white p-4 rounded-2xl font-bold text-center flex items-center justify-center gap-2 transition hover:bg-black">
                              <MessageCircle className="w-5 h-5"/> Support Ticket
                         </Link>
                     </div>

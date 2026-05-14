@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { DashboardSidebar } from '../components/DashboardSidebar';
 import { DashboardTopHeader } from '../components/DashboardTopHeader';
-import { Award, Zap, Loader2, BookOpenText } from 'lucide-react';
+import { Award, Zap, Loader2, BookOpenText, ArrowLeft } from 'lucide-react';
 import { motion } from 'motion/react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -77,10 +77,13 @@ export default function MySubscriptions() {
           <DashboardTopHeader user={profile} onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
           <main className="p-4 lg:p-8 overflow-y-auto w-full">
             <div className="max-w-6xl mx-auto space-y-8">
+              <Link to="/dashboard" className="text-[#006e5d] font-bold flex items-center gap-1 mb-2 hover:underline">
+                <ArrowLeft size={16} /> Back to Dashboard
+              </Link>
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-200">
                 <div>
                   <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
-                    <span className="bg-teal-50 p-2.5 rounded-2xl text-teal-600">
+                    <span className="bg-[#006e5d]/5 p-2.5 rounded-2xl text-[#006e5d]">
                       <BookOpenText className="w-8 h-8" />
                     </span>
                     My Subscriptions
@@ -94,7 +97,7 @@ export default function MySubscriptions() {
               {loading ? (
                  <div className="flex justify-center py-24">
                     <div className="bg-white p-3 rounded-full shadow-sm border border-slate-100">
-                      <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
+                      <Loader2 className="w-8 h-8 text-[#006e5d] animate-spin" />
                     </div>
                  </div>
               ) : activeExams.length === 0 ? (
@@ -108,31 +111,31 @@ export default function MySubscriptions() {
                    </p>
                    <button
                      onClick={() => navigate('/exams')}
-                     className="inline-flex items-center justify-center px-6 py-3 bg-teal-600 text-white font-bold rounded-2xl hover:bg-teal-700 transition"
+                     className="inline-flex items-center justify-center px-6 py-3 bg-[#006e5d] text-white font-bold rounded-2xl hover:bg-[#005a4d] transition"
                    >
                       Browse Exams
                    </button>
                  </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {activeExams.map((exam, index) => (
                       <motion.div 
                           initial={{ opacity: 0, y: 15 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.05 }}
                           key={exam.id} 
-                          className="bg-white p-6 rounded-[2rem] border border-slate-100 flex flex-col justify-between hover:border-teal-100 hover:shadow-sm transition group"
+                          className="bg-white p-6 rounded-[2rem] border border-slate-100 flex flex-col justify-between hover:border-[#006e5d]/20 hover:shadow-sm transition group"
                       >
                           <div className="flex items-start gap-4 mb-6">
-                              <div className="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center shrink-0 overflow-hidden">
+                              <div className="w-12 h-12 rounded-xl bg-[#006e5d]/5 flex items-center justify-center shrink-0 overflow-hidden">
                                   {exam.logoUrl ? (
                                       <img src={exam.logoUrl} alt={exam.name || exam.title} loading="lazy" decoding="async" width="48" height="48" className="w-full h-full object-contain bg-white border border-slate-100 rounded-xl" />
                                   ) : (
-                                      <Award className="w-6 h-6 text-teal-500" />
+                                      <Award className="w-6 h-6 text-[#006e5d]" />
                                   )}
                               </div>
                               <div className="flex-1 min-w-0 pt-1">
-                                  <h4 className="text-base font-bold text-[#001f19] leading-tight mb-1 line-clamp-2 group-hover:text-teal-700 transition">{exam.name || exam.title}</h4>
+                                  <h4 className="text-base font-bold text-[#001f19] leading-tight mb-1 line-clamp-2 group-hover:text-[#006e5d] transition">{exam.name || exam.title}</h4>
                                   <p className="text-[10px] text-slate-500 font-medium">{exam.type === 'live_test' ? 'Live Test Access' : 'Subscription Active'}</p>
                               </div>
                           </div>
@@ -140,7 +143,7 @@ export default function MySubscriptions() {
                               <span className="text-xs font-bold text-slate-700">One Time</span>
                               <button 
                                   onClick={() => navigate(exam.type === 'live_test' ? `/live-test/${exam.id}` : `/exam/${exam.id}`)} 
-                                  className="text-[10px] font-black text-teal-700 tracking-wider hover:text-teal-800 bg-teal-50 px-3 py-1.5 rounded-lg"
+                                  className="text-[10px] font-black text-[#006e5d] tracking-wider hover:text-[#005a4d] bg-[#006e5d]/5 px-3 py-1.5 rounded-lg"
                               >
                                   MANAGE
                               </button>

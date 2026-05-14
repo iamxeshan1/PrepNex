@@ -50,7 +50,7 @@ export default function PrivacyPolicy() {
                 className="bg-white p-8 md:p-12 rounded-[2.5rem] border border-slate-100 shadow-sm"
               >
                 <div className="flex flex-col md:flex-row gap-8 items-start">
-                  <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-teal-600 shrink-0">
+                  <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-[#006e5d] shrink-0">
                     <section.icon className="w-8 h-8" />
                   </div>
                   <div>
@@ -67,13 +67,13 @@ export default function PrivacyPolicy() {
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="p-10 md:p-16 bg-[#064e40] rounded-[2.5rem] text-white overflow-hidden relative"
+              className="p-10 md:p-16 bg-[#002f26] rounded-[2.5rem] text-white overflow-hidden relative"
             >
               <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
               
               <div className="relative z-10">
                 <div className="flex items-center gap-4 mb-8">
-                  <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-teal-400">
+                  <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-[#006e5d]">
                     <FileText className="w-6 h-6" />
                   </div>
                   <h2 className="text-3xl font-[800] tracking-tight">Your Digital Rights</h2>

@@ -164,19 +164,19 @@ export default function AdminRevenue() {
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm mb-10">
         <div className="p-8 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-xl font-black text-slate-900">Revenue Trends</h3>
-          <button onClick={exportTransactions} className="flex items-center gap-2 px-4 py-2 bg-[#064e40] text-white rounded-lg text-sm font-semibold hover:bg-[#001f19]">
+          <button onClick={exportTransactions} className="flex items-center gap-2 px-4 py-2 bg-[#006e5d] text-white rounded-lg text-sm font-semibold hover:bg-[#005a4d]">
             <Download className="w-4 h-4" /> Export Data
           </button>
         </div>
         <div className="h-[300px] p-6">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData}>
-              <defs><linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.2}/><stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/></linearGradient></defs>
+              <defs><linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#006e5d" stopOpacity={0.2}/><stop offset="95%" stopColor="#006e5d" stopOpacity={0}/></linearGradient></defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <XAxis dataKey="name" axisLine={false} tickLine={false} />
               <YAxis axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v/1000}k`} />
               <Tooltip formatter={(v: number) => [`₹${v.toLocaleString()}`, 'Revenue']} />
-              <Area type="monotone" dataKey="amount" stroke="#0ea5e9" fill="url(#colorRev)" />
+              <Area type="monotone" dataKey="amount" stroke="#006e5d" fill="url(#colorRev)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -195,7 +195,7 @@ export default function AdminRevenue() {
                 placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-[#006e5d] outline-none"
               />
             </div>
           </div>

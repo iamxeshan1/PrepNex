@@ -75,16 +75,16 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-6 py-2.5 text-sm font-semibold transition-all relative outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-teal-500 mx-2 ${
+                className={`flex items-center gap-3 px-6 py-2.5 text-sm font-semibold transition-all relative outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#006e5d] mx-2 ${
                   active
                     ? 'text-white bg-[#001f19]'
                     : 'text-slate-400 hover:text-white hover:bg-[#001f19]/50'
                 }`}
               >
                 {active && (
-                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-teal-500"></div>
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-[#006e5d]"></div>
                 )}
-                <item.icon className={`w-4 h-4 flex-shrink-0 ${active ? 'text-teal-400' : ''}`} />
+                <item.icon className={`w-4 h-4 flex-shrink-0 ${active ? 'text-[#006e5d]' : ''}`} />
                 <span>{item.label}</span>
               </Link>
             )})}
@@ -127,12 +127,12 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
       <aside className="w-[280px] bg-[#111827] flex flex-col shrink-0 relative z-40 text-slate-300 shadow-2xl">
         <header className="p-6 pb-4">
           <Link to="/admin" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center text-white shadow-lg shadow-teal-900/50">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#006e5d] to-[#005a4d] flex items-center justify-center text-white shadow-lg shadow-teal-900/50">
               <GraduationCap className="w-6 h-6" />
             </div>
             <div>
               <h1 className="text-white font-bold text-xl leading-none">PrepNext</h1>
-              <p className="text-[10px] font-bold text-teal-400 mt-1 uppercase tracking-widest">Administrator</p>
+              <p className="text-[10px] font-bold text-[#006e5d] mt-1 uppercase tracking-widest">Administrator</p>
             </div>
           </Link>
         </header>
@@ -147,7 +147,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
           <NavGroup id="system" label="System Controls" items={systemItems} />
         </nav>
 
-        <footer className="p-4 border-t border-[#001f19] bg-[#064e40]/50">
+        <footer className="p-4 border-t border-[#001f19] bg-[#002f26]/50">
            <Link 
              to="/admin/helpdesk"
              className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-[#001f19] rounded-lg transition-colors"
@@ -173,16 +173,16 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
              <input 
                 type="text" 
                 placeholder="Search global registries..." 
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all font-medium text-slate-700 placeholder:text-slate-400"
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#006e5d]/20 focus:border-[#006e5d] transition-all font-medium text-slate-700 placeholder:text-slate-400"
              />
           </div>
 
           <div className="flex items-center gap-6 ml-4">
             <Link 
               to="/" 
-              className="flex items-center gap-2 px-4 py-2 bg-teal-50 border border-teal-100 rounded-full text-teal-700 text-xs font-black shadow-sm hover:bg-teal-100 transition-all group"
+              className="flex items-center gap-2 px-4 py-2 bg-[#006e5d]/5 border border-[#006e5d]/10 rounded-full text-[#006e5d] text-xs font-black shadow-sm hover:bg-[#006e5d]/10 transition-all group"
             >
-              <ExternalLink className="w-3.5 h-3.5 text-teal-600 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              <ExternalLink className="w-3.5 h-3.5 text-[#006e5d] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               <span className="uppercase tracking-widest">Visit Main Site</span>
             </Link>
             <button className="text-slate-400 hover:text-slate-600 transition-colors relative">

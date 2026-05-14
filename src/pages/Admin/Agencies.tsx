@@ -106,7 +106,7 @@ export default function AdminAgencies() {
         <p className="text-slate-500 font-medium">Manage recruiting agencies and governing learning institutions.</p>
         <button 
           onClick={() => { if(showForm) { setShowForm(false); resetForm(); } else setShowForm(true); }}
-          className="bg-teal-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-teal-800 transition-colors"
+          className="bg-[#006e5d] text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-[#005a4d] transition-colors"
         >
            {showForm ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
            {showForm ? 'Cancel Entry' : 'Add Agency'}
@@ -131,7 +131,7 @@ export default function AdminAgencies() {
                     <input 
                       type="text" required 
                       placeholder="e.g. UPSC, SSC"
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 font-medium"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-[#006e5d] focus:border-[#006e5d] font-medium"
                       value={name} onChange={(e) => setName(e.target.value)} 
                     />
                  </div>
@@ -139,7 +139,7 @@ export default function AdminAgencies() {
                     <label className="block text-sm font-semibold text-slate-700 mb-2">Agency Logo</label>
                     <div className="flex gap-4 items-center">
                       <label className="flex items-center justify-center gap-3 px-4 py-3 bg-white border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors w-full h-12">
-                        {uploading ? <Loader2 className="w-5 h-5 animate-spin text-slate-400" /> : <Upload className="w-5 h-5 text-teal-600" />}
+                        {uploading ? <Loader2 className="w-5 h-5 animate-spin text-slate-400" /> : <Upload className="w-5 h-5 text-[#006e5d]" />}
                         <span className="text-sm font-medium text-slate-600">{uploading ? 'Uploading...' : 'Upload Image'}</span>
                         <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} disabled={uploading} />
                       </label>
@@ -151,7 +151,7 @@ export default function AdminAgencies() {
              <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Description</label>
                 <textarea 
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 font-medium min-h-[100px]"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-[#006e5d] focus:border-[#006e5d] font-medium min-h-[100px]"
                   placeholder="Details about the agency..."
                   value={description} onChange={(e) => setDescription(e.target.value)} 
                 />
@@ -161,7 +161,7 @@ export default function AdminAgencies() {
                 <div>
                    <label className="block text-sm font-semibold text-slate-700 mb-2">Status</label>
                    <select 
-                     className="w-full px-4 py-3 bg-white border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 font-medium"
+                     className="w-full px-4 py-3 bg-white border border-slate-300 rounded-lg focus:ring-[#006e5d] focus:border-[#006e5d] font-medium"
                      value={status} onChange={(e) => setStatus(e.target.value)}
                    >
                      <option value="draft">Draft - Hidden</option>
@@ -181,7 +181,7 @@ export default function AdminAgencies() {
              </div>
           </div>
           <div className="mt-8 flex gap-3">
-             <button type="submit" className="bg-teal-700 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-teal-800 transition-colors">
+             <button type="submit" className="bg-[#006e5d] text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-[#005a4d] transition-colors">
                {editingId ? 'Save Changes' : 'Create Agency'}
              </button>
           </div>
@@ -198,7 +198,7 @@ export default function AdminAgencies() {
                   placeholder="Search agencies..." 
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium focus:ring-teal-500 focus:border-teal-500 bg-white shadow-sm"
+                  className="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-md text-sm font-medium focus:ring-[#006e5d] focus:border-[#006e5d] bg-white shadow-sm"
                 />
              </div>
            </div>
@@ -206,7 +206,7 @@ export default function AdminAgencies() {
         </div>
 
         {loading ? (
-           <div className="py-20 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin" /></div>
+           <div className="py-20 flex justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-[#006e5d] rounded-full animate-spin" /></div>
         ) : (
           <table className="w-full text-left border-collapse">
             <thead>
@@ -222,7 +222,7 @@ export default function AdminAgencies() {
                 <tr key={agency.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
                   <td className="p-4 pl-6">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600 font-bold overflow-hidden p-1">
+                      <div className="w-10 h-10 rounded-lg bg-[#006e5d]/5 border border-[#006e5d]/10 flex items-center justify-center text-[#006e5d] font-bold overflow-hidden p-1">
                          {agency.logoUrl ? (
                            <img src={agency.logoUrl} alt={agency.name} loading="lazy" decoding="async" width="40" height="40" className="w-full h-full object-contain" />
                          ) : (
@@ -230,7 +230,7 @@ export default function AdminAgencies() {
                          )}
                       </div>
                       <div>
-                         <p className="font-bold text-slate-900 group-hover:text-teal-700 transition-colors uppercase">
+                         <p className="font-bold text-slate-900 group-hover:text-[#006e5d] transition-colors uppercase">
                            {agency.name}
                          </p>
                       </div>

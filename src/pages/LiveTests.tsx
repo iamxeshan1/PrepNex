@@ -42,13 +42,13 @@ export default function LiveTests() {
     <Layout>
       <div className="bg-[#f8fafc] min-h-screen">
         {/* Header Section */}
-        <section className="bg-[#064e40] pt-24 pb-32 relative overflow-hidden">
+        <section className="bg-[#002f26] pt-24 pb-32 relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(45,212,191,0.1),transparent)]" />
           <div className="max-w-7xl mx-auto px-4 lg:px-8 relative z-10 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center gap-2 bg-[#2dd4bf]/10 text-[#2dd4bf] px-4 py-2 rounded-full text-[10px] font-black tracking-widest uppercase mb-8 border border-[#2dd4bf]/20"
+              className="inline-flex items-center gap-2 bg-[#006e5d]/10 text-[#006e5d] px-4 py-2 rounded-full text-[10px] font-black tracking-widest uppercase mb-8 border border-[#006e5d]/20"
             >
               <Zap className="w-3 h-3 fill-current" /> Live Examination Portal
             </motion.div>
@@ -58,7 +58,7 @@ export default function LiveTests() {
               transition={{ delay: 0.1 }}
               className="text-4xl md:text-5xl font-sans font-[800] text-white mb-6 tracking-tighter"
             >
-              Real-Time Competitive <span className="text-[#2dd4bf]">Trials.</span>
+              Real-Time Competitive <span className="text-[#006e5d]">Trials.</span>
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
@@ -75,13 +75,13 @@ export default function LiveTests() {
               transition={{ delay: 0.3 }}
               className="max-w-xl mx-auto relative group"
             >
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-[#2dd4bf] transition-colors" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-[#006e5d] transition-colors" />
               <input 
                 type="text" 
                 placeholder="Search by exam category or title..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-white font-medium outline-none focus:ring-2 focus:ring-[#2dd4bf]/20 focus:border-[#2dd4bf] transition-all"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-white font-medium outline-none focus:ring-2 focus:ring-[#006e5d]/20 focus:border-[#006e5d] transition-all"
               />
             </motion.div>
           </div>
@@ -91,7 +91,7 @@ export default function LiveTests() {
         <section className="max-w-7xl mx-auto px-4 lg:px-8 -mt-12 relative z-10 pb-24">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20">
-              <Loader2 className="w-10 h-10 text-[#2dd4bf] animate-spin mb-4" />
+              <Loader2 className="w-10 h-10 text-[#006e5d] animate-spin mb-4" />
               <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Syncing Live Schedule...</p>
             </div>
           ) : filtered.length === 0 ? (
@@ -139,7 +139,7 @@ export default function LiveTests() {
                             isUpcoming ? 'SCHEDULED' : 'COMPLETED'
                           )}
                         </div>
-                        <span className="text-[10px] font-black text-[#2dd4bf] block tracking-[0.2em] uppercase mb-1">{test.category || 'GENERAL'}</span>
+                        <span className="text-[10px] font-black text-[#006e5d] block tracking-[0.2em] uppercase mb-1">{test.category || 'GENERAL'}</span>
                         <h4 className="text-sm font-bold text-slate-400 uppercase tracking-tighter">Live Examination</h4>
                       </div>
 
@@ -183,7 +183,7 @@ export default function LiveTests() {
                           className={`w-full py-4 rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all flex items-center justify-center gap-2 ${
                             isEnded 
                               ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
-                              : 'bg-[#064e40] text-white hover:bg-[#001f19] shadow-xl shadow-slate-200'
+                              : 'bg-[#006e5d] text-white hover:bg-[#005a4d] shadow-xl shadow-slate-200'
                           }`}
                           disabled={isEnded}
                         >
@@ -207,11 +207,11 @@ export default function LiveTests() {
         {/* Premium Upgrade CTA */}
         <section className="bg-white py-24">
           <div className="max-w-7xl mx-auto px-4 lg:px-8">
-            <div className="bg-[#064e40] rounded-[3.5rem] p-12 md:p-20 relative overflow-hidden">
-              <div className="absolute left-0 top-0 w-full h-full bg-[radial-gradient(circle_at_100%_0%,rgba(45,212,191,0.15),transparent)] pointer-events-none" />
+            <div className="bg-[#002f26] rounded-[3.5rem] p-12 md:p-20 relative overflow-hidden">
+              <div className="absolute left-0 top-0 w-full h-full bg-[radial-gradient(circle_at_100%_0%,rgba(0,110,93,0.15),transparent)] pointer-events-none" />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
                 <div>
-                  <div className="w-16 h-16 bg-[#2dd4bf]/10 rounded-2xl flex items-center justify-center text-[#2dd4bf] mb-8">
+                  <div className="w-16 h-16 bg-[#006e5d]/10 rounded-2xl flex items-center justify-center text-[#006e5d] mb-8">
                     <Shield className="w-8 h-8" />
                   </div>
                   <h2 className="text-4xl md:text-5xl font-sans font-[800] text-white mb-6 tracking-tighter leading-none">
@@ -222,7 +222,7 @@ export default function LiveTests() {
                   </p>
                   <button 
                     onClick={() => navigate('/premium')}
-                    className="bg-[#2dd4bf] text-slate-900 px-10 py-4.5 rounded-2xl font-black text-xs hover:bg-[#5eead4] transition-all uppercase tracking-[0.2em]"
+                    className="bg-[#006e5d] text-white px-10 py-4.5 rounded-2xl font-black text-xs hover:bg-[#005a4d] transition-all uppercase tracking-[0.2em]"
                   >
                     UPGRADE TO PREMIUM
                   </button>
@@ -235,7 +235,7 @@ export default function LiveTests() {
                     { label: 'Timed Precision', icon: Clock },
                   ].map((feat, i) => (
                     <div key={i} className="bg-white/5 border border-white/10 p-6 rounded-3xl backdrop-blur-sm">
-                      <feat.icon className="w-8 h-8 text-[#2dd4bf] mb-4" />
+                      <feat.icon className="w-8 h-8 text-[#006e5d] mb-4" />
                       <p className="text-white font-bold text-sm tracking-tight">{feat.label}</p>
                     </div>
                   ))}
