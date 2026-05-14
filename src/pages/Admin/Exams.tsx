@@ -12,8 +12,11 @@ import {
   Edit3, 
   MoreVertical,
   Activity,
-  FileText
+  FileText,
+  AlertTriangle
 } from 'lucide-react';
+import ConfirmationModal from '../../components/ConfirmationModal';
+import Toast, { ToastType } from '../../components/Toast';
 
 
 export default function AdminExams() {
@@ -22,6 +25,19 @@ export default function AdminExams() {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    examId: '',
+    title: '',
+    message: ''
+  });
+
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success' as ToastType
+  });
   
   // Form State
   const [name, setName] = useState('');
@@ -94,10 +110,20 @@ export default function AdminExams() {
     setName(''); setAgencyId(''); setPrice('0'); setIsPaid(false); setStatus('live');
   };
 
-  const handleDelete = async (id: string, confirmed = false) => {
-    if (!window.confirm("Are you sure you want to permanently delete this exam and all its associated tests and questions? This action cannot be undone.")) return;
-    if (true) {
-      try {
+  const handleDelete = async (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      examId: id,
+      title: 'Vaporizing Exam Node',
+      message: 'System Alert: Authorized deletion of this exam cycle. This will permanently purge all associated test patterns and question sub-nodes from the registry. This protocol is irreversible.'
+    });
+  };
+
+  const confirmDelete = async () => {
+    const id = confirmModal.examId;
+    try {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        setLoading(true);
         const testsSnap = await getDocs(query(collection(db, 'tests'), where('examId', '==', id)));
         for (const tDoc of testsSnap.docs) {
           const qSnap = await getDocs(query(collection(db, 'questions'), where('testId', '==', tDoc.id)));
@@ -107,9 +133,19 @@ export default function AdminExams() {
         }
         await deleteDoc(doc(db, 'exams', id));
         fetchExamsAndAgencies();
-      } catch (error) {
-        alert("Failed to delete exam permanently");
-      }
+        setToast({
+          isVisible: true,
+          message: 'Exam node purged successfully.',
+          type: 'success'
+        });
+    } catch (error) {
+        setToast({
+          isVisible: true,
+          message: 'Purge protocol failed. Authority override required.',
+          type: 'error'
+        });
+    } finally {
+        setLoading(false);
     }
   };
 
@@ -287,6 +323,22 @@ export default function AdminExams() {
           </table>
         )}
       </div>
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDelete}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type="danger"
+        confirmText="Confirm Purge"
+      />
+
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
     </AdminLayout>
   );
 }

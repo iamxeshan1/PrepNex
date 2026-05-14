@@ -13,10 +13,13 @@ import {
   CreditCard,
   CheckCircle2,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  AlertTriangle
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import ConfirmationModal from '../../components/ConfirmationModal';
+import Toast, { ToastType } from '../../components/Toast';
 
 export default function AdminRevenue() {
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -25,6 +28,18 @@ export default function AdminRevenue() {
   const [chartData, setChartData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: ''
+  });
+
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success' as ToastType
+  });
 
   useEffect(() => {
     const unsubSubs = onSnapshot(collection(db, 'subscriptions'), () => processData());
@@ -99,9 +114,17 @@ export default function AdminRevenue() {
     }
   };
 
-  const clearTransactions = async (confirmed = false) => {
-    if (!window.confirm("Are you sure you want to clear all transaction records? This cannot be undone.")) return;
+  const clearTransactions = async () => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Purging Financial Ledger',
+      message: 'System Alert: Authorized deletion of ALL transaction records. This will permanently zero-out the historical ledger for both standard and premium node subscriptions. This is irreversible.'
+    });
+  };
+
+  const confirmClear = async () => {
     try {
+      setConfirmModal({ ...confirmModal, isOpen: false });
       setLoading(true);
       const subsSnap = await getDocs(collection(db, 'subscriptions'));
       const premiumSnap = await getDocs(collection(db, 'premium_subscriptions'));
@@ -112,9 +135,18 @@ export default function AdminRevenue() {
       
       await Promise.all(deletions);
       await processData();
+      setToast({
+        isVisible: true,
+        message: 'Financial ledger purged successfully.',
+        type: 'success'
+      });
     } catch (e) {
       console.error("Failed to clear transactions:", e);
-      alert("Failed to clear transactions");
+      setToast({
+        isVisible: true,
+        message: 'Purge protocol failed.',
+        type: 'error'
+      });
       setLoading(false);
     }
   };
@@ -235,6 +267,22 @@ export default function AdminRevenue() {
           </table>
         </div>
       </div>
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmClear}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type="danger"
+        confirmText="Confirm Purge"
+      />
+
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
     </AdminLayout>
   );
 }

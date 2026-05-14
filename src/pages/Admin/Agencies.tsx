@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, where } from 'firebase/firestore';                
 import { db } from '../../lib/firebase';
-import { Plus, Trash2, Edit3, X, Loader2, Upload, ShieldCheck, Star, Activity, LayoutGrid, Award, Search, FileText, CheckCircle2 } from 'lucide-react';
+import { Plus, Trash2, Edit3, X, Loader2, Upload, ShieldCheck, Star, Activity, LayoutGrid, Award, Search, FileText, CheckCircle2, AlertTriangle } from 'lucide-react';
+import ConfirmationModal from '../../components/ConfirmationModal';
+import Toast, { ToastType } from '../../components/Toast';
 
 export default function AdminAgencies() {
   const [agencies, setAgencies] = useState<any[]>([]);
@@ -18,6 +20,19 @@ export default function AdminAgencies() {
   const [isFeatured, setIsFeatured] = useState(false);
   const [uploading, setUploading] = useState(false);
 
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    agencyId: '',
+    title: '',
+    message: ''
+  });
+
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success' as ToastType
+  });
+
   useEffect(() => { fetchAgencies(); }, []);                                                                                                                                                                                                                                                                             
   const fetchAgencies = async () => {
     try {
@@ -32,7 +47,14 @@ export default function AdminAgencies() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 500000) return alert("Logo must be under 500KB");
+    if (file.size > 500000) {
+      setToast({
+        isVisible: true,
+        message: "Logo must be under 500KB to minimize bandwidth impact.",
+        type: 'error'
+      });
+      return;
+    }
 
     setUploading(true);
     const reader = new FileReader();
@@ -66,27 +88,47 @@ export default function AdminAgencies() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDelete = async (id: string, confirmed = false) => {
-    if (!window.confirm("Are you sure you want to permanently delete this agency and all its exams, tests, and questions? This action cannot be undone.")) return;
-    if (true) {
-      try {
-        const examsSnap = await getDocs(query(collection(db, 'exams'), where('agencyId', '==', id)));
-        for (const eDoc of examsSnap.docs) {
-          const testsSnap = await getDocs(query(collection(db, 'tests'), where('examId', '==', eDoc.id)));
-          for (const tDoc of testsSnap.docs) {
-            const qSnap = await getDocs(query(collection(db, 'questions'), where('testId', '==', tDoc.id)));
-            const queries = qSnap.docs.map(qd => deleteDoc(doc(db, 'questions', qd.id)));
-            await Promise.all(queries);
-            await deleteDoc(doc(db, 'tests', tDoc.id));
-          }
-          await deleteDoc(doc(db, 'exams', eDoc.id));
+  const handleDelete = async (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      agencyId: id,
+      title: 'Decommissioning Agency Node',
+      message: 'System Alert: Authorized deletion of this recruiting agency. This will permanently purge all enrolled exams, tests, and question sub-nodes from the registry. This protocol is irreversible.'
+    });
+  };
+
+  const confirmDelete = async () => {
+    const id = confirmModal.agencyId;
+    try {
+      setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      setLoading(true);
+      const examsSnap = await getDocs(query(collection(db, 'exams'), where('agencyId', '==', id)));
+      for (const eDoc of examsSnap.docs) {
+        const testsSnap = await getDocs(query(collection(db, 'tests'), where('examId', '==', eDoc.id)));
+        for (const tDoc of testsSnap.docs) {
+          const qSnap = await getDocs(query(collection(db, 'questions'), where('testId', '==', tDoc.id)));
+          const queries = qSnap.docs.map(qd => deleteDoc(doc(db, 'questions', qd.id)));
+          await Promise.all(queries);
+          await deleteDoc(doc(db, 'tests', tDoc.id));
         }
-        await deleteDoc(doc(db, 'agencies', id));
-        fetchAgencies();
-      } catch (err) {
-        console.error("Delete error:", err);
-        alert("Failed to delete agency permanently");
+        await deleteDoc(doc(db, 'exams', eDoc.id));
       }
+      await deleteDoc(doc(db, 'agencies', id));
+      fetchAgencies();
+      setToast({
+        isVisible: true,
+        message: 'Agency node decommissioned successfully.',
+        type: 'success'
+      });
+    } catch (err) {
+      console.error("Delete error:", err);
+      setToast({
+        isVisible: true,
+        message: 'Decommissioning protocol failed.',
+        type: 'error'
+      });
+    } finally {
+        setLoading(false);
     }
   };
 
@@ -275,6 +317,22 @@ export default function AdminAgencies() {
           </table>
         )}
       </div>
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDelete}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type="danger"
+        confirmText="Confirm Purge"
+      />
+
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
     </AdminLayout>
   );
 }

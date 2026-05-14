@@ -23,8 +23,10 @@ import {
   MousePointer2,
   Send,
   MessageCircle,
-  MessageSquare
+  MessageSquare,
+  AlertTriangle
 } from 'lucide-react';
+import Toast, { ToastType } from '../../components/Toast';
 
 export default function AdminSettings() {
   const [razorpayKeyId, setRazorpayKeyId] = useState('');
@@ -56,7 +58,11 @@ export default function AdminSettings() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success' as ToastType
+  });
 
   useEffect(() => { fetchSettings(); }, []);
 
@@ -110,7 +116,11 @@ export default function AdminSettings() {
       }
     } catch (error) {
       console.error("Error fetching settings:", error);
-      setMessage({ type: 'error', text: 'Failed to source cloud preferences. Check console for details.' });
+      setToast({
+        isVisible: true,
+        message: 'Failed to source cloud preferences.',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
@@ -119,7 +129,7 @@ export default function AdminSettings() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setMessage(null);
+    setToast(prev => ({ ...prev, isVisible: false }));
     try {
       await Promise.all([
         setDoc(doc(db, 'settings', 'razorpay'), {
@@ -155,19 +165,27 @@ export default function AdminSettings() {
           updatedAt: new Date().toISOString()
         })
       ]);
-      setMessage({ type: 'success', text: 'System configuration globally updated!' });
-      setTimeout(() => setMessage(null), 5000);
+      setToast({
+        isVisible: true,
+        message: 'System configuration globally updated!',
+        type: 'success'
+      });
     } catch (error) {
-      setMessage({ type: 'error', text: 'Synchronization failed. Check permissions.' });
+      setToast({
+        isVisible: true,
+        message: 'Synchronization failed. Check permissions.',
+        type: 'error'
+      });
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <AdminLayout title="System Configuration">
-      <form onSubmit={handleSave} className="max-w-5xl space-y-12 pb-32">
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <>
+      <AdminLayout title="System Configuration">
+        <form onSubmit={handleSave} className="max-w-5xl space-y-12 pb-32">
+          <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
            <div>
               <h2 className="text-3xl font-black text-slate-900 tracking-tight font-display">Core Infrastructure</h2>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 italic">Propagating global settings across PrepNext ecosystem</p>
@@ -184,25 +202,7 @@ export default function AdminSettings() {
            </div>
         </header>
 
-        {message && (
-          <div className={`p-6 rounded-[2rem] flex items-center gap-4 animate-in slide-in-from-top-4 ${message.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-xl shadow-emerald-100/50' : 'bg-rose-50 text-rose-700 border border-rose-100 shadow-xl shadow-rose-100/50'}`}>
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${message.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
-               {message.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-            </div>
-            <p className="text-sm font-black uppercase tracking-widest flex-1">{message.text}</p>
-            {message.type === 'error' && (
-              <button 
-                type="button"
-                onClick={() => fetchSettings()}
-                className="text-[10px] font-black uppercase tracking-widest bg-rose-600 text-white px-4 py-2 rounded-lg hover:bg-rose-700 transition-colors"
-              >
-                Retry Link
-              </button>
-            )}
-          </div>
-        )}
-
-        {loading && !message && (
+        {loading && !toast.isVisible && (
           <div className="py-32 flex flex-col items-center justify-center space-y-4 opacity-50 bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
              <div className="w-12 h-12 border-4 border-slate-200 border-t-[#006e5d] rounded-full animate-spin"></div>
              <p className="text-sm font-black text-slate-400 uppercase tracking-widest">Bridging Cloud Repository...</p>
@@ -408,5 +408,12 @@ export default function AdminSettings() {
         </div>
       </form>
     </AdminLayout>
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
+    </>
   );
 }

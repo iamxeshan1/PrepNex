@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 import { Mail, Lock, LogIn, Chrome, AlertCircle } from 'lucide-react';
 import { auth, db } from '../lib/firebase';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { Logo } from '../components/Logo';
 import { Layout } from '../components/Layout';
 
@@ -51,6 +51,13 @@ export default function Login() {
           testsAttempted: 0,
           averageScore: 0,
           createdAt: new Date().toISOString()
+        });
+      } else {
+        // Keep photoURL and name in sync with Google if they change
+        await updateDoc(docRef, {
+          photoURL: user.photoURL || docSnap.data().photoURL,
+          name: user.displayName || docSnap.data().name,
+          email: user.email || docSnap.data().email
         });
       }
       navigate('/dashboard');

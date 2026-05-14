@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
 import { collection, getDocs, doc, addDoc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { BookOpen, Plus, Search, ExternalLink, Trash2, Edit3, X, FileText, Database, Loader2, Link as LinkIcon } from 'lucide-react';
+import { BookOpen, Plus, Search, ExternalLink, Trash2, Edit3, X, FileText, Database, Loader2, Link as LinkIcon, AlertTriangle } from 'lucide-react';
+import ConfirmationModal from '../../components/ConfirmationModal';
+import Toast, { ToastType } from '../../components/Toast';
 
 interface Material {
   id: string;
@@ -19,6 +21,19 @@ export default function AdminStudyMaterial() {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    materialId: '',
+    title: '',
+    message: ''
+  });
+
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success' as ToastType
+  });
 
   // Form State
   const [title, setTitle] = useState('');
@@ -73,13 +88,32 @@ export default function AdminStudyMaterial() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDelete = async (id: string, confirmed = false) => {
-    if (!window.confirm('Delete this study material?')) return;
+  const handleDelete = async (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      materialId: id,
+      title: 'Purging Resource Node',
+      message: 'System Alert: Authorized deletion of this study resource. This will permanently remove the link from the network registry. The physical file on the external server will not be affected.'
+    });
+  };
+
+  const confirmDelete = async () => {
+    const id = confirmModal.materialId;
     try {
+      setConfirmModal(prev => ({ ...prev, isOpen: false }));
       await deleteDoc(doc(db, 'study_material', id));
       setMaterials(prev => prev.filter(m => m.id !== id));
+      setToast({
+        isVisible: true,
+        message: 'Resource node purged successfully.',
+        type: 'success'
+      });
     } catch (err) {
-       console.error(err);
+      setToast({
+        isVisible: true,
+        message: 'Purge protocol failed.',
+        type: 'error'
+      });
     }
   };
 
@@ -264,6 +298,22 @@ export default function AdminStudyMaterial() {
           </table>
         )}
       </div>
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDelete}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type="danger"
+        confirmText="Confirm Purge"
+      />
+
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
     </AdminLayout>
   );
 }

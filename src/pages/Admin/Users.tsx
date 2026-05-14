@@ -34,9 +34,14 @@ import {
   FileText,
   CreditCard,
   Ticket,
-  BarChart3
+  BarChart3,
+  AlertCircle
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import ConfirmationModal from '../../components/ConfirmationModal';
+import PremiumGrantModal from '../../components/PremiumGrantModal';
+import Toast, { ToastType } from '../../components/Toast';
+import { addDoc } from 'firebase/firestore';
 
 
 export default function AdminUsers() {
@@ -50,6 +55,32 @@ export default function AdminUsers() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [showPrivilegeModal, setShowPrivilegeModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    type?: 'danger' | 'warning' | 'info' | 'success';
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  });
+
+  const [premiumGrantModal, setPremiumGrantModal] = useState({
+    isOpen: false,
+    loading: false
+  });
+
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success' as ToastType
+  });
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editFormData, setEditFormData] = useState<any>({});
 
@@ -57,18 +88,15 @@ export default function AdminUsers() {
   const [userPurchases, setUserPurchases] = useState<any[]>([]);
   const [loadingPurchases, setLoadingPurchases] = useState(false);
 
-  const handleDelete = async (userId: string) => {
-    setSelectedUser(users.find(u => u.id === userId));
-    setShowDeleteModal(true);
-  };
-
   const confirmDelete = async () => {
     if (!selectedUser) return;
     const userId = selectedUser.id;
     
     try {
         setLoading(true);
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
         
+        // ... rest of the code ...
         // Collections where userId is a field
         const collectionsToClean = [
           'results',
@@ -131,15 +159,25 @@ export default function AdminUsers() {
         await deleteDoc(doc(db, 'users', userId));
 
         setUsers(users.filter(u => u.id !== userId));
-        alert("User and all associated data (progress, subscriptions, etc.) deleted successfully.");
-        setShowDeleteModal(false);
         setSelectedUser(null);
     } catch (error) {
         console.error("Error deleting user data:", error);
-        alert("Failed to delete user fully. Some associated data might still exist.");
     } finally {
         setLoading(false);
     }
+  };
+
+  const handleDelete = async (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    setSelectedUser(user);
+    setConfirmModal({
+      isOpen: true,
+      title: 'Terminating Student Node',
+      message: `System Alert: Authorized deletion of user "${user.name}". This will permanently purge all progress, results, and network identification from the registry. This protocol is irreversible.`,
+      confirmText: 'Execute Purge',
+      type: 'danger',
+      onConfirm: confirmDelete
+    });
   };
 
   const handleEditUser = async (e: React.FormEvent) => {
@@ -153,11 +191,19 @@ export default function AdminUsers() {
              state: editFormData.state
          });
          setUsers(users.map(u => u.id === selectedUser.id ? {...u, ...editFormData} : u));
-         alert("User updated successfully");
+         setToast({
+           isVisible: true,
+           message: "Student node identity updated successfully.",
+           type: 'success'
+         });
          setShowEditModal(false);
       } catch (error) {
           console.error("Error updating user:", error);
-          alert("Failed to update user");
+          setToast({
+            isVisible: true,
+            message: "Node update rejected by registry.",
+            type: 'error'
+          });
       }
   };
 
@@ -182,15 +228,95 @@ export default function AdminUsers() {
     }
   };
 
-  const handleToggleBlock = async (userId: string, currentStatus: boolean, confirmed = false) => {
-    try {
-      if (!window.confirm(`Are you sure you want to ${currentStatus ? 'unblock' : 'block'} this user?`)) return;
-      if (true) {
-        await updateDoc(doc(db, 'users', userId), { isBlocked: !currentStatus });
-        setUsers(users.map(u => u.id === userId ? { ...u, isBlocked: !currentStatus } : u));
-      }
-    } catch (error) {
-      alert("Failed to update status");
+  const handleToggleBlock = async (userId: string, currentStatus: boolean) => {
+     const action = currentStatus ? 'unblock' : 'block';
+     setConfirmModal({
+        isOpen: true,
+        title: `${currentStatus ? 'Unblock' : 'Restrict'} Registry Access`,
+        message: `System Confirmation: You are about to ${action} node ID: ${userId}. This will ${currentStatus ? 'restore' : 'terminate'} their ability to access the platform nodes immediately.`,
+        confirmText: currentStatus ? 'System Restore' : 'Authorize Restriction',
+        type: currentStatus ? 'info' : 'warning',
+        onConfirm: async () => {
+           try {
+              await updateDoc(doc(db, 'users', userId), { isBlocked: !currentStatus });
+              setUsers(users.map(u => u.id === userId ? { ...u, isBlocked: !currentStatus } : u));
+              setConfirmModal(prev => ({ ...prev, isOpen: false }));
+           } catch (error) {
+              // handle error
+           }
+        }
+     });
+  };
+
+  const confirmPremiumGrant = async (months: number) => {
+     if (!selectedUser) return;
+     try {
+        setPremiumGrantModal(prev => ({ ...prev, loading: true }));
+        const expiry = new Date();
+        if (months === 0) {
+           expiry.setFullYear(expiry.getFullYear() + 99); // Lifetime
+        } else {
+           expiry.setMonth(expiry.getMonth() + months);
+        }
+        
+        // 1. Update user document
+        await updateDoc(doc(db, 'users', selectedUser.id), {
+          isPremium: true,
+          premiumExpiry: expiry.toISOString(),
+          subscriptionExpiry: expiry.toISOString()
+        });
+        
+        // 2. Create premium subscription record so it shows in dashboard and logs
+        await addDoc(collection(db, "premium_subscriptions"), {
+           userId: selectedUser.id,
+           userName: selectedUser.name || "Aspirant",
+           type: "Premium (Admin Grant)",
+           purchaseDate: new Date().toISOString(),
+           expiryDate: expiry.toISOString(),
+           paymentId: 'ADMIN_GRANT',
+           orderId: 'ADMIN_AUTH',
+           paymentStatus: "completed",
+           amount: 0,
+           durationMonths: months
+        });
+
+        setUsers(users.map(u => u.id === selectedUser.id ? { ...u, isPremium: true, premiumExpiry: expiry.toISOString(), subscriptionExpiry: expiry.toISOString() } : u));
+        setSelectedUser({ ...selectedUser, isPremium: true, premiumExpiry: expiry.toISOString(), subscriptionExpiry: expiry.toISOString() });
+        
+        setPremiumGrantModal({ isOpen: false, loading: false });
+     } catch (error) {
+        console.error("Failed to grant premium:", error);
+        setPremiumGrantModal(prev => ({ ...prev, loading: false }));
+     }
+  };
+
+  const handleTogglePremium = async (userId: string, currentStatus: boolean) => {
+    if (currentStatus) {
+      // Revoke logic
+      setConfirmModal({
+        isOpen: true,
+        title: 'Revoking Ultimate Access',
+        message: `System Alert: You are about to terminate the Premium Pass for node: ${selectedUser?.name || userId}. This will instantly restrict their access to exclusive registry features.`,
+        confirmText: 'Terminate Clearance',
+        type: 'danger',
+        onConfirm: async () => {
+          try {
+             await updateDoc(doc(db, 'users', userId), {
+               isPremium: false,
+               premiumExpiry: null,
+               subscriptionExpiry: null
+             });
+             setUsers(users.map(u => u.id === userId ? { ...u, isPremium: false, premiumExpiry: null, subscriptionExpiry: null } : u));
+             if (selectedUser?.id === userId) setSelectedUser({ ...selectedUser, isPremium: false, premiumExpiry: null, subscriptionExpiry: null });
+             setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          } catch (error) {
+             console.error(error);
+          }
+        }
+      });
+    } else {
+      // Grant logic
+      setPremiumGrantModal({ isOpen: true, loading: false });
     }
   };
 
@@ -202,10 +328,25 @@ export default function AdminUsers() {
     const newFreeExams = [...freeExams, examId];
     try {
       await updateDoc(doc(db, 'users', userId), { freeExams: newFreeExams });
+      
+      // Also create a subscription record if it's an exam grant
+      const exam = exams.find(e => e.id === examId);
+      await addDoc(collection(db, "subscriptions"), {
+         userId: userId,
+         userName: user.name || "Aspirant",
+         examId: examId,
+         type: (exam?.name || "Exam") + " (Admin Grant)",
+         purchaseDate: new Date().toISOString(),
+         paymentId: 'ADMIN_GRANT',
+         orderId: 'ADMIN_AUTH',
+         paymentStatus: "completed",
+         amount: 0
+      });
+
       setUsers(users.map(u => u.id === userId ? { ...u, freeExams: newFreeExams } : u));
       if (selectedUser?.id === userId) setSelectedUser({ ...selectedUser, freeExams: newFreeExams });
     } catch (error) {
-      alert("Failed to grant access");
+      console.error(error);
     }
   };
 
@@ -217,25 +358,7 @@ export default function AdminUsers() {
       setUsers(users.map(u => u.id === userId ? { ...u, freeExams: newFreeExams } : u));
       if (selectedUser?.id === userId) setSelectedUser({ ...selectedUser, freeExams: newFreeExams });
     } catch (error) {
-      alert("Failed to revoke access");
-    }
-  };
-
-  const handleTogglePremium = async (userId: string, currentStatus: boolean, confirmed = false) => {
-    try {
-      if (!window.confirm(`Are you sure you want to ${currentStatus ? 'revoke' : 'grant'} premium access?`)) return;
-      if (true) {
-        const expiry = new Date();
-        expiry.setFullYear(expiry.getFullYear() + 1);
-        await updateDoc(doc(db, 'users', userId), {
-          isPremium: !currentStatus,
-          premiumExpiry: !currentStatus ? expiry.toISOString() : null
-        });
-        setUsers(users.map(u => u.id === userId ? { ...u, isPremium: !currentStatus, premiumExpiry: !currentStatus ? expiry.toISOString() : null } : u));
-        if (selectedUser?.id === userId) setSelectedUser({ ...selectedUser, isPremium: !currentStatus, premiumExpiry: !currentStatus ? expiry.toISOString() : null });
-      }
-    } catch (error) {
-      alert("Failed to update premium");
+      console.error(error);
     }
   };
 
@@ -260,38 +383,47 @@ export default function AdminUsers() {
     }
   };
 
-  const revokePurchase = async (purchase: any, confirmed = false) => {
-    if (!window.confirm(`Are you sure you want to revoke this purchase: ${purchase.type || purchase.examId}?`)) return;
-    try {
-      // 1. Delete subscription doc
-      await deleteDoc(doc(db, purchase.collection, purchase.id));
-      
-      // 2. Adjust user doc
-      const userDocRef = doc(db, 'users', selectedUser.id);
-      if (purchase.collection === 'premium_subscriptions') {
-         await updateDoc(userDocRef, { isPremium: false, subscriptionExpiry: null });
-         setUsers(users.map(u => u.id === selectedUser.id ? { ...u, isPremium: false } : u));
-      } else {
-         const newPurchasedExams = (selectedUser.purchasedExams || []).filter((id: string) => id !== purchase.examId);
-         await updateDoc(userDocRef, { purchasedExams: newPurchasedExams });
-         setUsers(users.map(u => u.id === selectedUser.id ? { ...u, purchasedExams: newPurchasedExams } : u));
-         
-         // 3. Remove from live test enrolledUsers if it was a live test
-         if (purchase.examId) {
-             const liveRef = doc(db, 'liveTests', purchase.examId);
-             const liveSnap = await getDoc(liveRef);
-             if (liveSnap.exists()) {
-                 const enrolled = liveSnap.data().enrolledUsers || [];
-                 await updateDoc(liveRef, { enrolledUsers: enrolled.filter((id: string) => id !== selectedUser.id) });
-             }
-         }
-      }
-      
-      setUserPurchases(userPurchases.filter(p => p.id !== purchase.id));
-    } catch (error) {
-      console.error("Failed to revoke access:", error);
-      alert("Failed to revoke access");
-    }
+  const revokePurchase = async (purchase: any) => {
+    setConfirmModal({
+        isOpen: true,
+        title: 'Revoking Transaction Node',
+        message: `System Alert: You are about to authorize the withdrawal of access for node "${purchase.type || purchase.examId}". This ledger entry will be permanently negated.`,
+        confirmText: 'Execute Revocation',
+        type: 'danger',
+        onConfirm: async () => {
+           try {
+              // 1. Delete subscription doc
+              await deleteDoc(doc(db, purchase.collection, purchase.id));
+              
+              // 2. Adjust user doc
+              const userDocRef = doc(db, 'users', selectedUser.id);
+              if (purchase.collection === 'premium_subscriptions') {
+                 await updateDoc(userDocRef, { isPremium: false, subscriptionExpiry: null, premiumExpiry: null });
+                 setUsers(users.map(u => u.id === selectedUser.id ? { ...u, isPremium: false, premiumExpiry: null, subscriptionExpiry: null } : u));
+              } else {
+                 const newPurchasedExams = (selectedUser.purchasedExams || []).filter((id: string) => id !== purchase.examId);
+                 const newFreeExams = (selectedUser.freeExams || []).filter((id: string) => id !== purchase.examId);
+                 await updateDoc(userDocRef, { purchasedExams: newPurchasedExams, freeExams: newFreeExams });
+                 setUsers(users.map(u => u.id === selectedUser.id ? { ...u, purchasedExams: newPurchasedExams, freeExams: newFreeExams } : u));
+                 
+                 // 3. Remove from live test enrolledUsers if it was a live test
+                 if (purchase.examId) {
+                     const liveRef = doc(db, 'liveTests', purchase.examId);
+                     const liveSnap = await getDoc(liveRef);
+                     if (liveSnap.exists()) {
+                         const enrolled = liveSnap.data().enrolledUsers || [];
+                         await updateDoc(liveRef, { enrolledUsers: enrolled.filter((id: string) => id !== selectedUser.id) });
+                     }
+                 }
+              }
+              
+              setUserPurchases(userPurchases.filter(p => p.id !== purchase.id));
+              setConfirmModal(prev => ({ ...prev, isOpen: false }));
+            } catch (error) {
+              console.error("Failed to revoke access:", error);
+            }
+        }
+    });
   };
 
   const filteredUsers = users.filter(u => 
@@ -370,8 +502,8 @@ export default function AdminUsers() {
                   <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
                     <td className="p-4 pl-6">
                       <div className="flex items-center gap-4">
-                        {user.photoURL ? (
-                          <img src={user.photoURL} alt={user.name} loading="lazy" decoding="async" width="40" height="40" className="w-10 h-10 rounded-lg object-cover" />
+                        {(user.photoURL || user.profilePicture) ? (
+                          <img src={user.photoURL || user.profilePicture} alt={user.name} loading="lazy" decoding="async" width="40" height="40" className="w-10 h-10 rounded-lg object-cover" />
                         ) : (
                           <div className="w-10 h-10 rounded-lg bg-[#006e5d]/5 flex items-center justify-center text-[#006e5d] font-bold uppercase">
                              {user.name?.[0] || 'U'}
@@ -429,6 +561,32 @@ export default function AdminUsers() {
           </table>
         )}
       </div>
+
+      {/* Existing modals remain but we integrate components */}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+        type={confirmModal.type}
+      />
+
+      <PremiumGrantModal
+        isOpen={premiumGrantModal.isOpen}
+        onClose={() => setPremiumGrantModal({ ...premiumGrantModal, isOpen: false })}
+        onConfirm={confirmPremiumGrant}
+        userName={selectedUser?.name || 'Aspirant'}
+        loading={premiumGrantModal.loading}
+      />
+
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
 
       {showEditModal && selectedUser && (
         <div className="fixed inset-0 bg-[#002f26]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">

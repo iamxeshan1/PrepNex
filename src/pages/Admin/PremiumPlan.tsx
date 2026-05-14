@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Save, AlertCircle, CheckCircle2, Crown, ListChecks, Rocket, Loader2, Plus, Trash2, Star, Percent } from 'lucide-react';
+import { Save, AlertCircle, CheckCircle2, Crown, ListChecks, Rocket, Loader2, Plus, Trash2, Star, Percent, AlertTriangle, X } from 'lucide-react';
 import { motion } from 'motion/react';
+import Toast, { ToastType } from '../../components/Toast';
 
 export interface PremiumPlanDef {
   id: string;
@@ -31,7 +32,20 @@ export default function PremiumPlanManagement() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newPlan, setNewPlan] = useState<PremiumPlanDef>({
+    id: '',
+    name: '',
+    months: 1,
+    price: 0,
+    originalPrice: 0,
+    isPopular: false
+  });
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success' as ToastType
+  });
 
   useEffect(() => { fetchSettings(); }, []);
 
@@ -55,7 +69,7 @@ export default function PremiumPlanManagement() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setMessage(null);
+    setToast(prev => ({ ...prev, isVisible: false }));
     try {
       const genSnap = await getDoc(doc(db, 'settings', 'general'));
       const existingData = genSnap.exists() ? genSnap.data() : {};
@@ -70,163 +84,236 @@ export default function PremiumPlanManagement() {
         premiumFeatures,
         updatedAt: new Date().toISOString()
       });
-      setMessage({ type: 'success', text: 'Premium plan logic synchronized.' });
+      setToast({
+        isVisible: true,
+        message: 'Premium plan logic synchronized.',
+        type: 'success'
+      });
     } catch (error) {
        console.error(error);
-       setMessage({ type: 'error', text: 'Protocol failure. Verification required.' });
+       setToast({
+         isVisible: true,
+         message: 'Protocol failure. Verification required.',
+         type: 'error'
+       });
     } finally {
       setSaving(false);
     }
-  };
-
-  const updatePlan = (index: number, key: keyof PremiumPlanDef, value: any) => {
-     const newPlans = [...plans];
-     newPlans[index] = { ...newPlans[index], [key]: value };
-     setPlans(newPlans);
-  };
-
-  const addPlan = () => {
-     setPlans([...plans, { 
-       id: `p_${Date.now()}`, 
-       name: 'Custom Plan', 
-       months: 6, 
-       price: 1999, 
-       originalPrice: 2994, 
-       isPopular: false 
-     }]);
   };
 
   const removePlan = (index: number) => {
      setPlans(plans.filter((_, i) => i !== index));
   };
 
+  const handleAddPlan = () => {
+    if (!newPlan.name || !newPlan.price) return;
+    const planToAdd = { ...newPlan, id: `p_${Date.now()}` };
+    setPlans([...plans, planToAdd]);
+    setNewPlan({
+      id: '',
+      name: '',
+      months: 1,
+      price: 0,
+      originalPrice: 0,
+      isPopular: false
+    });
+    setShowAdd(false);
+  };
+
+  const StatCard = ({ title, value, span, colorClass = "text-slate-900" }: any) => (
+    <div className="bg-white p-4">
+      <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
+      <h3 className={`text-3xl font-bold tracking-tight ${colorClass}`}>{value}</h3>
+      {span && <p className="text-xs font-semibold text-slate-400 mt-1">{span}</p>}
+    </div>
+  );
+
   return (
-    <AdminLayout title="Premium Plans & Pricing">
-      <div className="mb-12">
-         <h2 className="text-3xl font-black text-slate-900 tracking-tight font-display">Premium Offering Schema</h2>
-         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 italic">Configure durations, pricing, and custom plans</p>
+    <AdminLayout title="Premium Plans">
+      <div className="flex justify-between items-center mb-6">
+        <p className="text-slate-500 font-medium">Configure durations, pricing, and custom premium membership protocols.</p>
+        <button 
+          type="button"
+          onClick={() => setShowAdd(!showAdd)}
+          className="bg-[#006e5d] text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-[#005a4d] transition-colors"
+        >
+          {showAdd ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+          {showAdd ? 'Cancel' : 'New Plan'}
+        </button>
       </div>
 
-      <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-3 gap-12 pb-40 items-start">
-         <div className="lg:col-span-2 space-y-10">
-            <div className="bg-white p-12 rounded-[3.5rem] border border-slate-100 shadow-sm relative overflow-hidden">
-               <header className="mb-12 flex items-center justify-between">
-                  <div className="flex items-center gap-5">
-                    <div className="w-14 h-14 bg-amber-50 border border-amber-100 rounded-2xl flex items-center justify-center text-amber-600 shadow-sm">
-                       <Crown className="w-7 h-7" />
-                    </div>
-                    <div>
-                       <h3 className="text-2xl font-black text-slate-900 tracking-tight font-display uppercase">Tier Foundation</h3>
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Core messaging</p>
-                    </div>
-                  </div>
-               </header>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <StatCard title="Total Plans" value={plans.length} span="Active tiers" colorClass="text-[#006e5d]" />
+        <StatCard title="Featured" value={plans.filter(p => p.isPopular).length} span="Recommended" colorClass="text-amber-600" />
+      </div>
 
-               <div className="space-y-10 relative">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                     <div className="space-y-3">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Page Title</label>
-                        <input className="w-full px-8 py-5 bg-slate-50 border border-slate-200 rounded-[2rem] outline-none font-bold" value={premiumTitle} onChange={(e) => setPremiumTitle(e.target.value)} required />
-                     </div>
-                     <div className="space-y-3">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Page Subtitle</label>
-                        <input className="w-full px-8 py-5 bg-slate-50 border border-slate-200 rounded-[2rem] outline-none font-bold" value={premiumSubtitle} onChange={(e) => setPremiumSubtitle(e.target.value)} required />
-                     </div>
-                  </div>
-               </div>
-            </div>
+      {showAdd && (
+        <div className="bg-white p-8 mb-8 relative border-b border-slate-200">
+           <button type="button" onClick={() => setShowAdd(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-rose-600 transition-colors">
+              <X className="w-5 h-5" />
+           </button>
 
-            <div className="bg-white p-12 rounded-[3.5rem] border border-slate-100 shadow-sm relative overflow-hidden">
-                <header className="mb-8 flex items-center justify-between">
-                   <div>
-                      <h3 className="text-xl font-black text-slate-900 tracking-tight font-display uppercase">Subscription Plans</h3>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Define specific durations, pricing, and discounts</p>
-                   </div>
-                   <button type="button" onClick={addPlan} className="flex items-center gap-2 px-5 py-3 bg-[#006e5d] text-white rounded-xl text-xs font-bold hover:bg-[#005a4d] transition-colors">
-                      <Plus className="w-4 h-4" /> Add custom plan
-                   </button>
-                </header>
-                
-                <div className="space-y-6">
-                   {plans.map((plan, index) => {
-                      const discountPercentage = Math.round(((plan.originalPrice - plan.price) / plan.originalPrice) * 100) || 0;
-                      return (
-                      <div key={plan.id} className={`p-6 rounded-[2rem] border-2 transition-all ${plan.isPopular ? 'border-amber-400 bg-amber-50/50' : 'border-slate-100 bg-slate-50'}`}>
-                         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
-                            <div className="col-span-12 md:col-span-4 space-y-2">
-                               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Plan Name</label>
-                               <input type="text" value={plan.name} onChange={e => updatePlan(index, 'name', e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-semibold text-sm" placeholder="e.g. 5 Months Crash Course" required />
-                            </div>
-                            <div className="col-span-6 md:col-span-2 space-y-2">
-                               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Months</label>
-                               <input type="number" value={plan.months} onChange={e => updatePlan(index, 'months', Number(e.target.value))} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-black text-sm" required min="1" max="120" />
-                            </div>
-                            <div className="col-span-6 md:col-span-2 space-y-2">
-                               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Price (₹)</label>
-                               <input type="number" value={plan.price} onChange={e => updatePlan(index, 'price', Number(e.target.value))} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-black text-sm text-emerald-600" required />
-                            </div>
-                            <div className="col-span-6 md:col-span-3 space-y-2">
-                               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Original (₹)</label>
-                               <div className="relative">
-                                  <input type="number" value={plan.originalPrice} onChange={e => updatePlan(index, 'originalPrice', Number(e.target.value))} className="w-full bg-white border border-slate-200 rounded-xl pl-4 pr-14 py-3 font-bold text-sm text-slate-500" required />
-                                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[10px] font-black text-rose-500 px-1.5 py-0.5 bg-rose-50 rounded">
-                                     {discountPercentage}%
-                                  </div>
-                               </div>
-                            </div>
-                            <div className="col-span-6 md:col-span-1 pt-2 md:pt-0 flex justify-end">
-                               <button type="button" onClick={() => removePlan(index)} className="p-3 bg-white border border-slate-200 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors">
-                                  <Trash2 className="w-4 h-4" />
-                               </button>
-                            </div>
-                         </div>
-                         <div className="mt-4 flex items-center gap-4">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                               <input type="checkbox" checked={plan.isPopular} onChange={e => updatePlan(index, 'isPopular', e.target.checked)} className="w-4 h-4 text-amber-500 rounded focus:ring-amber-500 bg-slate-100 border-slate-300" />
-                               <span className="text-xs font-bold text-slate-600 flex items-center gap-1.5"><Star className="w-3.5 h-3.5 text-amber-500" /> Mark as Popular / Recommended</span>
-                            </label>
-                         </div>
-                      </div>
-                   )})}
-                   {plans.length === 0 && (
-                      <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-2xl text-slate-500 font-medium">
-                         No plans defined. Users will not be able to purchase premium.
-                      </div>
-                   )}
+           <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2"><Crown className="w-5 h-5 text-amber-500" /> Forge New Tier</h3>
+
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+             <div className="md:col-span-1">
+               <label className="block text-sm font-semibold text-slate-700 mb-2">Tier Name</label>
+               <input 
+                 type="text" required 
+                 className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-[#006e5d] focus:border-[#006e5d] font-bold text-[#002f26]"
+                 value={newPlan.name} onChange={(e) => setNewPlan({...newPlan, name: e.target.value})} 
+                 placeholder="e.g. 1 Year Premium"
+               />
+             </div>
+             
+             <div>
+               <label className="block text-sm font-semibold text-slate-700 mb-2">Duration (Months)</label>
+               <input 
+                 type="number" required 
+                 className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-[#006e5d] focus:border-[#006e5d] font-bold text-[#002f26]"
+                 value={newPlan.months} onChange={(e) => setNewPlan({...newPlan, months: Number(e.target.value)})} 
+               />
+             </div>
+             
+             <div>
+               <label className="block text-sm font-semibold text-slate-700 mb-2">Display Price (₹)</label>
+               <input 
+                 type="number" required 
+                 className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-[#006e5d] focus:border-[#006e5d] font-bold text-[#002f26]"
+                 value={newPlan.price} onChange={(e) => setNewPlan({...newPlan, price: Number(e.target.value)})} 
+               />
+             </div>
+
+             <div>
+               <label className="block text-sm font-semibold text-slate-700 mb-2">Original Price (₹)</label>
+               <input 
+                 type="number" required 
+                 className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-[#006e5d] focus:border-[#006e5d] font-bold text-slate-500"
+                 value={newPlan.originalPrice} onChange={(e) => setNewPlan({...newPlan, originalPrice: Number(e.target.value)})} 
+               />
+             </div>
+
+             <div className="flex items-end pb-3">
+               <label className="flex items-center gap-3 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    className="w-5 h-5 rounded text-amber-500 focus:ring-amber-500 border-slate-300"
+                    checked={newPlan.isPopular} onChange={(e) => setNewPlan({...newPlan, isPopular: e.target.checked})} 
+                  />
+                  <span className="text-sm font-bold text-slate-700">Recommended Tier</span>
+               </label>
+             </div>
+           </div>
+
+           <div className="mt-8 flex items-center gap-4">
+              <button 
+                type="button" 
+                onClick={handleAddPlan}
+                className="bg-[#006e5d] text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-[#005a4d] transition-colors flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" /> Add to Schema
+              </button>
+           </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-40 items-start">
+        <div className="lg:col-span-2 space-y-8">
+          <div className="bg-white border-b border-slate-200 overflow-hidden">
+             <div className="p-4 border-b border-slate-200 bg-slate-50/50">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Tiers</p>
+             </div>
+             <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 text-xs font-bold text-slate-400 uppercase tracking-wider bg-slate-50">
+                    <th className="p-4 pl-6">Plan Name</th>
+                    <th className="p-4">Months</th>
+                    <th className="p-4">Pricing</th>
+                    <th className="p-4 text-right pr-6">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {plans.map((plan, index) => (
+                    <tr key={plan.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
+                      <td className="p-4 pl-6">
+                        <div className="flex items-center gap-3">
+                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${plan.isPopular ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-500'}`}>
+                              <Crown className="w-4 h-4" />
+                           </div>
+                           <div>
+                              <p className="font-black text-slate-900 group-hover:text-[#006e5d] transition-colors uppercase tracking-wider text-xs">{plan.name}</p>
+                              {plan.isPopular && <p className="text-[10px] font-black text-amber-500 uppercase">Recommended</p>}
+                           </div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <span className="text-xs font-black text-[#002f26] bg-slate-100 px-2 py-1 rounded">
+                           {plan.months} MO
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex flex-col">
+                           <span className="text-sm font-black text-emerald-600">₹{plan.price}</span>
+                           <span className="text-[10px] text-slate-400 line-through">₹{plan.originalPrice}</span>
+                        </div>
+                      </td>
+                      <td className="p-4 pr-6 text-right">
+                         <button onClick={() => removePlan(index)} className="p-2 hover:bg-red-50 rounded text-red-500 transition-colors" title="Delete">
+                            <Trash2 className="w-4 h-4" />
+                         </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+             </table>
+          </div>
+
+          <div className="bg-white p-8 border-b border-slate-200">
+             <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2"><Star className="w-5 h-5 text-emerald-500" /> Layer Metadata</h3>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div>
+                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Landing Title</label>
+                   <input className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-[#006e5d] font-bold text-slate-700" value={premiumTitle} onChange={(e) => setPremiumTitle(e.target.value)} />
                 </div>
-            </div>
+                <div>
+                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Landing Subtitle</label>
+                   <input className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-[#006e5d] font-bold text-slate-700" value={premiumSubtitle} onChange={(e) => setPremiumSubtitle(e.target.value)} />
+                </div>
+             </div>
+             <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1 flex items-center gap-2">
+                   <ListChecks className="w-4 h-4 text-[#006e5d]" /> Value Proposition Inventory (Features)
+                </label>
+                <textarea className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-[#006e5d] h-32 text-sm font-medium leading-relaxed resize-none" value={premiumFeatures} onChange={(e) => setPremiumFeatures(e.target.value)} />
+                <p className="text-[10px] text-slate-400 mt-2 italic font-bold uppercase tracking-widest">* Separate features by providing each entry on a new line</p>
+             </div>
+          </div>
+        </div>
 
-            <div className="bg-white p-12 rounded-[3.5rem] border border-slate-100 shadow-sm">
-               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2 mb-4"><ListChecks className="w-4 h-4 text-emerald-500" /> Utility Inventory (Features - One per line)</label>
-               <textarea className="w-full px-8 py-6 bg-slate-50 border border-slate-200 rounded-[2.5rem] outline-none h-48 focus:border-amber-400 font-medium text-slate-600 leading-relaxed resize-none" value={premiumFeatures} onChange={(e) => setPremiumFeatures(e.target.value)} />
-            </div>
-
-            {message && (
-               <motion.div 
-                  initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-                  className={`p-6 rounded-[2.5rem] border flex items-center gap-4 ${message.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-rose-50 border-rose-100 text-rose-600'}`}
-               >
-                  {message.type === 'success' ? <CheckCircle2 className="w-6 h-6" /> : <AlertCircle className="w-6 h-6" />}
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">{message.text}</span>
-               </motion.div>
-            )}
-         </div>
-
-         <div className="lg:col-span-1 space-y-10 sticky top-24">
-            <div className="bg-[#006e5d] p-10 rounded-[3.5rem] text-white shadow-2xl relative overflow-hidden group">
-               <Rocket className="w-10 h-10 mb-6 opacity-50" />
-               <h4 className="text-2xl font-black tracking-tight font-display uppercase leading-tight mb-4 text-amber-400">Deploy Changes</h4>
-               <p className="text-sm font-medium text-slate-400 italic leading-relaxed pr-6 mb-10">Premium plans scale dynamically based on selected duration. Clients automatically calculate exact prices.</p>
-               
-               <button 
-                  type="submit" disabled={saving}
-                  className="w-full py-5 bg-white text-slate-900 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-xl hover:bg-amber-400 transition-all flex items-center justify-center gap-3 active:scale-95"
-               >
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-5 h-5" /> Save Configuration</>}
-               </button>
-            </div>
-         </div>
-      </form>
+        <div className="lg:col-span-1">
+           <div className="bg-[#002f26] p-8 rounded-2xl text-white shadow-xl relative overflow-hidden">
+              <div className="relative z-10">
+                <Rocket className="w-10 h-10 mb-6 text-amber-400" />
+                <h4 className="text-xl font-black tracking-tight uppercase leading-tight mb-4">Synchronize Schema</h4>
+                <p className="text-xs font-medium text-slate-400 italic leading-relaxed mb-8">Communicate pricing architectural changes to the global registry node. Clients will update instantaneously.</p>
+                
+                <button 
+                   type="button"
+                   onClick={handleSave} disabled={saving}
+                   className="w-full py-4 bg-[#006e5d] text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-[#005a4d] transition-all flex items-center justify-center gap-2 active:scale-95"
+                >
+                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /> Deploy Configuration</>}
+                </button>
+              </div>
+           </div>
+        </div>
+      </div>
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
     </AdminLayout>
   );
 }

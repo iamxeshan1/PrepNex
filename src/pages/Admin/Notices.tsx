@@ -3,6 +3,8 @@ import { AdminLayout } from '../../components/AdminLayout';
 import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Plus, Trash2, Bell, Info, AlertTriangle, Zap, X, Megaphone, Calendar, Clock, Loader2, Search } from 'lucide-react';
+import ConfirmationModal from '../../components/ConfirmationModal';
+import Toast, { ToastType } from '../../components/Toast';
 
 interface Notice {
   id: string;
@@ -17,6 +19,19 @@ export default function AdminNotices() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    noticeId: '',
+    title: '',
+    message: ''
+  });
+
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success' as ToastType
+  });
   
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -43,11 +58,32 @@ export default function AdminNotices() {
     fetchNotices();
   };
 
-  const handleDelete = async (id: string, confirmed = false) => {
-    if (!window.confirm('Delete this notice?')) return;
-    if (true) {
-      await deleteDoc(doc(db, 'notices', id));
-      fetchNotices();
+  const handleDelete = async (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      noticeId: id,
+      title: 'Purging Global Notice',
+      message: 'System Alert: Authorized deletion of this platform announcement. This will permanently remove the broadcast from all user interfaces protocol-wide.'
+    });
+  };
+
+  const confirmDelete = async () => {
+    const id = confirmModal.noticeId;
+    try {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        await deleteDoc(doc(db, 'notices', id));
+        fetchNotices();
+        setToast({
+          isVisible: true,
+          message: 'Global notice purged successfully.',
+          type: 'success'
+        });
+    } catch (err) {
+        setToast({
+          isVisible: true,
+          message: 'Purge protocol failed.',
+          type: 'error'
+        });
     }
   };
 
@@ -213,6 +249,22 @@ export default function AdminNotices() {
           </table>
         )}
       </div>
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDelete}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type="danger"
+        confirmText="Confirm Purge"
+      />
+
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
     </AdminLayout>
   );
 }

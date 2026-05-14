@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
 import { db } from '../../lib/firebase';
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
-import { Plus, Trash2, Ticket, Power, Activity, X, Zap, Loader2, Search, Users } from 'lucide-react';
+import { Plus, Trash2, Ticket, Power, Activity, X, Zap, Loader2, Search, Users, AlertTriangle } from 'lucide-react';
 import { useItemTitles } from '../../hooks/useItemTitles';
+import ConfirmationModal from '../../components/ConfirmationModal';
+import Toast, { ToastType } from '../../components/Toast';
 
 export default function AdminCoupons() {
   const { getItemTitle } = useItemTitles();
@@ -11,6 +13,19 @@ export default function AdminCoupons() {
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    couponId: '',
+    title: '',
+    message: ''
+  });
+
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success' as ToastType
+  });
   
   // Form State
   const [code, setCode] = useState('');
@@ -63,13 +78,32 @@ export default function AdminCoupons() {
     }
   };
 
-  const handleDelete = async (id: string, confirmed = false) => {
-    if (!window.confirm("Delete this coupon?")) return;
+  const handleDelete = async (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      couponId: id,
+      title: 'Decommissioning Voucher Node',
+      message: 'System Alert: Authorized deletion of this promotional voucher. This will permanently revoke the token from the active registry. Existing transactions will remain unaffected.'
+    });
+  };
+
+  const confirmDelete = async () => {
+    const id = confirmModal.couponId;
     try {
+      setConfirmModal(prev => ({ ...prev, isOpen: false }));
       await deleteDoc(doc(db, 'coupons', id));
       fetchCoupons();
+      setToast({
+        isVisible: true,
+        message: 'Voucher node decommissioned successfully.',
+        type: 'success'
+      });
     } catch (err) {
-       console.error(err);
+      setToast({
+        isVisible: true,
+        message: 'Decommissioning protocol failed.',
+        type: 'error'
+      });
     }
   };
 
@@ -128,7 +162,7 @@ export default function AdminCoupons() {
       <div className="flex justify-between items-center mb-6">
         <p className="text-slate-500 font-medium">Manage promotional tokens and discount protocols.</p>
         <button 
-          onClick={() => { if(showAddForm) { resetForm(); setShowAddForm(false); } else { setShowAddForm(true); } }}
+          onClick={() => { if(showAdd) { setShowAdd(false); } else { setShowAdd(true); } }}
           className="bg-[#006e5d] text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-[#005a4d] transition-colors"
         >
           {showAdd ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
@@ -355,6 +389,22 @@ export default function AdminCoupons() {
           </div>
         </div>
       )}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDelete}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type="danger"
+        confirmText="Confirm Deletion"
+      />
+
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
     </AdminLayout>
   );
 }

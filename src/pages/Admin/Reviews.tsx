@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
 import { collection, getDocs, query, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { MessageSquare, Star, CheckCircle, XCircle, Trash2, Clock, User, Filter, Shield, Sparkles, Loader2, Info, Search } from 'lucide-react';
+import { MessageSquare, Star, CheckCircle, XCircle, Trash2, Clock, User, Filter, Shield, Sparkles, Loader2, Info, Search, AlertTriangle } from 'lucide-react';
+import ConfirmationModal from '../../components/ConfirmationModal';
+import Toast, { ToastType } from '../../components/Toast';
 
 interface Review {
   id: string;
@@ -19,6 +21,19 @@ export default function AdminReviews() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    reviewId: '',
+    title: '',
+    message: ''
+  });
+
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success' as ToastType
+  });
 
   const fetchReviews = async () => {
     setLoading(true);
@@ -44,13 +59,32 @@ export default function AdminReviews() {
     }
   };
 
-  const handleDelete = async (id: string, confirmed = false) => {
-    if (!window.confirm('Verfiy: Delete this review?')) return;
+  const handleDelete = async (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      reviewId: id,
+      title: 'Purging Sentiment Node',
+      message: 'System Alert: Authorized deletion of this user review. This action will permanently remove the sentiment node from the registry cache.'
+    });
+  };
+
+  const confirmDelete = async () => {
+    const id = confirmModal.reviewId;
     try {
+      setConfirmModal(prev => ({ ...prev, isOpen: false }));
       await deleteDoc(doc(db, 'reviews', id));
       setReviews(prev => prev.filter(r => r.id !== id));
+      setToast({
+        isVisible: true,
+        message: 'Review node purged successfully.',
+        type: 'success'
+      });
     } catch (err) {
-       console.error(err);
+      setToast({
+        isVisible: true,
+        message: 'Purge protocol failed.',
+        type: 'error'
+      });
     }
   };
 
@@ -183,6 +217,22 @@ export default function AdminReviews() {
           </table>
         )}
       </div>
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDelete}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type="danger"
+        confirmText="Confirm Purge"
+      />
+
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
     </AdminLayout>
   );
 }

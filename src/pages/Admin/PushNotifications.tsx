@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
 import { collection, addDoc, query, orderBy, limit, getDocs, serverTimestamp, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Send, Trash2, Bell, Clock, Info, Shield, ArrowRight, Zap, Target, Loader2, X } from 'lucide-react';
+import { Send, Trash2, Bell, Clock, Info, Shield, ArrowRight, Zap, Target, Loader2, X, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import ConfirmationModal from '../../components/ConfirmationModal';
+import Toast, { ToastType } from '../../components/Toast';
 
 interface Notification {
   id: string;
@@ -23,6 +25,19 @@ export default function PushNotifications() {
     message: '',
     url: '',
     userId: ''
+  });
+
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    notificationId: '',
+    title: '',
+    message: ''
+  });
+
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success' as ToastType
   });
 
   useEffect(() => {
@@ -61,12 +76,31 @@ export default function PushNotifications() {
     }
   };
 
-  const handleDelete = async (id: string, confirmed = false) => {
-    if (!window.confirm('Verify: Permanently clear this notification node from history?')) return;
+  const handleDelete = async (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      notificationId: id,
+      title: 'Purging Signal Node',
+      message: 'System Alert: Authorized deletion of this specific notification dispatch. This node will be permanently zero-ed from the dispatch ledger history.'
+    });
+  };
+
+  const confirmDelete = async () => {
+    const id = confirmModal.notificationId;
     try {
+      setConfirmModal(prev => ({ ...prev, isOpen: false }));
       await deleteDoc(doc(db, 'notifications', id));
+      setToast({
+        isVisible: true,
+        message: 'Signal node purged successfully.',
+        type: 'success'
+      });
     } catch (error) {
-       console.error(error);
+      setToast({
+        isVisible: true,
+        message: 'Purge protocol failed.',
+        type: 'error'
+      });
     }
   };
 
@@ -234,6 +268,22 @@ export default function PushNotifications() {
           </div>
         </div>
       </div>
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDelete}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type="danger"
+        confirmText="Confirm Purge"
+      />
+
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
     </AdminLayout>
   );
 }

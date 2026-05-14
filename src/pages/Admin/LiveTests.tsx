@@ -2,13 +2,47 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '../../lib/firebase';
 import { collection, getDocs, doc, setDoc, deleteDoc, addDoc, query, where, writeBatch } from 'firebase/firestore';
-import { Plus, Trash2, Clock, Users, Calendar, Award, X, Database, Loader2, Zap, Layout, Shield, Search, ArrowRight, CheckCircle2, Ticket, FileText } from 'lucide-react';
+import { 
+  Plus, 
+  Trash2, 
+  Clock, 
+  Users, 
+  Calendar, 
+  Award, 
+  X, 
+  Database, 
+  Loader2, 
+  Zap, 
+  Layout, 
+  Shield, 
+  Search, 
+  ArrowRight, 
+  CheckCircle2, 
+  Ticket, 
+  FileText,
+  AlertTriangle
+} from 'lucide-react';
 import { AdminLayout } from '../../components/AdminLayout';
+import ConfirmationModal from '../../components/ConfirmationModal';
+import Toast, { ToastType } from '../../components/Toast';
 
 
 export default function AdminLiveTests() {
   const [liveTests, setLiveTests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    testId: '',
+    title: '',
+    message: ''
+  });
+  
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success' as ToastType
+  });
+
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
   const [selectedTestForUsers, setSelectedTestForUsers] = useState<any>(null);
   const [enrolledStudentNames, setEnrolledStudentNames] = useState<string[]>([]);
@@ -132,18 +166,30 @@ export default function AdminLiveTests() {
 
   useEffect(() => { fetchLiveTests(); }, []);
 
-  const handleDelete = async (id: string, confirmed = false) => {
-    if (!window.confirm("Are you sure you want to permanently delete this live test and all its questions? This action cannot be undone.")) return;
-    if (true) {
-      try {
+  const handleDelete = async (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      testId: id,
+      title: 'Terminating Live Session',
+      message: 'System Alert: Authorized deletion of this live test session. This will permanently purge all enrolled user references and associated question data for this node.'
+    });
+  };
+
+  const confirmDelete = async () => {
+    const id = confirmModal.testId;
+    try {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        setLoading(true);
         const qSnap = await getDocs(query(collection(db, 'questions'), where('testId', '==', id)));
         const queries = qSnap.docs.map(qd => deleteDoc(doc(db, 'questions', qd.id)));
         await Promise.all(queries);
         await deleteDoc(doc(db, 'liveTests', id));
         fetchLiveTests();
-      } catch (err) {
-         console.error(err);
-      }
+        setToast({ isVisible: true, message: 'Session purged successfully.', type: 'success' });
+    } catch (err) {
+        setToast({ isVisible: true, message: 'Failed to purge session.', type: 'error' });
+    } finally {
+        setLoading(false);
     }
   };
 
@@ -490,6 +536,22 @@ export default function AdminLiveTests() {
           </div>
         </div>
       )}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDelete}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type="danger"
+        confirmText="Confirm Purge"
+      />
+
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
     </AdminLayout>
   );
 }

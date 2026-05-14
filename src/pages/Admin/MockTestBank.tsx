@@ -21,9 +21,11 @@ import {
   Sparkles,
   Info,
   CheckCircle2,
-  Trash
+  Trash,
+  AlertTriangle
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 export default function MockTestBank() {
   const [questions, setQuestions] = useState<any[]>([]);
@@ -49,7 +51,12 @@ export default function MockTestBank() {
   });
 
   const levels = ['Easy', 'Medium', 'Hard', 'UGC NET'];
-  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    questionId: '',
+    title: '',
+    message: ''
+  });
 
   useEffect(() => { fetchData(); }, []);
 
@@ -171,9 +178,24 @@ export default function MockTestBank() {
   };
 
   const deleteQuestion = async (id: string) => {
-    await deleteDoc(doc(db, 'questions', id));
-    setConfirmingDeleteId(null);
-    fetchData();
+    setConfirmModal({
+      isOpen: true,
+      questionId: id,
+      title: 'Vaporizing Question Node',
+      message: 'System Alert: Authorized deletion of this master question bank entry. This will permanently purge the question and its associated metadata from the registry. This protocol is irreversible.'
+    });
+  };
+
+  const confirmDelete = async () => {
+    const id = confirmModal.questionId;
+    try {
+      await deleteDoc(doc(db, 'questions', id));
+      fetchData();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setConfirmModal(prev => ({ ...prev, isOpen: false }));
+    }
   };
 
   const subjectCounts = subjects.reduce((acc, sub) => {
@@ -424,6 +446,13 @@ export default function MockTestBank() {
            )}
         </div>
       </div>
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmDelete}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+      />
     </AdminLayout>
   );
 }

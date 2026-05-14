@@ -13,8 +13,11 @@ import {
   Database, 
   Sparkles,
   ArrowRight,
-  BookOpen, Brain, Calculator, Globe, Microscope, History, Map, Cpu, FileText, Palette, Atom, MessageSquare, Languages, FlaskConical, Dna, Binary, Code, Music, HeartPulse, Scale, Briefcase, Church, Sigma, Zap, Gamepad2, Brush, Variable
+  BookOpen, Brain, Calculator, Globe, Microscope, History, Map, Cpu, FileText, Palette, Atom, MessageSquare, Languages, FlaskConical, Dna, Binary, Code, Music, HeartPulse, Scale, Briefcase, Church, Sigma, Zap, Gamepad2, Brush, Variable,
+  AlertTriangle
 } from 'lucide-react';
+import ConfirmationModal from '../../components/ConfirmationModal';
+import Toast, { ToastType } from '../../components/Toast';
 
 
 const ICON_OPTIONS = [
@@ -68,6 +71,19 @@ export default function AdminSubjects() {
   
   const [showForm, setShowForm] = useState(false);
 
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    subjectId: '',
+    title: '',
+    message: ''
+  });
+
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success' as ToastType
+  });
+
   const fetchSubjects = async () => {
     setFetching(true);
     try {
@@ -92,7 +108,11 @@ export default function AdminSubjects() {
       if (newSubjectName) {
         const exists = subjects.find(s => s.name?.toLowerCase() === newSubjectName.trim().toLowerCase());
         if (exists) {
-          alert("Subject already exists!");
+          setToast({
+            isVisible: true,
+            message: "Domain node already exists in registry.",
+            type: 'error'
+          });
           setLoading(false);
           return;
         }
@@ -147,32 +167,48 @@ export default function AdminSubjects() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDelete = async (id: string, confirmed = false) => {
-    if (!window.confirm("Are you sure you want to permanently delete this subject and all its associated tests and questions? This action cannot be undone.")) return;
-    if (true) {
-      setLoading(true);
-      try {
-        const testsSnap = await getDocs(query(collection(db, 'tests'), where('subjectId', '==', id)));
-        for (const tDoc of testsSnap.docs) {
-          const qSnap = await getDocs(query(collection(db, 'questions'), where('testId', '==', tDoc.id)));
-          const queries = qSnap.docs.map(qd => deleteDoc(doc(db, 'questions', qd.id)));
-          await Promise.all(queries);
-          await deleteDoc(doc(db, 'tests', tDoc.id));
-        }
-        
-        // Delete subject questions that may not belong to tests (if any)
-        const subQuestionsSnap = await getDocs(query(collection(db, 'questions'), where('subjectId', '==', id)));
-        const qQueries = subQuestionsSnap.docs.map(qd => deleteDoc(doc(db, 'questions', qd.id)));
-        await Promise.all(qQueries);
+  const handleDelete = async (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      subjectId: id,
+      title: 'Decommissioning Subject Node',
+      message: 'System Alert: Authorized deletion of this subject domain. This will permanently purge all associated tests and question sub-nodes from the registry. This protocol is irreversible.'
+    });
+  };
 
-        await deleteDoc(doc(db, 'subjects', id));
-        fetchSubjects();
-      } catch (err) {
-        console.error(err);
-        alert("Failed to delete subject permanently");
+  const confirmDelete = async () => {
+    const id = confirmModal.subjectId;
+    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+    setLoading(true);
+    try {
+      const testsSnap = await getDocs(query(collection(db, 'tests'), where('subjectId', '==', id)));
+      for (const tDoc of testsSnap.docs) {
+        const qSnap = await getDocs(query(collection(db, 'questions'), where('testId', '==', tDoc.id)));
+        const queries = qSnap.docs.map(qd => deleteDoc(doc(db, 'questions', qd.id)));
+        await Promise.all(queries);
+        await deleteDoc(doc(db, 'tests', tDoc.id));
       }
-      setLoading(false);
+      
+      const subQuestionsSnap = await getDocs(query(collection(db, 'questions'), where('subjectId', '==', id)));
+      const qQueries = subQuestionsSnap.docs.map(qd => deleteDoc(doc(db, 'questions', qd.id)));
+      await Promise.all(qQueries);
+
+      await deleteDoc(doc(db, 'subjects', id));
+      fetchSubjects();
+      setToast({
+        isVisible: true,
+        message: 'Subject node decommissioned successfully.',
+        type: 'success'
+      });
+    } catch (err) {
+      console.error(err);
+      setToast({
+        isVisible: true,
+        message: 'Decommissioning protocol failed.',
+        type: 'error'
+      });
     }
+    setLoading(false);
   };
 
   const StatCard = ({ title, value, span, icon: Icon, colorClass = "text-slate-900" }: any) => (
@@ -348,6 +384,22 @@ export default function AdminSubjects() {
           </table>
         )}
       </div>
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDelete}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type="danger"
+        confirmText="Confirm Purge"
+      />
+
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
     </AdminLayout>
   );
 }

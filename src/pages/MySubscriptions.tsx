@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { DashboardSidebar } from '../components/DashboardSidebar';
 import { DashboardTopHeader } from '../components/DashboardTopHeader';
-import { Award, Zap, Loader2, BookOpenText, ArrowLeft } from 'lucide-react';
+import { Award, Zap, Loader2, BookOpenText, ArrowLeft, Crown, CheckCircle2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -93,6 +93,41 @@ export default function MySubscriptions() {
                   </p>
                 </div>
               </div>
+
+              {profile?.isPremium && (
+                <div className="bg-[#002f26] rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl border-4 border-[#006e5d]/20">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#006e5d]/10 -translate-y-1/2 translate-x-1/2 rounded-full blur-3xl"></div>
+                   <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                      <div className="flex items-center gap-6">
+                        <div className="w-20 h-20 bg-amber-500/20 text-amber-500 rounded-3xl flex items-center justify-center shadow-inner">
+                          < Award className="w-10 h-10" />
+                        </div>
+                        <div>
+                          <p className="text-amber-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Membership Level</p>
+                          <h2 className="text-3xl font-black tracking-tight">Ultimate Premium Pass</h2>
+                          <div className="flex items-center gap-3 mt-2">
+                             <div className="flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full text-[10px] font-bold uppercase tracking-wide">
+                               <CheckCircle2 size={12} className="text-emerald-400" />
+                               Full Access Active
+                             </div>
+                             {profile.subscriptionExpiry && (
+                               <p className="text-slate-400 text-xs font-medium">Expires: {new Date(profile.subscriptionExpiry).toLocaleDateString()}</p>
+                             )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                         <div className="text-center md:text-right">
+                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
+                           <p className="text-xl font-bold text-emerald-400">Lifetime Validity</p>
+                         </div>
+                         <button onClick={() => navigate('/exams')} className="px-8 py-3 bg-[#006e5d] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[#005a4d] transition-all shadow-xl shadow-black/20">
+                           Unlock New Exam
+                         </button>
+                      </div>
+                   </div>
+                </div>
+              )}
 
               {loading ? (
                  <div className="flex justify-center py-24">

@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
 import { db } from '../../lib/firebase';
 import { collection, query, getDocs, orderBy, updateDoc, doc, deleteDoc } from 'firebase/firestore';
-import { MessageCircle, CheckCircle2, Clock, Send, Trash2, X, MessageSquare, User, Info, Loader2, Sparkles } from 'lucide-react';
+import { MessageCircle, CheckCircle2, Clock, Send, Trash2, X, MessageSquare, User, Info, Loader2, Sparkles, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import Toast, { ToastType } from '../../components/Toast';
 
 export default function AdminHelpdesk() {
   const [tickets, setTickets] = useState<any[]>([]);
@@ -12,6 +13,11 @@ export default function AdminHelpdesk() {
   const [replyText, setReplyText] = useState<{ [key: string]: string }>({});
   const [submitting, setSubmitting] = useState<string | null>(null);
   const [closing, setClosing] = useState<string | null>(null);
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success' as ToastType
+  });
 
   const fetchTickets = async () => {
     setLoading(true);
@@ -53,8 +59,17 @@ export default function AdminHelpdesk() {
       
       setReplyText({ ...replyText, [ticketId]: '' });
       fetchTickets();
+      setToast({
+        isVisible: true,
+        message: 'Institutional protocol dispatched successfully.',
+        type: 'success'
+      });
     } catch (err) {
-      alert('Failed to send reply');
+      setToast({
+        isVisible: true,
+        message: 'Failed to send reply protocol.',
+        type: 'error'
+      });
     } finally {
       setSubmitting(null);
     }
@@ -65,9 +80,18 @@ export default function AdminHelpdesk() {
     try {
       await deleteDoc(doc(db, 'tickets', ticketId));
       setTickets(prev => prev.filter(t => t.id !== ticketId));
+      setToast({
+        isVisible: true,
+        message: 'Ticket archived and purged from active channel.',
+        type: 'success'
+      });
     } catch (err) {
       console.error(err);
-      alert('Failed to archive ticket');
+      setToast({
+        isVisible: true,
+        message: 'Failed to archive ticket.',
+        type: 'error'
+      });
     } finally {
       setClosing(null);
     }
@@ -214,6 +238,12 @@ export default function AdminHelpdesk() {
           </AnimatePresence>
         </div>
       )}
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
     </AdminLayout>
   );
 }

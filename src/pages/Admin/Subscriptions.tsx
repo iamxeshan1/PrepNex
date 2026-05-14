@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
-import { collection, query, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, getDocs, doc, updateDoc, addDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { 
   CreditCard, 
@@ -17,10 +17,12 @@ import {
   FileText,
   Shield,
   Loader2,
-  Users
+  Users,
+  AlertTriangle
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { motion, AnimatePresence } from 'motion/react';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 
 export default function AdminSubscriptions() {
@@ -31,6 +33,20 @@ export default function AdminSubscriptions() {
   
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [thisMonthRevenue, setThisMonthRevenue] = useState(0);
+
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    type?: 'danger' | 'warning' | 'info' | 'success';
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  });
 
   useEffect(() => {
     fetchUsers();
@@ -85,30 +101,66 @@ export default function AdminSubscriptions() {
   };
 
   const setSubscription = async (userId: string, months: number) => {
-    const expiryDate = new Date();
-    expiryDate.setMonth(expiryDate.getMonth() + months);
-    try {
-      await updateDoc(doc(db, 'users', userId), {
-        subscriptionExpiry: expiryDate.toISOString(),
-        isPremium: true
-      });
-      fetchUsers();
-    } catch (error) {
-       console.error(error);
-    }
+    const user = users.find(u => u.id === userId);
+    setConfirmModal({
+      isOpen: true,
+      title: 'Authorize Premium Lifecycle',
+      message: `System Alert: Authorized issuance of a ${months}-month Premium Pass for node "${user?.name || userId}". This will append to our active registry and grant ultimate clearance.`,
+      confirmText: 'Authorize Issuance',
+      type: 'info',
+      onConfirm: async () => {
+        const expiryDate = new Date();
+        expiryDate.setMonth(expiryDate.getMonth() + months);
+        try {
+          await updateDoc(doc(db, 'users', userId), {
+            subscriptionExpiry: expiryDate.toISOString(),
+            isPremium: true
+          });
+
+          // Also create a subscription record
+          await addDoc(collection(db, "premium_subscriptions"), {
+             userId: userId,
+             userName: user?.name || "Aspirant",
+             type: "Premium (Admin Grant)",
+             purchaseDate: new Date().toISOString(),
+             expiryDate: expiryDate.toISOString(),
+             paymentId: 'ADMIN_GRANT',
+             orderId: 'ADMIN_AUTH',
+             paymentStatus: "completed",
+             amount: 0,
+             durationMonths: months
+          });
+
+          fetchUsers();
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        } catch (error) {
+           console.error(error);
+        }
+      }
+    });
   };
 
-  const revokeAccess = async (userId: string, confirmed = false) => {
-    if (!window.confirm("Verify: Revoke premium access for this entity?")) return;
-    try {
-      await updateDoc(doc(db, 'users', userId), {
-        subscriptionExpiry: null,
-        isPremium: false
-      });
-      fetchUsers();
-    } catch (error) {
-       console.error(error);
-    }
+  const revokeAccess = async (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    setConfirmModal({
+      isOpen: true,
+      title: 'Terminating Premium Node',
+      message: `System Alert: Authorized revocation of Premium Pass for node "${user?.name || userId}". This will instantly restrict their clearance level to baseline tiers.`,
+      confirmText: 'Execute Termination',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await updateDoc(doc(db, 'users', userId), {
+            subscriptionExpiry: null,
+            isPremium: false
+          });
+          fetchUsers();
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        } catch (error) {
+           console.error(error);
+        }
+      }
+    });
   };
 
   const exportSubscriptions = () => {
@@ -316,6 +368,15 @@ export default function AdminSubscriptions() {
             <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Institutional Privacy Enforced</span>
          </div>
       </div>
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+        type={confirmModal.type}
+      />
     </AdminLayout>
   );
 }

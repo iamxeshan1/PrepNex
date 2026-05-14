@@ -96,7 +96,7 @@ service cloud.firestore {
     // Subscriptions
     match /subscriptions/{subscriptionId} {
       allow read: if isOwner(resource.data.userId) || isAdmin();
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow create: if (isSignedIn() && request.resource.data.userId == request.auth.uid) || isAdmin();
       allow update: if isOwner(resource.data.userId) || isAdmin();
       allow delete: if isAdmin();
     }
@@ -104,7 +104,7 @@ service cloud.firestore {
     // Premium Subscriptions
     match /premium_subscriptions/{subscriptionId} {
       allow read: if isOwner(resource.data.userId) || isAdmin();
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow create: if (isSignedIn() && request.resource.data.userId == request.auth.uid) || isAdmin();
       allow update: if isOwner(resource.data.userId) || isAdmin();
       allow delete: if isAdmin();
     }

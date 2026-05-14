@@ -20,9 +20,12 @@ import {
   Clock,
   Sparkles,
   Edit3,
-  Search
+  Search,
+  AlertTriangle
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import ConfirmationModal from '../../components/ConfirmationModal';
+import Toast, { ToastType } from '../../components/Toast';
 
 export default function AdminQuestions() {
   const { testId } = useParams();
@@ -33,6 +36,19 @@ export default function AdminQuestions() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    questionId: '',
+    title: '',
+    message: ''
+  });
+
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success' as ToastType
+  });
 
   // Form State
   const [question, setQuestion] = useState('');
@@ -74,7 +90,14 @@ export default function AdminQuestions() {
 
   const handleSaveQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!correct) return alert('Select correct answer');
+    if (!correct) {
+      setToast({
+        isVisible: true,
+        message: "Selection error: Authorized content compiler requires a valid 'correct answer' node.",
+        type: 'error'
+      });
+      return;
+    }
     
     let finalSubjectId = test?.subjectId || subjectId;
     
@@ -133,11 +156,32 @@ export default function AdminQuestions() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDelete = async (id: string, confirmed = false) => {
-    if (!window.confirm('Delete this question permanently?')) return;
-    if (true) {
+  const handleDelete = async (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      questionId: id,
+      title: 'Purging Question Content',
+      message: 'System Alert: Authorized deletion of this specific question registry node. Recovery protocol is unavailable for purged content.'
+    });
+  };
+
+  const confirmDelete = async () => {
+    const id = confirmModal.questionId;
+    try {
+      setConfirmModal(prev => ({ ...prev, isOpen: false }));
       await deleteDoc(doc(db, 'questions', id));
       setQuestions(questions.filter(q => q.id !== id));
+      setToast({
+        isVisible: true,
+        message: 'Question content purged successfully.',
+        type: 'success'
+      });
+    } catch (err) {
+      setToast({
+        isVisible: true,
+        message: 'Purge protocol failed.',
+        type: 'error'
+      });
     }
   };
 
@@ -380,6 +424,22 @@ export default function AdminQuestions() {
           </table>
         )}
       </div>
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDelete}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type="danger"
+        confirmText="Confirm Purge"
+      />
+
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
     </AdminLayout>
   );
 }

@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { DashboardSidebar } from '../components/DashboardSidebar';
 import { DashboardTopHeader } from '../components/DashboardTopHeader';
-import { Award, Zap, HelpCircle, BookOpenText, TrendingUp, CheckCircle2, Megaphone, Info, AlertTriangle, X, MessageCircle } from 'lucide-react';
+import { Award, Zap, HelpCircle, BookOpenText, TrendingUp, CheckCircle2, Megaphone, Info, AlertTriangle, X, MessageCircle, Crown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSettings } from '../context/SettingsContext';
 import { collection, getDocs, query, where, documentId, orderBy, limit } from 'firebase/firestore';
@@ -356,19 +356,29 @@ export default function Dashboard() {
                   {/* Welcome Panel */}
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2 bg-[#002f26] text-white p-6 md:p-10 rounded-[2rem] flex flex-col justify-center relative overflow-hidden">
+                      {profile?.isPremium && (
+                        <div className="absolute top-0 right-0 p-6">
+                           <div className="flex items-center gap-2 px-3 py-1 bg-amber-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20">
+                             <Crown size={12} />
+                             Premium Member
+                           </div>
+                        </div>
+                      )}
                       <h1 className="text-2xl md:text-4xl font-black mb-3">Welcome back, {profile?.name || 'Aspirant'}!</h1>
-                      <p className="text-slate-400 mb-6 md:mb-8 text-sm md:text-base max-w-lg">You're in the top 5% of aspirants this week. Keep up the momentum to secure your spot.</p>
+                      <p className="text-slate-400 mb-6 md:mb-8 text-sm md:text-base max-w-lg">
+                        {profile?.isPremium 
+                          ? "Your Ultimate Pass is active. Enjoy unlimited access to all exams and premium features."
+                          : "You're in the top 5% of aspirants this week. Keep up the momentum to secure your spot."}
+                      </p>
                       <div className="flex flex-col sm:flex-row gap-4">
-                        <button onClick={() => navigate('/exams')} className="bg-[#006e5d] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 justify-center hover:bg-[#005a4d] transition">
+                        <button onClick={() => navigate('/exams')} className="bg-[#006e5d] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 justify-center hover:bg-[#005a4d] transition shadow-lg shadow-[#006e5d]/20">
                            <Zap className="w-4 h-4" /> Resume Mock Test
                         </button>
-                        <button onClick={() => navigate('/performance')} className="bg-white/10 text-white px-6 py-3 rounded-2xl font-bold justify-center hover:bg-white/20 transition">
+                        <button onClick={() => navigate('/performance')} className="bg-white/10 text-white px-6 py-3 rounded-2xl font-bold justify-center hover:bg-white/20 transition backdrop-blur-sm">
                            View History
                         </button>
                       </div>
                     </div>
-                    
-                    {/* Stats Grid */}
                     <div className="flex flex-col gap-6">
                         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between">
                             <div>
@@ -464,7 +474,25 @@ export default function Dashboard() {
                            )}
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {activeExams.length > 0 ? activeExams.slice(0, 4).map((exam) => (
+                            {profile?.isPremium && (
+                                <div className="bg-[#002f26] p-5 rounded-3xl border-2 border-amber-500/20 flex flex-col justify-between hover:border-amber-500/40 hover:shadow-lg transition group relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 -translate-y-1/2 translate-x-1/2 rounded-full blur-xl" />
+                                    <div className="flex items-start gap-3 mb-6 relative z-10">
+                                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+                                            <Crown className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-bold text-white leading-tight mb-1">Ultimate Pass</h4>
+                                            <p className="text-[10px] text-amber-500 font-black uppercase tracking-widest">Premium Active</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between pt-4 border-t border-white/5 relative z-10">
+                                        <span className="text-[10px] font-bold text-slate-400">Unlimited Access</span>
+                                        <button onClick={() => navigate('/exams')} className="text-[10px] font-black text-amber-500 tracking-wider hover:text-amber-400">EXPLORE</button>
+                                    </div>
+                                </div>
+                            )}
+                            {activeExams.length > 0 ? activeExams.slice(0, profile?.isPremium ? 3 : 4).map((exam) => (
                                 <div key={exam.id} className="bg-white p-5 rounded-3xl border border-slate-100 flex flex-col justify-between hover:border-teal-100 hover:shadow-sm transition group">
                                     <div className="flex items-start gap-3 mb-6">
                                         <div className="w-10 h-10 rounded-xl bg-[#006e5d]/5 flex items-center justify-center shrink-0 overflow-hidden">

@@ -3,7 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/AdminLayout';
 import { collection, addDoc, getDocs, deleteDoc, doc, query, where, getDoc, writeBatch, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Plus, Trash2, ChevronRight, FileText, Clock, Award, Upload, Download, Info, X, Shield, Edit3, Database, Loader2, Search } from 'lucide-react';
+import { Plus, Trash2, ChevronRight, FileText, Clock, Award, Upload, Download, Info, X, Shield, Edit3, Database, Loader2, Search, AlertTriangle } from 'lucide-react';
+import ConfirmationModal from '../../components/ConfirmationModal';
+import Toast, { ToastType } from '../../components/Toast';
 
 
 export default function AdminTests() {
@@ -13,6 +15,19 @@ export default function AdminTests() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    testId: '',
+    title: '',
+    message: ''
+  });
+
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success' as ToastType
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -89,7 +104,11 @@ export default function AdminTests() {
       setComposition({}); 
       setShowCompositionModal(true);
     } catch (err: any) {
-      alert("Failed to fetch bank data: " + err.message);
+      setToast({
+        isVisible: true,
+        message: "Failed to fetch bank logic: " + err.message,
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
@@ -99,8 +118,22 @@ export default function AdminTests() {
 
   const handleCompose = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!compData.title) return alert("Title required");
-    if (Object.keys(composition).length === 0) return alert("Select at least one subject");
+    if (!compData.title) {
+        setToast({
+            isVisible: true,
+            message: "Authorized title node required for composition.",
+            type: 'error'
+        });
+        return;
+    }
+    if (Object.keys(composition).length === 0) {
+        setToast({
+            isVisible: true,
+            message: "Select at least one subject domain node.",
+            type: 'error'
+        });
+        return;
+    }
     
     setComposing(true);
     try {
@@ -110,7 +143,7 @@ export default function AdminTests() {
           if ((count as number) <= 0) continue;
           const available = bankCounts[subId]?.[level] || 0;
           if ((count as number) > available) {
-            throw new Error(`Not enough ${level} questions in ${subjects.find(s => s.id === subId)?.name}. Requested: ${count}, Available: ${available}`);
+            throw new Error(`Insufficient ${level} units in ${subjects.find(s => s.id === subId)?.name}. Req: ${count}, Bank: ${available}`);
           }
         }
       }
@@ -157,30 +190,57 @@ export default function AdminTests() {
       }
 
       await batch.commit();
-      alert(`Test Created! ${totalImported} questions withdrawn from Repository.`);
+      setToast({
+        isVisible: true,
+        message: `Composition successful: ${totalImported} nodes withdrawn from main repository.`,
+        type: 'success'
+      });
       setShowCompositionModal(false);
       refreshTests();
     } catch (err: any) {
-      alert("Composition failed: " + err.message);
+      setToast({
+        isVisible: true,
+        message: "Composition failed: " + err.message,
+        type: 'error'
+      });
     } finally {
       setComposing(false);
     }
   };
 
-  const handleDelete = async (id: string, e?: React.MouseEvent | boolean) => {
-    if (typeof e === 'object' && e.stopPropagation) e.stopPropagation();
-    if (!window.confirm("Are you sure you want to permanently delete this test and all its questions? This action cannot be undone.")) return;
-    if (true) {
-      try {
-        const qSnap = await getDocs(query(collection(db, 'questions'), where('testId', '==', id)));
-        const queries = qSnap.docs.map(qd => deleteDoc(doc(db, 'questions', qd.id)));
-        await Promise.all(queries);
-        await deleteDoc(doc(db, 'tests', id));
-        setTests(tests.filter(t => t.id !== id));
-      } catch (error: any) {
-        console.error("Delete error:", error);
-        alert(`Failed to delete test permanently`);
-      }
+  const handleDelete = async (id: string, e?: React.MouseEvent) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    setConfirmModal({
+      isOpen: true,
+      testId: id,
+      title: 'Purging Test Node',
+      message: 'System Alert: Authorized deletion of this mock test and all associated question child-nodes. Recovery protocol unavailable.'
+    });
+  };
+
+  const confirmDelete = async () => {
+    const id = confirmModal.testId;
+    try {
+      setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      setLoading(true);
+      const qSnap = await getDocs(query(collection(db, 'questions'), where('testId', '==', id)));
+      const queries = qSnap.docs.map(qd => deleteDoc(doc(db, 'questions', qd.id)));
+      await Promise.all(queries);
+      await deleteDoc(doc(db, 'tests', id));
+      setTests(tests.filter(t => t.id !== id));
+      setToast({
+        isVisible: true,
+        message: 'Mock test purged successfully.',
+        type: 'success'
+      });
+    } catch (error: any) {
+      setToast({
+        isVisible: true,
+        message: "Purge protocol failed.",
+        type: 'error'
+      });
+    } finally {
+        setLoading(false);
     }
   };
 
@@ -457,6 +517,22 @@ export default function AdminTests() {
           </table>
         )}
       </div>
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDelete}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type="danger"
+        confirmText="Confirm Purge"
+      />
+
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
     </AdminLayout>
   );
 }
