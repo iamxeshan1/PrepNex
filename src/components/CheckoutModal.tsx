@@ -324,7 +324,7 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
                 {discount && (
                   <p className="text-sm text-slate-400 line-through">₹{item.price}</p>
                 )}
-                <p className="text-3xl font-black text-[#002f26]">₹{finalPrice}</p>
+                <p className="text-3xl font-black text-slate-900">₹{finalPrice}</p>
               </div>
               <div className="text-right">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-full uppercase tracking-wide">

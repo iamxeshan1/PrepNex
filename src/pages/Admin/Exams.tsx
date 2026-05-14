@@ -113,7 +113,7 @@ export default function AdminExams() {
     }
   };
 
-  const StatCard = ({ title, value, span, trend, colorClass = "text-[#002f26]" }: any) => (
+  const StatCard = ({ title, value, span, trend, colorClass = "text-slate-900" }: any) => (
     <div className="bg-white p-6 rounded-xl border border-slate-200">
       <p className="text-sm font-medium text-slate-500 mb-2">{title}</p>
       <h3 className={`text-4xl font-bold tracking-tight mb-2 ${colorClass}`}>{value}</h3>
@@ -153,7 +153,7 @@ export default function AdminExams() {
 
       {showAddForm && (
         <form onSubmit={handleAdd} className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm mb-8">
-            <h3 className="text-xl font-bold text-[#002f26] mb-6">{editingId ? 'Edit Exam' : 'Add New Exam'}</h3>
+            <h3 className="text-xl font-bold text-slate-900 mb-6">{editingId ? 'Edit Exam' : 'Add New Exam'}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Exam Name</label>
@@ -242,7 +242,7 @@ export default function AdminExams() {
                            <FileText className="w-5 h-5" />
                         </div>
                         <div>
-                           <Link to={`/admin/tests/${exam.id}`} className="font-bold text-[#002f26] group-hover:text-teal-700 transition-colors">
+                           <Link to={`/admin/tests/${exam.id}`} className="font-bold text-slate-900 group-hover:text-teal-700 transition-colors">
                              {exam.name}
                            </Link>
                            <p className="text-xs font-medium text-slate-400 mt-0.5">ID: {exam.id.slice(0,12).toUpperCase()}</p>
@@ -256,7 +256,7 @@ export default function AdminExams() {
                       </span>
                     </td>
                     <td className="p-4">
-                      <p className="font-bold text-[#002f26]">{exam.isPaid ? `₹${exam.price}` : '₹0'}</p>
+                      <p className="font-bold text-slate-900">{exam.isPaid ? `₹${exam.price}` : '₹0'}</p>
                       <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded flex w-fit mt-1 ${exam.isPaid ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
                         {exam.isPaid ? 'PAID' : 'FREE'}
                       </span>

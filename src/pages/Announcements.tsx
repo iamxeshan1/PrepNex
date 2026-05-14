@@ -59,7 +59,7 @@ export default function Announcements() {
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-xl font-black text-[#002f26] tracking-tight">Announcements</h1>
+              <h1 className="text-xl font-black text-slate-900 tracking-tight">Announcements</h1>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Global Platform Updates</p>
             </div>
           </div>
@@ -104,7 +104,7 @@ export default function Announcements() {
                           {format(date, 'MMMM dd, yyyy')}
                         </span>
                       </div>
-                      <h2 className="text-xl md:text-2xl font-black text-[#002f26] mb-3 group-hover:text-teal-700 transition-colors">
+                      <h2 className="text-xl md:text-2xl font-black text-slate-900 mb-3 group-hover:text-teal-700 transition-colors">
                         {notice.title}
                       </h2>
                       <div className="text-slate-600 font-medium leading-relaxed whitespace-pre-wrap">
@@ -121,7 +121,7 @@ export default function Announcements() {
             <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
                <Megaphone className="w-10 h-10" />
             </div>
-            <h3 className="text-xl font-black text-[#002f26] mb-2">No Announcements Yet</h3>
+            <h3 className="text-xl font-black text-slate-900 mb-2">No Announcements Yet</h3>
             <p className="text-slate-500 font-medium">We'll post updates here as they become available.</p>
           </div>
         )}

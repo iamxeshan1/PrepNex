@@ -33,7 +33,7 @@ export default function AdminExamManagement() {
     <AdminLayout title={exam?.name || 'Exam Management'} backTo="/admin/exams">
         <div className="flex justify-between items-center mb-6">
             <div>
-                <h1 className="text-2xl font-bold text-[#002f26]">{exam?.name}</h1>
+                <h1 className="text-2xl font-bold text-slate-900">{exam?.name}</h1>
                 <p className="text-slate-500 font-medium">{exam?.description || "Manage mock tests and evaluations."}</p>
             </div>
             <Link to={`/admin/tests/${examId}`} className="bg-teal-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-teal-800 transition-colors">
@@ -44,15 +44,15 @@ export default function AdminExamManagement() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white p-6 border border-slate-200">
                 <p className="text-sm font-medium text-slate-500">Total Active Tests</p>
-                <h3 className="text-4xl font-bold text-[#002f26] mt-2">{tests.length}</h3>
+                <h3 className="text-4xl font-bold text-slate-900 mt-2">{tests.length}</h3>
             </div>
             <div className="bg-white p-6 border border-slate-200">
                 <p className="text-sm font-medium text-slate-500">Total Attempts</p>
-                <h3 className="text-4xl font-bold text-[#002f26] mt-2">0</h3>
+                <h3 className="text-4xl font-bold text-slate-900 mt-2">0</h3>
             </div>
             <div className="bg-white p-6 border border-slate-200">
                 <p className="text-sm font-medium text-slate-500">Avg. Score</p>
-                <h3 className="text-4xl font-bold text-[#002f26] mt-2">0%</h3>
+                <h3 className="text-4xl font-bold text-slate-900 mt-2">0%</h3>
             </div>
         </div>
 

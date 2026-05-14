@@ -210,7 +210,7 @@ export default function MockTestBank() {
             <div className={`w-16 h-16 bg-teal-50 rounded-full flex items-center justify-center text-teal-600 mb-4 ${importing ? 'animate-bounce' : ''}`}>
               <Database className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-bold text-[#002f26]">{importing ? 'Importing Data...' : 'Click to Upload Dataset'}</h3>
+            <h3 className="text-xl font-bold text-slate-900">{importing ? 'Importing Data...' : 'Click to Upload Dataset'}</h3>
             <p className="text-sm font-medium text-slate-500 mt-2">XLSX or CSV files following the template format</p>
           </label>
         </div>
@@ -222,7 +222,7 @@ export default function MockTestBank() {
               <X className="w-5 h-5" />
            </button>
 
-           <h3 className="text-xl font-bold text-[#002f26] mb-6">{editingQuestionId ? 'Edit Question' : 'New Question'}</h3>
+           <h3 className="text-xl font-bold text-slate-900 mb-6">{editingQuestionId ? 'Edit Question' : 'New Question'}</h3>
 
            <div className="space-y-6">
               <div>
@@ -362,7 +362,7 @@ export default function MockTestBank() {
               <input 
                  type="text" 
                  placeholder="Search question bank..."
-                 className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-[#002f26] placeholder:text-slate-400"
+                 className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-slate-900 placeholder:text-slate-400"
                  value={searchTerm}
                  onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -387,7 +387,7 @@ export default function MockTestBank() {
                                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-bold">{q.level || 'Standard'}</span>
                                {q.previouslyAskedIn && <span className="text-xs font-semibold text-slate-400">({q.previouslyAskedIn})</span>}
                             </div>
-                            <p className="text-base font-bold text-[#002f26] mb-4 whitespace-pre-wrap">{q.question}</p>
+                            <p className="text-base font-bold text-slate-900 mb-4 whitespace-pre-wrap">{q.question}</p>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                                {q.options.map((opt: string, i: number) => {

@@ -186,7 +186,7 @@ export default function AdminTests() {
 
   const filtered = tests.filter(t => t.title?.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  const StatCard = ({ title, value, span, colorClass = "text-[#002f26]" }: any) => (
+  const StatCard = ({ title, value, span, colorClass = "text-slate-900" }: any) => (
     <div className="bg-white p-6 rounded-xl border border-slate-200">
       <p className="text-sm font-medium text-slate-500 mb-2">{title}</p>
       <h3 className={`text-4xl font-bold tracking-tight mb-2 ${colorClass}`}>{value}</h3>
@@ -219,7 +219,7 @@ export default function AdminTests() {
               <X className="w-5 h-5" />
            </button>
 
-           <h3 className="text-xl font-bold text-[#002f26] mb-6">Compose Mock Test</h3>
+           <h3 className="text-xl font-bold text-slate-900 mb-6">Compose Mock Test</h3>
 
            <div className="space-y-6">
               <div>
@@ -413,7 +413,7 @@ export default function AdminTests() {
                           <FileText className="w-5 h-5" />
                        </div>
                        <div>
-                         <p className="font-bold text-[#002f26] group-hover:text-teal-700 transition-colors">
+                         <p className="font-bold text-slate-900 group-hover:text-teal-700 transition-colors">
                            {test.title}
                          </p>
                          <p className="text-xs font-semibold text-slate-500 uppercase mt-0.5">{test.status || 'live'}</p>

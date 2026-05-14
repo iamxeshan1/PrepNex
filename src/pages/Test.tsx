@@ -471,7 +471,7 @@ export default function Test() {
 
                  {/* White Card */}
                  <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-[0_2px_8px_rgb(0,0,0,0.04)] border border-slate-200 p-6 md:p-8">
-                    <h3 className="text-lg md:text-xl font-semibold text-[#002f26] mb-8 leading-snug">{currentQ.question}</h3>
+                    <h3 className="text-lg md:text-xl font-semibold text-slate-900 mb-8 leading-snug">{currentQ.question}</h3>
                     {/* Options */}
                     <div className="space-y-4">
                        {currentQ.options.map((option: string, idx: number) => {

@@ -79,7 +79,7 @@ export default function MySubscriptions() {
             <div className="max-w-6xl mx-auto space-y-8">
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-200">
                 <div>
-                  <h1 className="text-3xl font-black text-[#002f26] flex items-center gap-3 tracking-tight">
+                  <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
                     <span className="bg-teal-50 p-2.5 rounded-2xl text-teal-600">
                       <BookOpenText className="w-8 h-8" />
                     </span>
@@ -102,7 +102,7 @@ export default function MySubscriptions() {
                    <div className="w-20 h-20 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
                      <Award className="w-10 h-10 text-slate-300" />
                    </div>
-                   <h3 className="text-2xl font-bold text-[#002f26] mb-3">No Active Subscriptions</h3>
+                   <h3 className="text-2xl font-bold text-slate-900 mb-3">No Active Subscriptions</h3>
                    <p className="text-slate-500 font-medium max-w-sm mx-auto text-lg mb-6">
                      You don't have any active subscriptions yet. Explore our exams and start learning!
                    </p>

@@ -152,7 +152,7 @@ export default function AdminSubscriptions() {
     <AdminLayout title="Membership Control">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
         <div>
-           <h2 className="text-3xl font-black text-[#002f26] tracking-tight font-display">Subscription Registry</h2>
+           <h2 className="text-3xl font-black text-slate-900 tracking-tight font-display">Subscription Registry</h2>
            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 italic">Monitor and authorize global membership permissions</p>
         </div>
         <button 
@@ -181,7 +181,7 @@ export default function AdminSubscriptions() {
                  <stat.icon className="w-6 h-6" />
               </div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
-              <h4 className="text-3xl font-black text-[#002f26] tracking-tight font-display">{stat.value}</h4>
+              <h4 className="text-3xl font-black text-slate-900 tracking-tight font-display">{stat.value}</h4>
            </motion.div>
          ))}
       </div>

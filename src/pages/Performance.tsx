@@ -149,7 +149,7 @@ export default function Performance() {
             {/* Page Header */}
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-black text-[#002f26] mb-2">Performance Analytics</h1>
+                <h1 className="text-3xl font-black text-slate-900 mb-2">Performance Analytics</h1>
                 <p className="text-slate-500 font-medium">Deep dive into your preparation metrics and test history.</p>
               </div>
               <div className="flex items-center gap-3">
@@ -181,7 +181,7 @@ export default function Performance() {
                     <stat.icon className="w-5 h-5" />
                   </div>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
-                  <h3 className="text-xl font-black text-[#002f26] truncate">{stat.value}</h3>
+                  <h3 className="text-xl font-black text-slate-900 truncate">{stat.value}</h3>
                 </motion.div>
               ))}
             </div>
@@ -191,7 +191,7 @@ export default function Performance() {
               {/* Score Trend */}
               <div className="lg:col-span-2 bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm">
                 <div className="flex justify-between items-center mb-10">
-                  <h3 className="text-lg font-black text-[#002f26] flex items-center gap-2">
+                  <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-teal-600" /> Score Trend
                   </h3>
                   <div className="flex items-center gap-4">
@@ -241,7 +241,7 @@ export default function Performance() {
 
               {/* Subject Mastery Radar */}
               <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col">
-                <h3 className="text-lg font-black text-[#002f26] mb-10 flex items-center gap-2">
+                <h3 className="text-lg font-black text-slate-900 mb-10 flex items-center gap-2">
                   <Award className="w-5 h-5 text-amber-500" /> Subject Mastery
                 </h3>
                 <div className="flex-1 min-h-[300px]">
@@ -281,7 +281,7 @@ export default function Performance() {
             {/* Test History */}
             <section className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
                <div className="p-6 md:p-8 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <h3 className="text-lg font-black text-[#002f26] flex items-center gap-2">
+                  <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
                     <Clock className="w-5 h-5 text-teal-500" /> Recent Attempts
                   </h3>
                   <div className="flex overflow-x-auto gap-2 scrollbar-hide pb-2 md:pb-0">

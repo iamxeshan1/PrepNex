@@ -226,7 +226,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
                       <ArrowLeft className="w-5 h-5" />
                     </button>
                   )}
-                  {title && <h2 className="text-2xl lg:text-3xl font-bold text-[#002f26] tracking-tight">{title}</h2>}
+                  {title && <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">{title}</h2>}
                 </div>
                 {children}
               </motion.div>

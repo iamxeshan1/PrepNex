@@ -62,7 +62,7 @@ export default function AdminThoughts() {
     t.author.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const StatCard = ({ title, value, span, colorClass = "text-[#002f26]" }: any) => (
+  const StatCard = ({ title, value, span, colorClass = "text-slate-900" }: any) => (
     <div className="bg-white p-6 rounded-xl border border-slate-200">
       <p className="text-sm font-medium text-slate-500 mb-2">{title}</p>
       <h3 className={`text-4xl font-bold tracking-tight mb-2 ${colorClass}`}>{value}</h3>
@@ -94,7 +94,7 @@ export default function AdminThoughts() {
               <X className="w-5 h-5" />
            </button>
 
-           <h3 className="text-xl font-bold text-[#002f26] mb-6 flex items-center gap-2"><Quote className="w-5 h-5 text-teal-600" /> Compose Thought</h3>
+           <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2"><Quote className="w-5 h-5 text-teal-600" /> Compose Thought</h3>
 
            <div className="space-y-6">
              <div>
@@ -170,7 +170,7 @@ export default function AdminThoughts() {
                          <Quote className="w-5 h-5" />
                        </div>
                        <div>
-                         <p className="font-bold text-[#002f26] group-hover:text-teal-700 transition-colors italic leading-relaxed max-w-2xl">
+                         <p className="font-bold text-slate-900 group-hover:text-teal-700 transition-colors italic leading-relaxed max-w-2xl">
                            "{thought.text}"
                          </p>
                        </div>

@@ -115,7 +115,7 @@ export default function AdminCoupons() {
 
   const filtered = coupons.filter(c => c.code.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  const StatCard = ({ title, value, span, colorClass = "text-[#002f26]" }: any) => (
+  const StatCard = ({ title, value, span, colorClass = "text-slate-900" }: any) => (
     <div className="bg-white p-4">
       <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
       <h3 className={`text-3xl font-bold tracking-tight ${colorClass}`}>{value}</h3>
@@ -147,7 +147,7 @@ export default function AdminCoupons() {
               <X className="w-5 h-5" />
            </button>
 
-           <h3 className="text-xl font-bold text-[#002f26] mb-6 flex items-center gap-2"><Ticket className="w-5 h-5 text-teal-600" /> Forge New Token</h3>
+           <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2"><Ticket className="w-5 h-5 text-teal-600" /> Forge New Token</h3>
 
            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
              <div>
@@ -248,7 +248,7 @@ export default function AdminCoupons() {
                           <Ticket className="w-5 h-5" />
                        </div>
                        <div>
-                         <p className="font-black text-[#002f26] group-hover:text-teal-700 transition-colors uppercase tracking-wider text-sm mt-0.5">
+                         <p className="font-black text-slate-900 group-hover:text-teal-700 transition-colors uppercase tracking-wider text-sm mt-0.5">
                            {coupon.code}
                          </p>
                          {coupon.minAmount && (
@@ -308,7 +308,7 @@ export default function AdminCoupons() {
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl relative">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold text-[#002f26] flex items-center gap-2">
+                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                   <Users className="w-5 h-5 text-teal-600" /> 
                   Usage: {selectedCoupon.code}
                 </h2>
@@ -338,7 +338,7 @@ export default function AdminCoupons() {
                      <tbody>
                         {couponUsers.map((u, i) => (
                            <tr key={u.id + '_' + i} className="border-b border-slate-50 last:border-0 text-sm">
-                              <td className="p-3 font-semibold text-[#002f26]">{u.userName}</td>
+                              <td className="p-3 font-semibold text-slate-900">{u.userName}</td>
                               <td className="p-3 font-medium text-slate-500">{getItemTitle(u.examId || (u.collection === "premium_subscriptions" ? "PREMIUM_PASS" : null), u.type) || u.examId || 'Purchase'}</td>
                               <td className="p-3 font-black text-slate-700">₹{u.amount}</td>
                               <td className="p-3 font-medium text-slate-400">{new Date(u.purchaseDate).toLocaleDateString()}</td>

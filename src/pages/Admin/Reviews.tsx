@@ -59,7 +59,7 @@ export default function AdminReviews() {
     (r.userName?.toLowerCase().includes(searchTerm.toLowerCase()) || r.content?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const StatCard = ({ title, value, span, colorClass = "text-[#002f26]" }: any) => (
+  const StatCard = ({ title, value, span, colorClass = "text-slate-900" }: any) => (
     <div className="bg-white p-4">
       <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
       <h3 className={`text-3xl font-bold tracking-tight ${colorClass}`}>{value}</h3>
@@ -131,7 +131,7 @@ export default function AdminReviews() {
                           {review.userName?.[0] || 'U'}
                        </div>
                        <div>
-                         <p className="font-bold text-[#002f26] group-hover:text-teal-700 transition-colors">
+                         <p className="font-bold text-slate-900 group-hover:text-teal-700 transition-colors">
                            {review.userName || 'Anonymous User'}
                          </p>
                          <div className="flex gap-0.5 mt-0.5">

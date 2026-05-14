@@ -120,18 +120,18 @@ export default function ExamDetail() {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <Link to="/exams" className="inline-flex items-center gap-1 text-sm font-bold text-slate-400 hover:text-[#002f26] mb-8 transition-colors">
+        <Link to="/exams" className="inline-flex items-center gap-1 text-sm font-bold text-slate-400 hover:text-slate-900 mb-8 transition-colors">
           <ChevronLeft className="w-4 h-4" /> Back to Catalog
         </Link>
         <div className="flex flex-col lg:grid lg:grid-cols-3 gap-8 lg:gap-12">
           {/* Main Info - Left Column */}
           <div className="lg:col-span-2 space-y-12">
             <header>
-              <div className="flex items-center gap-2 text-xs font-bold text-[#002f26] bg-[#e6fcf9] px-3 py-1 rounded-full mb-6 w-fit">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-900 bg-[#e6fcf9] px-3 py-1 rounded-full mb-6 w-fit">
                 <Shield className="w-3.5 h-3.5" />
                 <span>{agency?.name || exam.organization || 'OFFICIAL SERIES'}</span>
               </div>
-              <h1 className="text-4xl md:text-5xl font-display font-black text-[#002f26] tracking-tighter mb-6">{exam.name}</h1>
+              <h1 className="text-4xl md:text-5xl font-display font-black text-slate-900 tracking-tighter mb-6">{exam.name}</h1>
               <p className="text-lg text-slate-600 leading-relaxed font-medium">{exam.description || 'Comprehensive test series designed by regional experts to mirror the latest exam pattern.'}</p>
             </header>
 
@@ -145,7 +145,7 @@ export default function ExamDetail() {
                ].map((stat, i) => (
                  <div key={i} className="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm">
                     <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mb-1">{stat.label}</p>
-                    <p className="text-sm font-black text-[#002f26]">{stat.value}</p>
+                    <p className="text-sm font-black text-slate-900">{stat.value}</p>
                  </div>
                ))}
             </div>
@@ -157,9 +157,9 @@ export default function ExamDetail() {
              {/* Mock Tests Section */}
             <section>
               <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-display font-black text-[#002f26] tracking-tighter">Available Mock Tests</h2>
+                <h2 className="text-2xl font-display font-black text-slate-900 tracking-tighter">Available Mock Tests</h2>
                 <div className="flex bg-slate-100 p-1 rounded-full text-[12px] font-bold tracking-widest">
-                   <button className="px-5 py-2 bg-white rounded-full text-[#002f26] shadow-sm">All Tests</button>
+                   <button className="px-5 py-2 bg-white rounded-full text-slate-900 shadow-sm">All Tests</button>
                    <button className="hidden sm:block px-5 py-2 text-slate-500 hover:text-slate-700">Sectional</button>
                 </div>
               </div>
@@ -177,7 +177,7 @@ export default function ExamDetail() {
                           <FileText className="w-6 h-6" />
                         </div>
                         <div>
-                           <h4 className="font-display font-bold text-[#002f26] mb-1 leading-tight line-clamp-2">{test.title}</h4>
+                           <h4 className="font-display font-bold text-slate-900 mb-1 leading-tight line-clamp-2">{test.title}</h4>
                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-slate-500 text-[10px] uppercase font-bold tracking-widest mt-2 sm:mt-0">
                                <span>{test.questionCount || 120} Qs</span>
                                <span className="hidden sm:inline">•</span>
@@ -243,7 +243,7 @@ export default function ExamDetail() {
                
                {/* Included Card */}
                <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm">
-                  <h3 className="text-xl font-display font-black text-[#002f26] mb-6">What's Included</h3>
+                  <h3 className="text-xl font-display font-black text-slate-900 mb-6">What's Included</h3>
                   <ul className="space-y-4">
                     {[
                       'Full Length Mock Tests',

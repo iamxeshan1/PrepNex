@@ -165,7 +165,7 @@ export default function Transactions() {
       <div className="max-w-7xl mx-auto space-y-6 px-4 sm:px-6">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-4 border-b border-slate-200">
           <div>
-            <h1 className="text-3xl font-black text-[#002f26] flex items-center gap-3 tracking-tight">
+            <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
               <span className="bg-teal-50 p-2 rounded-xl text-teal-600">
                 <Receipt className="w-7 h-7" />
               </span>
@@ -210,7 +210,7 @@ export default function Transactions() {
              <div className="w-16 h-16 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center mx-auto mb-5">
                <FileText className="w-8 h-8 text-slate-300" />
              </div>
-             <h3 className="text-xl font-bold text-[#002f26] mb-2">No results found</h3>
+             <h3 className="text-xl font-bold text-slate-900 mb-2">No results found</h3>
              <p className="text-slate-500 font-medium max-w-sm mx-auto text-sm">
                {searchTerm ? 'Try adjusting your search terms.' : "You don't have any transaction history yet."}
              </p>
@@ -251,7 +251,7 @@ export default function Transactions() {
                         </td>
                         <td className="px-6 py-4 align-middle">
                           <div>
-                            <span className="font-semibold text-[#002f26] group-hover:text-teal-700 transition-colors block">
+                            <span className="font-semibold text-slate-900 group-hover:text-teal-700 transition-colors block">
                               {title}
                             </span>
                             {tx.couponCode && tx.couponCode !== 'NONE' && (
@@ -262,7 +262,7 @@ export default function Transactions() {
                           </div>
                         </td>
                         <td className="px-6 py-4 align-middle">
-                          <span className="font-bold text-[#002f26]">₹{tx.amount || 0}</span>
+                          <span className="font-bold text-slate-900">₹{tx.amount || 0}</span>
                         </td>
                         <td className="px-6 py-4 align-middle">
                           <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${

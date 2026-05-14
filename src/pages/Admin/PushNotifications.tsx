@@ -74,7 +74,7 @@ export default function PushNotifications() {
     <AdminLayout title="Signal Center">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
         <div>
-           <h2 className="text-3xl font-black text-[#002f26] tracking-tight font-display">Communication Broadcast Engine</h2>
+           <h2 className="text-3xl font-black text-slate-900 tracking-tight font-display">Communication Broadcast Engine</h2>
            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 italic">Instant dispatch of instructional or promotional nodes</p>
         </div>
         <div className="w-14 h-14 bg-teal-600 text-white rounded-2xl flex items-center justify-center shadow-xl shadow-teal-100">
@@ -92,7 +92,7 @@ export default function PushNotifications() {
                   <Zap className="w-6 h-6" />
                </div>
                <div>
-                  <h3 className="text-xl font-black text-[#002f26] tracking-tight font-display uppercase">Forge Signal</h3>
+                  <h3 className="text-xl font-black text-slate-900 tracking-tight font-display uppercase">Forge Signal</h3>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Broadcast logic for active network entities</p>
                </div>
             </header>
@@ -194,7 +194,7 @@ export default function PushNotifications() {
                       <Bell className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-black text-[#002f26] uppercase tracking-tight truncate pr-10 mb-2">{notif.title}</h3>
+                      <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight truncate pr-10 mb-2">{notif.title}</h3>
                       <p className="text-[11px] text-slate-500 font-medium leading-relaxed mb-6 group-hover:text-slate-700 transition-colors">{notif.message}</p>
                       
                       <div className="flex items-center gap-6 pt-6 border-t border-slate-100">

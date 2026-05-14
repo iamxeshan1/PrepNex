@@ -150,7 +150,7 @@ export default function Helpdesk() {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div>
-                <h1 className="text-3xl font-black text-[#002f26] tracking-tight font-display italic uppercase">Resolution Hub</h1>
+                <h1 className="text-3xl font-black text-slate-900 tracking-tight font-display italic uppercase">Resolution Hub</h1>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Direct protocol access for student support triage</p>
               </div>
               <button 
@@ -181,7 +181,7 @@ export default function Helpdesk() {
                            <MessageSquare className="w-6 h-6" />
                         </div>
                         <div>
-                           <h3 className="text-xl font-black text-[#002f26] uppercase">Draft Protocol</h3>
+                           <h3 className="text-xl font-black text-slate-900 uppercase">Draft Protocol</h3>
                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Provide detailed parameters for the triage team</p>
                         </div>
                      </div>
@@ -253,7 +253,7 @@ export default function Helpdesk() {
                                  <MessageSquare className="w-6 h-6" />
                               </div>
                               <div>
-                                 <h3 className="text-2xl font-black text-[#002f26] tracking-tight font-display uppercase italic">{ticket.subject}</h3>
+                                 <h3 className="text-2xl font-black text-slate-900 tracking-tight font-display uppercase italic">{ticket.subject}</h3>
                                  <div className="flex items-center gap-3 mt-1">
                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">ID: {ticket.id}</span>
                                     <div className="w-1 h-1 rounded-full bg-slate-200" />

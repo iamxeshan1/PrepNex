@@ -159,13 +159,13 @@ export default function Subjects() {
                     {IconComp && <IconComp className="w-10 h-10 text-primary" />}
                   </div>
                   <div>
-                    <h1 className="text-2xl font-sans font-[800] text-[#002f26] tracking-tight mb-2">{selectedSubject.name}</h1>
+                    <h1 className="text-2xl font-sans font-[800] text-slate-900 tracking-tight mb-2">{selectedSubject.name}</h1>
                     <p className="text-sm text-slate-500 font-medium leading-relaxed">{selectedSubject.description || 'Focused training module for competitive excellence.'}</p>
                   </div>
                 </div>
 
                 <div className="space-y-6">
-                  <h2 className="text-xl font-sans font-[800] text-[#002f26] tracking-tight px-2">Available Practice Sets</h2>
+                  <h2 className="text-xl font-sans font-[800] text-slate-900 tracking-tight px-2">Available Practice Sets</h2>
                   <div className="flex flex-col gap-4">
                     {tests.map((test) => (
                       <div key={test.id} className="bg-white p-5 rounded-[1.25rem] border border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200 transition-all group flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -175,7 +175,7 @@ export default function Subjects() {
                           </div>
                           <div>
                             <div className="flex items-center gap-3 mb-1.5">
-                              <h4 className="font-sans font-[800] text-[#002f26] text-[15px] tracking-tight group-hover:text-primary transition-colors">{test.title}</h4>
+                              <h4 className="font-sans font-[800] text-slate-900 text-[15px] tracking-tight group-hover:text-primary transition-colors">{test.title}</h4>
                               {!test.isFree && (
                                 <span className="text-[9px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full uppercase tracking-widest">Premium</span>
                               )}
@@ -268,7 +268,7 @@ export default function Subjects() {
                       <div className={`w-14 h-14 ${colorClass} rounded-[1rem] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
                         <IconComp className="w-7 h-7" />
                       </div>
-                      <h4 className="text-base font-sans font-[800] text-[#002f26] mb-2 tracking-tight">{subject.name}</h4>
+                      <h4 className="text-base font-sans font-[800] text-slate-900 mb-2 tracking-tight">{subject.name}</h4>
                       <p className="text-[11px] font-medium text-slate-400 line-clamp-2">
                         {subject.description || 'Master the concepts and shortcuts.'}
                       </p>

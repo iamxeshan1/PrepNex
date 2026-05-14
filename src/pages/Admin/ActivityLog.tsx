@@ -71,7 +71,7 @@ export default function AdminActivityLog() {
     <AdminLayout title="Security Ledger">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
         <div>
-           <h2 className="text-3xl font-black text-[#002f26] tracking-tight font-display">Global Activity Streams</h2>
+           <h2 className="text-3xl font-black text-slate-900 tracking-tight font-display">Global Activity Streams</h2>
            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 italic">Last 100 system nodes and event vectors</p>
         </div>
         <div className="flex items-center gap-4">
@@ -148,7 +148,7 @@ export default function AdminActivityLog() {
                             {log.userName?.[0].toUpperCase() || '?'}
                          </div>
                          <div>
-                            <p className="font-black text-[#002f26] uppercase tracking-tight text-xs leading-none mb-1">{log.userName || 'System Auto'}</p>
+                            <p className="font-black text-slate-900 uppercase tracking-tight text-xs leading-none mb-1">{log.userName || 'System Auto'}</p>
                             <p className="text-[10px] text-slate-400 font-bold italic truncate max-w-[150px]">{log.userEmail}</p>
                          </div>
                       </div>

@@ -103,7 +103,7 @@ export default function PremiumPlanManagement() {
   return (
     <AdminLayout title="Premium Plans & Pricing">
       <div className="mb-12">
-         <h2 className="text-3xl font-black text-[#002f26] tracking-tight font-display">Premium Offering Schema</h2>
+         <h2 className="text-3xl font-black text-slate-900 tracking-tight font-display">Premium Offering Schema</h2>
          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 italic">Configure durations, pricing, and custom plans</p>
       </div>
 
@@ -116,7 +116,7 @@ export default function PremiumPlanManagement() {
                        <Crown className="w-7 h-7" />
                     </div>
                     <div>
-                       <h3 className="text-2xl font-black text-[#002f26] tracking-tight font-display uppercase">Tier Foundation</h3>
+                       <h3 className="text-2xl font-black text-slate-900 tracking-tight font-display uppercase">Tier Foundation</h3>
                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Core messaging</p>
                     </div>
                   </div>
@@ -139,7 +139,7 @@ export default function PremiumPlanManagement() {
             <div className="bg-white p-12 rounded-[3.5rem] border border-slate-100 shadow-sm relative overflow-hidden">
                 <header className="mb-8 flex items-center justify-between">
                    <div>
-                      <h3 className="text-xl font-black text-[#002f26] tracking-tight font-display uppercase">Subscription Plans</h3>
+                      <h3 className="text-xl font-black text-slate-900 tracking-tight font-display uppercase">Subscription Plans</h3>
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Define specific durations, pricing, and discounts</p>
                    </div>
                    <button type="button" onClick={addPlan} className="flex items-center gap-2 px-5 py-3 bg-[#002f26] text-white rounded-xl text-xs font-bold hover:bg-[#001f19] transition-colors">
@@ -220,7 +220,7 @@ export default function PremiumPlanManagement() {
                
                <button 
                   type="submit" disabled={saving}
-                  className="w-full py-5 bg-white text-[#002f26] rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-xl hover:bg-amber-400 transition-all flex items-center justify-center gap-3 active:scale-95"
+                  className="w-full py-5 bg-white text-slate-900 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-xl hover:bg-amber-400 transition-all flex items-center justify-center gap-3 active:scale-95"
                >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-5 h-5" /> Save Configuration</>}
                </button>

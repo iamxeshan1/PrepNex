@@ -99,7 +99,7 @@ export default function LiveTests() {
               <div className="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-6 text-slate-400">
                 <Search className="w-10 h-10" />
               </div>
-              <h3 className="text-2xl font-bold text-[#002f26] mb-2">No live tests found</h3>
+              <h3 className="text-2xl font-bold text-slate-900 mb-2">No live tests found</h3>
               <p className="text-slate-500 font-medium">Try searching with a different keyword or check back later.</p>
             </div>
           ) : (
@@ -146,7 +146,7 @@ export default function LiveTests() {
                       {/* Middle: Title & Details */}
                       <div className="flex-1 p-8">
                         <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4">
-                          <h3 className="text-xl font-sans font-[800] text-[#002f26] group-hover:text-[#002f26] transition-colors tracking-tight">
+                          <h3 className="text-xl font-sans font-[800] text-slate-900 group-hover:text-slate-900 transition-colors tracking-tight">
                             {test.title}
                           </h3>
                           <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase ${test.isFree ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
@@ -156,19 +156,19 @@ export default function LiveTests() {
 
                         <div className="flex flex-wrap gap-6 text-slate-500">
                           <div className="flex items-center gap-2.5">
-                            <Calendar className="w-4 h-4 text-[#002f26]" />
+                            <Calendar className="w-4 h-4 text-slate-900" />
                             <span className="text-xs font-bold uppercase tracking-wider">
                               {startTime.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} - {endTime.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                             </span>
                           </div>
                           <div className="flex items-center gap-2.5">
-                            <Clock className="w-4 h-4 text-[#002f26]" />
+                            <Clock className="w-4 h-4 text-slate-900" />
                             <span className="text-xs font-bold uppercase tracking-wider">
                               {startTime.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
                           <div className="flex items-center gap-2.5">
-                            <Users className="w-4 h-4 text-[#002f26]" />
+                            <Users className="w-4 h-4 text-slate-900" />
                             <span className="text-xs font-bold uppercase tracking-wider">
                                {(test.enrolledUsers?.length || 0) + 120}+ Enrolled
                             </span>
@@ -222,7 +222,7 @@ export default function LiveTests() {
                   </p>
                   <button 
                     onClick={() => navigate('/premium')}
-                    className="bg-[#2dd4bf] text-[#002f26] px-10 py-4.5 rounded-2xl font-black text-xs hover:bg-[#5eead4] transition-all uppercase tracking-[0.2em]"
+                    className="bg-[#2dd4bf] text-slate-900 px-10 py-4.5 rounded-2xl font-black text-xs hover:bg-[#5eead4] transition-all uppercase tracking-[0.2em]"
                   >
                     UPGRADE TO PREMIUM
                   </button>

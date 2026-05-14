@@ -77,13 +77,13 @@ export default function AdminHelpdesk() {
     <AdminLayout title="Resolve Hub">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
         <div>
-           <h2 className="text-3xl font-black text-[#002f26] tracking-tight font-display">Student Support Ledger</h2>
+           <h2 className="text-3xl font-black text-slate-900 tracking-tight font-display">Student Support Ledger</h2>
            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 italic">Real-time triage for institutional queries</p>
         </div>
         <div className="flex items-center gap-4">
            <div className="px-6 py-4 bg-white border border-slate-100 rounded-[1.5rem] shadow-sm flex flex-col items-center">
               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Open Cases</span>
-              <span className="text-lg font-black text-[#002f26] font-display">{tickets.length}</span>
+              <span className="text-lg font-black text-slate-900 font-display">{tickets.length}</span>
            </div>
         </div>
       </div>
@@ -119,7 +119,7 @@ export default function AdminHelpdesk() {
                              <User className="w-5 h-5" />
                           </div>
                           <div>
-                             <h3 className="text-xl font-black text-[#002f26] tracking-tight font-display uppercase">{ticket.subject}</h3>
+                             <h3 className="text-xl font-black text-slate-900 tracking-tight font-display uppercase">{ticket.subject}</h3>
                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{ticket.userName} • {ticket.userEmail}</p>
                           </div>
                        </div>

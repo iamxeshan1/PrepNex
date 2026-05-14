@@ -35,7 +35,7 @@ export default function PrivacyPolicy() {
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-full text-blue-600 text-[10px] font-black uppercase tracking-widest mb-6">
               <Shield className="w-3.5 h-3.5" /> Governance
             </div>
-            <h1 className="text-4xl md:text-5xl font-sans font-[800] text-[#002f26] tracking-tight mb-4">Privacy Framework</h1>
+            <h1 className="text-4xl md:text-5xl font-sans font-[800] text-slate-900 tracking-tight mb-4">Privacy Framework</h1>
             <p className="text-slate-500 font-medium">Last comprehensive update: May 01, 2026</p>
           </motion.div>
 
@@ -54,7 +54,7 @@ export default function PrivacyPolicy() {
                     <section.icon className="w-8 h-8" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-[800] text-[#002f26] mb-4 tracking-tight uppercase text-xs tracking-[0.2em]">{section.title}</h3>
+                    <h3 className="text-2xl font-[800] text-slate-900 mb-4 tracking-tight uppercase text-xs tracking-[0.2em]">{section.title}</h3>
                     <p className="text-slate-600 leading-relaxed font-medium text-lg">
                       {section.content}
                     </p>

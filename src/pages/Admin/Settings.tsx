@@ -169,7 +169,7 @@ export default function AdminSettings() {
       <form onSubmit={handleSave} className="max-w-5xl space-y-12 pb-32">
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
            <div>
-              <h2 className="text-3xl font-black text-[#002f26] tracking-tight font-display">Core Infrastructure</h2>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight font-display">Core Infrastructure</h2>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 italic">Propagating global settings across PrepNext ecosystem</p>
            </div>
            <div className="flex items-center gap-4">
@@ -218,7 +218,7 @@ export default function AdminSettings() {
                     <Globe className="w-7 h-7" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-[#002f26] tracking-tight font-display">Identity & Messaging</h3>
+                    <h3 className="text-xl font-black text-slate-900 tracking-tight font-display">Identity & Messaging</h3>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Platform-wide content descriptors</p>
                   </div>
                 </div>
@@ -275,7 +275,7 @@ export default function AdminSettings() {
                     <Lock className="w-7 h-7" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-[#002f26] tracking-tight font-display">Revenue Gateway</h3>
+                    <h3 className="text-xl font-black text-slate-900 tracking-tight font-display">Revenue Gateway</h3>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Razorpay Secure Bridge Configuration</p>
                   </div>
                 </div>
@@ -316,7 +316,7 @@ export default function AdminSettings() {
                     <Server className="w-7 h-7" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-[#002f26] tracking-tight font-display">Communication Stack</h3>
+                    <h3 className="text-xl font-black text-slate-900 tracking-tight font-display">Communication Stack</h3>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Transactional Email Relay (SMTP)</p>
                   </div>
                 </div>
@@ -368,7 +368,7 @@ export default function AdminSettings() {
                     <div className="w-12 h-12 bg-secondary/10 rounded-2xl flex items-center justify-center text-secondary">
                        <Share2 className="w-6 h-6" />
                     </div>
-                    <h4 className="text-lg font-black font-display tracking-tight text-[#002f26]">Social Sync</h4>
+                    <h4 className="text-lg font-black font-display tracking-tight text-slate-900">Social Sync</h4>
                  </div>
                  <div className="space-y-4">
                     <div className="relative group/input">

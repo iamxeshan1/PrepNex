@@ -82,7 +82,7 @@ export default function StudyMaterial() {
               <Layers className="w-3.5 h-3.5" /> Comprehensive Resource Vault
             </motion.div>
             
-            <h1 className="text-4xl md:text-6xl font-sans font-[800] text-[#002f26] tracking-tighter mb-6 leading-tight">
+            <h1 className="text-4xl md:text-6xl font-sans font-[800] text-slate-900 tracking-tighter mb-6 leading-tight">
               Master Your Exams with <br/>
               <span className="text-teal-600">Curated Materials.</span>
             </h1>
@@ -148,7 +148,7 @@ export default function StudyMaterial() {
                           </span>
                         </div>
 
-                        <h3 className="text-xl font-bold text-[#002f26] tracking-tight mb-3 group-hover:text-teal-600 transition-colors line-clamp-1">
+                        <h3 className="text-xl font-bold text-slate-900 tracking-tight mb-3 group-hover:text-teal-600 transition-colors line-clamp-1">
                           {m.title}
                         </h3>
                         
@@ -177,7 +177,7 @@ export default function StudyMaterial() {
                   <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
                     <Search className="w-8 h-8" />
                   </div>
-                  <h3 className="text-xl font-black text-[#002f26] tracking-tight">No Resources Found</h3>
+                  <h3 className="text-xl font-black text-slate-900 tracking-tight">No Resources Found</h3>
                   <p className="text-slate-400 font-medium max-w-sm mx-auto mt-2">
                     We couldn't find any materials matching your filters. Try adjusting the keywords.
                   </p>

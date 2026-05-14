@@ -175,7 +175,7 @@ export default function AdminSubjects() {
     }
   };
 
-  const StatCard = ({ title, value, span, icon: Icon, colorClass = "text-[#002f26]" }: any) => (
+  const StatCard = ({ title, value, span, icon: Icon, colorClass = "text-slate-900" }: any) => (
     <div className="bg-white p-4">
       <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
       <h3 className={`text-3xl font-bold tracking-tight ${colorClass}`}>{value}</h3>
@@ -206,7 +206,7 @@ export default function AdminSubjects() {
 
       {showForm && (
         <form onSubmit={handleRegister} className="bg-white p-8 mb-8 border-b border-slate-200">
-          <h3 className="text-xl font-bold text-[#002f26] mb-6">{selectedSubjectId ? 'Edit Subject' : 'New Subject'}</h3>
+          <h3 className="text-xl font-bold text-slate-900 mb-6">{selectedSubjectId ? 'Edit Subject' : 'New Subject'}</h3>
           
           <div className="space-y-6">
              <div className="grid grid-cols-1 gap-6">
@@ -226,7 +226,7 @@ export default function AdminSubjects() {
                       <input 
                         required
                         placeholder="e.g. Constitutional Law"
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 font-medium text-[#002f26]"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 font-medium text-slate-900"
                         value={newSubjectName}
                         onChange={(e) => setNewSubjectName(e.target.value)}
                       />
@@ -307,7 +307,7 @@ export default function AdminSubjects() {
                             <IconComp className="w-5 h-5" />
                          </div>
                          <div>
-                           <p className="font-bold text-[#002f26] group-hover:text-teal-700 transition-colors uppercase">
+                           <p className="font-bold text-slate-900 group-hover:text-teal-700 transition-colors uppercase">
                              {sub.name}
                            </p>
                          </div>

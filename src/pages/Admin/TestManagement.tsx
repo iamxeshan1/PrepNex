@@ -53,7 +53,7 @@ export default function AdminTestManagement() {
     <AdminLayout title="Manage Test" backTo={-1}>
       <form onSubmit={handleSave} className="bg-white border border-slate-200 p-8 shadow-sm max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-[#002f26]">Manage Test</h2>
+            <h2 className="text-2xl font-bold text-slate-900">Manage Test</h2>
             <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${test.status === 'scheduled' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
                 {test.status || 'Live'}
             </div>

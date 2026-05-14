@@ -51,7 +51,7 @@ export default function Exams() {
     <Layout>
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-12">
         <div className="mb-12">
-          <h1 className="text-4xl md:text-5xl font-display font-black text-[#002f26] tracking-tighter mb-4">Explore All Exam Series</h1>
+          <h1 className="text-4xl md:text-5xl font-display font-black text-slate-900 tracking-tighter mb-4">Explore All Exam Series</h1>
           <p className="text-slate-500 text-lg font-medium max-w-2xl">Access the most comprehensive test series library. Verified by toppers, designed for excellence.</p>
         </div>
 
@@ -92,10 +92,10 @@ export default function Exams() {
                          {logo ? (
                             <img src={logo} alt="" loading="lazy" decoding="async" width="48" height="48" className="w-full h-full object-contain" />
                          ) : (
-                            <Shield className="w-6 h-6 text-slate-300 group-hover:text-[#002f26] transition-colors" />
+                            <Shield className="w-6 h-6 text-slate-300 group-hover:text-slate-900 transition-colors" />
                          )}
                       </div>
-                      <h3 className="text-lg font-display font-[800] text-[#002f26] group-hover:text-[#002f26] transition-colors tracking-tighter line-clamp-1">{exam.name}</h3>
+                      <h3 className="text-lg font-display font-[800] text-slate-900 group-hover:text-slate-900 transition-colors tracking-tighter line-clamp-1">{exam.name}</h3>
                    </div>
                    {exam.isPopular && (
                      <span className="bg-[#b91c1c] text-white text-[8px] font-black px-2 py-1 rounded-md tracking-widest uppercase shrink-0">MOST POPULAR</span>
@@ -123,7 +123,7 @@ export default function Exams() {
                        <CheckCircle2 className="w-3.5 h-3.5" /> ENROLLED
                     </div>
                   ) : (
-                    <button className="text-[10px] font-black text-[#002f26] tracking-[0.05em] uppercase hover:underline transition-all">
+                    <button className="text-[10px] font-black text-slate-900 tracking-[0.05em] uppercase hover:underline transition-all">
                       {exam.isPaid ? 'ENROLL NOW' : 'TRY FREE'}
                     </button>
                   )}

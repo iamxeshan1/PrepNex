@@ -53,7 +53,7 @@ export default function AdminEditLiveTest() {
   return (
     <AdminLayout title="Edit Live Test" backTo="/admin/live-tests">
       <form onSubmit={handleSave} className="bg-white border border-slate-200 p-8 max-w-2xl mx-auto rounded-xl">
-        <h2 className="text-xl font-bold mb-6 text-[#002f26]">Edit Test: {test.title}</h2>
+        <h2 className="text-xl font-bold mb-6 text-slate-900">Edit Test: {test.title}</h2>
         <div className="space-y-6">
           <div>
             <label className="block text-sm font-semibold mb-1">Test Title</label>

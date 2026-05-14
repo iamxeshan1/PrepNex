@@ -35,7 +35,7 @@ export const DashboardSidebar = () => {
     <div className="w-full h-full bg-white border-r border-slate-100 p-6 flex flex-col justify-between">
       <div>
         <Link to="/" className="flex items-center mb-10 px-2 lg:px-4">
-            <span className="font-logo font-black text-2xl lg:text-3xl tracking-tight text-black">Prep<span className="text-[#002f26]">Next</span></span>
+            <span className="font-logo font-black text-2xl lg:text-3xl tracking-tight text-[#002f26]">PrepNext</span>
         </Link>
         <nav className="space-y-2">
           {navItems.map((item) => (

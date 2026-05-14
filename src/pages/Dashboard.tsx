@@ -373,7 +373,7 @@ export default function Dashboard() {
                         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between">
                             <div>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">PREPSCORE</p>
-                                <h3 className="text-2xl font-black text-[#002f26]">{prepScore}<span className="text-sm text-slate-400 ml-1">/1000</span></h3>
+                                <h3 className="text-2xl font-black text-slate-900">{prepScore}<span className="text-sm text-slate-400 ml-1">/1000</span></h3>
                             </div>
                             <div className="w-12 h-12 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center">
                                 <TrendingUp className="w-6 h-6" />
@@ -382,7 +382,7 @@ export default function Dashboard() {
                         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between">
                             <div>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">GLOBAL RANK</p>
-                                <h3 className="text-2xl font-black text-[#002f26]">#{globalRank.toLocaleString()}<span className="text-sm text-slate-400 ml-1">/45.2k</span></h3>
+                                <h3 className="text-2xl font-black text-slate-900">#{globalRank.toLocaleString()}<span className="text-sm text-slate-400 ml-1">/45.2k</span></h3>
                             </div>
                             <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
                                 <Award className="w-6 h-6" />
@@ -395,7 +395,7 @@ export default function Dashboard() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                      <div className="flex flex-col gap-4">
                         <div className="flex justify-between items-center mb-2">
-                           <h3 className="text-lg font-black text-[#002f26]">Upcoming Live Tests</h3>
+                           <h3 className="text-lg font-black text-slate-900">Upcoming Live Tests</h3>
                            <Link to="/live-tests" className="text-teal-600 text-[10px] font-black uppercase tracking-wider hover:underline">View All</Link>
                         </div>
                         {upcomingTests.length > 0 ? upcomingTests.map((t) => {
@@ -456,7 +456,7 @@ export default function Dashboard() {
                      </div>
                      <div className="flex flex-col gap-4">
                         <div className="flex justify-between items-center mb-2">
-                           <h3 className="text-lg font-black text-[#002f26]">Active Subscriptions</h3>
+                           <h3 className="text-lg font-black text-slate-900">Active Subscriptions</h3>
                            {activeExams.length > 4 && (
                                <Link to="/my-subscriptions" className="text-teal-600 text-[10px] font-black uppercase tracking-wider hover:underline flex items-center gap-1">
                                    View All ({activeExams.length})
@@ -498,7 +498,7 @@ export default function Dashboard() {
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                       <div className="lg:col-span-2 bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col">
                           <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-black text-[#002f26] flex items-center gap-2">
+                            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
                                 <Megaphone className="w-5 h-5 text-teal-600" /> Platform Announcements
                             </h3>
                             <button onClick={() => navigate('/announcements')} className="text-teal-600 text-[10px] font-black uppercase tracking-wider hover:underline">View All Updates</button>
@@ -533,7 +533,7 @@ export default function Dashboard() {
                           </div>
                       </div>
                       <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col">
-                          <h3 className="text-lg font-black text-[#002f26] mb-6">Discover New</h3>
+                          <h3 className="text-lg font-black text-slate-900 mb-6">Discover New</h3>
                           <div className="space-y-4 flex-1">
                               {discoverExams.length > 0 ? discoverExams.map(ex => (
                                   <div key={ex.id} onClick={() => navigate(`/exam/${ex.id}`)} className="p-4 border rounded-2xl flex items-center justify-between hover:bg-slate-50 cursor-pointer">
@@ -550,7 +550,7 @@ export default function Dashboard() {
                   
                   {/* Subject Performance Analysis */}
                   <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm">
-                    <h3 className="text-lg font-black text-[#002f26] mb-6">Subject Performance Analysis</h3>
+                    <h3 className="text-lg font-black text-slate-900 mb-6">Subject Performance Analysis</h3>
                     {subjectPerformance.length > 0 ? (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {subjectPerformance.map((subj, idx) => (

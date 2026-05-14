@@ -149,7 +149,7 @@ export default function AdminLiveTests() {
 
   const filtered = liveTests.filter(t => t.title?.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  const StatCard = ({ title, value, span, colorClass = "text-[#002f26]" }: any) => (
+  const StatCard = ({ title, value, span, colorClass = "text-slate-900" }: any) => (
     <div className="bg-white p-4">
       <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
       <h3 className={`text-3xl font-bold tracking-tight ${colorClass}`}>{value}</h3>
@@ -182,7 +182,7 @@ export default function AdminLiveTests() {
               <X className="w-5 h-5" />
            </button>
 
-           <h3 className="text-xl font-bold text-[#002f26] mb-6 flex items-center gap-2"><Zap className="w-5 h-5 text-teal-600" /> Compose Live Exam</h3>
+           <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2"><Zap className="w-5 h-5 text-teal-600" /> Compose Live Exam</h3>
 
            <div className="space-y-6">
               <div>
@@ -403,7 +403,7 @@ export default function AdminLiveTests() {
                           <Zap className="w-5 h-5" />
                        </div>
                        <div>
-                         <p className="font-bold text-[#002f26] group-hover:text-teal-700 transition-colors">
+                         <p className="font-bold text-slate-900 group-hover:text-teal-700 transition-colors">
                            {test.title}
                          </p>
                          <p className="text-xs font-semibold text-slate-500 mt-0.5"><Clock className="w-3 h-3 inline mr-1 text-slate-400" /> {test.duration}m | {test.totalMarks}M</p>

@@ -364,12 +364,12 @@ export default function Premium() {
             <div className="flex-1 p-8 md:p-12 border-r border-slate-100">
               {targetExam ? (
                 <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                   <div className="w-20 h-20 bg-[#002f26]/10 rounded-[2rem] flex items-center justify-center text-[#002f26] mb-6">
+                   <div className="w-20 h-20 bg-[#002f26]/10 rounded-[2rem] flex items-center justify-center text-slate-900 mb-6">
                       <Layers className="w-10 h-10" />
                    </div>
                    <h2 className="text-2xl font-black text-[#001f19] mb-2">{targetExam.name}</h2>
                    <p className="text-slate-500 font-medium mb-8">Single exam unlock</p>
-                   <div className="text-5xl font-black text-[#002f26] mb-2">₹{basePrice}</div>
+                   <div className="text-5xl font-black text-slate-900 mb-2">₹{basePrice}</div>
                    {targetExam.price && targetExam.price > 0 && <div className="text-slate-400 line-through font-bold text-lg mb-8">₹{basePrice + 500}</div>}
                 </div>
               ) : (
@@ -391,7 +391,7 @@ export default function Premium() {
                                 </div>
                              </div>
                              <div className="text-right">
-                                <div className="text-xl font-black text-[#002f26]">₹{plan.price}</div>
+                                <div className="text-xl font-black text-slate-900">₹{plan.price}</div>
                                 {plan.originalPrice > plan.price && <div className="text-xs font-bold text-slate-400 line-through">₹{plan.originalPrice}</div>}
                              </div>
                           </div>
@@ -487,7 +487,7 @@ export default function Premium() {
 
         <section className="max-w-7xl mx-auto px-4 py-32 mt-12">
            <div className="text-center mb-16">
-              <h2 className="text-3xl font-black text-[#002f26] tracking-tight">Everything you need to succeed</h2>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Everything you need to succeed</h2>
            </div>
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {(premiumFeatures.length > 0 ? premiumFeatures : benefits.map(b => b.title)).map((featureTitle, idx) => {
@@ -497,7 +497,7 @@ export default function Premium() {
                        <div className={`w-12 h-12 ${benefit.color} rounded-xl flex items-center justify-center text-white mb-6`}>
                           <benefit.icon className="w-6 h-6" />
                        </div>
-                       <h3 className="text-lg font-black text-[#002f26] mb-2 leading-tight">{featureTitle}</h3>
+                       <h3 className="text-lg font-black text-slate-900 mb-2 leading-tight">{featureTitle}</h3>
                        <p className="text-sm font-medium text-slate-500 leading-relaxed">
                           Premium feature included in your all-access pass. Get ahead of the competition.
                        </p>
