@@ -14,6 +14,10 @@ const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const ExamDetail = React.lazy(() => import('./pages/ExamDetail'));
 const Test = React.lazy(() => import('./pages/Test'));
 const Result = React.lazy(() => import('./pages/Result'));
+const JobAlerts = React.lazy(() => import('./pages/JobAlerts'));
+const PYQs = React.lazy(() => import('./pages/PYQs'));
+const Forum = React.lazy(() => import('./pages/Forum'));
+const ForumThread = React.lazy(() => import('./pages/ForumThread'));
 const AdminMockTestBank = React.lazy(() => import('./pages/Admin/MockTestBank'));
 const AdminDashboard = React.lazy(() => import('./pages/Admin/Dashboard'));
 const AdminAgencies = React.lazy(() => import('./pages/Admin/Agencies'));
@@ -28,6 +32,9 @@ const AdminRevenue = React.lazy(() => import('./pages/Admin/Revenue'));
 const AdminPremiumPlan = React.lazy(() => import('./pages/Admin/PremiumPlan'));
 const AdminUsers = React.lazy(() => import('./pages/Admin/Users'));
 const AdminCoupons = React.lazy(() => import('./pages/Admin/Coupons'));
+const AdminJobAlerts = React.lazy(() => import('./pages/Admin/JobAlerts'));
+const AdminForum = React.lazy(() => import('./pages/Admin/Forum'));
+const AdminPYQs = React.lazy(() => import('./pages/Admin/PYQs'));
 const AdminSubscriptions = React.lazy(() => import('./pages/Admin/Subscriptions'));
 const AdminLiveTests = React.lazy(() => import('./pages/Admin/LiveTests'));
 const AdminHelpdesk = React.lazy(() => import('./pages/Admin/Helpdesk'));
@@ -175,6 +182,21 @@ export function AppContent() {
               <AdminCoupons />
             </ProtectedRoute>
           } />
+          <Route path="/admin/job-alerts" element={
+            <ProtectedRoute adminOnly>
+              <AdminJobAlerts />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/pyqs" element={
+            <ProtectedRoute adminOnly>
+              <AdminPYQs />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/forum" element={
+            <ProtectedRoute adminOnly>
+              <AdminForum />
+            </ProtectedRoute>
+          } />
           <Route path="/admin/subscriptions" element={
             <ProtectedRoute adminOnly>
               <AdminSubscriptions />
@@ -289,6 +311,10 @@ export function AppContent() {
           } />
 
           <Route path="/study-material" element={<StudyMaterial />} />
+          <Route path="/job-alerts" element={<JobAlerts />} />
+          <Route path="/pyqs" element={<PYQs />} />
+          <Route path="/forum" element={<Forum />} />
+          <Route path="/forum/:id" element={<ForumThread />} />
           
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

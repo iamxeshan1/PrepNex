@@ -26,7 +26,8 @@ import {
   Sparkles,
   Briefcase,
   ArrowLeft,
-  ExternalLink
+  ExternalLink,
+  FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -103,9 +104,12 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
   ];
 
   const contentItems = [
+    { label: 'Job Alerts', path: '/admin/job-alerts', icon: Megaphone },
     { label: 'Subjects & Topics', path: '/admin/subjects', icon: Briefcase },
     { label: 'Agencies / Boards', path: '/admin/agencies', icon: Building },
     { label: 'Study Material', path: '/admin/study-material', icon: GraduationCap },
+    { label: 'Previous Year Papers', path: '/admin/pyqs', icon: FileText },
+    { label: 'Community Forum', path: '/admin/forum', icon: MessageSquare },
     { label: 'Platform Reviews', path: '/admin/reviews', icon: MessageSquare },
   ];
 

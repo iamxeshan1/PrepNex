@@ -41,7 +41,11 @@ import {
   Gamepad2,
   Brush,
   Variable,
-  Calendar
+  Calendar,
+  Sparkles,
+  Newspaper,
+  ChevronRight,
+  Bell
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { db } from '../lib/firebase';
@@ -104,6 +108,8 @@ export default function Home() {
   const [realSubjects, setRealSubjects] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>({});
   const [latestThought, setLatestThought] = useState<any>(null);
+  const [jobAlerts, setJobAlerts] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -151,12 +157,17 @@ export default function Home() {
       if (!snap.empty) setLatestThought({ id: snap.docs[0].id, ...snap.docs[0].data() });
     });
 
+    const unsubAlerts = onSnapshot(query(collection(db, 'jobAlerts'), orderBy('createdAt', 'desc'), limit(5)), (snap) => {
+      setJobAlerts(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     fetchData();
     return () => {
       unsubLive();
       unsubSubjects();
       unsubSettings();
       unsubThought();
+      unsubAlerts();
     };
   }, []);
 
@@ -167,32 +178,32 @@ export default function Home() {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="bg-white pt-16 pb-24 overflow-hidden border-b border-slate-100">
+      <section className="bg-gradient-to-b from-emerald-50 via-white to-white pt-20 pb-12 overflow-hidden border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 text-center relative">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 bg-[#006e5d]/10 text-[#006e5d] px-4 py-2 rounded-full text-[10px] font-black tracking-widest uppercase mb-8"
+            className="inline-flex items-center gap-2 bg-emerald-100/50 text-[#006e5d] px-4 py-2 rounded-full text-xs font-bold tracking-wide mb-6"
           >
-            <Zap className="w-3 h-3 fill-[#006e5d]" /> The Trusted Learning Partner
+            <Zap className="w-4 h-4 fill-[#006e5d]" /> Premium Learning Platform for Exams
           </motion.div>
           
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-5xl md:text-6xl font-sans font-[800] text-slate-900 mb-8 tracking-tighter max-w-4xl mx-auto leading-[1.15]"
+            className="text-4xl md:text-5xl lg:text-6xl font-sans font-[800] text-slate-900 mb-6 tracking-tight max-w-4xl mx-auto leading-tight"
           >
             {settings.heroHeading ? (
               settings.heroHeading.includes('|') ? (
                 <>
-                  {settings.heroHeading.split('|')[0]} <span className="text-slate-900">{settings.heroHeading.split('|')[1]}</span>
+                  {settings.heroHeading.split('|')[0]} <span className="text-[#006e5d]">{settings.heroHeading.split('|')[1]}</span>
                 </>
               ) : (
                 settings.heroHeading
               )
             ) : (
-              <>Master Exams with <span className="text-slate-900">Confidence.</span></>
+              <>Crack your Target Exam with <span className="text-[#006e5d]">PrepNext</span></>
             )}
           </motion.h1>
           
@@ -200,26 +211,175 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-slate-500 text-lg md:text-xl font-medium max-w-2xl mx-auto mb-12 leading-relaxed tracking-tight"
+            className="text-slate-600 text-lg md:text-xl font-medium max-w-2xl mx-auto mb-10 leading-relaxed"
           >
-            {settings.heroTagline || "Get the most comprehensive mock tests and AI-driven performance insights."}
+            {settings.heroTagline || "Get the most comprehensive mock tests, live classes, and performance insights."}
           </motion.p>
           
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-5"
+            className="max-w-3xl mx-auto mb-12 relative"
           >
-            <Link to="/signup" className="w-full sm:w-auto bg-[#006e5d] text-white px-12 py-4.5 rounded-xl font-black text-sm hover:bg-[#005a4d] transition-all shadow-xl shadow-[#006e5d]/20 active:scale-95 uppercase tracking-widest">
-              Start Free Trial
-            </Link>
-            <Link to="/exams" className="w-full sm:w-auto bg-white text-[#002f26] border-2 border-slate-200 px-12 py-4.5 rounded-xl font-black text-sm hover:border-slate-300 transition-all active:scale-95 uppercase tracking-widest">
-              Browse Exams
-            </Link>
+            <div className="flex items-center bg-white p-2 rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200">
+              <div className="pl-4 pr-2 text-slate-400">
+                <Search className="w-6 h-6" />
+              </div>
+              <input 
+                type="text" 
+                value={searchTerm}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && searchTerm.trim()) navigate(`/exams?search=${encodeURIComponent(searchTerm.trim())}`);
+                }}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search for Exams, Subjects or Providers" 
+                className="w-full bg-transparent border-none outline-none text-slate-900 font-medium px-2 py-3 placeholder:text-slate-400"
+              />
+              <button onClick={() => { if(searchTerm.trim()) navigate(`/exams?search=${encodeURIComponent(searchTerm.trim())}`); }} className="bg-[#006e5d] text-white px-8 py-3.5 rounded-xl font-bold text-sm hover:bg-[#005a4d] transition-all shrink-0">
+                Search
+              </button>
+            </div>
+            
+            {/* Quick Links / Badges */}
+            <div className="flex flex-wrap justify-center gap-3 mt-8">
+              {agencies.filter(a => a.id !== 'All').slice(0, 8).map((agency, idx) => (
+                <span key={idx} onClick={() => navigate(`/exams?agency=${encodeURIComponent(agency.id)}`)} className="bg-white border border-slate-200 text-slate-600 text-xs font-bold px-4 py-2 rounded-full hover:border-[#006e5d] hover:text-[#006e5d] cursor-pointer transition-colors shadow-sm">
+                  {agency.name}
+                </span>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Quick Stats in Hero */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="flex flex-wrap items-center justify-center gap-8 md:gap-16 pt-8 border-t border-slate-100"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-[#006e5d]">
+                <Users className="w-6 h-6 fill-current" />
+              </div>
+              <div className="text-left">
+                <p className="text-xl font-bold text-slate-900">{settings.aspirantCount || '50k+'}</p>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Students</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                <FileText className="w-6 h-6 fill-current" />
+              </div>
+              <div className="text-left">
+                <p className="text-xl font-bold text-slate-900">{settings.totalTests || '1.2k+'}</p>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Mock Tests</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-orange-500">
+                <CheckCircle className="w-6 h-6 fill-current" />
+              </div>
+              <div className="text-left">
+                <p className="text-xl font-bold text-slate-900">{settings.successRate || '98%'}</p>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Success Rate</p>
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>
+
+      {/* PrepNext Pass Promotion (Testbook Pass style) */}
+      <section className="py-12 bg-white">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8">
+          <div className="bg-gradient-to-r from-slate-900 to-[#002f26] rounded-3xl p-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between text-left shadow-2xl border border-slate-800">
+            <div className="absolute -right-20 -top-20 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl"></div>
+            <div className="relative z-10 w-full md:w-auto">
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-600 text-yellow-950 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase mb-4 shadow-sm">
+                <Sparkles className="w-3 h-3" /> Recommended
+              </div>
+              <h2 className="text-3xl md:text-4xl font-sans font-[800] text-white mb-2 tracking-tight">PrepNext <span className="text-emerald-400">Pass Pro</span></h2>
+              <ul className="text-slate-300 font-medium space-y-2 mt-4 text-sm max-w-md">
+                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Unlock 70,000+ Mock Tests</li>
+                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> 17,000+ Previous Year Papers</li>
+                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Unlimited Re-attempts on all tests</li>
+              </ul>
+            </div>
+            <div className="relative z-10 mt-8 md:mt-0 flex flex-col items-center md:items-end w-full md:w-auto bg-white/5 p-6 rounded-2xl border border-white/10 backdrop-blur-sm">
+              <div className="text-emerald-400 font-bold text-sm tracking-wider uppercase mb-1">Limited Time Offer</div>
+              <div className="text-white text-4xl font-black mb-1">₹399 <span className="text-lg text-slate-400 font-medium line-through">₹799</span></div>
+              <div className="text-slate-300 text-xs mb-4">Valid for 1 Year</div>
+              <button 
+                onClick={() => navigate('/premium')}
+                className="w-full sm:w-auto bg-emerald-500 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-500/20"
+              >
+                Get Pass Pro Now
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Latest Job Alerts & Notifications */}
+      {jobAlerts.length > 0 && (
+        <section className="py-12 bg-slate-50 border-y border-slate-100">
+          <div className="max-w-7xl mx-auto px-4 lg:px-8">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center shadow-sm">
+                  <Bell className="w-5 h-5 fill-current animate-pulse" />
+                </div>
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-sans font-[800] text-slate-900 tracking-tight">Latest Job Alerts</h2>
+                  <p className="text-sm font-medium text-slate-500">Stay updated with latest govt jobs, admit cards & results</p>
+                </div>
+              </div>
+              <Link to="/job-alerts" className="hidden sm:flex text-sm font-bold text-blue-600 hover:text-blue-700 items-center gap-1 group">
+                View All <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {jobAlerts.map(alert => (
+                <div key={alert.id} className="bg-white rounded-2xl p-5 border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all flex flex-col group relative overflow-hidden cursor-pointer">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-blue-500 transform origin-left md:scale-y-0 group-hover:scale-y-100 transition-transform"></div>
+                  <div className="flex items-start justify-between mb-3">
+                     <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                        alert.type === 'Notification' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
+                        alert.type === 'Admit Card' ? 'bg-amber-50 text-amber-700 border border-amber-100' :
+                        'bg-purple-50 text-purple-700 border border-purple-100'
+                      }`}>
+                        {alert.type}
+                     </span>
+                     {alert.status === 'Active' && <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>}
+                  </div>
+                  <h3 className="font-sans font-[800] text-slate-900 text-base leading-tight mb-1 group-hover:text-blue-600 transition-colors line-clamp-2">{alert.postName}</h3>
+                  <p className="text-xs font-medium text-slate-500 mb-4 line-clamp-1">{alert.boardInfo}</p>
+                  
+                  <div className="mt-auto space-y-2 pt-4 border-t border-slate-50">
+                    {alert.vacancies && (
+                      <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
+                        <Users className="w-3.5 h-3.5 text-slate-400" /> {alert.vacancies}
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between mt-2">
+                       <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase">
+                         <Calendar className="w-3.5 h-3.5" />
+                         {new Date(alert.lastDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                       </div>
+                       {alert.applyLink && (
+                         <a href={alert.applyLink} target="_blank" rel="noopener noreferrer" className="text-[10px] bg-slate-900 text-white px-3 py-1.5 rounded-lg font-bold shadow-sm hover:bg-blue-600 transition-colors">
+                           {alert.type === 'Result' ? 'Check Result' : alert.type === 'Admit Card' ? 'Download' : 'Apply Now'}
+                         </a>
+                       )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Mock Test Series Section */}
       <section className="py-24 bg-[#f8fafc]">
@@ -247,9 +407,9 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
             {loading ? (
-              [1, 2, 3].map(i => <div key={i} className="h-64 bg-slate-200 rounded-3xl animate-pulse" />)
+              [1, 2, 3, 4].map(i => <div key={i} className="h-64 bg-slate-100 rounded-2xl animate-pulse" />)
             ) : filteredExams.map((exam) => {
                 const agency = agencies.find(a => a.id === exam.agencyId);
                 const logo = agency?.logoUrl || exam.logoUrl;
@@ -257,51 +417,56 @@ export default function Home() {
                 return (
                   <motion.div 
                     key={exam.id}
-                    whileHover={{ y: -8 }}
+                    whileHover={{ y: -4 }}
                     onClick={() => navigate(`/exam/${exam.id}`)}
-                    className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-xl hover:border-[#006e5d]/20 transition-all cursor-pointer group flex flex-col"
+                    className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg hover:border-[#006e5d]/30 transition-all cursor-pointer group flex flex-col relative"
                   >
-                    <div className="flex justify-between items-start mb-6">
-                       <div className="flex items-center gap-3">
-                           <div className="w-12 h-12 bg-white border border-slate-100 rounded-xl flex items-center justify-center p-2 group-hover:bg-[#006e5d]/5 transition-colors shadow-sm shrink-0">
-                             {logo ? (
-                                <img src={logo} alt="" loading="lazy" decoding="async" width="48" height="48" className="w-full h-full object-contain" />
-                             ) : (
-                                <Shield className="w-6 h-6 text-slate-300 group-hover:text-slate-900 transition-colors" />
-                             )}
-                          </div>
-                          <h3 className="text-lg font-sans font-[800] text-slate-900 group-hover:text-slate-900 transition-colors tracking-tighter line-clamp-1">{exam.name}</h3>
-                       </div>
-                       {exam.isPopular && (
-                         <span className="bg-[#b91c1c] text-white text-[8px] font-black px-2 py-1 rounded-md tracking-widest uppercase shrink-0">MOST POPULAR</span>
-                       )}
-                       {exam.isNew && (
-                         <span className="bg-[#006e5d]/10 text-[#006e5d] text-[8px] font-black px-2 py-1 rounded-md tracking-widest uppercase shrink-0">NEW BATCH</span>
-                       )}
-                    </div>
+                    {/* Top Accent Bar */}
+                    <div className="h-1.5 w-full bg-[#006e5d]"></div>
                     
-                    <div className="flex items-center gap-4 mb-6 text-slate-400">
-                       <div className="flex items-center gap-1.5 font-medium">
-                          <FileText className="w-3.5 h-3.5 text-slate-400" />
-                          <span className="text-[10px] text-slate-500 whitespace-nowrap font-bold">{exam.mockCount || 0} Mocks</span>
-                       </div>
-                       <div className="flex items-center gap-1.5 font-medium">
-                          <Users className="w-3.5 h-3.5 text-slate-400" />
-                          <span className="text-[10px] text-slate-500 whitespace-nowrap font-bold">{exam.enrollCount || 0} Enrolled</span>
-                       </div>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-auto pt-5 border-t border-slate-50">
-                      <span className="text-[10px] font-bold text-slate-400 tracking-[0.1em] uppercase">{exam.isPaid ? 'PREMIUM' : 'FREE TRIAL'}</span>
-                      {isEnrolled ? (
-                        <div className="flex items-center gap-1 text-[10px] font-black text-slate-700 tracking-[0.05em] uppercase">
-                           <CheckCircle2 className="w-3.5 h-3.5" /> ENROLLED
+                    <div className="p-5 flex flex-col h-full">
+                      <div className="flex justify-between items-start mb-4 gap-2">
+                         <div className="w-10 h-10 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center p-1.5 shrink-0">
+                           {logo ? (
+                              <img src={logo} alt="" loading="lazy" decoding="async" className="w-full h-full object-contain" />
+                           ) : (
+                              <BookOpen className="w-5 h-5 text-slate-300" />
+                           )}
                         </div>
-                      ) : (
-                        <button className="text-[10px] font-black text-slate-900 tracking-[0.05em] uppercase hover:underline transition-all">
-                          {exam.isPaid ? 'ENROLL NOW' : 'TRY FREE'}
-                        </button>
-                      )}
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          {exam.isPopular && (
+                            <span className="bg-[#b91c1c] text-white text-[9px] font-black px-1.5 py-0.5 rounded tracking-wider uppercase">Popular</span>
+                          )}
+                          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded tracking-wider uppercase ${exam.isPaid ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                            {exam.isPaid ? 'Pass Pro' : 'Free'}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <h3 className="text-sm font-sans font-[800] text-slate-900 group-hover:text-[#006e5d] transition-colors leading-tight mb-3 line-clamp-2">{exam.name}</h3>
+                      
+                      <div className="space-y-2 mt-auto pb-4">
+                         <div className="flex items-center gap-2 text-slate-500 font-medium text-xs">
+                            <FileText className="w-4 h-4 text-[#006e5d]" />
+                            <span>{exam.mockCount || 0} Total Tests</span>
+                         </div>
+                         <div className="flex items-center gap-2 text-slate-500 font-medium text-xs">
+                            <Users className="w-4 h-4 text-[#006e5d]" />
+                            <span>{exam.enrollCount || 0}+ Enrolled</span>
+                         </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-100 mt-auto">
+                        {isEnrolled ? (
+                          <div className="w-full text-center py-2 bg-slate-50 text-[#006e5d] rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1">
+                             <CheckCircle2 className="w-4 h-4" /> Enrolled
+                          </div>
+                        ) : (
+                          <button className="w-full text-center py-2 bg-white border border-[#006e5d] text-[#006e5d] group-hover:bg-[#006e5d] group-hover:text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-colors">
+                            View Test Series
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 )

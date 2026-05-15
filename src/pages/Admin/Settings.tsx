@@ -158,7 +158,7 @@ export default function AdminSettings() {
           successRate,
           establishedYear,
           updatedAt: new Date().toISOString()
-        }),
+        }, { merge: true }),
         setDoc(doc(db, 'settings', 'smtp'), {
           smtpEmail,
           smtpPassword,

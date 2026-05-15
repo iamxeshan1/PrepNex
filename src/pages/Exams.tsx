@@ -3,7 +3,7 @@ import { Layout } from '../components/Layout';
 import { db } from '../lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Shield, Search, FileText, Users, CheckCircle2 } from 'lucide-react';
+import { Shield, Search, FileText, Users, CheckCircle2, BookOpen } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
 
@@ -11,9 +11,17 @@ export default function Exams() {
   const { profile } = useAuth();
   const [exams, setExams] = useState<any[]>([]);
   const [agencies, setAgencies] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState('All');
-  const [loading, setLoading] = useState(true);
   const [searchParams] = useSearchParams();
+  const agencyParam = searchParams.get('agency');
+  const [activeTab, setActiveTab] = useState(agencyParam || 'All');
+  const [loading, setLoading] = useState(true);
+
+  // Sync activeTab if agencyParam changes
+  useEffect(() => {
+    if (agencyParam) {
+      setActiveTab(agencyParam);
+    }
+  }, [agencyParam]);
   const navigate = useNavigate();
   const searchQuery = searchParams.get('search') || '';
 
@@ -44,7 +52,9 @@ export default function Exams() {
   const filteredExams = exams.filter(exam => {
     const matchesCategory = activeTab === 'All' || exam.agencyId === activeTab;
     const nameMatches = (exam.name || '').toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && nameMatches;
+    const agencyName = (agencies.find(a => a.id === exam.agencyId)?.name || '').toLowerCase();
+    const agencyMatches = agencyName.includes(searchQuery.toLowerCase());
+    return matchesCategory && (nameMatches || agencyMatches);
   });
 
   return (
@@ -71,65 +81,70 @@ export default function Exams() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
           {loading ? (
-             [1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-64 bg-slate-100 rounded-3xl animate-pulse" />)
+             [1, 2, 3, 4, 5, 6, 7, 8].map(i => <div key={i} className="h-64 bg-slate-100 rounded-2xl animate-pulse" />)
           ) : filteredExams.length > 0 ? (
             filteredExams.map(exam => {
               const agency = agencies.find(a => a.id === exam.agencyId);
               const logo = agency?.logoUrl || exam.logoUrl;
               const isEnrolled = profile?.isPremium || profile?.purchasedExams?.includes(exam.id) || profile?.freeExams?.includes(exam.id) || false;
               return (
-              <motion.div 
-                 key={exam.id}
-                 whileHover={{ y: -8 }}
-                 onClick={() => navigate(`/exam/${exam.id}`)} 
-                 className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-xl hover:border-[#006e5d]/20 transition-all cursor-pointer group flex flex-col"
-              >
-                <div className="flex justify-between items-start mb-6">
-                   <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-white border border-slate-100 rounded-xl flex items-center justify-center p-2 group-hover:bg-[#006e5d]/5 transition-colors shadow-sm shrink-0">
-                         {logo ? (
-                            <img src={logo} alt="" loading="lazy" decoding="async" width="48" height="48" className="w-full h-full object-contain" />
-                         ) : (
-                            <Shield className="w-6 h-6 text-slate-300 group-hover:text-slate-900 transition-colors" />
-                         )}
+                  <motion.div 
+                    key={exam.id}
+                    whileHover={{ y: -4 }}
+                    onClick={() => navigate(`/exam/${exam.id}`)}
+                    className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg hover:border-[#006e5d]/30 transition-all cursor-pointer group flex flex-col relative"
+                  >
+                    {/* Top Accent Bar */}
+                    <div className="h-1.5 w-full bg-[#006e5d]"></div>
+                    
+                    <div className="p-5 flex flex-col h-full">
+                      <div className="flex justify-between items-start mb-4 gap-2">
+                         <div className="w-10 h-10 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center p-1.5 shrink-0">
+                           {logo ? (
+                              <img src={logo} alt="" loading="lazy" decoding="async" className="w-full h-full object-contain" />
+                           ) : (
+                              <BookOpen className="w-5 h-5 text-slate-300" />
+                           )}
+                        </div>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          {exam.isPopular && (
+                            <span className="bg-[#b91c1c] text-white text-[9px] font-black px-1.5 py-0.5 rounded tracking-wider uppercase">Popular</span>
+                          )}
+                          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded tracking-wider uppercase ${exam.isPaid ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                            {exam.isPaid ? 'Pass Pro' : 'Free'}
+                          </span>
+                        </div>
                       </div>
-                      <h3 className="text-lg font-display font-[800] text-slate-900 group-hover:text-slate-900 transition-colors tracking-tighter line-clamp-1">{exam.name}</h3>
-                   </div>
-                   {exam.isPopular && (
-                     <span className="bg-[#b91c1c] text-white text-[8px] font-black px-2 py-1 rounded-md tracking-widest uppercase shrink-0">MOST POPULAR</span>
-                   )}
-                   {exam.isNew && (
-                     <span className="bg-[#006e5d]/10 text-[#006e5d] text-[8px] font-black px-2 py-1 rounded-md tracking-widest uppercase shrink-0">NEW BATCH</span>
-                   )}
-                </div>
-                
-                <div className="flex items-center gap-4 mb-6 text-slate-400">
-                   <div className="flex items-center gap-1.5 font-medium">
-                      <FileText className="w-3.5 h-3.5 text-slate-400" />
-                      <span className="text-[10px] text-slate-500 whitespace-nowrap font-bold">{exam.mockCount || 0} Mocks</span>
-                   </div>
-                   <div className="flex items-center gap-1.5 font-medium">
-                      <Users className="w-3.5 h-3.5 text-slate-400" />
-                      <span className="text-[10px] text-slate-500 whitespace-nowrap font-bold">{exam.enrollCount || 0} Enrolled</span>
-                   </div>
-                </div>
+                      
+                      <h3 className="text-sm font-sans font-[800] text-slate-900 group-hover:text-[#006e5d] transition-colors leading-tight mb-3 line-clamp-2">{exam.name}</h3>
+                      
+                      <div className="space-y-2 mt-auto pb-4">
+                         <div className="flex items-center gap-2 text-slate-500 font-medium text-xs">
+                            <FileText className="w-4 h-4 text-[#006e5d]" />
+                            <span>{exam.mockCount || 0} Total Tests</span>
+                         </div>
+                         <div className="flex items-center gap-2 text-slate-500 font-medium text-xs">
+                            <Users className="w-4 h-4 text-[#006e5d]" />
+                            <span>{exam.enrollCount || 0}+ Enrolled</span>
+                         </div>
+                      </div>
 
-                <div className="flex items-center justify-between mt-auto pt-5 border-t border-slate-50">
-                  <span className="text-[10px] font-bold text-slate-400 tracking-[0.1em] uppercase">{exam.isPaid ? 'PREMIUM' : 'FREE TRIAL'}</span>
-                  {isEnrolled ? (
-                    <div className="flex items-center gap-1 text-[10px] font-black text-slate-700 tracking-[0.05em] uppercase">
-                       <CheckCircle2 className="w-3.5 h-3.5" /> ENROLLED
+                      <div className="pt-3 border-t border-slate-100 mt-auto">
+                        {isEnrolled ? (
+                          <div className="w-full text-center py-2 bg-slate-50 text-[#006e5d] rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1">
+                             <CheckCircle2 className="w-4 h-4" /> Enrolled
+                          </div>
+                        ) : (
+                           <button className="w-full text-center py-2 bg-[#006e5d] hover:bg-[#005a4d] text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-colors">
+                              {exam.isPaid ? 'Unlock Now' : 'Start Free Test'}
+                           </button>
+                        )}
+                      </div>
                     </div>
-                  ) : (
-                    <button className="px-4 py-2 bg-[#006e5d] text-white rounded-lg text-[10px] font-black tracking-[0.05em] uppercase hover:bg-[#005a4d] transition-all">
-                      {exam.isPaid ? 'ENROLL NOW' : 'TRY FREE'}
-                    </button>
-                  )}
-                </div>
-              </motion.div>
-            )})
+                  </motion.div>
+              )})
           ) : (
             <div className="col-span-full py-20 text-center bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl">
                <p className="text-slate-500 font-bold">No exams found.</p>

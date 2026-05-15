@@ -9,7 +9,8 @@ import {
   Menu,
   X,
   ChevronRight,
-  MessageCircle
+  MessageCircle,
+  Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db } from '../lib/firebase';
@@ -59,10 +60,11 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
               <div className="hidden lg:flex items-center gap-10">
                 <Link to="/exams" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/exams') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Exams</Link>
-                <Link to="/subjects" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/subjects') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Subjects</Link>
-                <Link to="/live-tests" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/live-tests') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Live Tests</Link>
-                <Link to="/announcements" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/announcements') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Announcements</Link>
+                <Link to="/job-alerts" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/job-alerts') ? 'text-blue-600' : 'text-slate-600 hover:text-slate-900'}`}>Job Alerts</Link>
+                <Link to="/pyqs" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/pyqs') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>PYQs</Link>
                 <Link to="/study-material" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/study-material') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Study Material</Link>
+                <Link to="/forum" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/forum') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Forum</Link>
+                <Link to="/live-tests" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/live-tests') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Live Tests</Link>
                 {user && (
                   <Link to="/dashboard" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/dashboard') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>My Library</Link>
                 )}
@@ -77,6 +79,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               <div className="flex items-center gap-4">
                 {user ? (
                   <div className="hidden md:flex items-center gap-4">
+                    <Link to="/premium" className="hidden lg:flex items-center gap-1.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-sm">
+                      <Zap className="w-3.5 h-3.5 fill-current" />
+                      Get Pass Pro
+                    </Link>
                     <button className="relative w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors" aria-label="Notifications">
                       <Bell className="w-5 h-5" />
                       <span className="absolute top-2 right-2 w-2 h-2 bg-[#006e5d] rounded-full border-2 border-white"></span>
@@ -88,6 +94,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   </div>
                 ) : (
                   <div className="hidden md:flex items-center gap-4">
+                    <Link to="/premium" className="hidden lg:flex items-center gap-1.5 text-emerald-600 hover:text-emerald-700 text-sm font-bold mr-2 transition-colors">
+                      <Zap className="w-4 h-4 fill-current" />
+                      Pass Pro
+                    </Link>
                     <Link to="/login" className="text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">Log In</Link>
                     <Link to="/signup" className="text-sm font-bold bg-[#006e5d] text-white px-5 py-2.5 rounded-xl hover:bg-[#005a4d] transition-colors shadow-sm">Get Started</Link>
                   </div>
@@ -124,6 +134,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   Exams
                 </Link>
                 <Link 
+                  to="/job-alerts" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/job-alerts') ? 'bg-blue-50 text-blue-600' : 'text-slate-600'}`}
+                >
+                  Job Alerts
+                </Link>
+                <Link 
                   to="/subjects" 
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`block text-sm font-bold p-3 rounded-xl ${isActive('/subjects') ? 'bg-[#006e5d]/10 text-[#006e5d]' : 'text-slate-600'}`}
@@ -150,6 +167,20 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   className={`block text-sm font-bold p-3 rounded-xl ${isActive('/study-material') ? 'bg-[#006e5d]/10 text-[#006e5d]' : 'text-slate-600'}`}
                 >
                   Study Material
+                </Link>
+                <Link 
+                  to="/pyqs" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/pyqs') ? 'bg-[#006e5d]/10 text-[#006e5d]' : 'text-slate-600'}`}
+                >
+                  Previous Year Papers
+                </Link>
+                <Link 
+                  to="/forum" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/forum') ? 'bg-[#006e5d]/10 text-[#006e5d]' : 'text-slate-600'}`}
+                >
+                  Community Forum
                 </Link>
                 {user && (
                   <Link 
@@ -280,6 +311,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                     <li><Link to="/subjects" className="text-slate-400 hover:text-[#006e5d] text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-[#006e5d]" /> Subject Catalog</Link></li>
                     <li><Link to="/live-tests" className="text-slate-400 hover:text-[#006e5d] text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-[#006e5d]" /> Live Tests</Link></li>
                     <li><Link to="/study-material" className="text-slate-400 hover:text-[#006e5d] text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-[#006e5d]" /> Study Material</Link></li>
+                    <li><Link to="/pyqs" className="text-slate-400 hover:text-[#006e5d] text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-[#006e5d]" /> Previous Year Papers</Link></li>
+                    <li><Link to="/forum" className="text-slate-400 hover:text-[#006e5d] text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-[#006e5d]" /> Community Forum</Link></li>
                     {socialLinks.doubtLink && (
                       <li className="pt-2"><a href={socialLinks.doubtLink} target="_blank" rel="noreferrer" className="text-[#006e5d] py-1.5 px-3 rounded-lg bg-[#006e5d]/10 hover:bg-[#006e5d]/20 text-xs font-bold transition-colors inline-flex items-center gap-1.5"><MessageCircle className="w-3.5 h-3.5" /> Doubt Clearing Hub</a></li>
                     )}

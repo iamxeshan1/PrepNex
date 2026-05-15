@@ -32,6 +32,7 @@ export default function Premium() {
   const [premiumSubtitle, setPremiumSubtitle] = useState('Select your duration');
   const [premiumFeatures, setPremiumFeatures] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingPlans, setLoadingPlans] = useState(true);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   
   // Coupon State
@@ -62,23 +63,44 @@ export default function Premium() {
   }, []);
 
   const fetchPremiumSettings = async () => {
+    setLoadingPlans(true);
     try {
       const snap = await getDoc(doc(db, 'settings', 'general'));
       if (snap.exists()) {
         const data = snap.data();
         if (data.premiumTitle) setPremiumTitle(data.premiumTitle);
         if (data.premiumSubtitle) setPremiumSubtitle(data.premiumSubtitle);
+        
         if (data.premiumPlans && data.premiumPlans.length > 0) {
           setPlans(data.premiumPlans);
           const popular = data.premiumPlans.find((p: PremiumPlanDef) => p.isPopular);
           setSelectedPlanId(popular ? popular.id : data.premiumPlans[0].id);
+        } else {
+          // Fallback if no plans found in DB
+          const fallbackPlans = [
+            { id: 'p_1m', name: '1 Month', months: 1, price: 499, originalPrice: 999, isPopular: false },
+            { id: 'p_1y', name: '1 Year', months: 12, price: 3999, originalPrice: 11988, isPopular: true },
+          ];
+          setPlans(fallbackPlans);
+          setSelectedPlanId('p_1y');
         }
+        
         if (data.premiumFeatures) {
           setPremiumFeatures(Array.isArray(data.premiumFeatures) ? data.premiumFeatures : data.premiumFeatures.split('\n'));
         }
+      } else {
+        // Fallback if document doesn't exist
+        const fallbackPlans = [
+          { id: 'p_1m', name: '1 Month', months: 1, price: 499, originalPrice: 999, isPopular: false },
+          { id: 'p_1y', name: '1 Year', months: 12, price: 3999, originalPrice: 11988, isPopular: true },
+        ];
+        setPlans(fallbackPlans);
+        setSelectedPlanId('p_1y');
       }
     } catch (err) {
       console.error("Error fetching premium settings:", err);
+    } finally {
+      setLoadingPlans(false);
     }
   }
 
@@ -376,28 +398,36 @@ export default function Premium() {
                 <>
                   <h2 className="text-2xl font-black text-[#002f26] mb-6">Select your plan</h2>
                   <div className="space-y-4">
-                    {plans.map(plan => (
-                       <label key={plan.id} className={`cursor-pointer block relative rounded-2xl border-2 transition-all p-5 hover:border-[#006e5d]/50 ${selectedPlanId === plan.id ? 'border-[#006e5d] bg-[#006e5d]/5' : 'border-slate-100 bg-white'}`}>
+                    {loadingPlans ? (
+                      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                        <Loader2 className="w-8 h-8 text-[#006e5d] animate-spin" />
+                        <p className="text-slate-500 font-medium tracking-tight">Fetching latest plans...</p>
+                      </div>
+                    ) : plans.length > 0 ? (
+                      plans.map(plan => (
+                        <label key={plan.id} className={`cursor-pointer block relative rounded-2xl border-2 transition-all p-5 hover:border-[#006e5d]/50 ${selectedPlanId === plan.id ? 'border-[#006e5d] bg-[#006e5d]/5' : 'border-slate-100 bg-white'}`}>
                           <input type="radio" className="hidden" name="premium_plan" value={plan.id} checked={selectedPlanId === plan.id} onChange={() => setSelectedPlanId(plan.id)} />
                           {plan.isPopular && <div className="absolute -top-3 right-6 bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-sm">Popular</div>}
                           <div className="flex items-center justify-between">
-                             <div className="flex items-center gap-4">
-                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedPlanId === plan.id ? 'border-[#006e5d]' : 'border-slate-300'}`}>
-                                   {selectedPlanId === plan.id && <div className="w-3 h-3 bg-[#006e5d] rounded-full" />}
-                                </div>
-                                <div>
-                                   <div className="text-lg font-black text-[#002f26]">{plan.name}</div>
-                                   <div className="text-xs font-bold text-slate-500">{plan.months} Month{plan.months > 1 ? 's' : ''}</div>
-                                </div>
-                             </div>
-                             <div className="text-right">
-                                <div className="text-xl font-black text-slate-900">₹{plan.price}</div>
-                                {plan.originalPrice > plan.price && <div className="text-xs font-bold text-slate-400 line-through">₹{plan.originalPrice}</div>}
-                             </div>
+                            <div className="flex items-center gap-4">
+                              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedPlanId === plan.id ? 'border-[#006e5d]' : 'border-slate-300'}`}>
+                                {selectedPlanId === plan.id && <div className="w-3 h-3 bg-[#006e5d] rounded-full" />}
+                              </div>
+                              <div>
+                                <div className="text-lg font-black text-[#002f26]">{plan.name}</div>
+                                <div className="text-xs font-bold text-slate-500">{plan.months} Month{plan.months > 1 ? 's' : ''}</div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-xl font-black text-slate-900">₹{plan.price}</div>
+                              {plan.originalPrice > plan.price && <div className="text-xs font-bold text-slate-400 line-through">₹{plan.originalPrice}</div>}
+                            </div>
                           </div>
-                       </label>
-                    ))}
-                    {plans.length === 0 && <p className="text-slate-500 italic p-4 text-center">Loading plans...</p>}
+                        </label>
+                      ))
+                    ) : (
+                      <p className="text-slate-500 italic p-4 text-center">No plans available.</p>
+                    )}
                   </div>
                 </>
               )}
