@@ -323,7 +323,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                      <img src="https://upload.wikimedia.org/wikipedia/commons/b/b2/Punjab_National_Bank_new_logo.svg" alt="PNB" className="h-3.5" />
                   </div>
                   <div className="h-6 px-2 bg-white rounded flex items-center justify-center">
-                     <img src="https://upload.wikimedia.org/wikipedia/en/1/12/Jammu_%26_Kashmir_Bank_Logo.svg" alt="J&K Bank" className="h-2.5" />
+                     <img src="https://upload.wikimedia.org/wikipedia/commons/8/89/Razorpay_logo.svg" alt="Razorpay" className="h-2.5" />
                   </div>
                </div>
             </div>
