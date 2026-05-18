@@ -329,6 +329,7 @@ export default function App() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "PrepNext",
+    "alternateName": ["Prep Next", "Prepnext.in", "Prepnext"],
     "url": "https://www.prepnext.in/",
     "potentialAction": {
       "@type": "SearchAction",
