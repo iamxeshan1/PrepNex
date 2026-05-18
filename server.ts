@@ -843,6 +843,32 @@ app.get("/api/health-check", async (req, res) => {
     }
   });
 
+  app.post("/api/admin/delete-user", async (req, res) => {
+    try {
+      const appInst = getFirebaseApp();
+      if (!appInst) throw new Error("Firebase not initialized");
+      const adminAuth = getAdminAuth(appInst);
+      
+      const { uid } = req.body;
+      if (!uid) {
+        return res.status(400).json({ error: "Missing uid" });
+      }
+
+      await adminAuth.deleteUser(uid);
+      console.log(`[Admin API] Successfully deleted user ${uid} from Auth.`);
+      
+      res.json({ success: true, message: "User deleted from Firebase Auth." });
+    } catch (e: any) {
+      console.error("[Admin API] Failed to delete user from Auth:", e);
+      // Even if there's no such user, we can return success since the goal is they don't exist
+      if (e.code === 'auth/user-not-found') {
+        res.json({ success: true, message: "User automatically considered deleted (not found in Auth)." });
+      } else {
+        res.status(500).json({ error: "Failed to delete user from Auth: " + e.message });
+      }
+    }
+  });
+
   app.post("/api/admin/clear-transactions", async (req, res) => {
     console.log("[Admin API] Clear Transactions called.");
     try {

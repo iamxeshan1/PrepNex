@@ -155,11 +155,26 @@ export default function AdminUsers() {
             await enrollBatch.commit();
         }
 
-        // 4. Delete the main user document last
+        // 4. Delete the user from Firebase Authentication via our backend API
+        try {
+          const res = await fetch('/api/admin/delete-user', {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({ uid: userId })
+          });
+          if (!res.ok) {
+             console.error("Failed to delete user from Auth, continuing with DB cleanup.");
+          }
+        } catch (authDeleteErr) {
+          console.error("Error calling delete-user endpoint:", authDeleteErr);
+        }
+
+        // 5. Delete the main user document last
         await deleteDoc(doc(db, 'users', userId));
 
         setUsers(users.filter(u => u.id !== userId));
         setSelectedUser(null);
+        setShowDeleteModal(false);
     } catch (error) {
         console.error("Error deleting user data:", error);
     } finally {

@@ -470,9 +470,9 @@ export default function Premium() {
                         <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><Ticket size={14} /> Coupon Code</label>
                         <button onClick={() => { setHasCoupon(null); setDiscount(null); setCouponCode(''); }} className="text-[10px] font-bold text-emerald-400 hover:underline">Change</button>
                       </div>
-                      <div className="flex gap-2">
-                        <input type="text" placeholder="E.G. PREP20" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} className="flex-1 bg-[#002f26] border border-slate-700 focus:border-emerald-500 rounded-xl px-4 py-3 outline-none font-bold text-white uppercase" />
-                        <button onClick={handleApplyCoupon} disabled={!couponCode || isValidatingCoupon || discount !== null} className="bg-emerald-500 text-white px-5 rounded-xl font-bold text-sm hover:bg-emerald-600 transition-colors disabled:opacity-50">
+                      <div className="flex sm:flex-row flex-col gap-2">
+                        <input type="text" placeholder="E.G. PREP20" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} className="flex-1 w-full sm:w-auto bg-[#002f26] border border-slate-700 focus:border-emerald-500 rounded-xl px-4 py-3 outline-none font-bold text-white uppercase" />
+                        <button onClick={handleApplyCoupon} disabled={!couponCode || isValidatingCoupon || discount !== null} className="w-full sm:w-auto shrink-0 bg-emerald-500 text-white px-5 py-3 rounded-xl font-bold text-sm hover:bg-emerald-600 transition-colors disabled:opacity-50 flex items-center justify-center">
                           {isValidatingCoupon ? <Loader2 className="animate-spin" size={18} /> : (discount ? 'Applied' : 'Apply')}
                         </button>
                       </div>

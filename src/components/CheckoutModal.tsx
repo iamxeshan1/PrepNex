@@ -362,18 +362,18 @@ export default function CheckoutModal({ isOpen, onClose, item, onSuccess }: Chec
                   </label>
                   <button onClick={() => setHasCoupon(null)} className="text-[10px] font-bold text-teal-500 hover:underline">Change</button>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex sm:flex-row flex-col gap-2">
                   <input 
                     type="text"
                     placeholder="E.G. PREP20"
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                    className="flex-1 bg-slate-50 border-2 border-transparent focus:border-teal-500 focus:bg-white rounded-xl px-4 py-3 outline-none font-bold text-slate-700 uppercase transition-all"
+                    className="flex-1 w-full sm:w-auto bg-slate-50 border-2 border-transparent focus:border-teal-500 focus:bg-white rounded-xl px-4 py-3 outline-none font-bold text-slate-700 uppercase transition-all"
                   />
                   <button 
                     onClick={handleApplyCoupon}
                     disabled={!couponCode || isValidatingCoupon || discount !== null}
-                    className="bg-[#002f26] text-white px-5 rounded-xl font-bold text-sm hover:bg-[#001f19] transition-colors disabled:opacity-50"
+                    className="w-full sm:w-auto shrink-0 flex items-center justify-center bg-[#002f26] text-white px-5 py-3 rounded-xl font-bold text-sm hover:bg-[#001f19] transition-colors disabled:opacity-50"
                   >
                     {isValidatingCoupon ? <Loader2 className="animate-spin" size={18} /> : (discount ? 'Applied' : 'Apply')}
                   </button>
