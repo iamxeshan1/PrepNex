@@ -215,12 +215,22 @@ export default function LiveTestDetail() {
                     Go to Test
                   </button>
                 </div>
+              ) : ((test.enrollmentEndTime && new Date() > new Date(test.enrollmentEndTime)) || new Date() > new Date(test.endTime)) ? (
+                <div className="mb-8">
+                  <div className="w-16 h-16 bg-rose-500/20 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <X className="w-8 h-8" />
+                  </div>
+                  <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Enrollment Closed</h2>
+                  <p className="text-slate-400 mb-6 max-w-lg mx-auto">
+                    The enrollment period or the test time has ended. You can no longer enroll in this test.
+                  </p>
+                </div>
               ) : (
                 <>
                   <ShieldCheck className="w-12 h-12 text-blue-400 mx-auto mb-4 opacity-50" />
                   <h2 className="text-2xl font-black text-white mb-2">Enrollment Details</h2>
                   <p className="text-slate-400 mb-6 max-w-lg mx-auto">
-                    This is a premium live mock test. Enrollment requires payment. Integrated payment gateways (such as Stripe or Razorpay) would process the transaction.
+                    This is a premium live mock test. Enrollment requires payment.
                   </p>
                   
                   <div className="flex flex-col items-center gap-2 w-full max-w-sm mx-auto mb-6">
@@ -238,18 +248,18 @@ export default function LiveTestDetail() {
                         </button>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2 w-full">
+                      <div className="flex sm:flex-row flex-col items-stretch sm:items-center gap-2 w-full">
                         <input 
                           type="text" 
                           placeholder="Have a coupon code?" 
                           value={couponCode} 
                           onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                          className="flex-1 px-4 py-3 bg-[#001f19] border border-slate-700 rounded-xl outline-none focus:border-blue-500 font-bold tracking-widest text-sm text-white placeholder-slate-500 uppercase"
+                          className="flex-1 w-full sm:w-auto px-4 py-3 bg-[#001f19] border border-slate-700 rounded-xl outline-none focus:border-blue-500 font-bold tracking-widest text-sm text-white placeholder-slate-500 uppercase"
                         />
                         <button 
                           onClick={handleApplyCoupon}
                           disabled={!couponCode || couponLoading}
-                          className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-all disabled:opacity-50 text-sm"
+                          className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-all disabled:opacity-50 text-sm whitespace-nowrap shrink-0"
                         >
                           {couponLoading ? '...' : 'Apply'}
                         </button>

@@ -307,7 +307,7 @@ export default function Home() {
             </div>
             <div className="relative z-10 mt-8 md:mt-0 flex flex-col items-center md:items-end w-full md:w-auto bg-white/5 p-6 rounded-2xl border border-white/10 backdrop-blur-sm">
               <div className="text-emerald-400 font-bold text-sm tracking-wider uppercase mb-1">Limited Time Offer</div>
-              <div className="text-white text-4xl font-black mb-1">₹399 <span className="text-lg text-slate-400 font-medium line-through">₹799</span></div>
+              <div className="text-white text-4xl font-black mb-1">₹{settings?.premiumPlans?.find((p: any) => p.months === 12 || p.id === 'p_1y')?.price || 3999} <span className="text-lg text-slate-400 font-medium line-through">₹{settings?.premiumPlans?.find((p: any) => p.months === 12 || p.id === 'p_1y')?.originalPrice || 11988}</span></div>
               <div className="text-slate-300 text-xs mb-4">Valid for 1 Year</div>
               <button 
                 onClick={() => navigate('/premium')}
@@ -610,7 +610,11 @@ export default function Home() {
                                      <p className="text-[10px] font-bold text-[#006e5d]">LIVE</p>
                                   </div>
                                </div>
-                               <button className="bg-[#002f26] text-white px-6 py-2.5 rounded-xl text-[10px] font-black hover:bg-[#002f26]/80 transition-colors uppercase tracking-widest">ENROLL NOW</button>
+                               {(!live.enrollmentEndTime || new Date() < new Date(live.enrollmentEndTime)) && (!live.endTime || new Date() < new Date(live.endTime)) ? (
+                                  <button onClick={(e) => { e.stopPropagation(); navigate(`/live-test/${live.id}`); }} className="bg-[#002f26] text-white px-6 py-2.5 rounded-xl text-[10px] font-black hover:bg-[#002f26]/80 transition-colors uppercase tracking-widest">ENROLL NOW</button>
+                               ) : (
+                                  <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest px-4 py-2 bg-rose-500/10 rounded-xl">Closed</span>
+                               )}
                             </div>
                          </div>
                        ))}

@@ -107,10 +107,11 @@ export default function LiveTests() {
               {filtered.map((test, idx) => {
                 const startTime = new Date(test.startTime);
                 const endTime = new Date(test.endTime);
+                const enrollmentEndTime = test.enrollmentEndTime ? new Date(test.enrollmentEndTime) : endTime;
                 const now = new Date();
-                const isUpcoming = startTime > now;
+                const isEnded = now > endTime || (test.enrollmentEndTime && now > enrollmentEndTime);
                 const isLive = now >= startTime && now <= endTime;
-                const isEnded = now > endTime;
+                const isUpcoming = startTime > now && !isEnded;
                 
                 return (
                   <motion.div
@@ -136,7 +137,7 @@ export default function LiveTests() {
                               LIVE NOW
                             </>
                           ) : (
-                            isUpcoming ? 'SCHEDULED' : 'COMPLETED'
+                            isUpcoming ? 'SCHEDULED' : 'CLOSED'
                           )}
                         </div>
                         <span className="text-[10px] font-black text-[#006e5d] block tracking-[0.2em] uppercase mb-1">{test.category || 'GENERAL'}</span>
