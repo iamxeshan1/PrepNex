@@ -20,6 +20,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import CheckoutModal from '../components/CheckoutModal';
 
 interface Material {
   id: string;
@@ -40,6 +41,7 @@ export default function StudyMaterial() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [priceFilter, setPriceFilter] = useState<'all' | 'free' | 'premium'>('all');
   const [selectedBook, setSelectedBook] = useState<Material | null>(null);
+  const [checkoutItem, setCheckoutItem] = useState<{ id: string; name: string; price: number } | null>(null);
   
   const { user, profile, isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -81,6 +83,7 @@ export default function StudyMaterial() {
     if (book.isFree !== false) return true;
     if (isAdmin) return true;
     if (profile?.isPremium) return true;
+    if (profile?.purchasedExams && profile.purchasedExams.includes(book.id)) return true;
     return false;
   };
 
@@ -242,6 +245,10 @@ export default function StudyMaterial() {
                           <span className="px-2.5 py-1 bg-emerald-500 text-white rounded-lg text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shadow">
                             <Unlock className="w-2.5 h-2.5" /> Free
                           </span>
+                        ) : hasAccessToBook(m) ? (
+                          <span className="px-2.5 py-1 bg-teal-600 text-white rounded-lg text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shadow-md">
+                            <CheckCircle className="w-2.5 h-2.5 text-teal-200" /> Purchased
+                          </span>
                         ) : (
                           <span className="px-2.5 py-1 bg-amber-500 text-white rounded-lg text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shadow">
                             <Lock className="w-2.5 h-2.5" /> {m.price !== undefined && m.price > 0 ? `₹${m.price}` : 'Premium'}
@@ -398,14 +405,28 @@ export default function StudyMaterial() {
                             <Sparkles className="w-3.5 h-3.5 animate-spin" /> Premium eBook Locked
                           </h4>
                           <p className="text-slate-600 text-xs font-semibold leading-normal mb-4">
-                            This comprehensive resource requires an active <strong className="text-amber-700 font-black">All-Access Prep Pass</strong>. Alternatively, you can unlock this individual booklet valued at <strong className="text-amber-700 font-black">₹{selectedBook.price !== undefined && selectedBook.price > 0 ? selectedBook.price : '199'}</strong> by upgrading.
+                            Unlock this individual booklet for lifetime access, or get instant digital access to all premium booklets, mock exams, and revision notes.
                           </p>
-                          <button 
-                            onClick={() => { setSelectedBook(null); navigate('/premium'); }}
-                            className="w-full py-3 bg-gradient-to-r from-amber-500 to-[#d97706] hover:from-amber-600 hover:to-amber-700 text-white font-black text-xs uppercase tracking-widest rounded-xl text-center shadow-md hover:shadow-lg hover:shadow-amber-500/20 transition-all flex items-center justify-center gap-2"
-                          >
-                            Upgrade Subscription Now <ArrowRight className="w-3.5 h-3.5" />
-                          </button>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <button 
+                              onClick={() => {
+                                setCheckoutItem({
+                                  id: selectedBook.id,
+                                  name: selectedBook.title,
+                                  price: selectedBook.price !== undefined && selectedBook.price > 0 ? selectedBook.price : 199
+                                });
+                              }}
+                              className="w-full py-3 bg-slate-900 hover:bg-black text-white font-black text-xs uppercase tracking-wider rounded-xl text-center shadow-md transition-all flex items-center justify-center gap-1"
+                            >
+                              Buy Booklet • ₹{selectedBook.price !== undefined && selectedBook.price > 0 ? selectedBook.price : '199'}
+                            </button>
+                            <button 
+                              onClick={() => { setSelectedBook(null); navigate('/premium'); }}
+                              className="w-full py-3 bg-gradient-to-r from-amber-500 to-[#d97706] hover:from-amber-600 hover:to-amber-700 text-white font-black text-xs uppercase tracking-wider rounded-xl text-center shadow-md hover:shadow-lg hover:shadow-amber-500/20 transition-all flex items-center justify-center gap-1"
+                            >
+                              Upgrade Prep Pass <ArrowRight className="w-3" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ) : (
@@ -423,6 +444,15 @@ export default function StudyMaterial() {
             </div>
           )}
         </AnimatePresence>
+
+        <CheckoutModal 
+          isOpen={checkoutItem !== null}
+          onClose={() => setCheckoutItem(null)}
+          item={checkoutItem || { id: '', name: '', price: 0 }}
+          onSuccess={() => {
+            setCheckoutItem(null);
+          }}
+        />
       </div>
     </Layout>
   );

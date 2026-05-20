@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpenText, Book, BarChart3, HelpCircle, User, ShieldCheck, CreditCard, ExternalLink } from 'lucide-react';
+import { LayoutDashboard, BookOpenText, Book, BookOpen, BarChart3, HelpCircle, User, ShieldCheck, CreditCard, ExternalLink } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 
@@ -15,6 +15,7 @@ export const DashboardSidebar = () => {
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
     { name: 'Mock Tests', icon: BookOpenText, path: '/exams' },
     { name: 'Study Material', icon: Book, path: '/study-material' },
+    { name: 'My eBooks', icon: BookOpen, path: '/my-ebooks' },
     { name: 'Performance', icon: BarChart3, path: '/performance' },
     { name: 'Transactions', icon: CreditCard, path: '/transactions' },
     { name: 'My Profile', icon: User, path: '/profile' },

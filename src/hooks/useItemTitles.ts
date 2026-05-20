@@ -14,11 +14,12 @@ export function useItemTitles() {
 
     const fetchTitles = async () => {
       try {
-        const [exams, liveTests, tests, subjects] = await Promise.all([
+        const [exams, liveTests, tests, subjects, studyMaterials] = await Promise.all([
           getDocs(collection(db, 'exams')),
           getDocs(collection(db, 'liveTests')),
           getDocs(collection(db, 'tests')),
-          getDocs(collection(db, 'subjects'))
+          getDocs(collection(db, 'subjects')),
+          getDocs(collection(db, 'study_material'))
         ]);
 
         const map: Record<string, string> = {};
@@ -26,6 +27,7 @@ export function useItemTitles() {
         liveTests.forEach(doc => map[doc.id] = doc.data().title || doc.data().name);
         tests.forEach(doc => map[doc.id] = doc.data().title || doc.data().name);
         subjects.forEach(doc => map[doc.id] = doc.data().title || doc.data().name);
+        studyMaterials.forEach(doc => map[doc.id] = doc.data().title || doc.data().name);
 
         cachedTitles = map;
         setItemTitles(map);

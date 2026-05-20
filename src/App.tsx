@@ -49,6 +49,7 @@ const Premium = React.lazy(() => import('./pages/Premium'));
 const Subjects = React.lazy(() => import('./pages/Subjects'));
 const Contact = React.lazy(() => import('./pages/Contact'));
 const StudyMaterial = React.lazy(() => import('./pages/StudyMaterial'));
+const MyEbooks = React.lazy(() => import('./pages/MyEbooks'));
 const PrivacyPolicy = React.lazy(() => import('./pages/PrivacyPolicy'));
 const LiveTestDetail = React.lazy(() => import('./pages/LiveTestDetail'));
 const Helpdesk = React.lazy(() => import('./pages/Helpdesk'));
@@ -304,6 +305,11 @@ export function AppContent() {
           } />
 
           <Route path="/study-material" element={<StudyMaterial />} />
+          <Route path="/my-ebooks" element={
+            <ProtectedRoute>
+              <MyEbooks />
+            </ProtectedRoute>
+          } />
           <Route path="/job-alerts" element={<JobAlerts />} />
           <Route path="/forum" element={<Forum />} />
           <Route path="/forum/:id" element={<ForumThread />} />

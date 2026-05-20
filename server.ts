@@ -453,6 +453,13 @@ app.get("/api/health-check", async (req, res) => {
             if (liveTestDoc.exists) {
               originalPrice = liveTestDoc.data()?.price || 0;
               itemName = liveTestDoc.data()?.title || "Live Test";
+            } else {
+              // Check study_material
+              const bookDoc = await database.collection("study_material").doc(itemId).get();
+              if (bookDoc.exists) {
+                originalPrice = bookDoc.data()?.price || 0;
+                itemName = bookDoc.data()?.title || "eBook";
+              }
             }
           }
         }
@@ -648,6 +655,12 @@ app.get("/api/health-check", async (req, res) => {
                    itemTitle = examDoc.data()?.title || "Exam";
                    // Fallback amount if razorpay fetch fails
                    if (!amountPaid) amountPaid = examDoc.data()?.price || 0;
+                } else {
+                   const bookDoc = await database.collection("study_material").doc(itemId).get();
+                   if (bookDoc.exists) {
+                      itemTitle = bookDoc.data()?.title || "eBook";
+                      if (!amountPaid) amountPaid = bookDoc.data()?.price || 0;
+                   }
                 }
              }
              
@@ -793,6 +806,11 @@ app.get("/api/health-check", async (req, res) => {
                 const examDoc = await database.collection("exams").doc(itemId).get();
                 if (examDoc.exists) {
                   itemTitle = examDoc.data()?.title || "Exam";
+                } else {
+                  const bookDoc = await database.collection("study_material").doc(itemId).get();
+                  if (bookDoc.exists) {
+                    itemTitle = bookDoc.data()?.title || "eBook";
+                  }
                 }
               }
               
