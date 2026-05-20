@@ -45,6 +45,7 @@ const AdminEditLiveTest = React.lazy(() => import('./pages/Admin/EditLiveTest'))
 const AdminReviews = React.lazy(() => import('./pages/Admin/Reviews'));
 const AdminStudyMaterial = React.lazy(() => import('./pages/Admin/StudyMaterial'));
 const AdminPushNotifications = React.lazy(() => import('./pages/Admin/PushNotifications'));
+const AdminPopupAnnouncement = React.lazy(() => import('./pages/Admin/PopupAnnouncement'));
 const Premium = React.lazy(() => import('./pages/Premium'));
 const Subjects = React.lazy(() => import('./pages/Subjects'));
 const Contact = React.lazy(() => import('./pages/Contact'));
@@ -159,6 +160,11 @@ export function AppContent() {
           <Route path="/admin/settings" element={
             <ProtectedRoute adminOnly>
               <AdminSettings />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/popup-announcement" element={
+            <ProtectedRoute adminOnly>
+              <AdminPopupAnnouncement />
             </ProtectedRoute>
           } />
           <Route path="/admin/notices" element={

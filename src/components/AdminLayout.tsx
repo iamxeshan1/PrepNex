@@ -119,6 +119,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
   ];
 
   const systemItems = [
+    { label: 'Popup Alert', path: '/admin/popup-announcement', icon: Megaphone },
     { label: 'Notices Board', path: '/admin/notices', icon: Megaphone },
     { label: 'Daily Thoughts', path: '/admin/thoughts', icon: Sparkles },
     { label: 'Settings', path: '/admin/settings', icon: Settings },

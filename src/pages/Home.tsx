@@ -48,7 +48,9 @@ import {
   Bell,
   Lock,
   Unlock,
-  BookMarked
+  BookMarked,
+  X,
+  Megaphone
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { db } from '../lib/firebase';
@@ -114,6 +116,8 @@ export default function Home() {
   const [latestThought, setLatestThought] = useState<any>(null);
   const [jobAlerts, setJobAlerts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [popupData, setPopupData] = useState<any>(null);
+  const [showPopup, setShowPopup] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -175,6 +179,21 @@ export default function Home() {
       setJobAlerts(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
+    const unsubPopup = onSnapshot(doc(db, 'settings', 'popup_announcement'), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.isActive) {
+          const key = 'prepnext_popup_dismissed_v2_' + (data.updatedAt || 'default');
+          if (!sessionStorage.getItem(key)) {
+            setPopupData(data);
+            setShowPopup(true);
+            return;
+          }
+        }
+      }
+      setShowPopup(false);
+    });
+
     fetchData();
     return () => {
       unsubLive();
@@ -183,12 +202,33 @@ export default function Home() {
       unsubSettings();
       unsubThought();
       unsubAlerts();
+      unsubPopup();
     };
   }, []);
 
   const filteredExams = activeTab === 'All' 
     ? exams 
     : exams.filter(exam => exam.agencyId === activeTab);
+
+  const handleDismissPopup = () => {
+    if (popupData) {
+      const key = 'prepnext_popup_dismissed_v2_' + (popupData.updatedAt || 'default');
+      sessionStorage.setItem(key, 'true');
+    }
+    setShowPopup(false);
+  };
+
+  const handlePopupSubmit = () => {
+    if (popupData && popupData.buttonUrl) {
+      const url = popupData.buttonUrl.trim();
+      if (url.startsWith('/')) {
+        navigate(url);
+      } else {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+    }
+    handleDismissPopup();
+  };
 
   return (
     <Layout>
@@ -660,105 +700,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Premium Study Materials / E-Books Section */}
-      <section className="py-24 bg-[#f8fafc] border-t border-slate-200/50">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#006e5d]/5 border border-[#006e5d]/10 rounded-full text-[#006e5d] text-[10px] font-black uppercase tracking-wider mb-3">
-                <BookMarked className="w-3 h-3" /> Digital Library
-              </div>
-              <h2 className="text-4xl font-sans font-[800] text-slate-900 tracking-tighter">Premium E-Books & Study Material</h2>
-              <p className="text-slate-500 font-medium tracking-tight mt-1">Get comprehensive revision notes, exam syllabus booklets, and reference manuals.</p>
-            </div>
-            
-            <button 
-              onClick={() => navigate('/study-material')}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 hover:border-slate-300 text-slate-800 rounded-xl text-xs font-black tracking-wider transition-all uppercase shadow-sm shrink-0"
-            >
-              View All Study Material <ArrowRight className="w-3.5 h-3.5 text-[#006e5d]" />
-            </button>
-          </div>
-
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[1, 2, 3, 4].map(i => <div key={i} className="h-64 bg-slate-100 rounded-2xl animate-pulse" />)}
-            </div>
-          ) : studyMaterials.length === 0 ? (
-            <div className="bg-white rounded-3xl p-12 text-center border border-slate-200">
-               <p className="text-slate-400 font-bold text-sm">No premium books or syllabus manuals available at this time.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {studyMaterials.map((m) => {
-                const isFree = m.isFree !== false;
-                const price = m.price !== undefined ? m.price : 199;
-                return (
-                  <div
-                    key={m.id}
-                    onClick={() => navigate('/study-material')}
-                    className="group bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col p-4 hover:border-[#006e5d]/30 hover:shadow-lg transition-all duration-300 cursor-pointer"
-                  >
-                    {/* Cover Container */}
-                    <div className="relative aspect-[16/10] bg-slate-100 rounded-xl overflow-hidden mb-4 shrink-0 flex items-center justify-center border border-slate-200/50">
-                      {m.coverUrl ? (
-                        <img 
-                          src={m.coverUrl} 
-                          alt={m.title} 
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          referrerPolicy="no-referrer"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-[#0c5c4e] to-slate-900 flex flex-col justify-between p-4 text-white">
-                          <p className="text-[8px] font-black uppercase tracking-widest text-emerald-300 opacity-80">{m.category}</p>
-                          <div className="space-y-1 my-auto">
-                            <h4 className="text-xs font-black tracking-tight leading-snug line-clamp-3 text-emerald-100">{m.title}</h4>
-                            <div className="w-6 h-0.5 bg-amber-400 rounded" />
-                          </div>
-                          <div className="text-[8px] font-bold text-slate-400 text-right uppercase tracking-widest mt-auto">Study Guide</div>
-                        </div>
-                      )}
-
-                      {/* Pricing Tag */}
-                      <div className="absolute top-2.5 right-2.5 z-10">
-                        {isFree ? (
-                          <span className="px-2 py-0.5 bg-emerald-500 text-white rounded text-[8px] font-black uppercase tracking-wider flex items-center gap-0.5 shadow">
-                            <Unlock className="w-2 h-2" /> Free
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 bg-amber-500 text-white rounded text-[8px] font-black uppercase tracking-wider flex items-center gap-0.5 shadow">
-                            <Lock className="w-2 h-2" /> ₹{price}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Book Details */}
-                    <div className="flex-grow flex flex-col justify-between">
-                      <div>
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 block">{m.category}</span>
-                        <h3 className="text-xs font-bold text-slate-900 tracking-tight leading-snug line-clamp-2 mb-1 group-hover:text-[#006e5d] transition-colors">
-                          {m.title}
-                        </h3>
-                        {m.description && (
-                          <p className="text-[10px] font-semibold text-slate-400 line-clamp-2 leading-relaxed">
-                            {m.description}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[10px] font-black text-[#006e5d] uppercase tracking-wider">
-                        <span>Get Booklet</span>
-                        <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </section>
 
       {/* Feature Section */}
       <section className="py-24 bg-[#f8fafc]">
@@ -824,6 +765,81 @@ export default function Home() {
             </div>
          </div>
       </section>
+      {/* Dynamic Popup Announcement Modal */}
+      {showPopup && popupData && (
+        <div id="popup-announcement-modal" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] border border-slate-200/50 relative flex flex-col transform transition-transform scale-100 duration-300">
+            
+            {/* Close Button Header overlay */}
+            <button 
+              onClick={handleDismissPopup}
+              className="absolute top-4 right-4 z-20 w-8 h-8 bg-slate-900/10 hover:bg-slate-900/20 text-slate-700 hover:text-slate-900 rounded-full flex items-center justify-center cursor-pointer transition-colors"
+              aria-label="Close notification"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Banner/Image area */}
+            {popupData.imageUrl ? (
+              <div className="w-full aspect-[16/10] bg-slate-100 overflow-hidden relative">
+                <img 
+                  src={popupData.imageUrl} 
+                  alt={popupData.title} 
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute bottom-4 left-4">
+                  <span className="px-2.5 py-1 bg-[#006e5d] text-white rounded-lg text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shadow-md">
+                    <Sparkles className="w-3.5 h-3.5 text-teal-200" /> Broadcast
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="py-6 px-6 bg-gradient-to-r from-[#006e5d] to-[#014e42] text-white relative flex items-center gap-3">
+                <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center border border-white/10 shrink-0">
+                  <Megaphone className="w-5 h-5 text-teal-300" />
+                </div>
+                <div>
+                  <span className="px-2 py-0.5 bg-rose-500 text-white rounded text-[8px] font-black uppercase tracking-wider inline-flex items-center gap-0.5 shadow select-none">
+                    Flash Alert
+                  </span>
+                  <h4 className="text-xs font-black tracking-widest text-[#a7f3d0] leading-none uppercase mt-1">IMPORTANT ANNOUNCEMENT</h4>
+                </div>
+              </div>
+            )}
+
+            {/* Info details body */}
+            <div className="p-6 md:p-8">
+              <h3 className="text-lg font-black text-slate-900 tracking-tight leading-snug mb-3">
+                {popupData.title}
+              </h3>
+              <p className="text-xs font-semibold text-slate-500 leading-relaxed mb-6 whitespace-pre-line max-h-48 overflow-y-auto pr-1">
+                {popupData.description}
+              </p>
+
+              {/* Action options */}
+              <div className="space-y-3">
+                {popupData.buttonText && popupData.buttonUrl && (
+                  <button 
+                    onClick={handlePopupSubmit}
+                    className="w-full py-3.5 bg-[#006e5d] hover:bg-[#005c4e] text-white font-black text-xs uppercase tracking-widest rounded-xl text-center shadow-lg shadow-[#006e5d]/10 hover:shadow-[#006e5d]/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer animate-pulse"
+                  >
+                    {popupData.buttonText}
+                  </button>
+                )}
+
+                <button 
+                  onClick={handleDismissPopup}
+                  className="w-full py-3 hover:bg-slate-50 text-slate-500 hover:text-slate-800 font-extrabold text-xs uppercase tracking-widest rounded-xl text-center transition-all cursor-pointer"
+                >
+                  Dismiss / Maybe Later
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

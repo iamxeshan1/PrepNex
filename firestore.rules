@@ -127,7 +127,7 @@ service cloud.firestore {
 
     // Settings
     match /settings/{settingId} {
-      allow read: if settingId == 'general' || isAdmin();
+      allow read: if settingId == 'general' || settingId == 'popup_announcement' || isAdmin();
       allow write: if isAdmin();
     }
 
