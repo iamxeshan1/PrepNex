@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpenText, Book, BarChart3, HelpCircle, User, ShieldCheck, CreditCard } from 'lucide-react';
+import { LayoutDashboard, BookOpenText, Book, BarChart3, HelpCircle, User, ShieldCheck, CreditCard, ExternalLink } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 
@@ -11,6 +11,7 @@ export const DashboardSidebar = () => {
   const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
+    { name: 'Visit Main Site', icon: ExternalLink, path: '/' },
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
     { name: 'Mock Tests', icon: BookOpenText, path: '/exams' },
     { name: 'Study Material', icon: Book, path: '/study-material' },

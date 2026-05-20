@@ -108,7 +108,6 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
     { label: 'Subjects & Topics', path: '/admin/subjects', icon: Briefcase },
     { label: 'Agencies / Boards', path: '/admin/agencies', icon: Building },
     { label: 'Study Material', path: '/admin/study-material', icon: GraduationCap },
-    { label: 'Previous Year Papers', path: '/admin/pyqs', icon: FileText },
     { label: 'Community Forum', path: '/admin/forum', icon: MessageSquare },
     { label: 'Platform Reviews', path: '/admin/reviews', icon: MessageSquare },
   ];
@@ -130,7 +129,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
       {/* Sidebar */}
       <aside className="w-[280px] bg-[#111827] flex flex-col shrink-0 relative z-40 text-slate-300 shadow-2xl">
         <header className="p-6 pb-4">
-          <Link to="/admin" className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-[#006e5d] to-[#005a4d] flex items-center justify-center text-white shadow-lg shadow-teal-900/50">
               <GraduationCap className="w-6 h-6" />
             </div>

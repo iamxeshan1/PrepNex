@@ -53,27 +53,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             } else {
               setProfile(data);
             }
+            setLoading(false);
           } else {
-            // New user profile creation
-            const isAdminEmail = authUser.email === 'iamxeshan1@gmail.com' || authUser.email === 'prepnextedtech@gmail.com';
-            const newProfile = {
-              userId: authUser.uid,
-              name: authUser.displayName || authUser.email?.split('@')[0] || 'User',
-              email: authUser.email,
-              photoURL: authUser.photoURL,
-              role: isAdminEmail ? 'admin' : 'student',
-              isPremium: false,
-              premiumExpiry: null,
-              purchasedExams: [],
-              testsAttempted: 0,
-              averageScore: 0,
-              profileCompleted: false, // Explicitly false for new users
-              createdAt: new Date().toISOString()
-            };
-            await setDoc(userDocRef, newProfile);
-            // Profile will be set by the next snapshot trigger
+            // Only auto-create profile in AuthContext for Google users
+            const isGoogleUser = authUser.providerData.some(p => p.providerId === 'google.com');
+            if (isGoogleUser) {
+              const isAdminEmail = authUser.email === 'iamxeshan1@gmail.com' || authUser.email === 'prepnextedtech@gmail.com';
+              const newProfile = {
+                userId: authUser.uid,
+                name: authUser.displayName || authUser.email?.split('@')[0] || 'User',
+                email: authUser.email,
+                photoURL: authUser.photoURL,
+                role: isAdminEmail ? 'admin' : 'student',
+                isPremium: false,
+                premiumExpiry: null,
+                purchasedExams: [],
+                testsAttempted: 0,
+                averageScore: 0,
+                profileCompleted: false, // Explicitly false for new users
+                createdAt: new Date().toISOString()
+              };
+              try {
+                await setDoc(userDocRef, newProfile);
+              } catch (err) {
+                console.error("Failed to auto-create Google user profile:", err);
+              }
+            } else {
+              // For non-Google (email/password), Signup.tsx creates it.
+              setProfile(null);
+              setLoading(false);
+            }
           }
-          setLoading(false);
         }, (error) => {
           console.error("Profile snapshot error:", error);
           setLoading(false);

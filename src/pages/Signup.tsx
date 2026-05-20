@@ -55,32 +55,7 @@ export default function Signup() {
     setError('');
     try {
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-
-      const docRef = doc(db, 'users', user.uid);
-      const docSnap = await getDoc(docRef);
-
-      if (!docSnap.exists()) {
-        await setDoc(docRef, {
-          userId: user.uid,
-          name: user.displayName || 'Aspirant',
-          email: user.email,
-          photoURL: user.photoURL,
-          role: user.email === 'iamxeshan1@gmail.com' || user.email === 'prepnextedtech@gmail.com' ? 'admin' : 'student',
-          purchasedExams: [],
-          testsAttempted: 0,
-          averageScore: 0,
-          createdAt: new Date().toISOString()
-        });
-      } else {
-        // Keep photoURL and name in sync with Google if they change
-        await updateDoc(docRef, {
-          photoURL: user.photoURL || docSnap.data().photoURL,
-          name: user.displayName || docSnap.data().name,
-          email: user.email || docSnap.data().email
-        });
-      }
+      await signInWithPopup(auth, provider);
       navigate('/dashboard');
     } catch (err: any) {
       console.error("Google Login Error:", err);

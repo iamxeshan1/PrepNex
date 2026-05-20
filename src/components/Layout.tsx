@@ -61,7 +61,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               <div className="hidden lg:flex items-center gap-10">
                 <Link to="/exams" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/exams') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Exams</Link>
                 <Link to="/job-alerts" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/job-alerts') ? 'text-blue-600' : 'text-slate-600 hover:text-slate-900'}`}>Job Alerts</Link>
-                <Link to="/pyqs" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/pyqs') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>PYQs</Link>
                 <Link to="/study-material" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/study-material') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Study Material</Link>
                 <Link to="/forum" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/forum') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Forum</Link>
                 <Link to="/live-tests" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/live-tests') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Live Tests</Link>
@@ -167,13 +166,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   className={`block text-sm font-bold p-3 rounded-xl ${isActive('/study-material') ? 'bg-[#006e5d]/10 text-[#006e5d]' : 'text-slate-600'}`}
                 >
                   Study Material
-                </Link>
-                <Link 
-                  to="/pyqs" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/pyqs') ? 'bg-[#006e5d]/10 text-[#006e5d]' : 'text-slate-600'}`}
-                >
-                  Previous Year Papers
                 </Link>
                 <Link 
                   to="/forum" 
@@ -311,7 +303,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                     <li><Link to="/subjects" className="text-slate-400 hover:text-[#006e5d] text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-[#006e5d]" /> Subject Catalog</Link></li>
                     <li><Link to="/live-tests" className="text-slate-400 hover:text-[#006e5d] text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-[#006e5d]" /> Live Tests</Link></li>
                     <li><Link to="/study-material" className="text-slate-400 hover:text-[#006e5d] text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-[#006e5d]" /> Study Material</Link></li>
-                    <li><Link to="/pyqs" className="text-slate-400 hover:text-[#006e5d] text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-[#006e5d]" /> Previous Year Papers</Link></li>
                     <li><Link to="/forum" className="text-slate-400 hover:text-[#006e5d] text-sm font-medium transition-colors flex items-center gap-2 group"><ChevronRight className="w-3 h-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all text-[#006e5d]" /> Community Forum</Link></li>
                     {socialLinks.doubtLink && (
                       <li className="pt-2"><a href={socialLinks.doubtLink} target="_blank" rel="noreferrer" className="text-[#006e5d] py-1.5 px-3 rounded-lg bg-[#006e5d]/10 hover:bg-[#006e5d]/20 text-xs font-bold transition-colors inline-flex items-center gap-1.5"><MessageCircle className="w-3.5 h-3.5" /> Doubt Clearing Hub</a></li>
