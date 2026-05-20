@@ -32,16 +32,8 @@ interface Material {
   createdAt: string;
   isFree: boolean;
   coverUrl?: string;
+  price?: number;
 }
-
-const PRESET_COVERS = [
-  { name: 'Sleek Dark Study', url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&q=80&w=600' },
-  { name: 'Warm Leather Library', url: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=600' },
-  { name: 'Luminous Library Shelf', url: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&q=80&w=600' },
-  { name: 'Conceptual Textbook', url: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&q=80&w=600' },
-  { name: 'Cozy Notebook Study', url: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=600' },
-  { name: 'Educational Chalkboard', url: 'https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?auto=format&fit=crop&q=80&w=600' },
-];
 
 export default function AdminStudyMaterial() {
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -71,6 +63,7 @@ export default function AdminStudyMaterial() {
   const [description, setDescription] = useState('');
   const [isFree, setIsFree] = useState(true);
   const [coverUrl, setCoverUrl] = useState('');
+  const [price, setPrice] = useState<number | ''>('');
 
   const fetchMaterials = async () => {
     setLoading(true);
@@ -87,7 +80,8 @@ export default function AdminStudyMaterial() {
           description: "An exhaustive master-guide featuring 1,500+ solved practice problems, advanced shortcuts, and expert time-management strategy for competitive examinations.",
           url: "https://example.com/reference_quantitative_aptitude.pdf",
           isFree: false,
-          coverUrl: "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&q=80&w=600",
+          price: 199,
+          coverUrl: "",
           createdAt: new Date().toISOString()
         };
         const docRef = await addDoc(collection(db, 'study_material'), referenceBook);
@@ -135,13 +129,14 @@ export default function AdminStudyMaterial() {
     if (!title || !url) return;
 
     try {
-      const payload = {
+      const payload: any = {
         title,
         url,
         category,
         description,
         isFree,
         coverUrl,
+        price: !isFree && price !== '' ? Number(price) : 0,
         updatedAt: new Date().toISOString()
       };
 
@@ -182,6 +177,7 @@ export default function AdminStudyMaterial() {
     setDescription('');
     setIsFree(true);
     setCoverUrl('');
+    setPrice('');
     setIsAdding(false); 
     setEditingId(null);
   };
@@ -193,6 +189,7 @@ export default function AdminStudyMaterial() {
     setDescription(m.description || '');
     setIsFree(m.isFree !== false);
     setCoverUrl(m.coverUrl || '');
+    setPrice(m.price !== undefined ? m.price : '');
     setEditingId(m.id); 
     setIsAdding(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -336,6 +333,24 @@ export default function AdminStudyMaterial() {
                      </label>
                    </div>
                    <p className="text-xs font-semibold text-slate-400 mt-2.5">Paid books only unlock for active paid subscribers.</p>
+
+                   {/* Pricing fields for premium book */}
+                   {!isFree && (
+                     <div className="mt-4 pt-4 border-t border-slate-200">
+                       <label className="block text-xs font-black uppercase text-slate-600 mb-1.5">Premium Ebook Access Price (₹)</label>
+                       <input 
+                         type="number"
+                         required
+                         placeholder="e.g. 199"
+                         min="0"
+                         className="w-full px-4 py-2 border border-slate-200 bg-white rounded-xl focus:ring-2 focus:ring-teal-500 focus:outline-none font-semibold text-sm text-slate-800"
+                         value={price} 
+                         onChange={(e) => setPrice(e.target.value !== '' ? Number(e.target.value) : '')}
+                         id="inputPriceField"
+                       />
+                       <p className="text-[10px] text-slate-400 font-semibold mt-1">Specify price tag displayed to general students.</p>
+                     </div>
+                   )}
                 </div>
 
                 {/* PDF Link URL */}
@@ -425,26 +440,6 @@ export default function AdminStudyMaterial() {
                           />
                         </label>
                         <p className="text-[10px] text-slate-400 font-semibold leading-normal">Uploaded straight to your personal Cloud bucket. Automatically stored in historical listings.</p>
-                      </div>
-                    </div>
-
-                    {/* Preloaded Template selector */}
-                    <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" /> Elegant Preset Ebook Themes
-                      </label>
-                      <div className="flex flex-wrap gap-2.5">
-                        {PRESET_COVERS.map((preset, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => setCoverUrl(preset.url)}
-                            className={`w-12 h-16 rounded-lg border-2 overflow-hidden transition-all relative shrink-0 ${coverUrl === preset.url ? 'border-teal-600 scale-105 shadow-md shadow-teal-600/20' : 'border-slate-200 hover:border-slate-400'}`}
-                            title={preset.name}
-                          >
-                            <img src={preset.url} alt={preset.name} className="w-full h-full object-cover" />
-                          </button>
-                        ))}
                       </div>
                     </div>
 
@@ -570,7 +565,7 @@ export default function AdminStudyMaterial() {
                       <td className="p-4">
                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black tracking-wide ${isFreeBook ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
                             {isFreeBook ? <Unlock className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
-                            {isFreeBook ? 'Free Access' : 'Premium Only'}
+                            {isFreeBook ? 'Free Access' : `Premium (₹${m.price !== undefined ? m.price : 0})`}
                          </span>
                       </td>
                       <td className="p-4">

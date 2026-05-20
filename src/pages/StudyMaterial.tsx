@@ -30,6 +30,7 @@ interface Material {
   createdAt: string;
   isFree?: boolean; // default true if undef
   coverUrl?: string;
+  price?: number;
 }
 
 export default function StudyMaterial() {
@@ -243,7 +244,7 @@ export default function StudyMaterial() {
                           </span>
                         ) : (
                           <span className="px-2.5 py-1 bg-amber-500 text-white rounded-lg text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shadow">
-                            <Lock className="w-2.5 h-2.5" /> Premium
+                            <Lock className="w-2.5 h-2.5" /> {m.price !== undefined && m.price > 0 ? `₹${m.price}` : 'Premium'}
                           </span>
                         )}
                       </div>
@@ -347,7 +348,7 @@ export default function StudyMaterial() {
                   
                   <span className={`mt-4 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 ${selectedBook.isFree !== false ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
                     {selectedBook.isFree !== false ? <Unlock className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
-                    {selectedBook.isFree !== false ? 'Free Digital Access' : 'Premium Membership'}
+                    {selectedBook.isFree !== false ? 'Free Digital Access' : `Price: ₹${selectedBook.price !== undefined && selectedBook.price > 0 ? selectedBook.price : '199'}`}
                   </span>
                 </div>
 
@@ -397,7 +398,7 @@ export default function StudyMaterial() {
                             <Sparkles className="w-3.5 h-3.5 animate-spin" /> Premium eBook Locked
                           </h4>
                           <p className="text-slate-600 text-xs font-semibold leading-normal mb-4">
-                            This comprehensive resource requires an active <strong className="text-amber-700 font-black">All-Access Prep Pass</strong>. Unlock infinite access to all premium eBooks, Full-length Mock exams, and Expert Analysis notes.
+                            This comprehensive resource requires an active <strong className="text-amber-700 font-black">All-Access Prep Pass</strong>. Alternatively, you can unlock this individual booklet valued at <strong className="text-amber-700 font-black">₹{selectedBook.price !== undefined && selectedBook.price > 0 ? selectedBook.price : '199'}</strong> by upgrading.
                           </p>
                           <button 
                             onClick={() => { setSelectedBook(null); navigate('/premium'); }}
