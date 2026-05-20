@@ -61,14 +61,14 @@ export default function MyEbooks() {
   // This means:
   // 1. Paid books where book.id is in profile.purchasedExams
   // 2. Or if they are premium, all premium booklets
-  // 3. And let's also list free books they saved or have universal access to for completeness!
   const myPurchasedBooks = materials.filter(book => {
-    // Only premium/paid books they have access to, OR free books (which are universally accessible)
-    // Actually, let's prioritize books they have purchased/unlocked!
     const isFreeBook = book.isFree !== false;
+    if (isFreeBook) return false; // Keep the purchased list focused on PREMIUM/PAID books they explicitly owned!
     
-    if (isFreeBook) return false; // Let's keep the purchased eBooks tab focused on PAID eBooks they bought or have premium access to!
-    return hasAccessToBook(book);
+    const isPurchased = profile?.purchasedExams && profile.purchasedExams.includes(book.id);
+    const isPremiumUnlocked = profile?.isPremium;
+    
+    return isPurchased || isPremiumUnlocked;
   });
 
   const filteredBooks = myPurchasedBooks.filter(book => {
@@ -193,9 +193,15 @@ export default function MyEbooks() {
 
                       {/* Purchased Badge */}
                       <div className="absolute top-3 right-3 z-10">
-                        <span className="px-2.5 py-1 bg-[#006e5d] text-white rounded-lg text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shadow-md">
-                          <CheckCircle2 className="w-2.5 h-2.5 text-teal-200" /> Unlocked
-                        </span>
+                        {profile?.purchasedExams && profile.purchasedExams.includes(m.id) ? (
+                          <span className="px-2.5 py-1 bg-teal-600 text-white rounded-lg text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shadow-md">
+                            <CheckCircle2 className="w-2.5 h-2.5 text-teal-200" /> Purchased
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-1 bg-purple-600 text-white rounded-lg text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shadow-md">
+                            <Sparkles className="w-2.5 h-2.5 text-purple-250 animate-pulse" /> Pass Active
+                          </span>
+                        )}
                       </div>
 
                       {/* Gloss Overlay */}

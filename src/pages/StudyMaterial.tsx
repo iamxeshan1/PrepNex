@@ -245,9 +245,17 @@ export default function StudyMaterial() {
                           <span className="px-2.5 py-1 bg-emerald-500 text-white rounded-lg text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shadow">
                             <Unlock className="w-2.5 h-2.5" /> Free
                           </span>
-                        ) : hasAccessToBook(m) ? (
+                        ) : (profile?.purchasedExams && profile.purchasedExams.includes(m.id)) ? (
                           <span className="px-2.5 py-1 bg-teal-600 text-white rounded-lg text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shadow-md">
                             <CheckCircle className="w-2.5 h-2.5 text-teal-200" /> Purchased
+                          </span>
+                        ) : profile?.isPremium ? (
+                          <span className="px-2.5 py-1 bg-purple-600 text-white rounded-lg text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shadow-md">
+                            <Sparkles className="w-2.5 h-2.5 text-purple-200 animate-pulse" /> Pass Active
+                          </span>
+                        ) : isAdmin ? (
+                          <span className="px-2.5 py-1 bg-[#1e293b] text-teal-400 rounded-lg text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shadow border border-teal-500/20">
+                            <CheckCircle className="w-2.5 h-2.5 text-teal-400" /> Admin Access
                           </span>
                         ) : (
                           <span className="px-2.5 py-1 bg-amber-500 text-white rounded-lg text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shadow">
