@@ -59,6 +59,11 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
         allow read, write: if isAdmin();
       }
+      
+      match /study_sessions/{sessionId} {
+        allow read, write: if isOwner(userId);
+        allow read, write: if isAdmin();
+      }
     }
 
     // Exams

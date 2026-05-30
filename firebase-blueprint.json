@@ -240,10 +240,25 @@
         "sentBy": { "type": "string" }
       },
       "required": ["title", "message", "createdAt"]
+    },
+    "StudySession": {
+      "title": "StudySession",
+      "description": "A recorded study session or daily tracking entry for the student.",
+      "type": "object",
+      "properties": {
+        "sessionId": { "type": "string" },
+        "userId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "minutes": { "type": "number" },
+        "type": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["sessionId", "userId", "date", "minutes"]
     }
   },
   "firestore": {
     "users": { "schema": "User", "description": "User profiles" },
+    "users/{userId}/study_sessions/{sessionId}": { "schema": "StudySession", "description": "User study sessions tracking daily streak and study time" },
     "exams": { "schema": "Exam", "description": "Exam categories" },
     "subjects": { "schema": "Subject", "description": "Subject categories" },
     "notices": { "schema": "Notice", "description": "Global announcements" },

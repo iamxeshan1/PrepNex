@@ -1,0 +1,15 @@
+# PrepNext Clean URLs Router Rewriter Engine
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /php-version/
+
+    # Disable Directory Listing indexes
+    Options -Indexes
+
+    # Avoid loops by ignoring real files or directory indexes
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # Redirect clean URLs to index.php controller
+    RewriteRule ^(.*)$ index.php?route=$1 [QSA,L]
+</IfModule>

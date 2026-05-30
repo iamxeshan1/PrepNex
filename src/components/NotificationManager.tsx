@@ -50,6 +50,12 @@ export const NotificationManager = () => {
       if (snap.empty) return;
       
       const notif = snap.docs[0].data();
+      
+      // Filter user-specific warnings
+      if (notif.userId && notif.userId !== user.uid) {
+        return;
+      }
+      
       const title = notif.title || 'New Notification';
       const message = notif.message || '';
       const url = notif.url;

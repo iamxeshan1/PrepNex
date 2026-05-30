@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useSettings } from '../context/SettingsContext';
 import { collection, getDocs, query, where, documentId, orderBy, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { ActivityCalendar } from '../components/ActivityCalendar';
 
 export default function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -575,6 +576,11 @@ export default function Dashboard() {
                           <button onClick={() => navigate('/exams')} className="w-full mt-4 py-3 bg-[#006e5d]/5 text-[#006e5d] font-bold rounded-2xl text-sm">Browse Categories</button>
                       </div>
                   </div>
+                  
+                  {/* Visual Activity Calendar (Streak & Study Time with Recharts) */}
+                  {profile?.userId && (
+                    <ActivityCalendar userId={profile.userId} />
+                  )}
                   
                   {/* Subject Performance Analysis */}
                   <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm">

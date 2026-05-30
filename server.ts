@@ -918,6 +918,149 @@ app.get("/api/health-check", async (req, res) => {
     }
   });
 
+  // Background Streak Monitor System (Checks hourly, alerts if past 9 PM and no study today)
+  async function runStreakMonitoringJob(forceUserId?: string) {
+    try {
+      const adminApp = getFirebaseApp();
+      if (!adminApp) {
+        console.warn("[Streak Monitoring] Firebase Admin not initialized. Skipping background check.");
+        return;
+      }
+      const dbInstance = getDb();
+      const messaging = getMessaging(adminApp);
+      
+      const now = new Date();
+      const currentHour = now.getHours();
+      
+      console.log(`[Streak Monitoring Job] Running streak compliance scan at hour: ${currentHour}`);
+
+      // Run on hour 21 (9:00 PM) OR if explicitly bypassed for custom user testing
+      const isNinePm = currentHour === 21;
+      if (!isNinePm && !forceUserId) {
+        return;
+      }
+
+      const todayDateStr = now.toISOString().split("T")[0];
+      
+      let usersToProcess: any[] = [];
+      if (forceUserId) {
+        const userDoc = await dbInstance.collection("users").doc(forceUserId).get();
+        if (userDoc.exists) {
+          usersToProcess = [userDoc];
+        }
+      } else {
+        const snapshot = await dbInstance.collection("users").get();
+        usersToProcess = snapshot.docs;
+      }
+
+      console.log(`[Streak Monitoring Job] Processing ${usersToProcess.length} user(s) for streak warnings`);
+
+      for (const uDoc of usersToProcess) {
+        const uData = uDoc.data();
+        const uid = uDoc.id;
+
+        // Skip user if they have explicitly opted out of streak alerts
+        if (uData.streakAlertsEnabled === false) {
+          console.log(`[Streak Monitoring Job] Skipping user ${uid} (notifications disabled in preferences)`);
+          continue;
+        }
+
+        // Check if user has logged any activity today in study_sessions
+        const sessionsSnap = await dbInstance
+          .collection("users")
+          .doc(uid)
+          .collection("study_sessions")
+          .where("date", "==", todayDateStr)
+          .get();
+
+        const studiedToday = !sessionsSnap.empty;
+
+        if (!studiedToday) {
+          console.log(`[Streak Monitoring Job] User ${uid} has NOT completed any study sessions today.`);
+          
+          const notificationTitle = "⚠️ Maintain Your Study Streak!";
+          const notificationBody = `It's already 9 PM and you haven't logged any study sessions today. Spend just 15 minutes to secure your daily goal and keep your streak strong!`;
+
+          // 1. Store in user's in-app notifications so it displays in-app dynamically
+          await dbInstance.collection("notifications").add({
+            title: notificationTitle,
+            message: notificationBody,
+            userId: uid,
+            createdAt: new Date().toISOString(),
+            type: "streak_alert",
+            url: "/dashboard"
+          });
+
+          // 2. Query push tokens to send real push notifications
+          const pushTokensSnap = await dbInstance
+            .collection("users")
+            .doc(uid)
+            .collection("pushTokens")
+            .get();
+
+          const tokenList = pushTokensSnap.docs.map((tDoc: any) => tDoc.id);
+
+          if (tokenList.length > 0) {
+            console.log(`[Streak Monitoring Job] Sending push message to ${tokenList.length} device tokens for ${uid}`);
+            for (const token of tokenList) {
+              try {
+                await messaging.send({
+                  token: token,
+                  notification: {
+                    title: notificationTitle,
+                    body: notificationBody,
+                  },
+                  data: {
+                    url: "/dashboard",
+                    type: "streak_alert"
+                  }
+                });
+              } catch (err: any) {
+                console.warn(`[Streak Monitoring Job] Token invalidation or failed push for ${token}:`, err.message);
+                if (err.code === 'messaging/invalid-registration' || err.code === 'messaging/registration-token-not-registered') {
+                  await dbInstance
+                    .collection("users")
+                    .doc(uid)
+                    .collection("pushTokens")
+                    .doc(token)
+                    .delete();
+                }
+              }
+            }
+          }
+        } else {
+          console.log(`[Streak Monitoring Job] User ${uid} already completed study goals today.`);
+        }
+      }
+    } catch (jobErr) {
+      console.error("[Streak Monitoring Job] ERROR running cron checks:", jobErr);
+    }
+  }
+
+  // Scan every 15 minutes to inspect for 9 PM
+  setInterval(() => {
+    runStreakMonitoringJob();
+  }, 15 * 60 * 1000);
+
+  // Endpoint to immediately trigger and test streak alert warnings
+  app.post("/api/notifications/trigger-streak-alerts", async (req, res) => {
+    try {
+      const { userId } = req.body;
+      if (!userId) {
+        return res.status(400).json({ error: "Missing userId in request body" });
+      }
+      console.log(`[Streak Alert Verification] Immediate trigger requested for userId: ${userId}`);
+      await runStreakMonitoringJob(userId);
+      res.json({ 
+        success: true, 
+        message: "Streak compliance job evaluated successfully! If there are no study activities logged today, alerts have been dispatched." 
+      });
+    } catch (e: any) {
+      console.error(e);
+      res.status(500).json({ error: e.message || "Failed to trigger streak health check" });
+    }
+  });
+
   // Vite middleware for development
   const isProduction = process.env.NODE_ENV === "production" || fs.existsSync(path.join(process.cwd(), "dist"));
   
