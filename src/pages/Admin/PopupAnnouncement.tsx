@@ -36,6 +36,7 @@ export default function PopupAnnouncement() {
   const [buttonText, setButtonText] = useState('');
   const [buttonUrl, setButtonUrl] = useState('');
   const [isActive, setIsActive] = useState(false);
+  const [isLivePreviewModalOpen, setIsLivePreviewModalOpen] = useState(false);
 
   // Toast
   const [toast, setToast] = useState({
@@ -252,9 +253,18 @@ export default function PopupAnnouncement() {
 
             {/* Live Preview Side */}
             <div className="space-y-6">
-              <div className="flex items-center gap-2">
-                <Eye className="w-4 h-4 text-slate-500" />
-                <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest">Interactive Component Mockup Preview</h2>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-slate-500" />
+                  <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest">Interactive Component Mockup Preview</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsLivePreviewModalOpen(true)}
+                  className="px-3.5 py-2 bg-gradient-to-r from-teal-600 to-[#006e5d] text-white hover:from-teal-700 hover:to-[#005c4e] shadow-sm hover:shadow font-black text-[10px] uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Eye className="w-3.5 h-3.5 text-teal-200" /> Launch Live Overlay
+                </button>
               </div>
 
               {/* Main Preview Block */}
@@ -328,6 +338,108 @@ export default function PopupAnnouncement() {
               </div>
             </div>
 
+          </div>
+        )}
+
+        {/* Immersive Front-Page Simulator Overlay */}
+        {isLivePreviewModalOpen && (
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in"
+            onClick={() => setIsLivePreviewModalOpen(false)}
+          >
+            <div 
+              className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-[0_30px_70px_rgba(0,0,0,0.4)] border border-slate-200/50 relative flex flex-col transform transition-all scale-100 duration-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              
+              {/* Draft / Live Status Badge */}
+              <div className="absolute top-4 left-4 z-20">
+                {isActive ? (
+                  <span className="px-2.5 py-1 bg-emerald-600 text-white rounded-lg text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shadow-md">
+                    <CheckCircle className="w-2.5 h-2.5" /> LIVE PREVIEW
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-1 bg-orange-600 text-white rounded-lg text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shadow-md">
+                    <Sparkles className="w-2.5 h-2.5" /> DRAFT PREVIEW
+                  </span>
+                )}
+              </div>
+
+              {/* Close Button Overlay */}
+              <button 
+                onClick={() => setIsLivePreviewModalOpen(false)}
+                className="absolute top-4 right-4 z-20 w-8 h-8 bg-slate-900/10 hover:bg-slate-900/20 text-slate-700 hover:text-slate-900 rounded-full flex items-center justify-center cursor-pointer transition-all border border-black/5"
+                aria-label="Close notification"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              {/* Image Banner Section */}
+              {imageUrl ? (
+                <div className="w-full aspect-[16/10] bg-slate-100 overflow-hidden relative">
+                  <img 
+                    src={imageUrl} 
+                    alt={title || "Preview"} 
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="py-8 px-6 bg-gradient-to-r from-[#006e5d] to-[#014e42] text-white relative flex items-center gap-3 pt-14">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center border border-white/10 shrink-0">
+                    <Megaphone className="w-5 h-5 text-teal-300" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black tracking-widest text-[#a7f3d0] leading-none uppercase">SYSTEM BROADCAST</h4>
+                  </div>
+                </div>
+              )}
+
+              {/* Body Details */}
+              <div className="p-6 md:p-8">
+                <h3 className="text-lg font-black text-slate-900 tracking-tight leading-snug mb-3">
+                  {title || 'No Title Configuration'}
+                </h3>
+                <p className="text-xs font-semibold text-slate-500 leading-relaxed mb-6 whitespace-pre-line max-h-48 overflow-y-auto pr-1">
+                  {description || 'No description provided. Add details inside the edit panel to interact.'}
+                </p>
+
+                {/* Primary CTA button test */}
+                <div className="space-y-3">
+                  {buttonText && buttonUrl ? (
+                    <button 
+                      onClick={() => {
+                        const url = buttonUrl.trim();
+                        if (url.startsWith('/')) {
+                          setToast({
+                            isVisible: true,
+                            message: `Simulated Navigate: Redirecting user to local path "${url}"`,
+                            type: 'success'
+                          });
+                        } else {
+                          window.open(url, '_blank', 'noopener,noreferrer');
+                        }
+                        setIsLivePreviewModalOpen(false);
+                      }}
+                      className="w-full py-3.5 bg-[#006e5d] hover:bg-[#005c4e] text-white font-black text-xs uppercase tracking-widest rounded-xl text-center shadow-lg shadow-[#006e5d]/10 hover:shadow-[#006e5d]/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                    >
+                      {buttonText}
+                    </button>
+                  ) : null}
+
+                  <button 
+                    onClick={() => setIsLivePreviewModalOpen(false)}
+                    className="w-full py-3 hover:bg-slate-50 text-slate-500 hover:text-slate-800 font-extrabold text-xs uppercase tracking-widest rounded-xl text-center transition-all cursor-pointer"
+                  >
+                    Dismiss / Close Preview
+                  </button>
+                </div>
+              </div>
+
+            </div>
           </div>
         )}
 
