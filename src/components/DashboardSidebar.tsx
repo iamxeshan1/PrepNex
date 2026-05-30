@@ -34,10 +34,10 @@ export const DashboardSidebar = () => {
   };
 
   return (
-    <div className="w-full h-full bg-white border-r border-slate-100 p-6 flex flex-col justify-between">
+    <div className="w-full h-full bg-white dark:bg-[#031d19] border-r border-slate-100 dark:border-emerald-950/50 p-6 flex flex-col justify-between transition-colors duration-300">
       <div>
         <Link to="/" className="flex items-center mb-10 px-2 lg:px-4">
-            <span className="font-logo font-black text-2xl lg:text-3xl tracking-tight text-[#002f26]">PrepNext</span>
+            <span className="font-logo font-black text-2xl lg:text-3xl tracking-tight text-[#002f26] dark:text-emerald-450">PrepNext</span>
         </Link>
         <nav className="space-y-2">
           {navItems.map((item) => (
@@ -45,7 +45,9 @@ export const DashboardSidebar = () => {
               key={item.name} 
               to={item.path}
               className={`flex items-center gap-3 px-2 lg:px-4 py-3 rounded-2xl font-bold transition-all ${
-                isActive(item.path) ? 'bg-[#006e5d]/5 text-[#006e5d]' : 'text-slate-500 hover:bg-slate-50 hover:text-black'
+                isActive(item.path) 
+                  ? 'bg-[#006e5d]/5 dark:bg-emerald-900/10 text-[#006e5d] dark:text-emerald-400' 
+                  : 'text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-emerald-950/20 hover:text-black dark:hover:text-white'
               }`}
             >
               <item.icon className="w-5 h-5" />
@@ -54,7 +56,7 @@ export const DashboardSidebar = () => {
           ))}
           <button 
             onClick={handleDoubtClick}
-            className="flex w-full items-center gap-3 px-2 lg:px-4 py-3 rounded-2xl font-bold transition-all text-slate-500 hover:bg-slate-50 hover:text-black"
+            className="flex w-full items-center gap-3 px-2 lg:px-4 py-3 rounded-2xl font-bold transition-all text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-emerald-950/20 hover:text-black dark:hover:text-white"
           >
             <HelpCircle className="w-5 h-5" />
             <span className="text-sm lg:text-base">Doubt Clearing</span>
@@ -62,10 +64,10 @@ export const DashboardSidebar = () => {
         </nav>
       </div>
 
-      <div className="bg-orange-50 p-4 lg:p-6 rounded-3xl border border-orange-100">
-        <h4 className="text-[10px] lg:text-sm font-black text-orange-900 mb-1">GO PREMIUM</h4>
-        <p className="text-[10px] lg:text-xs text-orange-700 font-medium mb-3 lg:mb-4">Access All Mock Tests</p>
-        <Link to="/premium" className="block w-full bg-orange-600 text-white py-2 lg:py-3 rounded-xl font-black text-[10px] lg:text-xs uppercase tracking-widest hover:bg-orange-700 transition-all text-center">
+      <div className="bg-orange-50 dark:bg-amber-950/10 p-4 lg:p-6 rounded-3xl border border-orange-100 dark:border-amber-950/30">
+        <h4 className="text-[10px] lg:text-sm font-black text-orange-900 dark:text-amber-500 mb-1">GO PREMIUM</h4>
+        <p className="text-[10px] lg:text-xs text-orange-700 dark:text-amber-600 font-medium mb-3 lg:mb-4">Access All Mock Tests</p>
+        <Link to="/premium" className="block w-full bg-orange-600 dark:bg-amber-600 text-white py-2 lg:py-3 rounded-xl font-black text-[10px] lg:text-xs uppercase tracking-widest hover:bg-orange-700 dark:hover:bg-amber-500 transition-all text-center">
           Upgrade
         </Link>
       </div>

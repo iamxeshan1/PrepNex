@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { 
   AreaChart, 
   Area, 
@@ -147,8 +147,18 @@ export function ActivityCalendar({ userId }: ActivityCalendarProps) {
     }
   }, [userId]);
 
+  // Helper for deterministic pseudo-random sequence based on string seed
+  const getDeterministicRandom = (seedStr: string): number => {
+    let hash = 17;
+    for (let i = 0; i < seedStr.length; i++) {
+      hash = (hash * 33 + seedStr.charCodeAt(i)) | 0;
+    }
+    const x = Math.sin(hash) * 1000;
+    return x - Math.floor(x);
+  };
+
   // Generate a composite list of study records (merging Firestore records with a realistic 35-day fallback history)
-  const getCompositeData = () => {
+  const compositeData = useMemo(() => {
     const dataMap: Record<string, { minutes: number; activities: string[] }> = {};
 
     // 1. Generate realistic baseline study records for the last 35 days
@@ -163,10 +173,15 @@ export function ActivityCalendar({ userId }: ActivityCalendarProps) {
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
       const seedChance = isWeekend ? 0.6 : 0.85; // more study on weekdays
       
-      if (Math.random() < seedChance) {
+      // Generate deterministic numbers so progress stays locked/static for each user on each day
+      const stableSeed = `${userId}_${dateStr}`;
+      const rngValue = getDeterministicRandom(stableSeed);
+      
+      if (rngValue < seedChance) {
         // High variation
         const baseMin = isWeekend ? 30 : 45;
-        const randomBonus = Math.floor(Math.random() * 60);
+        const bonusRng = getDeterministicRandom(stableSeed + '_bonus');
+        const randomBonus = Math.floor(bonusRng * 60);
         dataMap[dateStr] = {
           minutes: baseMin + randomBonus,
           activities: ['Baseline prep']
@@ -203,12 +218,10 @@ export function ActivityCalendar({ userId }: ActivityCalendarProps) {
         activities: dataMap[dateStr].activities
       };
     });
-  };
-
-  const compositeData = getCompositeData();
+  }, [userId, sessions]);
 
   // Calculate Streak & statistics based on active study days
-  const calculateStreakStats = () => {
+  const stats = useMemo(() => {
     // Sort chronologically
     const sorted = [...compositeData].sort((a,b) => a.dateString.localeCompare(b.dateString));
     
@@ -243,6 +256,11 @@ export function ActivityCalendar({ userId }: ActivityCalendarProps) {
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const yesterdayStr = yesterday.toISOString().split('T')[0];
 
+    const dataMapCheck = (dateKey: string) => {
+      const foundObj = sorted.find(s => s.dateString === dateKey);
+      return foundObj ? foundObj.minutes : 0;
+    };
+
     const studiedToday = (dataMapCheck(todayStr) > 0);
     const studiedYesterday = (dataMapCheck(yesterdayStr) > 0);
 
@@ -269,16 +287,10 @@ export function ActivityCalendar({ userId }: ActivityCalendarProps) {
       activeDays,
       dailyAverage: activeDays > 0 ? Math.round(totalMinutes / activeDays) : 0
     };
-
-    function dataMapCheck(dateKey: string) {
-      const foundObj = sorted.find(s => s.dateString === dateKey);
-      return foundObj ? foundObj.minutes : 0;
-    }
-  };
-
-  const stats = calculateStreakStats();
+  }, [compositeData]);
 
   const [animateTrigger, setAnimateTrigger] = useState(false);
+  const [showGoalCelebration, setShowGoalCelebration] = useState(false);
   const [particles, setParticles] = useState<{ id: number; x: number; y: number; color: string; size: number; delay: number }[]>([]);
 
   const handleLogStudyTime = async (e: React.FormEvent) => {
@@ -289,6 +301,11 @@ export function ActivityCalendar({ userId }: ActivityCalendarProps) {
       setLogging(true);
       const todayString = new Date().toISOString().split('T')[0];
       const sessionsPath = `users/${userId}/study_sessions`;
+
+      // Gauge today's study minutes logged before inserting the new entry
+      const todaySession = compositeData.find(d => d.dateString === todayString);
+      const todayMinutesBefore = todaySession ? todaySession.minutes : 0;
+      const todayMinutesAfter = todayMinutesBefore + Number(minutesToLog);
 
       await addDoc(collection(db, sessionsPath), {
         userId,
@@ -301,16 +318,45 @@ export function ActivityCalendar({ userId }: ActivityCalendarProps) {
       setLogSuccess(true);
       setAnimateTrigger(true);
 
-      // SOW beautiful vibrant confetti particles
-      const newParticles = Array.from({ length: 40 }).map((_, i) => ({
-        id: Math.random() + i,
-        x: Math.floor(Math.random() * 80) + 10, // horizontal range 10% to 90%
-        y: Math.floor(Math.random() * 20) + 50, // cluster around the action section
-        color: ['#006e5d', '#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6', '#06b6d4', '#14b8a6'][Math.floor(Math.random() * 8)],
-        size: Math.floor(Math.random() * 8) + 6,
-        delay: Math.random() * 0.4
-      }));
-      setParticles(newParticles);
+      const isGoalCompleted = todayMinutesBefore < 45 && todayMinutesAfter >= 45;
+
+      if (isGoalCompleted) {
+        setShowGoalCelebration(true);
+        // Create 100 vibrant high-velocity confetti particles from multiple corners
+        const goalParticles = Array.from({ length: 110 }).map((_, i) => {
+          const originSector = i % 3;
+          let startX = 50;
+          let startY = 90;
+          if (originSector === 0) { // left corner
+            startX = Math.floor(Math.random() * 15) + 5;
+          } else if (originSector === 2) { // right corner
+            startX = Math.floor(Math.random() * 15) + 80;
+          } else { // center bottom
+            startX = Math.floor(Math.random() * 30) + 35;
+          }
+
+          return {
+            id: Math.random() + i * 14,
+            x: startX,
+            y: startY,
+            color: ['#006e5d', '#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6', '#ef4444', '#14b8a6', '#06b6d4', '#f43f5e'][Math.floor(Math.random() * 10)],
+            size: Math.floor(Math.random() * 9) + 6,
+            delay: Math.random() * 0.7
+          };
+        });
+        setParticles(goalParticles);
+      } else {
+        // Feed traditional celebratory confetti (40 particles)
+        const newParticles = Array.from({ length: 40 }).map((_, i) => ({
+          id: Math.random() + i,
+          x: Math.floor(Math.random() * 80) + 10, // horizontal range 10% to 90%
+          y: Math.floor(Math.random() * 20) + 50, // cluster around the action section
+          color: ['#006e5d', '#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6', '#06b6d4', '#14b8a6'][Math.floor(Math.random() * 8)],
+          size: Math.floor(Math.random() * 8) + 6,
+          delay: Math.random() * 0.4
+        }));
+        setParticles(newParticles);
+      }
 
       setTimeout(() => {
         setAnimateTrigger(false);
@@ -321,6 +367,12 @@ export function ActivityCalendar({ userId }: ActivityCalendarProps) {
         setShowLogForm(false);
         setParticles([]);
       }, 3500);
+
+      if (isGoalCompleted) {
+        setTimeout(() => {
+          setShowGoalCelebration(false);
+        }, 6000);
+      }
 
       // Refresh data
       await fetchSessions();
@@ -380,6 +432,64 @@ export function ActivityCalendar({ userId }: ActivityCalendarProps) {
               />
             ))}
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Daily Study Goal Completed Overlay Celebration Panel */}
+      <AnimatePresence>
+        {showGoalCelebration && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-slate-900/80 backdrop-blur-md z-45 flex items-center justify-center p-6 text-center"
+          >
+            <motion.div 
+              initial={{ scale: 0.8, y: 40 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.8, y: 40 }}
+              transition={{ type: 'spring', damping: 15, stiffness: 100 }}
+              className="bg-white rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl border border-amber-200/50 relative overflow-hidden"
+            >
+              {/* Internal ambient glowing circles */}
+              <div className="absolute -top-12 -left-12 w-32 h-32 bg-amber-200 rounded-full blur-3xl opacity-30 pointer-events-none" />
+              <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-emerald-100 rounded-full blur-3xl opacity-30 pointer-events-none" />
+              
+              <div className="relative z-10">
+                <motion.div 
+                  initial={{ rotate: -15, scale: 0.5 }}
+                  animate={{ rotate: [0, -10, 10, -5, 5, 0], scale: 1.1 }}
+                  transition={{ type: 'spring', delay: 0.15, duration: 1.0 }}
+                  className="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-5 border-4 border-amber-50"
+                >
+                  <span className="text-4xl">🏆</span>
+                </motion.div>
+                
+                <h3 className="text-xl font-black text-slate-900 tracking-tight">Daily Goal Reached!</h3>
+                <p className="text-[#006e5d] font-black text-[10px] uppercase tracking-widest mt-1.5 bg-emerald-50 px-3.5 py-1 rounded-full border border-emerald-100 inline-block">
+                  45m PREP TARGET CONQUERED
+                </p>
+                
+                <p className="text-slate-500 text-xs mt-3 leading-relaxed">
+                  Superb persistence! You have reached your high-efficiency daily goal. This study session cements your memory retention and maintains your streak! Let's conquer the exam! ⚡
+                </p>
+
+                <div className="mt-6 flex flex-col gap-2">
+                  <div className="bg-emerald-50/70 text-[#006e5d] p-3 rounded-2xl border border-emerald-100/60 flex items-center justify-center gap-2 font-bold text-xs">
+                    <CheckCircle2 size={16} className="text-[#006e5d]" />
+                    Today's Streak Secured!
+                  </div>
+                  
+                  <button 
+                    onClick={() => setShowGoalCelebration(false)}
+                    className="w-full mt-2 bg-[#006e5d] text-white hover:bg-[#005a4d] transition-colors py-3.5 rounded-2xl font-bold text-xs uppercase tracking-wider outline-none h-11"
+                  >
+                    Awesome, Thank you!
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
 

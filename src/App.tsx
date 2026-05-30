@@ -3,6 +3,7 @@ import { Helmet, HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SettingsProvider } from './context/SettingsContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { collection, getDocs, query, where, addDoc, setDoc, doc, limit } from 'firebase/firestore';
 import { db } from './lib/firebase';
 
@@ -351,11 +352,13 @@ export default function App() {
           {JSON.stringify(schema)}
         </script>
       </Helmet>
-      <SettingsProvider>
-        <AuthProvider>
-          <AppContent />
-        </AuthProvider>
-      </SettingsProvider>
+      <ThemeProvider>
+        <SettingsProvider>
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+        </SettingsProvider>
+      </ThemeProvider>
     </HelmetProvider>
   );
 }

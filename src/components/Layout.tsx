@@ -10,14 +10,18 @@ import {
   X,
   ChevronRight,
   MessageCircle,
-  Zap
+  Zap,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db } from '../lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
+import { useTheme } from '../context/ThemeContext';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAdmin } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -47,28 +51,28 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans text-[#001f19]">
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#02100d] flex flex-col font-sans text-[#001f19] dark:text-slate-200 transition-colors duration-300">
       {/* Navbar */}
-      <nav className="sticky top-0 z-50 w-full bg-white border-b border-slate-200">
+      <nav className="sticky top-0 z-50 w-full bg-white dark:bg-[#031d19] border-b border-slate-200 dark:border-emerald-950/50 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 lg:px-8">
           <div className="flex justify-between h-20 items-center">
             {/* Left side: Logo & Links */}
             <div className="flex items-center gap-8 xl:gap-12">
               <Link to="/" className="flex items-center">
-                <span className="font-logo font-black text-4xl tracking-tight text-[#006e5d]">PrepNext</span>
+                <span className="font-logo font-black text-4xl tracking-tight text-[#006e5d] dark:text-emerald-400">PrepNext</span>
               </Link>
 
               <div className="hidden lg:flex items-center gap-10">
-                <Link to="/exams" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/exams') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Exams</Link>
-                <Link to="/job-alerts" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/job-alerts') ? 'text-blue-600' : 'text-slate-600 hover:text-slate-900'}`}>Job Alerts</Link>
-                <Link to="/study-material" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/study-material') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Study Material</Link>
-                <Link to="/forum" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/forum') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Forum</Link>
-                <Link to="/live-tests" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/live-tests') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Live Tests</Link>
+                <Link to="/exams" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/exams') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>Exams</Link>
+                <Link to="/job-alerts" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/job-alerts') ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>Job Alerts</Link>
+                <Link to="/study-material" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/study-material') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>Study Material</Link>
+                <Link to="/forum" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/forum') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>Forum</Link>
+                <Link to="/live-tests" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/live-tests') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>Live Tests</Link>
                 {user && (
-                  <Link to="/dashboard" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/dashboard') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>My Library</Link>
+                  <Link to="/dashboard" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/dashboard') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>My Library</Link>
                 )}
                 {isAdmin && (
-                  <Link to="/admin" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/admin') ? 'text-[#006e5d]' : 'text-slate-600 hover:text-slate-900'}`}>Admin Panel</Link>
+                  <Link to="/admin" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/admin') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>Admin Panel</Link>
                 )}
               </div>
             </div>
@@ -102,6 +106,16 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   </div>
                 )}
                 
+                {/* Theme Toggle Button */}
+                <button
+                  onClick={toggleTheme}
+                  className="p-2.5 rounded-xl border border-slate-200 dark:border-emerald-950/50 text-slate-500 dark:text-emerald-400 hover:bg-slate-50 dark:hover:bg-emerald-950/25 hover:text-[#006e5d] dark:hover:text-emerald-300 transition-all focus:outline-none cursor-pointer"
+                  title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                  aria-label="Toggle Theme"
+                >
+                  {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                </button>
+
                 {/* Mobile Menu Button */}
                 <button 
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -122,7 +136,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="lg:hidden bg-white border-t border-slate-100 overflow-hidden"
+              className="lg:hidden bg-white dark:bg-[#031d19] border-t border-slate-100 dark:border-emerald-950/50 overflow-hidden"
             >
               <div className="px-4 py-6 space-y-4">
                 <Link 
