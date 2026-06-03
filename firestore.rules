@@ -180,6 +180,18 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // User Messages / Vouchers / Coupons
+    match /user_messages/{messageId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.userId == 'all' || isAdmin());
+      allow create: if isAdmin();
+      allow update: if isAdmin() || (
+        isSignedIn() && 
+        (resource.data.userId == request.auth.uid || resource.data.userId == 'all') &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy', 'deletedBy', 'archivedBy'])
+      );
+      allow delete: if isAdmin();
+    }
+
     // Job Alerts
     match /jobAlerts/{alertId} {
       allow read: if true;

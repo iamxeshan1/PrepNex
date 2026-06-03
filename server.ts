@@ -365,7 +365,7 @@ app.get("/api/health-check", async (req, res) => {
 
   app.post("/api/validate-coupon", async (req, res) => {
     try {
-      const { code } = req.body;
+      const { code, userId } = req.body;
       if (!code) return res.status(400).json({ error: "Coupon code is required" });
 
       const database = getDb();
@@ -382,19 +382,57 @@ app.get("/api/health-check", async (req, res) => {
           return res.status(404).json({ valid: false, message: "Invalid coupon code" });
         }
 
-        const couponData = q.docs[0].data();
+        const couponDoc = q.docs[0];
+        const couponData = couponDoc.data();
         const isActive = couponData.isActive === true || couponData.isActive === "true";
         
         if (!isActive) {
           console.log(`[Coupon Debug] Coupon "${normalizedCode}" is inactive`);
-          return res.status(404).json({ valid: false, message: "This coupon is expired or disabled" });
+          return res.status(400).json({ valid: false, message: "This coupon is expired or disabled" });
+        }
+
+        // Validity Checks
+        const now = new Date();
+        if (couponData.validFrom && now < new Date(couponData.validFrom)) {
+          return res.status(400).json({ valid: false, message: "This coupon is not active yet" });
+        }
+        if (couponData.validTo && now > new Date(couponData.validTo)) {
+          return res.status(400).json({ valid: false, message: "This coupon has expired" });
+        }
+
+        // Usage limit checks
+        const totalUsageLimit = couponData.totalUsageLimit;
+        const usageLimitType = couponData.usageLimitType;
+
+        if (usageLimitType === 'one_time_total' || usageLimitType === 'limited' || usageLimitType === 'one_time_user') {
+          // Count total usages of this coupon code from subscriptions and premium_subscriptions
+          const subQuery = await database.collection("subscriptions").where("couponCode", "==", normalizedCode).get();
+          const premQuery = await database.collection("premium_subscriptions").where("couponCode", "==", normalizedCode).get();
+          const totalUsed = subQuery.size + premQuery.size;
+
+          if (usageLimitType === 'one_time_total' && totalUsed >= 1) {
+            return res.status(400).json({ valid: false, message: "This coupon usage limit has been reached" });
+          }
+
+          if (usageLimitType === 'limited' && typeof totalUsageLimit === 'number' && totalUsed >= totalUsageLimit) {
+            return res.status(400).json({ valid: false, message: "This coupon usage limit has been reached" });
+          }
+
+          if (usageLimitType === 'one_time_user' && userId) {
+            const userSubFilter = subQuery.docs.some(doc => doc.data().userId === userId);
+            const userPremFilter = premQuery.docs.some(doc => doc.data().userId === userId);
+            if (userSubFilter || userPremFilter) {
+               return res.status(400).json({ valid: false, message: "You have already used this coupon code" });
+            }
+          }
         }
 
         console.log(`[Coupon Debug] Validated:`, couponData);
         res.json({ 
           valid: true, 
           discountType: couponData.discountType, 
-          discountValue: couponData.discountValue 
+          discountValue: couponData.discountValue,
+          minAmount: couponData.minAmount 
         });
       } catch (queryErr: any) {
         console.error(`[Coupon Debug] Firestore error:`, queryErr.message);

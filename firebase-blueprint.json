@@ -197,7 +197,11 @@
         "discountType": { "type": "string", "enum": ["fixed", "percentage"] },
         "discountValue": { "type": "number" },
         "isActive": { "type": "boolean" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "usageLimitType": { "type": "string", "enum": ["unlimited", "one_time_total", "one_time_user", "limited"] },
+        "totalUsageLimit": { "type": "number" },
+        "validFrom": { "type": "string", "format": "date-time" },
+        "validTo": { "type": "string", "format": "date-time" }
       },
       "required": ["code", "discountType", "discountValue", "isActive"]
     },
@@ -254,6 +258,25 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["sessionId", "userId", "date", "minutes"]
+    },
+    "UserMessage": {
+      "title": "UserMessage",
+      "description": "Direct message, gift voucher, or coupon sent by admin to a single user or all users.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string", "enum": ["message", "voucher", "coupon"] },
+        "code": { "type": "string" },
+        "senderId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "readBy": { "type": "array", "items": { "type": "string" } },
+        "deletedBy": { "type": "array", "items": { "type": "string" } },
+        "archivedBy": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["userId", "title", "content", "type", "createdAt"]
     }
   },
   "firestore": {
@@ -272,6 +295,7 @@
     "liveTests": { "schema": "LiveTest", "description": "Scheduled live tests" },
     "coupons": { "schema": "Coupon", "description": "Discount coupons" },
     "tickets": { "schema": "Ticket", "description": "Support tickets" },
-    "notifications": { "schema": "Notification", "description": "Push notifications" }
+    "notifications": { "schema": "Notification", "description": "Push notifications" },
+    "user_messages": { "schema": "UserMessage", "description": "Inboxes messaging system for announcements or targeted vouchers" }
   }
 }

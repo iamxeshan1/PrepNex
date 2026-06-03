@@ -33,6 +33,11 @@ export default function AdminCoupons() {
   const [discountValue, setDiscountValue] = useState('');
   const [minAmount, setMinAmount] = useState('');
   const [isActive, setIsActive] = useState(true);
+  const [usageLimitType, setUsageLimitType] = useState<string>('unlimited');
+  const [totalUsageLimit, setTotalUsageLimit] = useState<string>('');
+  const [validFrom, setValidFrom] = useState<string>('');
+  const [validTo, setValidTo] = useState<string>('');
+  const [usageCounts, setUsageCounts] = useState<{[key: string]: number}>({});
 
   // Usage Modal State
   const [usageModalOpen, setUsageModalOpen] = useState(false);
@@ -42,9 +47,32 @@ export default function AdminCoupons() {
 
   const fetchCoupons = async () => {
     setLoading(true);
-    const snap = await getDocs(collection(db, 'coupons'));
-    setCoupons(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    setLoading(false);
+    try {
+      const snap = await getDocs(collection(db, 'coupons'));
+      setCoupons(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+
+      // Fetch usage counts to display in list!
+      const q1 = await getDocs(collection(db, 'subscriptions'));
+      const q2 = await getDocs(collection(db, 'premium_subscriptions'));
+      
+      const counts: {[key: string]: number} = {};
+      const processSnap = (s: any) => {
+        s.forEach((docSnap: any) => {
+          const couponCode = docSnap.data().couponCode;
+          if (couponCode) {
+            const codeUpper = couponCode.trim().toUpperCase();
+            counts[codeUpper] = (counts[codeUpper] || 0) + 1;
+          }
+        });
+      };
+      processSnap(q1);
+      processSnap(q2);
+      setUsageCounts(counts);
+    } catch (err) {
+      console.error("Error loading coupons data:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchCoupons(); }, []);
@@ -59,9 +87,21 @@ export default function AdminCoupons() {
         discountValue: Number(discountValue),
         minAmount: discountType === 'fixed' && minAmount ? Number(minAmount) : null,
         isActive,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        usageLimitType,
+        totalUsageLimit: (usageLimitType === 'limited' && totalUsageLimit) ? Number(totalUsageLimit) : (usageLimitType === 'one_time_total' ? 1 : null),
+        validFrom: validFrom ? new Date(validFrom).toISOString() : null,
+        validTo: validTo ? new Date(validTo).toISOString() : null
       });
-      setCode(''); setDiscountValue(''); setMinAmount(''); setDiscountType('fixed'); setIsActive(true);
+      setCode(''); 
+      setDiscountValue(''); 
+      setMinAmount(''); 
+      setDiscountType('fixed'); 
+      setIsActive(true);
+      setUsageLimitType('unlimited');
+      setTotalUsageLimit('');
+      setValidFrom('');
+      setValidTo('');
       setShowAdd(false);
       fetchCoupons();
     } catch (err) {
@@ -226,6 +266,49 @@ export default function AdminCoupons() {
                  />
                </div>
              )}
+
+             <div>
+               <label className="block text-sm font-semibold text-slate-700 mb-2">Usage Limit Type</label>
+               <select 
+                 className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-[#006e5d] focus:border-[#006e5d] text-sm font-medium"
+                 value={usageLimitType} onChange={(e) => setUsageLimitType(e.target.value)}
+               >
+                 <option value="unlimited">Unlimited Usage</option>
+                 <option value="one_time_total">One-Time Use (Single global use across all users)</option>
+                 <option value="one_time_user">Once Per User (Each student can use only once)</option>
+                 <option value="limited">Specific Limit (Certain number of maximum global uses)</option>
+               </select>
+             </div>
+
+             {usageLimitType === 'limited' && (
+               <div>
+                 <label className="block text-sm font-semibold text-slate-700 mb-2">Max Uses Count</label>
+                 <input 
+                   type="number" required
+                   className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-[#006e5d] focus:border-[#006e5d] font-bold text-[#002f26]"
+                   value={totalUsageLimit} onChange={(e) => setTotalUsageLimit(e.target.value)} 
+                   placeholder="e.g. 50"
+                 />
+               </div>
+             )}
+
+             <div>
+               <label className="block text-sm font-semibold text-slate-700 mb-2">Valid From (Optional)</label>
+               <input 
+                 type="datetime-local"
+                 className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-[#006e5d] focus:border-[#006e5d] text-sm font-medium text-[#002f26]"
+                 value={validFrom} onChange={(e) => setValidFrom(e.target.value)} 
+               />
+             </div>
+
+             <div>
+               <label className="block text-sm font-semibold text-slate-700 mb-2">Valid To / Expiry (Optional)</label>
+               <input 
+                 type="datetime-local"
+                 className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-[#006e5d] focus:border-[#006e5d] text-sm font-medium text-[#002f26]"
+                 value={validTo} onChange={(e) => setValidTo(e.target.value)} 
+               />
+             </div>
            </div>
 
            <div className="mt-8 flex items-center gap-6">
@@ -269,67 +352,129 @@ export default function AdminCoupons() {
               <tr className="border-b border-slate-200 text-xs font-bold text-slate-400 uppercase tracking-wider bg-slate-50">
                 <th className="p-4 pl-6 font-semibold">Code</th>
                 <th className="p-4 font-semibold">Value</th>
+                <th className="p-4 font-semibold">Limit Info</th>
+                <th className="p-4 font-semibold">Validity</th>
                 <th className="p-4 font-semibold">Status</th>
                 <th className="p-4 pr-6 text-right font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((coupon) => (
-                <tr key={coupon.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
-                  <td className="p-4 pl-6">
-                    <div className="flex items-center gap-4">
-                       <div className="w-10 h-10 rounded-lg bg-[#006e5d]/5 text-[#006e5d] border border-[#006e5d]/10 flex items-center justify-center">
-                          <Ticket className="w-5 h-5" />
-                       </div>
-                       <div>
-                         <p className="font-black text-slate-900 group-hover:text-[#006e5d] transition-colors uppercase tracking-wider text-sm mt-0.5">
-                           {coupon.code}
-                         </p>
-                         {coupon.minAmount && (
-                            <p className="text-[10px] font-bold text-emerald-600 mt-0.5 uppercase tracking-wider">Min ₹{coupon.minAmount}</p>
+              {filtered.map((coupon) => {
+                const totalUsed = usageCounts[coupon.code.toUpperCase()] || 0;
+                let limitLabel = "Unlimited Usage";
+                let limitReached = false;
+                
+                if (coupon.usageLimitType === 'one_time_total') {
+                  limitLabel = `One-Time Use (${totalUsed}/1 used)`;
+                  if (totalUsed >= 1) limitReached = true;
+                } else if (coupon.usageLimitType === 'one_time_user') {
+                  limitLabel = "Once Per User";
+                } else if (coupon.usageLimitType === 'limited' && coupon.totalUsageLimit) {
+                  limitLabel = `Max ${coupon.totalUsageLimit} Uses (${totalUsed}/${coupon.totalUsageLimit} used)`;
+                  if (totalUsed >= coupon.totalUsageLimit) limitReached = true;
+                }
+
+                const now = new Date();
+                let validityLabel = "Always Available";
+                let isExpired = false;
+                let isNotYetActive = false;
+
+                if (coupon.validFrom && now < new Date(coupon.validFrom)) {
+                  isNotYetActive = true;
+                  validityLabel = `Starts: ${new Date(coupon.validFrom).toLocaleDateString()}`;
+                }
+                if (coupon.validTo) {
+                  const toDate = new Date(coupon.validTo);
+                  validityLabel = `Expires: ${toDate.toLocaleDateString()}`;
+                  if (now > toDate) {
+                    isExpired = true;
+                    validityLabel = `Expired (${toDate.toLocaleDateString()})`;
+                  }
+                }
+                if (coupon.validFrom && coupon.validTo && !isExpired && !isNotYetActive) {
+                  validityLabel = `Valid until ${new Date(coupon.validTo).toLocaleDateString()}`;
+                }
+
+                return (
+                  <tr key={coupon.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
+                    <td className="p-4 pl-6">
+                      <div className="flex items-center gap-4">
+                         <div className="w-10 h-10 rounded-lg bg-[#006e5d]/5 text-[#006e5d] border border-[#006e5d]/10 flex items-center justify-center">
+                            <Ticket className="w-5 h-5" />
+                         </div>
+                         <div>
+                           <p className="font-black text-slate-900 group-hover:text-[#006e5d] transition-colors uppercase tracking-wider text-sm mt-0.5">
+                             {coupon.code}
+                           </p>
+                           {coupon.minAmount && (
+                              <p className="text-[10px] font-bold text-emerald-600 mt-0.5 uppercase tracking-wider">Min ₹{coupon.minAmount}</p>
+                           )}
+                         </div>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                       <span className="text-sm font-black text-[#002f26]">
+                          {coupon.discountType === 'fixed' ? `₹${coupon.discountValue}` : `${coupon.discountValue}%`} OFF
+                       </span>
+                    </td>
+                    <td className="p-4">
+                       <div className="flex flex-col">
+                         <span className={`text-xs font-semibold ${limitReached ? 'text-rose-600 font-bold' : 'text-slate-600'}`}>
+                           {limitLabel}
+                         </span>
+                         {limitReached && (
+                           <span className="text-[10px] text-rose-500 font-extrabold uppercase tracking-wide">Limit Reached</span>
                          )}
                        </div>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                     <span className="text-sm font-black text-[#002f26]">
-                        {coupon.discountType === 'fixed' ? `₹${coupon.discountValue}` : `${coupon.discountValue}%`} OFF
-                     </span>
-                  </td>
-                  <td className="p-4">
-                     <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest ${
-                       coupon.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
-                     }`}>
-                        <div className={`w-1.5 h-1.5 rounded-full ${coupon.isActive ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                        {coupon.isActive ? 'Active' : 'Inactive'}
-                     </span>
-                  </td>
-                  <td className="p-4 pr-6 text-right">
-                     <div className="flex items-center justify-end gap-2 text-slate-400">
-                        <button 
-                           onClick={() => viewCouponUsage(coupon)}
-                           className="p-2 rounded hover:bg-[#006e5d]/5 text-[#006e5d] transition-colors" 
-                           title="View Usage"
-                        >
-                           <Users className="w-4 h-4" />
-                        </button>
-                        <button 
-                           onClick={() => toggleStatus(coupon.id, coupon.isActive)}
-                           className={`p-2 rounded transition-colors ${coupon.isActive ? 'hover:bg-amber-50 text-amber-500' : 'hover:bg-emerald-50 text-emerald-500'}`} 
-                           title={coupon.isActive ? "Deactivate" : "Activate"}
-                        >
-                           {coupon.isActive ? <Power className="w-4 h-4" /> : <Activity className="w-4 h-4" />}
-                        </button>
-                        <button onClick={() => handleDelete(coupon.id)} className="p-2 hover:bg-red-50 rounded text-red-500 transition-colors" title="Delete">
-                           <Trash2 className="w-4 h-4" />
-                        </button>
-                     </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="p-4">
+                       <div className="flex flex-col">
+                         <span className={`text-xs font-semibold ${isExpired ? 'text-rose-500 font-bold' : isNotYetActive ? 'text-amber-600 font-semibold' : 'text-slate-500'}`}>
+                           {validityLabel}
+                         </span>
+                         {isExpired && (
+                           <span className="text-[10px] text-rose-500 font-extrabold uppercase tracking-wide">Expired</span>
+                         )}
+                         {isNotYetActive && (
+                           <span className="text-[10px] text-amber-500 font-extrabold uppercase tracking-wide">Not Active Yet</span>
+                         )}
+                       </div>
+                    </td>
+                    <td className="p-4">
+                       <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest ${
+                         (coupon.isActive && !limitReached && !isExpired && !isNotYetActive) ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                       }`}>
+                          <div className={`w-1.5 h-1.5 rounded-full ${(coupon.isActive && !limitReached && !isExpired && !isNotYetActive) ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                          {(coupon.isActive && !limitReached && !isExpired && !isNotYetActive) ? 'Active' : (limitReached ? 'Limit Reached' : isExpired ? 'Expired' : isNotYetActive ? 'Pending' : 'Inactive')}
+                       </span>
+                    </td>
+                    <td className="p-4 pr-6 text-right">
+                       <div className="flex items-center justify-end gap-2 text-slate-400">
+                          <button 
+                             onClick={() => viewCouponUsage(coupon)}
+                             className="p-2 rounded hover:bg-[#006e5d]/5 text-[#006e5d] transition-colors" 
+                             title="View Usage"
+                          >
+                             <Users className="w-4 h-4" />
+                          </button>
+                          <button 
+                             onClick={() => toggleStatus(coupon.id, coupon.isActive)}
+                             className={`p-2 rounded transition-colors ${coupon.isActive ? 'hover:bg-amber-50 text-amber-500' : 'hover:bg-emerald-50 text-emerald-500'}`} 
+                             title={coupon.isActive ? "Deactivate" : "Activate"}
+                          >
+                             {coupon.isActive ? <Power className="w-4 h-4" /> : <Activity className="w-4 h-4" />}
+                          </button>
+                          <button onClick={() => handleDelete(coupon.id)} className="p-2 hover:bg-red-50 rounded text-red-500 transition-colors" title="Delete">
+                             <Trash2 className="w-4 h-4" />
+                          </button>
+                       </div>
+                    </td>
+                  </tr>
+                );
+              })}
               {filtered.length === 0 && (
                 <tr>
-                   <td colSpan={4} className="p-8 text-center text-slate-500">No coupons found.</td>
+                   <td colSpan={6} className="p-8 text-center text-slate-500">No coupons found.</td>
                 </tr>
               )}
             </tbody>

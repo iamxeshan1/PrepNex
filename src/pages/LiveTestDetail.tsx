@@ -40,17 +40,77 @@ export default function LiveTestDetail() {
     setCouponLoading(true);
     setCouponError('');
     try {
-      const codeUpper = couponCode.toUpperCase();
-      const q = query(collection(db, 'coupons'), where('code', '==', codeUpper), where('isActive', '==', true), limit(1));
+      const codeUpper = couponCode.trim().toUpperCase();
+      const q = query(collection(db, 'coupons'), where('code', '==', codeUpper), limit(1));
       const snap = await getDocs(q);
       
       if (snap.empty) {
         setCouponError('Invalid or expired coupon code.');
         setAppliedCoupon(null);
-      } else {
-        const couponData = snap.docs[0].data();
-        setAppliedCoupon({ id: snap.docs[0].id, ...couponData });
+        return;
       }
+
+      const couponData = snap.docs[0].data();
+      const isActive = couponData.isActive === true || couponData.isActive === "true";
+
+      if (!isActive) {
+        setCouponError('This coupon is expired or disabled.');
+        setAppliedCoupon(null);
+        return;
+      }
+
+      // Validity checks
+      const now = new Date();
+      if (couponData.validFrom && now < new Date(couponData.validFrom)) {
+        setCouponError('This coupon is not active yet.');
+        setAppliedCoupon(null);
+        return;
+      }
+      if (couponData.validTo && now > new Date(couponData.validTo)) {
+        setCouponError('This coupon has expired.');
+        setAppliedCoupon(null);
+        return;
+      }
+
+      // Usage limit checks
+      const limitType = couponData.usageLimitType;
+      if (limitType === 'one_time_total' || limitType === 'limited' || limitType === 'one_time_user') {
+        const qSub = query(collection(db, 'subscriptions'), where('couponCode', '==', codeUpper));
+        const qPrem = query(collection(db, 'premium_subscriptions'), where('couponCode', '==', codeUpper));
+        const [snapSub, snapPrem] = await Promise.all([getDocs(qSub), getDocs(qPrem)]);
+        const totalUsed = snapSub.size + snapPrem.size;
+
+        if (limitType === 'one_time_total' && totalUsed >= 1) {
+          setCouponError('This coupon usage limit has been reached.');
+          setAppliedCoupon(null);
+          return;
+        }
+
+        if (limitType === 'limited' && couponData.totalUsageLimit && totalUsed >= Number(couponData.totalUsageLimit)) {
+          setCouponError('This coupon usage limit has been reached.');
+          setAppliedCoupon(null);
+          return;
+        }
+
+        if (limitType === 'one_time_user' && user?.uid) {
+          const usedByMe = snapSub.docs.some(doc => doc.data().userId === user.uid) || 
+                           snapPrem.docs.some(doc => doc.data().userId === user.uid);
+          if (usedByMe) {
+            setCouponError('You have already used this coupon code.');
+            setAppliedCoupon(null);
+            return;
+          }
+        }
+      }
+
+      const basePrice = getBasePrice();
+      if (couponData.discountType === 'fixed' && couponData.minAmount && basePrice < couponData.minAmount) {
+         setCouponError(`This coupon requires a minimum purchase of ₹${couponData.minAmount}`);
+         setAppliedCoupon(null);
+         return;
+      }
+
+      setAppliedCoupon({ id: snap.docs[0].id, ...couponData });
     } catch (err) {
       setCouponError('Error applying coupon. Please try again.');
     } finally {
