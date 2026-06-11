@@ -25,7 +25,6 @@ const AdminExams = React.lazy(() => import('./pages/Admin/Exams'));
 const AdminTests = React.lazy(() => import('./pages/Admin/Tests'));
 const AdminQuestions = React.lazy(() => import('./pages/Admin/Questions'));
 const AdminSettings = React.lazy(() => import('./pages/Admin/Settings'));
-const AdminNotices = React.lazy(() => import('./pages/Admin/Notices'));
 const AdminThoughts = React.lazy(() => import('./pages/Admin/Thoughts'));
 const AdminSubjects = React.lazy(() => import('./pages/Admin/Subjects'));
 const AdminRevenue = React.lazy(() => import('./pages/Admin/Revenue'));
@@ -167,11 +166,6 @@ export function AppContent() {
           <Route path="/admin/popup-announcement" element={
             <ProtectedRoute adminOnly>
               <AdminPopupAnnouncement />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/notices" element={
-            <ProtectedRoute adminOnly>
-              <AdminNotices />
             </ProtectedRoute>
           } />
           <Route path="/admin/thoughts" element={

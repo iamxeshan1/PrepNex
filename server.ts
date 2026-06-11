@@ -9,8 +9,30 @@ import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getMessaging } from "firebase-admin/messaging";
 import nodemailer from "nodemailer";
 import fs from "fs";
+import { GoogleGenAI, Type } from "@google/genai";
 
 dotenv.config();
+
+let aiClient: any = null;
+
+function getAiClient() {
+  if (!aiClient) {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) {
+      throw new Error("GEMINI_API_KEY environment variable is required to generate questions.");
+    }
+    aiClient = new GoogleGenAI({
+      apiKey: key,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        }
+      }
+    });
+  }
+  return aiClient;
+}
+
 
 // Ensure app is initialized at startup
 const configPath = path.join(process.cwd(), "firebase-applet-config.json");
@@ -470,6 +492,69 @@ app.get("/api/health-check", async (req, res) => {
     } catch (err: any) {
       console.error("[Debug API] Error:", err);
       res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/admin/generate-questions-ai", async (req, res) => {
+    try {
+      const { subjectName, level, topic, additionalInstructions, examName } = req.body;
+      if (!subjectName) {
+        return res.status(400).json({ error: "Subject/Domain name is required." });
+      }
+
+      const ai = getAiClient();
+      
+      let prompt = `Generate exactly 10 high-quality, multiple choice questions for the subject/domain "${subjectName}".\n`;
+      prompt += `Target Exam Standard: "${examName || 'General Exam'}"\n`;
+      prompt += `Difficulty Level Requested: "${level || 'Medium'}" (Please align difficulty & syllabus style with the standards of the ${examName || 'General'} Exam).\n`;
+      
+      if (topic && topic.trim() !== '') {
+        prompt += `Focus specifically on the following topic or sub-theme: "${topic.trim()}".\n`;
+      }
+      if (additionalInstructions && additionalInstructions.trim() !== '') {
+        prompt += `Follow these additional instructions: "${additionalInstructions.trim()}".\n`;
+      }
+      prompt += `\nEach question must have exactly 4 options. The 'correctAnswer' must match one of the options verbatim. Set the 'previouslyAskedIn' property to either "${examName || 'Practice'}" or something like "${examName || 'Practice'} previous years" if highly realistic. Make the questions premium quality, accurate and challenging.`;
+
+      console.log("[AI API] Sending prompt to Gemini:", prompt);
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            description: "An array of exactly 10 multiple choice questions.",
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                question: { type: Type.STRING, description: "The quiz question text." },
+                options: {
+                  type: Type.ARRAY,
+                  items: { type: Type.STRING },
+                  description: "Array of exactly 4 option strings."
+                },
+                correctAnswer: { type: Type.STRING, description: "One of the options that represents the correct answer. Must be identical to the option text." },
+                explanation: { type: Type.STRING, description: "Detailed summary explaining why this answer is correct." },
+                previouslyAskedIn: { type: Type.STRING, description: "Name of the reference exam if applicable, or empty." }
+              },
+              required: ["question", "options", "correctAnswer", "explanation"]
+            }
+          }
+        }
+      });
+
+      const text = response.text;
+      if (!text) {
+        throw new Error("No response text received from Gemini.");
+      }
+
+      const questions = JSON.parse(text.trim());
+      res.json({ success: true, questions });
+    } catch (err: any) {
+      console.error("[AI API] Error generating questions:", err);
+      res.status(500).json({ error: err.message || "Failed to generate questions with AI" });
     }
   });
 

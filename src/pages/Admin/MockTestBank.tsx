@@ -38,6 +38,27 @@ export default function MockTestBank() {
   const [importing, setImporting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // AI Question Generation State
+  const [showAiGen, setShowAiGen] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiSubjectId, setAiSubjectId] = useState('');
+  const [aiSubjectName, setAiSubjectName] = useState('');
+  const [aiLevel, setAiLevel] = useState<'Easy' | 'Medium' | 'Hard' | 'UGC NET'>('Medium');
+  const [aiExamName, setAiExamName] = useState<string>('JKSSB');
+  const [aiCustomExamName, setAiCustomExamName] = useState<string>('');
+  const [aiTopic, setAiTopic] = useState('');
+  const [aiInstructions, setAiInstructions] = useState('');
+  const [aiResults, setAiResults] = useState<any[]>([]);
+  const [editingGeneratedIdx, setEditingGeneratedIdx] = useState<number | null>(null);
+  const [tempGenQ, setTempGenQ] = useState<any>({
+    question: '',
+    options: ['', '', '', ''],
+    correctAnswer: '',
+    explanation: '',
+    previouslyAskedIn: ''
+  });
+  const [aiError, setAiError] = useState<string | null>(null);
+
   // New Question Form State
   const [newQ, setNewQ] = useState({
     subjectId: '',
@@ -73,6 +94,104 @@ export default function MockTestBank() {
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGenerateAiQuestions = async () => {
+    if (!aiSubjectId && !aiSubjectName) {
+      setAiError("Please select or enter a subject first.");
+      return;
+    }
+    setAiGenerating(true);
+    setAiError(null);
+    try {
+      const response = await fetch('/api/admin/generate-questions-ai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          subjectName: aiSubjectName || (aiSubjectId === 'new' ? '' : subjects.find(s => s.id === aiSubjectId)?.name),
+          level: aiLevel,
+          topic: aiTopic,
+          additionalInstructions: aiInstructions,
+          examName: aiExamName === 'Other' ? aiCustomExamName : aiExamName
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed server execution");
+      }
+
+      const data = await response.json();
+      if (data.success && Array.isArray(data.questions)) {
+        setAiResults(data.questions);
+      } else {
+        throw new Error("Invalid response format received from AI.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setAiError(err.message || "A network or validation error occurred.");
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
+  const handleSaveAllAiQuestions = async () => {
+    try {
+      const batch = writeBatch(db);
+      let targetSubjectId = aiSubjectId;
+
+      if (aiSubjectId === 'new' && aiSubjectName.trim()) {
+        const existingSubject = subjects.find(s => s.name?.toLowerCase() === aiSubjectName.trim().toLowerCase());
+        if (existingSubject) {
+          targetSubjectId = existingSubject.id;
+        } else {
+          const subRef = await addDoc(collection(db, 'subjects'), {
+            name: aiSubjectName.trim(),
+            createdAt: new Date().toISOString(),
+            description: '',
+            icon: 'BookOpen'
+          });
+          targetSubjectId = subRef.id;
+        }
+      }
+
+      const finalExamName = aiExamName === 'Other' ? aiCustomExamName : aiExamName;
+
+      for (const q of aiResults) {
+        const qRef = doc(collection(db, 'questions'));
+        batch.set(qRef, {
+          testId: 'MASTER_BANK',
+          subjectId: targetSubjectId,
+          level: aiLevel,
+          question: q.question,
+          options: q.options.map(String),
+          correctAnswer: String(q.correctAnswer),
+          explanation: q.explanation || '',
+          previouslyAskedIn: q.previouslyAskedIn || finalExamName || '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      }
+
+      await batch.commit();
+      
+      // Cleanup
+      setAiResults([]);
+      setShowAiGen(false);
+      setAiTopic('');
+      setAiInstructions('');
+      setAiSubjectId('');
+      setAiSubjectName('');
+      setAiExamName('JKSSB');
+      setAiCustomExamName('');
+      // Refresh
+      fetchData();
+    } catch (err: any) {
+      console.error("Failed to commit AI generated questions:", err);
+      setAiError("Failed saving to DB: " + err.message);
     }
   };
 
@@ -213,15 +332,18 @@ export default function MockTestBank() {
            <p className="text-slate-500 font-medium">Master repository for all questions used in mock tests.</p>
         </div>
         <div className="flex items-center gap-3">
-           <button onClick={downloadSample} className="px-5 py-2.5 bg-white border border-slate-300 rounded-lg font-semibold text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
-              <Download className="w-4 h-4" /> Download Template
-           </button>
-           <button onClick={() => setShowImport(!showImport)} className="px-5 py-2.5 bg-teal-50 border border-teal-200 rounded-lg font-semibold text-sm text-teal-700 hover:bg-teal-100 transition-colors flex items-center gap-2">
-              <Upload className="w-4 h-4" /> Bulk Upload CSV
-           </button>
-           <button onClick={() => setShowAddForm(true)} className="px-5 py-2.5 bg-teal-700 text-white rounded-lg font-semibold text-sm shadow-sm hover:bg-teal-800 transition-colors flex items-center gap-2">
-              <Plus className="w-4 h-4" /> Add Question
-           </button>
+            <button onClick={downloadSample} className="px-5 py-2.5 bg-white border border-slate-300 rounded-lg font-semibold text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2">
+               <Download className="w-4 h-4" /> Download Template
+            </button>
+            <button onClick={() => { setShowImport(!showImport); setShowAddForm(false); setShowAiGen(false); }} className="px-5 py-2.5 bg-teal-50 border border-teal-200 rounded-lg font-semibold text-sm text-teal-700 hover:bg-teal-100 transition-colors flex items-center gap-2">
+               <Upload className="w-4 h-4" /> Bulk Upload CSV
+            </button>
+            <button onClick={() => { setShowAiGen(!showAiGen); setShowAddForm(false); setShowImport(false); setAiResults([]); }} className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg font-semibold text-sm shadow-sm transition-all flex items-center gap-2">
+               <Sparkles className="w-4 h-4 animate-pulse" /> Generate with AI
+            </button>
+            <button onClick={() => { setShowAddForm(!showAddForm); setShowImport(false); setShowAiGen(false); }} className="px-5 py-2.5 bg-teal-700 text-white rounded-lg font-semibold text-sm shadow-sm hover:bg-teal-800 transition-colors flex items-center gap-2">
+               <Plus className="w-4 h-4" /> Add Question
+            </button>
         </div>
       </div>
 
@@ -235,6 +357,355 @@ export default function MockTestBank() {
             <h3 className="text-xl font-bold text-slate-900">{importing ? 'Importing Data...' : 'Click to Upload Dataset'}</h3>
             <p className="text-sm font-medium text-slate-500 mt-2">XLSX or CSV files following the template format</p>
           </label>
+        </div>
+      )}
+
+      {showAiGen && (
+        <div className="bg-gradient-to-br from-indigo-50/10 to-purple-50/40 p-8 rounded-xl border border-purple-200 shadow-sm mb-8 relative">
+           <button type="button" onClick={() => { setShowAiGen(false); setAiResults([]); }} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-rose-600 transition-colors">
+              <X className="w-5 h-5" />
+           </button>
+
+           <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="w-6 h-6 text-purple-600 animate-pulse" />
+              <h3 className="text-xl font-bold text-slate-900 font-sans">Generate Questions with AI (Gemini 3.5 Flash)</h3>
+           </div>
+           <p className="text-sm text-slate-500 mb-6">Create 10 premium multiple-choice questions instantly for your targeted exam standard. Review, edit, and fine-tune each question, then bulk-add them directly into your database.</p>
+
+           {aiResults.length === 0 ? (
+              <div className="space-y-6">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                    <div>
+                       <label className="block text-sm font-bold text-slate-700 mb-2">Subject / Domain</label>
+                       <div className="space-y-3">
+                          <select 
+                             required
+                             className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 bg-white text-sm font-medium text-slate-800"
+                             value={aiSubjectId}
+                             onChange={e => {
+                               setAiSubjectId(e.target.value);
+                               if (e.target.value !== 'new') {
+                                 const selected = subjects.find(s => s.id === e.target.value);
+                                 setAiSubjectName(selected ? selected.name : '');
+                               } else {
+                                 setAiSubjectName('');
+                               }
+                             }}
+                          >
+                             <option value="">Select Domain</option>
+                             {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                             <option value="new">+ Create New Domain</option>
+                          </select>
+                          {aiSubjectId === 'new' && (
+                             <input 
+                                required
+                                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 text-sm font-medium text-slate-800"
+                                placeholder="New Domain Name (e.g. Constitutional Law)"
+                                value={aiSubjectName}
+                                onChange={e => setAiSubjectName(e.target.value)}
+                             />
+                          )}
+                       </div>
+                    </div>
+
+                    <div>
+                       <label className="block text-sm font-bold text-slate-700 mb-2">Target Exam</label>
+                       <div className="space-y-3">
+                          <select 
+                             className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 bg-white text-sm font-medium text-slate-800"
+                             value={aiExamName}
+                             onChange={e => setAiExamName(e.target.value)}
+                          >
+                             <option value="JKSSB">JKSSB</option>
+                             <option value="JKPSC">JKPSC</option>
+                             <option value="UPSC">UPSC</option>
+                             <option value="RRB">RRB</option>
+                             <option value="SSC">SSC</option>
+                             <option value="Other">Other / Custom Exam</option>
+                          </select>
+                          {aiExamName === 'Other' && (
+                             <input 
+                                required
+                                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 text-sm font-medium text-slate-800"
+                                placeholder="Specify custom exam (e.g. UGC NET, GATE)"
+                                value={aiCustomExamName}
+                                onChange={e => setAiCustomExamName(e.target.value)}
+                             />
+                          )}
+                       </div>
+                    </div>
+
+                    <div>
+                       <label className="block text-sm font-bold text-slate-700 mb-2">Difficulty Level</label>
+                       <select 
+                          className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 bg-white text-sm font-medium text-slate-800"
+                          value={aiLevel}
+                          onChange={e => setAiLevel(e.target.value as any)}
+                       >
+                          <option value="Easy">Easy</option>
+                          <option value="Medium">Medium</option>
+                          <option value="Hard">Hard</option>
+                          <option value="UGC NET">UGC NET</option>
+                       </select>
+                       <p className="text-xs text-slate-400 mt-1.5 font-medium italic">Select the target difficulty standard for the generated questions.</p>
+                    </div>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+                    <div>
+                       <label className="block text-sm font-bold text-slate-700 mb-2">Specific Topic / Keywords (Optional)</label>
+                       <input 
+                          type="text"
+                          placeholder="e.g. Preamble, Photosynthesis, Thermodynamics, Hooks..."
+                          className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 text-sm font-medium text-slate-800"
+                          value={aiTopic}
+                          onChange={e => setAiTopic(e.target.value)}
+                       />
+                    </div>
+
+                    <div>
+                       <label className="block text-sm font-bold text-slate-700 mb-2">Additional Instructions (Optional)</label>
+                       <input 
+                          type="text"
+                          placeholder="e.g. Include conceptual trick-questions, keep the options short..."
+                          className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 text-sm font-medium text-slate-800"
+                          value={aiInstructions}
+                          onChange={e => setAiInstructions(e.target.value)}
+                       />
+                    </div>
+                 </div>
+
+                 {aiError && (
+                    <div className="p-4 bg-red-50 text-red-700 text-sm font-semibold rounded-lg flex items-center gap-2 border border-red-100">
+                       <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
+                       <span>{aiError}</span>
+                    </div>
+                 )}
+
+                 <div className="pt-2 flex gap-3">
+                    <button 
+                       type="button"
+                       disabled={aiGenerating}
+                       onClick={handleGenerateAiQuestions}
+                       className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg text-sm transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+                    >
+                       {aiGenerating ? (
+                          <>
+                             <Loader2 className="w-4 h-4 animate-spin" />
+                             Generating 10 Questions with Gemini 3.5...
+                          </>
+                       ) : (
+                          <>
+                             <Sparkles className="w-4 h-4 animate-bounce" />
+                             Generate 10 Questions
+                          </>
+                       )}
+                    </button>
+                    <button 
+                       type="button" 
+                       onClick={() => setShowAiGen(false)} 
+                       className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-sm transition-colors"
+                    >
+                       Cancel
+                    </button>
+                 </div>
+              </div>
+           ) : (
+              // Review Interface
+              <div className="space-y-6">
+                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-purple-50 border border-purple-100 p-5 rounded-xl gap-4">
+                    <div className="flex items-center gap-3">
+                       <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 shrink-0">
+                          <CheckCircle2 className="w-6 h-6 text-purple-600" />
+                       </div>
+                       <div>
+                          <p className="text-sm font-bold text-slate-900">Review Draft: {aiResults.length} Questions Generated</p>
+                          <p className="text-xs text-slate-500 font-medium">Verify accuracy, edit fields inline, or delete wrong entries before batch uploading.</p>
+                       </div>
+                    </div>
+                    <div className="flex gap-2">
+                       <button 
+                          onClick={handleSaveAllAiQuestions}
+                          className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-lg transition-colors flex items-center gap-2 shadow"
+                       >
+                          <CheckCircle2 className="w-4 h-4" /> Add All to Bank
+                       </button>
+                       <button 
+                          onClick={() => { setAiResults([]); }} 
+                          className="px-5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-sm border border-rose-200 rounded-lg transition-colors"
+                       >
+                          Discard All
+                       </button>
+                    </div>
+                 </div>
+
+                 <div className="space-y-4">
+                    {aiResults.map((q, idx) => {
+                       const isEditing = editingGeneratedIdx === idx;
+                       return (
+                          <div key={idx} className="bg-white border text-left rounded-xl p-6 relative group border-slate-200 shadow-sm hover:border-purple-200 transition-all">
+                             <div className="absolute right-4 top-4 flex items-center gap-1.5">
+                                {!isEditing && (
+                                   <>
+                                      <button 
+                                         onClick={() => {
+                                            setEditingGeneratedIdx(idx);
+                                            setTempGenQ({ ...q });
+                                         }}
+                                         className="p-2 bg-slate-50 text-slate-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors border border-slate-200 shadow-sm"
+                                         title="Edit Question"
+                                      >
+                                         <Edit3 className="w-4 h-4" />
+                                      </button>
+                                      <button 
+                                         onClick={() => {
+                                            const updated = [...aiResults];
+                                            updated.splice(idx, 1);
+                                            setAiResults(updated);
+                                            if (editingGeneratedIdx === idx) {
+                                               setEditingGeneratedIdx(null);
+                                            }
+                                         }}
+                                         className="p-2 bg-slate-50 text-slate-500 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors border border-slate-200 shadow-sm"
+                                         title="Delete Question"
+                                      >
+                                         <Trash className="w-4 h-4" />
+                                      </button>
+                                   </>
+                                )}
+                             </div>
+
+                             <div className="flex items-center gap-2 mb-3">
+                                <span className="text-xs bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded">Draft Question {idx + 1}</span>
+                                <span className="text-xs bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded">{aiLevel}</span>
+                                {q.previouslyAskedIn && <span className="text-xs text-slate-400 font-medium">({q.previouslyAskedIn})</span>}
+                             </div>
+
+                             {isEditing ? (
+                                <div className="space-y-4 bg-slate-50/50 p-4 border border-dashed border-slate-300 rounded-lg mt-3">
+                                   <div>
+                                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Question Statement</label>
+                                      <textarea 
+                                         className="w-full px-3 py-2 text-sm border rounded bg-white font-medium text-slate-800"
+                                         value={tempGenQ.question}
+                                         rows={3}
+                                         onChange={e => setTempGenQ({ ...tempGenQ, question: e.target.value })}
+                                      />
+                                   </div>
+
+                                   <div>
+                                      <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Options (Click letter to select correct answer)</label>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                         {tempGenQ.options.map((opt: string, optIdx: number) => {
+                                            const isCorrect = tempGenQ.correctAnswer === opt;
+                                            return (
+                                               <div key={optIdx} className="flex relative items-center">
+                                                  <button 
+                                                     type="button" 
+                                                     onClick={() => setTempGenQ({ ...tempGenQ, correctAnswer: opt })}
+                                                     className={`absolute left-0 top-0 bottom-0 px-3 font-bold text-xs rounded-l flex items-center justify-center transition-colors border-r ${isCorrect && opt !== '' ? 'bg-purple-600 text-white border-purple-600' : 'bg-slate-200 text-slate-500 border-slate-200 hover:bg-slate-300'}`}
+                                                  >
+                                                     {String.fromCharCode(65 + optIdx)}
+                                                  </button>
+                                                  <input 
+                                                     type="text"
+                                                     className={`w-full pl-12 pr-3 py-2 text-xs border rounded bg-white font-medium text-slate-800 ${isCorrect && opt !== '' ? 'border-purple-400 ring-2 ring-purple-100' : 'border-slate-300'}`}
+                                                     value={opt}
+                                                     onChange={e => {
+                                                        const opts = [...tempGenQ.options];
+                                                        opts[optIdx] = e.target.value;
+                                                        setTempGenQ({ ...tempGenQ, options: opts });
+                                                     }}
+                                                  />
+                                               </div>
+                                            );
+                                         })}
+                                      </div>
+                                   </div>
+
+                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      <div>
+                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Explanation</label>
+                                         <textarea 
+                                            className="w-full px-3 py-2 text-xs border rounded bg-white font-medium text-slate-800"
+                                            value={tempGenQ.explanation}
+                                            rows={2}
+                                            onChange={e => setTempGenQ({ ...tempGenQ, explanation: e.target.value })}
+                                         />
+                                      </div>
+                                      <div>
+                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Reference Exam</label>
+                                         <input 
+                                            type="text"
+                                            className="w-full px-3 py-2 text-xs border rounded bg-white font-medium text-slate-800"
+                                            value={tempGenQ.previouslyAskedIn}
+                                            onChange={e => setTempGenQ({ ...tempGenQ, previouslyAskedIn: e.target.value })}
+                                         />
+                                      </div>
+                                   </div>
+
+                                   <div className="flex gap-2 justify-end pt-2 border-t">
+                                      <button 
+                                         onClick={() => {
+                                            const updated = [...aiResults];
+                                            updated[idx] = tempGenQ;
+                                            setAiResults(updated);
+                                            setEditingGeneratedIdx(null);
+                                         }}
+                                         className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded transition-colors"
+                                      >
+                                         Apply Changes
+                                      </button>
+                                      <button 
+                                         onClick={() => setEditingGeneratedIdx(null)}
+                                         className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded transition-colors"
+                                      >
+                                         Cancel
+                                      </button>
+                                   </div>
+                                </div>
+                             ) : (
+                                <div>
+                                   <p className="text-base font-bold text-slate-950 mb-3 pr-24 whitespace-pre-wrap">{q.question}</p>
+                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                      {q.options.map((opt: string, optIdx: number) => {
+                                         const isCorrect = String(opt) === String(q.correctAnswer);
+                                         return (
+                                            <div key={optIdx} className={`px-4 py-2 rounded-lg border-2 flex items-center gap-3 ${isCorrect ? 'border-purple-500 bg-purple-50/20' : 'border-slate-100 bg-slate-50'}`}>
+                                               <span className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold ${isCorrect ? 'bg-purple-600 text-white' : 'bg-slate-200 text-slate-500'}`}>{String.fromCharCode(65 + optIdx)}</span>
+                                               <span className={`text-xs font-semibold ${isCorrect ? 'text-purple-900 font-bold' : 'text-slate-600'}`}>{opt}</span>
+                                            </div>
+                                         );
+                                      })}
+                                   </div>
+                                   {q.explanation && (
+                                      <div className="bg-amber-50/40 px-4 py-3 rounded-lg border border-amber-100 mt-3 text-xs text-amber-900 font-medium">
+                                         <span className="font-bold text-amber-800">Explanation:</span> {q.explanation}
+                                      </div>
+                                   )}
+                                </div>
+                             )}
+                          </div>
+                       );
+                    })}
+                 </div>
+
+                 <div className="pt-4 flex gap-3 text-left">
+                    <button 
+                       onClick={handleSaveAllAiQuestions}
+                       className="px-6 py-3 bg-teal-700 hover:bg-teal-800 text-white font-bold rounded-lg text-sm shadow flex items-center gap-2"
+                    >
+                       <CheckCircle2 className="w-4 h-4" /> Add Approved Questions to Bank
+                    </button>
+                    <button 
+                       onClick={() => { setAiResults([]); }}
+                       className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-sm transition-colors"
+                    >
+                       Discard All
+                    </button>
+                 </div>
+              </div>
+           )}
         </div>
       )}
 
