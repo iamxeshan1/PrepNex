@@ -141,6 +141,17 @@ export default function AdminQuestions() {
   const refreshQuestions = async () => {
     const qSnap = await getDocs(query(collection(db, 'questions'), where('testId', '==', testId)));
     setQuestions(qSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    if (testId) {
+      try {
+        await updateDoc(doc(db, 'tests', testId), { questionCount: qSnap.size });
+      } catch (err) {
+        try {
+          await updateDoc(doc(db, 'liveTests', testId), { questionCount: qSnap.size });
+        } catch (e) {
+          console.error("Failed to update parent count:", e);
+        }
+      }
+    }
   };
 
   const handleEdit = (q: any) => {

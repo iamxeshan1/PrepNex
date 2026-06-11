@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '../../lib/firebase';
-import { collection, getDocs, doc, setDoc, deleteDoc, addDoc, query, where, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, deleteDoc, addDoc, query, where, writeBatch, updateDoc } from 'firebase/firestore';
 import { 
   Plus, 
   Trash2, 
@@ -146,15 +146,18 @@ export default function AdminLiveTests() {
       });
 
       const batch = writeBatch(db);
+      let totalImported = 0;
       for (const [subId, config] of Object.entries(composition)) {
         const c = config as {count: number, level: string};
         if (c.count <= 0) continue;
         const qSnap = await getDocs(query(collection(db, 'questions'), where('testId', '==', 'MASTER_BANK'), where('subjectId', '==', subId), where('level', '==', c.level)));
         qSnap.docs.slice(0, c.count).forEach(qDoc => {
           batch.update(qDoc.ref, { testId: newTestRef.id, assignedAt: new Date().toISOString() });
+          totalImported++;
         });
       }
       await batch.commit();
+      await updateDoc(newTestRef, { questionCount: totalImported });
       setShowCompositionModal(false);
       fetchLiveTests();
     } catch (err) {

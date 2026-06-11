@@ -64,6 +64,52 @@ function getDb() {
   }
 }
 
+async function healQuestionCounts() {
+  try {
+    const database = getDb();
+    console.log("[Healer] Beginning background database validation for question counts...");
+    const [questionsSnap, testsSnap, liveTestsSnap] = await Promise.all([
+      database.collection("questions").get(),
+      database.collection("tests").get(),
+      database.collection("liveTests").get()
+    ]);
+
+    const counts: Record<string, number> = {};
+    questionsSnap.docs.forEach((doc: any) => {
+      const data = doc.data();
+      if (data.testId) {
+        counts[data.testId] = (counts[data.testId] || 0) + 1;
+      }
+    });
+
+    console.log(`[Healer] Scanned ${questionsSnap.size} question nodes. Found active test mappings:`, Object.keys(counts).length);
+
+    // Heal tests collection
+    for (const testDoc of testsSnap.docs) {
+      const testData = testDoc.data();
+      const currentCount = counts[testDoc.id] || 0;
+      if (testData.questionCount !== currentCount) {
+        console.log(`[Healer] Healing counts on test "${testData.title}" (${testDoc.id}): ${testData.questionCount ?? 'undefined'} -> ${currentCount}`);
+        await testDoc.ref.update({ questionCount: currentCount });
+      }
+    }
+
+    // Heal liveTests collection
+    for (const liveTestDoc of liveTestsSnap.docs) {
+      const liveTestData = liveTestDoc.data();
+      const currentCount = counts[liveTestDoc.id] || 0;
+      if (liveTestData.questionCount !== currentCount) {
+        console.log(`[Healer] Healing counts on liveTest "${liveTestData.title}" (${liveTestDoc.id}): ${liveTestData.questionCount ?? 'undefined'} -> ${currentCount}`);
+        await liveTestDoc.ref.update({ questionCount: currentCount });
+      }
+    }
+
+    console.log("[Healer] Background database validation complete.");
+  } catch (err: any) {
+    console.error("[Healer] Error during background heal process:", err.message);
+  }
+}
+
 // Wrapper for collection to handle potential permission issues on named databases
 const db = {
   collection: (name: string) => {
@@ -360,6 +406,70 @@ app.get("/api/health-check", async (req, res) => {
       res.json({ configured: true, keyId: config.keyId });
     } catch (error: any) {
       res.status(500).json({ configured: false, error: error.message });
+    }
+  });
+
+  app.get("/api/debug-questions-count", async (req, res) => {
+    try {
+      const database = getDb();
+      console.log("[Debug API] Fetching questions, tests, and liveTests...");
+      const [questionsSnap, testsSnap, liveTestsSnap] = await Promise.all([
+        database.collection("questions").get(),
+        database.collection("tests").get(),
+        database.collection("liveTests").get()
+      ]);
+
+      const counts: Record<string, number> = {};
+      questionsSnap.docs.forEach((doc: any) => {
+        const data = doc.data();
+        if (data.testId) {
+          counts[data.testId] = (counts[data.testId] || 0) + 1;
+        }
+      });
+
+      const testsHealed: any[] = [];
+      const liveTestsHealed: any[] = [];
+
+      for (const testDoc of testsSnap.docs) {
+        const testData = testDoc.data();
+        const currentCount = counts[testDoc.id] || 0;
+        testsHealed.push({
+          id: testDoc.id,
+          title: testData.title,
+          oldQuestionCount: testData.questionCount ?? null,
+          newQuestionCount: currentCount,
+        });
+        if (testData.questionCount !== currentCount) {
+          await testDoc.ref.update({ questionCount: currentCount });
+        }
+      }
+
+      for (const liveTestDoc of liveTestsSnap.docs) {
+        const liveTestData = liveTestDoc.data();
+        const currentCount = counts[liveTestDoc.id] || 0;
+        liveTestsHealed.push({
+          id: liveTestDoc.id,
+          title: liveTestData.title,
+          oldQuestionCount: liveTestData.questionCount ?? null,
+          newQuestionCount: currentCount,
+        });
+        if (liveTestData.questionCount !== currentCount) {
+          await liveTestDoc.ref.update({ questionCount: currentCount });
+        }
+      }
+
+      res.json({
+        success: true,
+        scannedQuestions: questionsSnap.size,
+        scannedTestsCount: testsSnap.size,
+        scannedLiveTestsCount: liveTestsSnap.size,
+        counts,
+        testsHealed,
+        liveTestsHealed
+      });
+    } catch (err: any) {
+      console.error("[Debug API] Error:", err);
+      res.status(500).json({ error: err.message });
     }
   });
 
@@ -1155,6 +1265,9 @@ app.get("/api/health-check", async (req, res) => {
   if (!process.env.VERCEL) {
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`Server running on http://localhost:${PORT}`);
+      setTimeout(() => {
+        healQuestionCounts().catch(err => console.error("Error in healQuestionCounts:", err));
+      }, 1000);
     });
   }
 

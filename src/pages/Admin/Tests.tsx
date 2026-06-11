@@ -190,6 +190,7 @@ export default function AdminTests() {
       }
 
       await batch.commit();
+      await updateDoc(newTestRef, { questionCount: totalImported });
       setToast({
         isVisible: true,
         message: `Composition successful: ${totalImported} nodes withdrawn from main repository.`,

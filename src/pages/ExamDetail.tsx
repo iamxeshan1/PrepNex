@@ -179,7 +179,7 @@ export default function ExamDetail() {
                         <div>
                            <h4 className="font-display font-bold text-slate-900 mb-1 leading-tight line-clamp-2">{test.title}</h4>
                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-slate-500 text-[10px] uppercase font-bold tracking-widest mt-2 sm:mt-0">
-                               <span>{test.questionCount || 120} Qs</span>
+                               <span>{test.questionCount !== undefined ? test.questionCount : 120} Qs</span>
                                <span className="hidden sm:inline">•</span>
                                <span>{test.duration || 120} Mins</span>
                                <span className="hidden sm:inline">•</span>

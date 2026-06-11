@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
-import { collection, onSnapshot, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, limit, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { 
   Users, 
@@ -22,7 +22,8 @@ import {
   Calendar,
   ArrowRight,
   GraduationCap,
-  Download
+  Download,
+  RefreshCw
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -59,6 +60,58 @@ export default function AdminDashboard() {
   });
   const [recentSubs, setRecentSubs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<string | null>(null);
+
+  const handleSyncQuestionCounts = async () => {
+    setSyncing(true);
+    setSyncStatus("Fetching tests & questions...");
+    try {
+      const [questionsSnap, testsSnap, liveTestsSnap] = await Promise.all([
+        getDocs(collection(db, 'questions')),
+        getDocs(collection(db, 'tests')),
+        getDocs(collection(db, 'liveTests'))
+      ]);
+
+      setSyncStatus(`Processing ${questionsSnap.size} questions...`);
+
+      const counts: Record<string, number> = {};
+      questionsSnap.docs.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (data.testId) {
+          counts[data.testId] = (counts[data.testId] || 0) + 1;
+        }
+      });
+
+      let updatedCount = 0;
+
+      for (const tDoc of testsSnap.docs) {
+        const tData = tDoc.data();
+        const currentCount = counts[tDoc.id] || 0;
+        if (tData.questionCount !== currentCount) {
+          await updateDoc(doc(db, 'tests', tDoc.id), { questionCount: currentCount });
+          updatedCount++;
+        }
+      }
+
+      for (const ltDoc of liveTestsSnap.docs) {
+        const ltData = ltDoc.data();
+        const currentCount = counts[ltDoc.id] || 0;
+        if (ltData.questionCount !== currentCount) {
+          await updateDoc(doc(db, 'liveTests', ltDoc.id), { questionCount: currentCount });
+          updatedCount++;
+        }
+      }
+
+      setSyncStatus(`Sync complete! Updated ${updatedCount} tests.`);
+      setTimeout(() => setSyncStatus(null), 4000);
+    } catch (err: any) {
+      console.error("Error syncing counts:", err);
+      setSyncStatus(`Error: ${err.message || 'Verification failure'}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   useEffect(() => {
     const unsubUsers = onSnapshot(collection(db, 'users'), (snap) => {
@@ -120,11 +173,32 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout title="Dashboard">
-      <div className="flex justify-between items-center mb-6">
-        <p className="text-slate-500 font-medium">Overview of system operations, user growth, and financial metrics.</p>
-        <button className="bg-teal-700 text-white px-5 py-2.5 font-semibold text-sm flex items-center gap-2 hover:bg-teal-800 transition-colors">
-           <Download className="w-5 h-5" /> Download Report
-        </button>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+        <div>
+          <p className="text-slate-500 font-medium">Overview of system operations, user growth, and financial metrics.</p>
+          {syncStatus && (
+            <div className={`mt-2 text-xs font-bold ${syncStatus.includes("Error") ? "text-rose-600" : "text-[#006e5d]"}`}>
+              ● {syncStatus}
+            </div>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <button 
+            onClick={handleSyncQuestionCounts}
+            disabled={syncing}
+            className={`px-5 py-2.5 font-bold text-sm flex items-center gap-2 border transition-all ${
+              syncing 
+                ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed" 
+                : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:text-slate-900 shadow-sm"
+            }`}
+          >
+            <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Syncing...' : 'Sync Question Counts'}
+          </button>
+          <button className="bg-teal-700 text-white px-5 py-2.5 font-semibold text-sm flex items-center gap-2 hover:bg-teal-800 transition-colors">
+             <Download className="w-5 h-5" /> Download Report
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
