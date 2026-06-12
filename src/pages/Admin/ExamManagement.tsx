@@ -21,7 +21,31 @@ export default function AdminExamManagement() {
       ]);
 
       if (examSnap.exists()) setExam(examSnap.data());
-      setTests(testsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const rawTests = testsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+      const sortedTests = rawTests.sort((a, b) => {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        
+        if (timeA !== timeB) {
+          return timeA - timeB;
+        }
+        
+        const getMockNumber = (title: string) => {
+          const match = title?.match(/(?:Mock Set|Mock|Set)\s*(\d+)/i);
+          return match ? parseInt(match[1], 10) : null;
+        };
+        const numA = getMockNumber(a.title || "");
+        const numB = getMockNumber(b.title || "");
+        
+        if (numA !== null && numB !== null) {
+          if (numA !== numB) {
+            return numA - numB;
+          }
+        }
+        
+        return (a.title || "").localeCompare(b.title || "", undefined, { numeric: true, sensitivity: 'base' });
+      });
+      setTests(sortedTests);
       setLoading(false);
     };
     fetchData();

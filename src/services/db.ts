@@ -67,7 +67,34 @@ export const getTestsByExamId = async (examId: string) => {
   try {
     const q = query(collection(db, path), where('examId', '==', examId));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const tests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+    
+    // Sort so first created (oldest) is at the top
+    return tests.sort((a, b) => {
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      
+      if (timeA !== timeB) {
+        return timeA - timeB; // Ascending order of creation
+      }
+      
+      // Fallback: natural parse of mock sets (e.g., "Mock Set 01" < "Mock Set 02")
+      const getMockNumber = (title: string) => {
+        const match = title?.match(/(?:Mock Set|Mock|Set)\s*(\d+)/i);
+        return match ? parseInt(match[1], 10) : null;
+      };
+      
+      const numA = getMockNumber(a.title || "");
+      const numB = getMockNumber(b.title || "");
+      
+      if (numA !== null && numB !== null) {
+        if (numA !== numB) {
+          return numA - numB;
+        }
+      }
+      
+      return (a.title || "").localeCompare(b.title || "", undefined, { numeric: true, sensitivity: 'base' });
+    });
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, path);
   }

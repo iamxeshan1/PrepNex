@@ -501,7 +501,7 @@ app.get("/api/health-check", async (req, res) => {
 
   app.post("/api/admin/generate-questions-ai", async (req, res) => {
     try {
-      const { subjectName, level, topic, additionalInstructions, examName } = req.body;
+      const { subjectName, level, topic, additionalInstructions, examName, existingQuestionTexts } = req.body;
       if (!subjectName) {
         return res.status(400).json({ error: "Subject/Domain name is required." });
       }
@@ -510,7 +510,7 @@ app.get("/api/health-check", async (req, res) => {
 
       const ai = getAiClient();
       
-      let prompt = `Generate exactly 10 high-quality, multiple choice questions for the subject/domain "${subjectName}".\n`;
+      let prompt = `Generate exactly 50 high-quality, multiple choice questions for the subject/domain "${subjectName}". Make sure the response contains exactly 50 questions, not fewer.\n`;
       prompt += `Target Exam Standard: "${examName || 'General Exam'}"\n`;
       prompt += `Difficulty Level Requested: "${level || 'Medium'}" (Please align difficulty & syllabus style with the standards of the ${examName || 'General'} Exam).\n`;
       
@@ -520,7 +520,18 @@ app.get("/api/health-check", async (req, res) => {
       if (additionalInstructions && additionalInstructions.trim() !== '') {
         prompt += `Follow these additional instructions: "${additionalInstructions.trim()}".\n`;
       }
-      prompt += `\nEach question must have exactly 4 options. The 'correctAnswer' must match one of the options verbatim. Set the 'previouslyAskedIn' property to either "${examName || 'Practice'}" or something like "${examName || 'Practice'} previous years" if highly realistic. Make the questions premium quality, accurate and challenging.`;
+      prompt += `\nEach question must have exactly 4 options. The 'correctAnswer' must match one of the options verbatim.\n`;
+      prompt += `Do NOT set the 'previouslyAskedIn' property for all questions. Only set it for a realistic subset of questions (e.g. 15-20% of them) using realistic labels like "${examName || 'Practice'} Past Exam" or "${examName || 'Practice'} previous years". For other questions (80-85% of them), 'previouslyAskedIn' must be an empty string (""). Make the questions unique, accurate, challenging, with concise, clear explanations.`;
+
+      if (Array.isArray(existingQuestionTexts) && existingQuestionTexts.length > 0) {
+        prompt += `\n\nCRITICAL REQUIREMENT - DO NOT GENERATE DUPLICATE QUESTIONS:\n`;
+        prompt += `The following question stems are ALREADY PRESENT in the question bank for this subject. Review them carefully to avoid any duplication, rephrasing, or trivial variations. Every single generated question MUST cover a different sub-topic, question style, or set of facts from these:\n`;
+        // Slice to avoid super-long prompts, 150 items is a very safe limit
+        existingQuestionTexts.slice(0, 150).forEach((qText: string) => {
+          if (qText) prompt += `- ${qText}\n`;
+        });
+        prompt += `\nEnsure 100% conceptual uniqueness relative to the list above.\n`;
+      }
 
       console.log("[AI API] Sending prompt to Gemini:", prompt);
 
@@ -546,7 +557,7 @@ app.get("/api/health-check", async (req, res) => {
                 responseMimeType: "application/json",
                 responseSchema: {
                   type: Type.ARRAY,
-                  description: "An array of exactly 10 multiple choice questions.",
+                  description: "An array of exactly 50 multiple choice questions.",
                   items: {
                     type: Type.OBJECT,
                     properties: {

@@ -106,12 +106,36 @@ export default function Subjects() {
         if (subjectId) {
           const [sSnap, tSnap] = await Promise.all([
             getDoc(doc(db, 'subjects', subjectId)),
-            getDocs(query(collection(db, 'tests'), where('subjectId', '==', subjectId), orderBy('createdAt', 'desc')))
+            getDocs(query(collection(db, 'tests'), where('subjectId', '==', subjectId)))
           ]);
           if (sSnap.exists()) setSelectedSubject({ id: sSnap.id, ...sSnap.data() });
           
           const fetchedTests = tSnap.docs.map(d => ({ id: d.id, ...d.data() as any }));
-          setTests(fetchedTests.filter(t => t.status !== 'draft'));
+          const sortedTests = fetchedTests.sort((a, b) => {
+            const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            
+            if (timeA !== timeB) {
+              return timeA - timeB; // Ascending order: older/first created at the top
+            }
+            
+            const getMockNumber = (title: string) => {
+              const match = title?.match(/(?:Mock Set|Mock|Set)\s*(\d+)/i);
+              return match ? parseInt(match[1], 10) : null;
+            };
+            const numA = getMockNumber(a.title || "");
+            const numB = getMockNumber(b.title || "");
+            
+            if (numA !== null && numB !== null) {
+              if (numA !== numB) {
+                return numA - numB;
+              }
+            }
+            
+            return (a.title || "").localeCompare(b.title || "", undefined, { numeric: true, sensitivity: 'base' });
+          });
+          
+          setTests(sortedTests.filter(t => t.status !== 'draft'));
           setLoading(false);
         } else {
           unsub = onSnapshot(collection(db, 'subjects'), (snap) => {

@@ -105,17 +105,30 @@ export default function MockTestBank() {
     setAiGenerating(true);
     setAiError(null);
     try {
+      const targetSubjectName = aiSubjectName || (aiSubjectId === 'new' ? '' : subjects.find(s => s.id === aiSubjectId)?.name);
+      
+      // Filter existing questions for this subject to prevent duplications
+      const existingQs = questions.filter(q => {
+        if (aiSubjectId && aiSubjectId !== 'new') {
+          return q.subjectId === aiSubjectId;
+        }
+        const qSubjectName = subjects.find(s => s.id === q.subjectId)?.name;
+        return qSubjectName && targetSubjectName && qSubjectName.toLowerCase() === targetSubjectName.toLowerCase();
+      });
+      const existingQuestionTexts = existingQs.map(q => q.question);
+
       const response = await fetch('/api/admin/generate-questions-ai', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          subjectName: aiSubjectName || (aiSubjectId === 'new' ? '' : subjects.find(s => s.id === aiSubjectId)?.name),
+          subjectName: targetSubjectName,
           level: aiLevel,
           topic: aiTopic,
           additionalInstructions: aiInstructions,
-          examName: aiExamName === 'Other' ? aiCustomExamName : aiExamName
+          examName: aiExamName === 'Other' ? aiCustomExamName : aiExamName,
+          existingQuestionTexts
         })
       });
 
@@ -170,7 +183,7 @@ export default function MockTestBank() {
           options: q.options.map(String),
           correctAnswer: String(q.correctAnswer),
           explanation: q.explanation || '',
-          previouslyAskedIn: q.previouslyAskedIn || finalExamName || '',
+          previouslyAskedIn: q.previouslyAskedIn || '',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         });
@@ -370,7 +383,7 @@ export default function MockTestBank() {
               <Sparkles className="w-6 h-6 text-purple-600 animate-pulse" />
               <h3 className="text-xl font-bold text-slate-900 font-sans">Generate Questions with AI (Gemini 3.5 Flash)</h3>
            </div>
-           <p className="text-sm text-slate-500 mb-6">Create 10 premium multiple-choice questions instantly for your targeted exam standard. Review, edit, and fine-tune each question, then bulk-add them directly into your database.</p>
+           <p className="text-sm text-slate-500 mb-6">Create 50 premium multiple-choice questions instantly for your targeted exam standard. Review, edit, and fine-tune each question, then bulk-add them directly into your database.</p>
 
            {aiResults.length === 0 ? (
               <div className="space-y-6">
@@ -488,7 +501,7 @@ export default function MockTestBank() {
                              <p>1. Open the <strong className="text-purple-700 font-semibold">Settings</strong> menu (found in Google AI Studio at the top right header or sidebar).</p>
                              <p>2. Add a new workspace Secret/Environment variable named <strong className="font-mono bg-slate-100 px-1 py-0.5 rounded text-rose-600 font-semibold">GEMINI_API_KEY</strong>.</p>
                              <p>3. Set its value to your Gemini API key (you can obtain a key from AI Studio's API developer dashboard).</p>
-                             <p className="text-slate-500 pt-1">The system will automatically detect the new variable, giving you access to 10 premium practice questions instantly.</p>
+                             <p className="text-slate-500 pt-1">The system will automatically detect the new variable, giving you access to 50 premium practice questions instantly.</p>
                           </div>
                        )}
                     </div>
@@ -504,12 +517,12 @@ export default function MockTestBank() {
                        {aiGenerating ? (
                           <>
                              <Loader2 className="w-4 h-4 animate-spin" />
-                             Generating 10 Questions with Gemini 3.5...
+                             Generating 50 Questions with Gemini 3.5...
                           </>
                        ) : (
                           <>
                              <Sparkles className="w-4 h-4 animate-bounce" />
-                             Generate 10 Questions
+                             Generate 50 Questions
                           </>
                        )}
                     </button>
