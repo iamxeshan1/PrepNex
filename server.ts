@@ -526,19 +526,23 @@ app.get("/api/health-check", async (req, res) => {
 
       let response: any = null;
       let lastError: any = null;
-      const modelsToTry = ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-flash-latest"];
+      // Primary model: gemini-3.5-flash. Fallbacks: gemini-3.1-flash-lite, gemini-flash-latest, gemini-3.1-pro-preview
+      const modelsToTry = ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-flash-latest", "gemini-3.1-pro-preview"];
 
       for (const modelName of modelsToTry) {
         console.log(`[AI API] Attempting question generation with model: ${modelName}`);
-        let attempts = 3;
-        let delay = 1000; // ms
+        // For the primary model, try 2 times (1 retry). For fallbacks, 1 attempt is sufficient to move quickly.
+        const maxAttempts = (modelName === "gemini-3.5-flash") ? 2 : 1;
+        let attempt = 1;
+        let delay = 800; // ms
 
-        while (attempts > 0) {
+        while (attempt <= maxAttempts) {
           try {
             response = await ai.models.generateContent({
               model: modelName,
               contents: prompt,
               config: {
+                systemInstruction: "You are an expert question developer and test set designer. Your task is to generate highly accurate, relevant, non-obvious, and engaging multiple choice questions matching the specified topic, target exam, and difficulty standard. Always strictly format your response as a valid JSON array conforming to the specified response schema. Do not output anything other than the JSON.",
                 responseMimeType: "application/json",
                 responseSchema: {
                   type: Type.ARRAY,
@@ -564,23 +568,49 @@ app.get("/api/health-check", async (req, res) => {
             break; // Success! Break out of the attempt loop.
           } catch (err: any) {
             lastError = err;
-            console.warn(`[AI API] Model ${modelName} attempt failed (remaining: ${attempts - 1}). Error details:`, err);
+            console.warn(`[AI API] Model ${modelName} attempt ${attempt}/${maxAttempts} failed. Error:`, err);
             
-            const isTransient = err.status === 503 || 
-                                err.statusCode === 503 || 
-                                String(err.message || "").includes("503") || 
-                                String(err.message || "").includes("UNAVAILABLE") || 
-                                String(err.message || "").includes("temp") || 
-                                String(err.message || "").includes("demand") ||
-                                String(err.message || "").includes("ResourceExhausted") ||
-                                err.status === 429;
+            let isTransient = false;
+            try {
+              if (err.message) {
+                const parsed = JSON.parse(err.message);
+                const code = parsed?.error?.code || parsed?.code;
+                const statusStr = parsed?.error?.status || parsed?.status;
+                if (code === 503 || code === 429 || statusStr === "UNAVAILABLE" || statusStr === "RESOURCE_EXHAUSTED") {
+                  isTransient = true;
+                }
+              }
+            } catch {
+              // Ignore parse error, use fallback string matching
+            }
+
+            if (!isTransient) {
+              const errMsg = String(err.message || "").toLowerCase();
+              const errStack = String(err.stack || "").toLowerCase();
+              const errStr = String(err).toLowerCase();
+              
+              isTransient = errMsg.includes("503") || 
+                            errMsg.includes("unavailable") || 
+                            errMsg.includes("temp") || 
+                            errMsg.includes("demand") ||
+                            errMsg.includes("quota") ||
+                            errMsg.includes("429") ||
+                            errStack.includes("503") ||
+                            errStack.includes("unavail") ||
+                            errStr.includes("503") ||
+                            errStr.includes("unavail") ||
+                            err.status === 503 ||
+                            err.statusCode === 503 ||
+                            err.status === 429;
+            }
             
-            attempts--;
-            if (attempts > 0 && isTransient) {
+            if (attempt < maxAttempts && isTransient) {
+              console.log(`[AI API] Transient error detected. Retrying model ${modelName} after ${delay}ms...`);
               await new Promise(resolve => setTimeout(resolve, delay));
-              delay *= 2; // Exponential backoff
+              delay *= 1.5; // Backoff
+              attempt++;
             } else {
-              break; // Proceed to key fallback model
+              break; // Proceed to fallback model or abort
             }
           }
         }
