@@ -476,9 +476,21 @@ export default function MockTestBank() {
                  </div>
 
                  {aiError && (
-                    <div className="p-4 bg-red-50 text-red-700 text-sm font-semibold rounded-lg flex items-center gap-2 border border-red-100">
-                       <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
-                       <span>{aiError}</span>
+                    <div className="p-4 bg-red-50 text-red-700 text-sm font-medium rounded-lg flex flex-col gap-2 border border-red-100">
+                       <div className="flex items-center gap-2 font-semibold">
+                          <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
+                          <span>Error Generating Questions</span>
+                       </div>
+                       <p className="text-xs text-slate-600 font-medium">{aiError}</p>
+                       {aiError.includes("GEMINI_API_KEY") && (
+                          <div className="mt-2 p-3 bg-white/80 border border-red-200 rounded text-xs text-slate-700 space-y-1 text-left">
+                             <div className="font-bold text-slate-800">How to Fix This:</div>
+                             <p>1. Open the <strong className="text-purple-700 font-semibold">Settings</strong> menu (found in Google AI Studio at the top right header or sidebar).</p>
+                             <p>2. Add a new workspace Secret/Environment variable named <strong className="font-mono bg-slate-100 px-1 py-0.5 rounded text-rose-600 font-semibold">GEMINI_API_KEY</strong>.</p>
+                             <p>3. Set its value to your Gemini API key (you can obtain a key from AI Studio's API developer dashboard).</p>
+                             <p className="text-slate-500 pt-1">The system will automatically detect the new variable, giving you access to 10 premium practice questions instantly.</p>
+                          </div>
+                       )}
                     </div>
                  )}
 
