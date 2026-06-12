@@ -17,7 +17,11 @@ let aiClient: any = null;
 
 function getAiClient() {
   if (!aiClient) {
-    const key = process.env.GEMINI_API_KEY;
+    const key = process.env.GEMINI_API_KEY || 
+                process.env.VITE_GEMINI_API_KEY || 
+                process.env.GEMINI_API || 
+                process.env.API_KEY;
+                
     if (!key) {
       throw new Error("GEMINI_API_KEY environment variable is required to generate questions.");
     }
@@ -501,6 +505,8 @@ app.get("/api/health-check", async (req, res) => {
       if (!subjectName) {
         return res.status(400).json({ error: "Subject/Domain name is required." });
       }
+
+      console.log("[AI API] Diagnostic - Env keys in process.env:", Object.keys(process.env).filter(key => key.includes("GEMINI") || key.includes("API") || key.includes("KEY")));
 
       const ai = getAiClient();
       
