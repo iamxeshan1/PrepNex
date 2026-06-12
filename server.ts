@@ -524,32 +524,76 @@ app.get("/api/health-check", async (req, res) => {
 
       console.log("[AI API] Sending prompt to Gemini:", prompt);
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.ARRAY,
-            description: "An array of exactly 10 multiple choice questions.",
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                question: { type: Type.STRING, description: "The quiz question text." },
-                options: {
+      let response: any = null;
+      let lastError: any = null;
+      const modelsToTry = ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-flash-latest"];
+
+      for (const modelName of modelsToTry) {
+        console.log(`[AI API] Attempting question generation with model: ${modelName}`);
+        let attempts = 3;
+        let delay = 1000; // ms
+
+        while (attempts > 0) {
+          try {
+            response = await ai.models.generateContent({
+              model: modelName,
+              contents: prompt,
+              config: {
+                responseMimeType: "application/json",
+                responseSchema: {
                   type: Type.ARRAY,
-                  items: { type: Type.STRING },
-                  description: "Array of exactly 4 option strings."
-                },
-                correctAnswer: { type: Type.STRING, description: "One of the options that represents the correct answer. Must be identical to the option text." },
-                explanation: { type: Type.STRING, description: "Detailed summary explaining why this answer is correct." },
-                previouslyAskedIn: { type: Type.STRING, description: "Name of the reference exam if applicable, or empty." }
-              },
-              required: ["question", "options", "correctAnswer", "explanation"]
+                  description: "An array of exactly 10 multiple choice questions.",
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      question: { type: Type.STRING, description: "The quiz question text." },
+                      options: {
+                        type: Type.ARRAY,
+                        items: { type: Type.STRING },
+                        description: "Array of exactly 4 option strings."
+                      },
+                      correctAnswer: { type: Type.STRING, description: "One of the options that represents the correct answer. Must be identical to the option text." },
+                      explanation: { type: Type.STRING, description: "Detailed summary explaining why this answer is correct." },
+                      previouslyAskedIn: { type: Type.STRING, description: "Name of the reference exam if applicable, or empty." }
+                    },
+                    required: ["question", "options", "correctAnswer", "explanation"]
+                  }
+                }
+              }
+            });
+            break; // Success! Break out of the attempt loop.
+          } catch (err: any) {
+            lastError = err;
+            console.warn(`[AI API] Model ${modelName} attempt failed (remaining: ${attempts - 1}). Error details:`, err);
+            
+            const isTransient = err.status === 503 || 
+                                err.statusCode === 503 || 
+                                String(err.message || "").includes("503") || 
+                                String(err.message || "").includes("UNAVAILABLE") || 
+                                String(err.message || "").includes("temp") || 
+                                String(err.message || "").includes("demand") ||
+                                String(err.message || "").includes("ResourceExhausted") ||
+                                err.status === 429;
+            
+            attempts--;
+            if (attempts > 0 && isTransient) {
+              await new Promise(resolve => setTimeout(resolve, delay));
+              delay *= 2; // Exponential backoff
+            } else {
+              break; // Proceed to key fallback model
             }
           }
         }
-      });
+
+        if (response) {
+          console.log(`[AI API] Successfully generated questions using model: ${modelName}`);
+          break; // Exit the model loop on success
+        }
+      }
+
+      if (!response) {
+        throw lastError || new Error("All fallback models failed to generate questions.");
+      }
 
       const text = response.text;
       if (!text) {
