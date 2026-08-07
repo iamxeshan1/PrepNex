@@ -187,12 +187,21 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
               <div className="hidden lg:flex items-center gap-10">
                 <Link to="/exams" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/exams') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>Exams</Link>
-                <Link to="/job-alerts" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/job-alerts') ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>Job Alerts</Link>
+                <Link to="/premium" className={`text-sm font-[700] tracking-tight transition-colors flex items-center gap-1 ${isActive('/premium') ? 'text-amber-600 dark:text-amber-400 font-extrabold' : 'text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400'}`}>
+                  <Zap className="w-4 h-4 text-amber-500 fill-amber-500 animate-pulse" />
+                  Pass Pro
+                </Link>
+                <Link to="/live-tests" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/live-tests') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>Live Tests</Link>
                 <Link to="/study-material" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/study-material') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>Study Material</Link>
                 <Link to="/forum" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/forum') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>Forum</Link>
-                <Link to="/live-tests" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/live-tests') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>Live Tests</Link>
                 {user && (
-                  <Link to="/dashboard" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/dashboard') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>My Library</Link>
+                  <>
+                    <Link to="/chat" className={`text-sm font-[700] tracking-tight transition-colors flex items-center gap-1 ${isActive('/chat') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>
+                      <MessageCircle className="w-4 h-4 text-[#006e5d]" />
+                      Chat
+                    </Link>
+                    <Link to="/dashboard" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/dashboard') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>My Library</Link>
+                  </>
                 )}
                 {isAdmin && (
                   <Link to="/admin" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/admin') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>Admin Panel</Link>
@@ -217,7 +226,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                         </span>
                       )}
                     </button>
-                    <button onClick={handleLogout} className="text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">Log Out</button>
+                    <button onClick={handleLogout} className="text-sm font-bold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors">Log Out</button>
                     <Link to="/profile" className="w-9 h-9 rounded-full overflow-hidden border border-slate-200 cursor-pointer hover:border-[#006e5d] transition-colors bg-slate-50">
                       <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email || 'User'}&background=006e5d&color=fff`} alt="User" className="w-full h-full object-cover" width="36" height="36" fetchPriority="high" />
                     </Link>
@@ -228,7 +237,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                       <Zap className="w-4 h-4 fill-current" />
                       Pass Pro
                     </Link>
-                    <Link to="/login" className="text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">Log In</Link>
+                    <Link to="/login" className="text-sm font-bold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors">Log In</Link>
                     <Link to="/signup" className="text-sm font-bold bg-[#006e5d] text-white px-5 py-2.5 rounded-xl hover:bg-[#005a4d] transition-colors shadow-sm">Get Started</Link>
                   </div>
                 )}

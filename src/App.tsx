@@ -30,6 +30,7 @@ const AdminSubjects = React.lazy(() => import('./pages/Admin/Subjects'));
 const AdminRevenue = React.lazy(() => import('./pages/Admin/Revenue'));
 const AdminPremiumPlan = React.lazy(() => import('./pages/Admin/PremiumPlan'));
 const AdminUsers = React.lazy(() => import('./pages/Admin/Users'));
+const AdminChatMonitor = React.lazy(() => import('./pages/Admin/ChatMonitor'));
 const AdminCoupons = React.lazy(() => import('./pages/Admin/Coupons'));
 const AdminJobAlerts = React.lazy(() => import('./pages/Admin/JobAlerts'));
 const AdminForum = React.lazy(() => import('./pages/Admin/Forum'));
@@ -58,6 +59,8 @@ const Helpdesk = React.lazy(() => import('./pages/Helpdesk'));
 const Exams = React.lazy(() => import('./pages/Exams'));
 const Performance = React.lazy(() => import('./pages/Performance'));
 const Profile = React.lazy(() => import('./pages/Profile'));
+const StudentProfile = React.lazy(() => import('./pages/StudentProfile'));
+const Chat = React.lazy(() => import('./pages/Chat'));
 const Transactions = React.lazy(() => import('./pages/Transactions'));
 const About = React.lazy(() => import('./pages/About'));
 const Announcements = React.lazy(() => import('./pages/Announcements'));
@@ -119,7 +122,10 @@ export function AppContent() {
           
           <Route path="/exams" element={<Exams />} />
           <Route path="/performance" element={<ProtectedRoute><Performance /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><StudentProfile /></ProtectedRoute>} />
+          <Route path="/student/:userId" element={<StudentProfile />} />
+          <Route path="/student" element={<StudentProfile />} />
+          <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
           <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
           <Route path="/my-subscriptions" element={<ProtectedRoute><MySubscriptions /></ProtectedRoute>} />
           <Route path="/subjects" element={<Subjects />} />
@@ -176,6 +182,11 @@ export function AppContent() {
           <Route path="/admin/users" element={
             <ProtectedRoute adminOnly>
               <AdminUsers />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/chat-monitor" element={
+            <ProtectedRoute adminOnly>
+              <AdminChatMonitor />
             </ProtectedRoute>
           } />
           <Route path="/admin/coupons" element={

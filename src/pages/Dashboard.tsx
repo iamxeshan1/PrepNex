@@ -3,12 +3,14 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { DashboardSidebar } from '../components/DashboardSidebar';
 import { DashboardTopHeader } from '../components/DashboardTopHeader';
-import { Award, Zap, HelpCircle, BookOpenText, TrendingUp, CheckCircle2, Megaphone, Info, AlertTriangle, X, MessageCircle, Crown } from 'lucide-react';
+import { Award, Zap, HelpCircle, BookOpenText, TrendingUp, CheckCircle2, Megaphone, Info, AlertTriangle, X, MessageCircle, Crown, AtSign } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSettings } from '../context/SettingsContext';
 import { collection, getDocs, query, where, documentId, orderBy, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { ActivityCalendar } from '../components/ActivityCalendar';
+import { StudyPlanner } from '../components/StudyPlanner';
+import { TopPerformersLeaderboard } from '../components/TopPerformersLeaderboard';
+import { DailyStreakWidget } from '../components/DailyStreakWidget';
 
 export default function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -354,6 +356,29 @@ export default function Dashboard() {
                     )}
                   </AnimatePresence>
 
+                  {/* Complete Username Banner */}
+                  {profile && !profile.username && (
+                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-100 rounded-[2rem] p-6 relative overflow-hidden shadow-sm">
+                       <div className="flex flex-col md:flex-row items-center gap-6">
+                          <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 shrink-0">
+                             <AtSign size={24} />
+                          </div>
+                          <div className="text-center md:text-left flex-1">
+                             <h2 className="text-base font-black text-amber-900 mb-1">Claim your Unique Handle / Username!</h2>
+                             <p className="text-xs text-amber-700 font-bold leading-relaxed">
+                               To join collaborative Study Groups, pin useful forum discussions, and maintain your network identity, please claim your unique PrepNext username in your Profile section.
+                             </p>
+                          </div>
+                          <button 
+                            onClick={() => navigate('/profile')} 
+                            className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-black px-5 py-3 rounded-xl transition-all shadow-md shadow-amber-600/20 shrink-0 active:scale-95"
+                          >
+                            Set Username
+                          </button>
+                       </div>
+                    </div>
+                  )}
+
                   {/* Welcome Panel */}
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2 bg-[#002f26] text-white p-6 md:p-10 rounded-[2rem] flex flex-col justify-center relative overflow-hidden">
@@ -402,6 +427,12 @@ export default function Dashboard() {
                     </div>
                   </div>
                   
+                  {/* Daily Quiz Streak Snapchat-style Widget */}
+                  <DailyStreakWidget 
+                    streakCount={Number(profile?.studyStreak || profile?.streak || 14)} 
+                    onTakeQuiz={() => navigate('/exams')}
+                  />
+
                   {/* Live Tests & Subscriptions Row */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                      <div className="flex flex-col gap-4">
@@ -577,10 +608,11 @@ export default function Dashboard() {
                       </div>
                   </div>
                   
-                  {/* Visual Activity Calendar (Streak & Study Time with Recharts) */}
-                  {profile?.userId && (
-                    <ActivityCalendar userId={profile.userId} />
-                  )}
+                  {/* Drag and Drop Daily Study & Practice Planner */}
+                  <StudyPlanner userId={profile?.userId || profile?.uid || 'user'} />
+
+                  {/* Top Performers Leaderboard Widget */}
+                  <TopPerformersLeaderboard currentUserId={profile?.userId || profile?.uid} />
                   
                   {/* Subject Performance Analysis */}
                   <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm">

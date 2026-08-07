@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { User, Phone, MapPin, Building, Map, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react';
+import { User, Phone, MapPin, Building, Map, CheckCircle2, AlertCircle, ArrowLeft, AtSign, Loader2, Check, X } from 'lucide-react';
 import { DashboardSidebar } from '../components/DashboardSidebar';
 import { DashboardTopHeader } from '../components/DashboardTopHeader';
+import { SnapchatStreakBadge } from '../components/SnapchatStreakBadge';
+import { VerifiedBadge } from '../components/VerifiedBadge';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 
@@ -33,6 +35,13 @@ export default function Profile() {
     state: ''
   });
 
+  const [username, setUsername] = useState('');
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [usernameStatus, setUsernameStatus] = useState<{
+    available: boolean | null;
+    message: string;
+  }>({ available: null, message: '' });
+
   useEffect(() => {
     if (user && profile) {
       setFormData({
@@ -42,14 +51,77 @@ export default function Profile() {
         district: profile.district || '',
         state: profile.state || ''
       });
+
+      const initialUsername = profile.username || (profile.name || user.displayName || '').toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20);
+      setUsername(initialUsername);
     }
   }, [user, profile]);
+
+  useEffect(() => {
+    const cleanHandle = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+
+    if (!cleanHandle) {
+      setUsernameStatus({ available: false, message: 'Username cannot be empty.' });
+      return;
+    }
+
+    if (cleanHandle.length < 3) {
+      setUsernameStatus({ available: false, message: 'Username must be at least 3 characters.' });
+      return;
+    }
+
+    if (cleanHandle.length > 20) {
+      setUsernameStatus({ available: false, message: 'Username cannot exceed 20 characters.' });
+      return;
+    }
+
+    if (profile?.username && cleanHandle === profile.username.toLowerCase()) {
+      setUsernameStatus({ available: true, message: 'This is your current active username.' });
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setCheckingUsername(true);
+      try {
+        const q = query(collection(db, 'users'), where('username', '==', cleanHandle));
+        const querySnap = await getDocs(q);
+
+        let isTaken = false;
+        querySnap.forEach(docSnap => {
+          if (docSnap.id !== user?.uid) {
+            isTaken = true;
+          }
+        });
+
+        if (isTaken) {
+          setUsernameStatus({ available: false, message: 'Username is already taken by another aspirant.' });
+        } else {
+          setUsernameStatus({ available: true, message: 'Username is available!' });
+        }
+      } catch (err) {
+        console.error('Error checking username availability:', err);
+        setUsernameStatus({ available: null, message: 'Error checking availability.' });
+      } finally {
+        setCheckingUsername(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [username, profile?.username, user?.uid]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
+    const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+
     if (!formData.name.trim()) return setError('Full name is required');
+    if (!cleanUsername || cleanUsername.length < 3 || cleanUsername.length > 20) {
+      return setError('Username must be between 3 and 20 characters.');
+    }
+    if (usernameStatus.available !== true) {
+      return setError(usernameStatus.message || 'Please choose an available username before saving.');
+    }
     if (!formData.phone.trim() || !/^\d{10}$/.test(formData.phone)) return setError('Please enter a valid 10-digit phone number');
     if (!formData.address.trim()) return setError('Address is required');
     if (!formData.district.trim()) return setError('District is required');
@@ -60,13 +132,30 @@ export default function Profile() {
     setSuccess(null);
 
     try {
+      // Direct, real-time database check right before write to prevent race conditions
+      const q = query(collection(db, 'users'), where('username', '==', cleanUsername));
+      const querySnap = await getDocs(q);
+      let isTaken = false;
+      querySnap.forEach(docSnap => {
+        if (docSnap.id !== user.uid) {
+          isTaken = true;
+        }
+      });
+
+      if (isTaken) {
+        setUsernameStatus({ available: false, message: 'Username is already taken by another aspirant.' });
+        setIsSubmitting(false);
+        return setError('This username is already taken. Please choose another one.');
+      }
+
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, {
         ...formData,
+        username: cleanUsername,
         profileCompleted: true,
         updatedAt: new Date().toISOString()
       });
-      setSuccess('Profile updated successfully!');
+      setSuccess('Profile and username updated successfully!');
     } catch (err: any) {
       console.error('Error updating profile:', err);
       setError('Failed to update profile. Please try again.');
@@ -74,6 +163,8 @@ export default function Profile() {
       setIsSubmitting(false);
     }
   };
+
+  const isVerified = Boolean(profile?.isPremium || profile?.role === 'admin');
 
   return (
     <div className="flex h-screen bg-[#f8fafc] font-sans">
@@ -99,7 +190,7 @@ export default function Profile() {
                         <ArrowLeft size={16} /> Back to Dashboard
                       </Link>
                       <h1 className="text-2xl md:text-3xl font-black text-slate-900 mb-2">My Profile</h1>
-                      <p className="text-slate-500 font-medium">Manage your personal details and contact information.</p>
+                      <p className="text-slate-500 font-medium">Manage your personal details, unique username, and contact information.</p>
                   </header>
 
                   <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
@@ -115,9 +206,16 @@ export default function Profile() {
                                 </div>
                             </div>
                             <div className="text-center md:text-left">
-                                <h3 className="text-xl font-black text-slate-900">{profile?.name || 'Aspirant'}</h3>
-                                <p className="text-sm font-medium text-slate-500">{profile?.email}</p>
-                                <div className="mt-2 flex flex-wrap justify-center md:justify-start gap-2">
+                                <div className="flex items-center justify-center md:justify-start gap-2">
+                                  <h3 className="text-xl font-black text-slate-900">{profile?.name || 'Aspirant'}</h3>
+                                  {isVerified && <VerifiedBadge size="md" title="Pass Pro Verified Aspirant" />}
+                                </div>
+                                <p className="text-xs font-extrabold text-[#006e5d] mt-0.5">
+                                  @{username || profile?.username || 'aspirant'}
+                                </p>
+                                <p className="text-xs font-medium text-slate-400 mt-0.5">{profile?.email}</p>
+                                <div className="mt-2.5 flex flex-wrap justify-center md:justify-start items-center gap-2">
+                                    <SnapchatStreakBadge streakCount={Number(profile?.studyStreak || profile?.streak || 14)} size="sm" />
                                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${profile?.isPremium ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
                                         {profile?.isPremium ? 'Premium Member' : 'Free Member'}
                                     </span>
@@ -146,6 +244,62 @@ export default function Profile() {
                       )}
 
                       <div className="space-y-5">
+                        {/* Unique Username Field */}
+                        <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-2">
+                          <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest ml-1">
+                            Aspirant Handle / Unique Username
+                          </label>
+                          <div className="relative">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-extrabold text-sm flex items-center gap-1">
+                              <AtSign size={18} />
+                            </div>
+                            <input
+                              type="text"
+                              required
+                              value={username}
+                              onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                              className={`w-full pl-12 pr-12 py-3.5 bg-white border rounded-xl transition-all outline-none text-slate-800 font-extrabold text-sm ${
+                                usernameStatus.available === true
+                                  ? 'border-emerald-500/80 focus:border-emerald-600 ring-2 ring-emerald-500/10'
+                                  : usernameStatus.available === false
+                                  ? 'border-red-400 focus:border-red-500 ring-2 ring-red-500/10'
+                                  : 'border-slate-200 focus:border-[#006e5d]'
+                              }`}
+                              placeholder="e.g. shahid_jkssb"
+                            />
+                            
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
+                              {checkingUsername ? (
+                                <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+                              ) : usernameStatus.available === true ? (
+                                <div className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center" title="Available">
+                                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                </div>
+                              ) : usernameStatus.available === false ? (
+                                <div className="w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center" title="Not Available">
+                                  <X className="w-3.5 h-3.5 stroke-[3]" />
+                                </div>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          {/* Status Helper Message */}
+                          {username.trim() && (
+                            <p className={`text-xs font-bold mt-1 ml-1 flex items-center gap-1 ${
+                              usernameStatus.available === true 
+                                ? 'text-emerald-600' 
+                                : usernameStatus.available === false 
+                                ? 'text-red-500' 
+                                : 'text-slate-400'
+                            }`}>
+                              {usernameStatus.message}
+                            </p>
+                          )}
+                          <p className="text-[11px] font-medium text-slate-500 ml-1">
+                            Your unique handle used across discussions, test leaderboards, and your public profile handle.
+                          </p>
+                        </div>
+
                         <div>
                           <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Full Name</label>
                           <div className="relative">

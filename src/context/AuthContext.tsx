@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 
 interface AuthContextType {
@@ -19,6 +19,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Maintain real-time online status and heartbeat for active user
+  useEffect(() => {
+    if (!user) return;
+
+    const userDocRef = doc(db, 'users', user.uid);
+
+    const markOnline = async () => {
+      try {
+        await updateDoc(userDocRef, {
+          isOnline: true,
+          lastSeen: Date.now()
+        });
+      } catch (e) {
+        // Document might be created shortly during signup
+      }
+    };
+
+    const markOffline = async () => {
+      try {
+        await updateDoc(userDocRef, {
+          isOnline: false,
+          lastSeen: Date.now()
+        });
+      } catch (e) {
+        // Ignore
+      }
+    };
+
+    markOnline();
+
+    // Heartbeat every 45 seconds to keep lastSeen fresh
+    const heartbeatInterval = setInterval(markOnline, 45000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        markOnline();
+      } else {
+        markOffline();
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      markOffline();
+    };
+
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      clearInterval(heartbeatInterval);
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      markOffline();
+    };
+  }, [user]);
 
   useEffect(() => {
     let profileUnsubscribe: (() => void) | null = null;
@@ -71,7 +127,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 testsAttempted: 0,
                 averageScore: 0,
                 profileCompleted: false, // Explicitly false for new users
-                createdAt: new Date().toISOString()
+                createdAt: new Date().toISOString(),
+                isOnline: true,
+                lastSeen: Date.now()
               };
               try {
                 await setDoc(userDocRef, newProfile);
@@ -108,6 +166,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loading,
     isAdmin: profile?.role === 'admin' || user?.email === 'iamxeshan1@gmail.com' || user?.email === 'prepnextedtech@gmail.com',
     logout: async () => {
+      if (user) {
+        try {
+          await updateDoc(doc(db, 'users', user.uid), {
+            isOnline: false,
+            lastSeen: Date.now()
+          });
+        } catch (e) {}
+      }
       await auth.signOut();
     }
   };

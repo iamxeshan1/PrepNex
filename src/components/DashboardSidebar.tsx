@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpenText, Book, BookOpen, BarChart3, HelpCircle, User, ShieldCheck, CreditCard, ExternalLink } from 'lucide-react';
+import { LayoutDashboard, BookOpenText, Book, BookOpen, BarChart3, HelpCircle, User, ShieldCheck, CreditCard, ExternalLink, MessageSquare, Bookmark } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 
@@ -13,6 +13,8 @@ export const DashboardSidebar = () => {
   const navItems = [
     { name: 'Visit Main Site', icon: ExternalLink, path: '/' },
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+    { name: 'Aspirant Feed', icon: MessageSquare, path: '/forum' },
+    { name: 'Saved Revision', icon: Bookmark, path: '/forum?tab=saved' },
     { name: 'Mock Tests', icon: BookOpenText, path: '/exams' },
     { name: 'Study Material', icon: Book, path: '/study-material' },
     { name: 'My eBooks', icon: BookOpen, path: '/my-ebooks' },

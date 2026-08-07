@@ -3,6 +3,7 @@ import { Bell, LogOut, Menu, Sun, Moon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { SnapchatStreakBadge } from './SnapchatStreakBadge';
 
 export const DashboardTopHeader = ({ user, onMenuClick }: { user: any, onMenuClick?: () => void }) => {
   const { logout } = useAuth();
@@ -27,15 +28,18 @@ export const DashboardTopHeader = ({ user, onMenuClick }: { user: any, onMenuCli
       
       {/* Right Side: Logout and Desktop Icons */}
       <div className="flex items-center justify-end gap-4 lg:gap-6 flex-1">
-        {/* Desktop View: Keep Bell and Profile */}
-        <div className="hidden lg:flex items-center gap-6">
-            <button className="relative p-2 hover:bg-slate-50 dark:hover:bg-emerald-950/20 rounded-full" aria-label="Notifications">
+        {/* Desktop View: Streak, Bell, Profile */}
+        <div className="flex items-center gap-3 lg:gap-5">
+            <Link to="/profile" title="Your Practice Streak">
+              <SnapchatStreakBadge streakCount={Number(user?.studyStreak || user?.streak || 14)} size="sm" showLabel={false} />
+            </Link>
+            <button className="hidden lg:block relative p-2 hover:bg-slate-50 dark:hover:bg-emerald-950/20 rounded-full" aria-label="Notifications">
                 <Bell className="w-5 h-5 text-slate-500 dark:text-slate-300" />
                 <span className="absolute top-2 right-2 w-2 h-2 bg-[#006e5d] rounded-full border-2 border-white dark:border-[#031d19]"></span>
             </button>
-            <div className="w-10 h-10 rounded-full border border-slate-200 dark:border-emerald-950/55 overflow-hidden bg-slate-50">
+            <Link to="/profile" className="hidden lg:block w-10 h-10 rounded-full border border-slate-200 dark:border-emerald-950/55 overflow-hidden bg-slate-50 hover:border-[#006e5d] transition-all cursor-pointer" title="View Profile">
                  <img src={user?.photoURL || user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.name || user?.email || 'User'}&background=006e5d&color=fff`} className="w-full h-full object-cover" width="40" height="40" fetchPriority="high" alt="User" />
-            </div>
+            </Link>
         </div>
 
         {/* Theme Toggle Button */}

@@ -277,6 +277,37 @@
         "archivedBy": { "type": "array", "items": { "type": "string" } }
       },
       "required": ["userId", "title", "content", "type", "createdAt"]
+    },
+    "StudyGroup": {
+      "title": "StudyGroup",
+      "description": "Collaborative study group for students.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "creatorId": { "type": "string" },
+        "creatorName": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "isPrivate": { "type": "boolean" },
+        "members": { "type": "array", "items": { "type": "string" } },
+        "pinnedPostIds": { "type": "array", "items": { "type": "string" } },
+        "pinnedTestIds": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["name", "creatorId", "creatorName", "isPrivate", "members"]
+    },
+    "GroupMessage": {
+      "title": "GroupMessage",
+      "description": "Message within a StudyGroup chat board.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["senderId", "senderName", "text", "createdAt"]
     }
   },
   "firestore": {
@@ -296,6 +327,8 @@
     "coupons": { "schema": "Coupon", "description": "Discount coupons" },
     "tickets": { "schema": "Ticket", "description": "Support tickets" },
     "notifications": { "schema": "Notification", "description": "Push notifications" },
-    "user_messages": { "schema": "UserMessage", "description": "Inboxes messaging system for announcements or targeted vouchers" }
+    "user_messages": { "schema": "UserMessage", "description": "Inboxes messaging system for announcements or targeted vouchers" },
+    "study_groups": { "schema": "StudyGroup", "description": "Collaborative study groups" },
+    "study_groups/{groupId}/messages/{messageId}": { "schema": "GroupMessage", "description": "Study group chat messages" }
   }
 }

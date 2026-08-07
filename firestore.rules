@@ -39,30 +39,27 @@ service cloud.firestore {
 
     // Users
     match /users/{userId} {
-      allow read: if isOwner(userId);
-      allow read: if isAdmin();
+      allow read: if true;
 
-      allow create: if isOwner(userId);
-      allow create: if isAdmin();
+      allow create: if isOwner(userId) || isAdmin();
 
-      allow update: if isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-        'name', 'phone', 'address', 'district', 'state', 'profileCompleted', 
-        'purchasedExams', 'freeExams', 'testsAttempted', 'averageScore', 
-        'subscriptionExpiry', 'isPremium', 'premiumExpiry', 'lastReviewAt', 
-        'emailVerified', 'updatedAt', 'photoURL', 'email'
-      ]);
-      allow update: if isAdmin();
+      allow update: if isAdmin() || (
+        isOwner(userId) && 
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) || request.resource.data.role == resource.data.role)
+      );
 
       allow delete: if isAdmin();
       
       match /pushTokens/{token} {
-        allow read, write: if isOwner(userId);
-        allow read, write: if isAdmin();
+        allow read, write: if isOwner(userId) || isAdmin();
       }
       
       match /study_sessions/{sessionId} {
-        allow read, write: if isOwner(userId);
-        allow read, write: if isAdmin();
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+
+      match /study_planner_items/{itemId} {
+        allow read, write: if isOwner(userId) || isAdmin();
       }
     }
 
@@ -208,13 +205,57 @@ service cloud.firestore {
     match /forum_posts/{postId} {
       allow read: if true;
       allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
-      allow update: if isAdmin() || (isSignedIn() && ((resource.data.authorId == request.auth.uid) || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount'])));
+      allow update: if isAdmin() || (isSignedIn() && (
+        (resource.data.authorId == request.auth.uid) || 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount', 'likeCount', 'likedUsers', 'poll'])
+      ));
       allow delete: if isAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
       
       match /comments/{commentId} {
         allow read: if true;
         allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
         allow update, delete: if isAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
+      }
+    }
+
+    // Friend Requests
+    match /friend_requests/{requestId} {
+      allow read: if isSignedIn() && (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
+      allow update, delete: if isSignedIn() && (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid || isAdmin());
+    }
+
+    // Friendships
+    match /friendships/{friendshipId} {
+      allow read: if isSignedIn() && (resource.data.users.hasAny([request.auth.uid]) || isAdmin());
+      allow create: if isSignedIn() && request.resource.data.users.hasAny([request.auth.uid]);
+      allow update, delete: if isSignedIn() && (resource.data.users.hasAny([request.auth.uid]) || isAdmin());
+    }
+
+    // Chats and Direct Messages
+    match /chats/{chatId} {
+      allow read: if isSignedIn() && (resource.data.participants.hasAny([request.auth.uid]) || isAdmin());
+      allow create: if isSignedIn() && request.resource.data.participants.hasAny([request.auth.uid]);
+      allow update: if isSignedIn() && (resource.data.participants.hasAny([request.auth.uid]) || isAdmin());
+      
+      match /messages/{messageId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
+        allow update, delete: if isSignedIn() && (resource.data.senderId == request.auth.uid || isAdmin());
+      }
+    }
+
+    // Study Groups
+    match /study_groups/{groupId} {
+      allow read: if isSignedIn() && (resource.data.isPrivate == false || resource.data.members.hasAny([request.auth.uid]) || isAdmin());
+      allow create: if isSignedIn() && request.resource.data.creatorId == request.auth.uid;
+      allow update: if isSignedIn() && (resource.data.members.hasAny([request.auth.uid]) || isAdmin());
+      allow delete: if isSignedIn() && (resource.data.creatorId == request.auth.uid || isAdmin());
+
+      match /messages/{messageId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
+        allow update, delete: if isSignedIn() && (resource.data.senderId == request.auth.uid || isAdmin());
       }
     }
 

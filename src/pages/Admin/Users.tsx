@@ -208,14 +208,34 @@ export default function AdminUsers() {
   const handleEditUser = async (e: React.FormEvent) => {
       e.preventDefault();
       try {
+         const cleanUsername = (editFormData.username || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+         if (cleanUsername) {
+           const q = query(collection(db, 'users'), where('username', '==', cleanUsername));
+           const querySnap = await getDocs(q);
+           let isTaken = false;
+           querySnap.forEach(docSnap => {
+             if (docSnap.id !== selectedUser.id) {
+               isTaken = true;
+             }
+           });
+           if (isTaken) {
+             setToast({
+               isVisible: true,
+               message: "Error: That username is already taken by another user.",
+               type: 'error'
+             });
+             return;
+           }
+         }
          await updateDoc(doc(db, 'users', selectedUser.id), {
-             name: editFormData.name,
-             email: editFormData.email,
-             phone: editFormData.phone,
-             address: editFormData.address,
-             state: editFormData.state
+             name: editFormData.name || '',
+             email: editFormData.email || '',
+             phone: editFormData.phone || '',
+             address: editFormData.address || '',
+             state: editFormData.state || '',
+             username: cleanUsername
          });
-         setUsers(users.map(u => u.id === selectedUser.id ? {...u, ...editFormData} : u));
+         setUsers(users.map(u => u.id === selectedUser.id ? {...u, ...editFormData, username: cleanUsername} : u));
          setToast({
            isVisible: true,
            message: "Student node identity updated successfully.",
@@ -586,6 +606,9 @@ export default function AdminUsers() {
                         <div>
                            <p className="font-bold text-slate-900 group-hover:text-[#006e5d] transition-colors flex items-center gap-2">
                              {user.name || 'Anonymous User'}
+                             {user.username && (
+                               <span className="bg-teal-50 text-[#006e5d] px-2 py-0.5 rounded text-[10px] font-extrabold">@{user.username}</span>
+                             )}
                              {user.role === 'admin' && <span className="bg-rose-100 text-rose-700 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">Admin</span>}
                            </p>
                            <p className="text-xs font-medium text-slate-400 mt-0.5">{user.email}</p>
@@ -691,6 +714,19 @@ export default function AdminUsers() {
                 <div>
                    <label className="block text-sm font-semibold mb-1 text-slate-700">Email Address</label>
                    <input className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#006e5d] focus:border-transparent" value={editFormData.email || ''} onChange={e => setEditFormData({...editFormData, email: e.target.value})} />
+                </div>
+                <div>
+                   <label className="block text-sm font-semibold mb-1 text-slate-700">Unique Username / Handle (Admin Override)</label>
+                   <div className="relative">
+                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">@</span>
+                     <input 
+                       className="w-full pl-8 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#006e5d] focus:border-transparent font-bold text-slate-800" 
+                       value={editFormData.username || ''} 
+                       placeholder="unique_username"
+                       onChange={e => setEditFormData({...editFormData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')})} 
+                     />
+                   </div>
+                   <p className="text-[11px] text-slate-400 mt-1 font-medium">As an administrator, you can override and set any unique handle/username for this user. Only lower-case letters, numbers, and underscores are allowed.</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
