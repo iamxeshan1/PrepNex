@@ -42,7 +42,7 @@ export default function Signup() {
         body: JSON.stringify({ email, name })
       }).catch(console.error);
 
-      navigate('/dashboard');
+      navigate('/exams');
     } catch (err: any) {
       setError(err.message || 'Signup failed');
     } finally {
@@ -56,7 +56,7 @@ export default function Signup() {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-      navigate('/dashboard');
+      navigate('/exams');
     } catch (err: any) {
       console.error("Google Login Error:", err);
       // Provide more specific feedback for common Firebase errors

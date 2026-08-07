@@ -72,13 +72,14 @@ import ScrollToTop from './components/ScrollToTop';
 import { SessionTimeoutManager } from './components/SessionTimeoutManager';
 import { NotificationManager } from './components/NotificationManager';
 import { SplashScreen } from './components/SplashScreen';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import { AnimatePresence } from 'motion/react';
 import { Toaster } from 'react-hot-toast';
 
 const ProtectedRoute = ({ children, adminOnly = false }: { children: React.ReactNode, adminOnly?: boolean }) => {
   const { user, profile, loading, isAdmin } = useAuth();
   
-  if (loading) return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  if (loading) return <div className="flex h-screen items-center justify-center bg-[#02100d]"><div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div></div>;
   if (!user) return <Navigate to="/login" />;
   if (adminOnly && !isAdmin) return <Navigate to="/dashboard" />;
   
@@ -86,13 +87,12 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: React.React
 };
 
 export function AppContent() {
-  const [showSplash, setShowSplash] = React.useState(window.location.pathname === '/');
+  const [showSplash, setShowSplash] = React.useState(true);
 
   React.useEffect(() => {
-    if (!showSplash) return;
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 1000); 
+    }, 1800); 
     return () => clearTimeout(timer);
   }, []);
 
@@ -336,6 +336,7 @@ export function AppContent() {
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
         </React.Suspense>
+        <MobileBottomNav />
       </Router>
     </>
   );

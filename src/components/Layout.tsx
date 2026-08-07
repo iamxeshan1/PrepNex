@@ -404,7 +404,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 animate-in fade-in duration-500">
+      <main className="flex-1 pb-20 lg:pb-0 animate-in fade-in duration-500">
         {children}
       </main>
 

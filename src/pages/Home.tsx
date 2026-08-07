@@ -104,7 +104,7 @@ const COLOR_VARIANTS = [
 const tabs = ['All', 'UPSC', 'SSC', 'NEET', 'JEE', 'IBPS', 'GATE'];
 
 export default function Home() {
-  const { profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('All');
   const [exams, setExams] = useState<any[]>([]);
   const [agencies, setAgencies] = useState<any[]>([]);
@@ -119,6 +119,15 @@ export default function Home() {
   const [popupData, setPopupData] = useState<any>(null);
   const [showPopup, setShowPopup] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (user) {
+      navigate('/exams');
+    } else {
+      navigate('/login');
+    }
+  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     const fetchData = async () => {
