@@ -11,7 +11,7 @@ import {
   UserPlus, UserCheck, MessageCircle, BarChart2, Share2, 
   Edit3, Sparkles, CheckCircle2, ShieldCheck, Heart, 
   BookOpen, Target, Clock, ArrowLeft, Send, Check, X,
-  Search, ExternalLink
+  Search, ExternalLink, AtSign, Loader2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -40,6 +40,8 @@ export default function StudentProfile() {
   const [friendshipStatus, setFriendshipStatus] = useState<'none' | 'pending_sent' | 'pending_received' | 'friends'>('none');
   const [requestId, setRequestId] = useState<string | null>(null);
   const [friendCount, setFriendCount] = useState<number>(0);
+  const [friends, setFriends] = useState<any[]>([]);
+  const [friendsLoading, setFriendsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
   // Edit Bio / Profile Modal
@@ -48,7 +50,62 @@ export default function StudentProfile() {
   const [editDistrict, setEditDistrict] = useState('');
   const [editState, setEditState] = useState('');
   const [editExam, setEditExam] = useState('');
+  const [editUsername, setEditUsername] = useState('');
+  const [usernameStatus, setUsernameStatus] = useState<{ available: boolean | null; message: string }>({ available: null, message: '' });
+  const [checkingUsername, setCheckingUsername] = useState(false);
   const [updatingProfile, setUpdatingProfile] = useState(false);
+
+  useEffect(() => {
+    const cleanHandle = editUsername.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+
+    if (!cleanHandle) {
+      setUsernameStatus({ available: false, message: 'Username cannot be empty.' });
+      return;
+    }
+
+    if (cleanHandle.length < 3) {
+      setUsernameStatus({ available: false, message: 'Username must be at least 3 characters.' });
+      return;
+    }
+
+    if (cleanHandle.length > 20) {
+      setUsernameStatus({ available: false, message: 'Username cannot exceed 20 characters.' });
+      return;
+    }
+
+    if (studentData?.username && cleanHandle === studentData.username.toLowerCase()) {
+      setUsernameStatus({ available: true, message: 'This is your current active username.' });
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setCheckingUsername(true);
+      try {
+        const q = query(collection(db, 'users'), where('username', '==', cleanHandle));
+        const querySnap = await getDocs(q);
+
+        let isTaken = false;
+        querySnap.forEach(docSnap => {
+          if (docSnap.id !== currentUser?.uid) {
+            isTaken = true;
+          }
+        });
+
+        if (isTaken) {
+          setUsernameStatus({ available: false, message: 'Username is already taken by another aspirant.' });
+        } else {
+          setUsernameStatus({ available: true, message: 'Username is available!' });
+        }
+      } catch (err) {
+        console.error('Error checking username availability:', err);
+        setUsernameStatus({ available: null, message: 'Error checking availability.' });
+      } finally {
+        setCheckingUsername(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [editUsername, studentData?.username, currentUser?.uid]);
 
   useEffect(() => {
     if (!targetId) return;
@@ -64,6 +121,7 @@ export default function StudentProfile() {
         setEditDistrict(data.district || '');
         setEditState(data.state || '');
         setEditExam(data.targetExam || 'JKSSB / SSC');
+        setEditUsername(data.username || '');
       } else {
         setStudentData({
           id: targetId,
@@ -104,13 +162,27 @@ export default function StudentProfile() {
         fetchedResults.sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
         setTestResults(fetchedResults);
 
-        // Fetch Friends Count
+        // Fetch Friends Count and friends list
         const friendshipsQ1 = query(
           collection(db, 'friendships'),
           where('users', 'array-contains', targetId)
         );
         const fSnap = await getDocs(friendshipsQ1);
         setFriendCount(fSnap.size);
+
+        const fetchedFriends = fSnap.docs.map(docSnap => {
+          const data = docSnap.data();
+          const otherUser = data.user1?.uid === targetId ? data.user2 : data.user1;
+          return {
+            id: docSnap.id,
+            friendId: otherUser?.uid || '',
+            name: otherUser?.name || 'Aspirant',
+            photoURL: otherUser?.photoURL || '',
+            isPremium: Boolean(otherUser?.isPremium)
+          };
+        }).filter(f => f.friendId !== '');
+        setFriends(fetchedFriends);
+        setFriendsLoading(false);
 
         // Check Friendship / Request Status if logged in & viewing another student
         if (currentUser && !isSelf) {
@@ -257,9 +329,37 @@ export default function StudentProfile() {
 
   const handleSaveProfileEdit = async () => {
     if (!currentUser) return;
+    const cleanUsername = editUsername.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+    if (!cleanUsername || cleanUsername.length < 3 || cleanUsername.length > 20) {
+      toast.error('Username must be between 3 and 20 characters.');
+      return;
+    }
+    if (usernameStatus.available !== true) {
+      toast.error(usernameStatus.message || 'Please choose an available username.');
+      return;
+    }
+
     setUpdatingProfile(true);
     try {
+      // Final guard check before save
+      const q = query(collection(db, 'users'), where('username', '==', cleanUsername));
+      const querySnap = await getDocs(q);
+      let isTaken = false;
+      querySnap.forEach(docSnap => {
+        if (docSnap.id !== currentUser.uid) {
+          isTaken = true;
+        }
+      });
+
+      if (isTaken) {
+        setUsernameStatus({ available: false, message: 'Username is already taken.' });
+        toast.error('This username is already taken. Please choose another one.');
+        setUpdatingProfile(false);
+        return;
+      }
+
       await updateDoc(doc(db, 'users', currentUser.uid), {
+        username: cleanUsername,
         bio: editBio.trim(),
         district: editDistrict.trim(),
         state: editState.trim(),
@@ -269,6 +369,7 @@ export default function StudentProfile() {
 
       setStudentData((prev: any) => ({
         ...prev,
+        username: cleanUsername,
         bio: editBio.trim(),
         district: editDistrict.trim(),
         state: editState.trim(),
@@ -577,6 +678,17 @@ export default function StudentProfile() {
             >
               <Award className="w-4 h-4" /> Earned Badges
             </button>
+
+            <button
+              onClick={() => setActiveTab('friends')}
+              className={`py-3.5 px-4 text-xs font-black transition-all border-b-2 flex items-center gap-2 ${
+                activeTab === 'friends'
+                  ? 'border-[#006e5d] text-[#006e5d] dark:text-emerald-400'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              <UserCheck className="w-4 h-4" /> Friends ({friendCount})
+            </button>
           </div>
 
           {/* TAB 1: Posts & Polls Feed */}
@@ -747,6 +859,68 @@ export default function StudentProfile() {
             </div>
           )}
 
+          {/* TAB 4: Friends List */}
+          {activeTab === 'friends' && (
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs">
+              <h3 className="text-sm font-extrabold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                <UserCheck className="w-4 h-4 text-[#006e5d]" /> Active Connections
+              </h3>
+
+              {friendsLoading ? (
+                <div className="text-center py-6 text-xs text-slate-400 font-medium">
+                  Loading connections...
+                </div>
+              ) : friends.length === 0 ? (
+                <div className="text-center py-8 text-xs text-slate-500 font-medium">
+                  No friends added yet.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {friends.map(friend => {
+                    const friendAvatar = friend.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(friend.name)}&background=006e5d&color=fff`;
+                    return (
+                      <div key={friend.id} className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <img 
+                            src={friendAvatar} 
+                            alt={friend.name} 
+                            className="w-10 h-10 rounded-full object-cover bg-slate-200"
+                          />
+                          <div>
+                            <h4 className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1">
+                              {friend.name}
+                              {friend.isPremium && <VerifiedBadge size="xs" />}
+                            </h4>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase">
+                              Aspirant
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          <Link 
+                            to={`/student/${friend.friendId}`}
+                            className="p-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-300 transition-all text-xs"
+                            title="View Profile"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </Link>
+                          <Link 
+                            to={`/chat?userId=${friend.friendId}`}
+                            className="p-1.5 bg-[#006e5d]/10 hover:bg-[#006e5d]/20 text-[#006e5d] dark:text-emerald-400 rounded-lg transition-all text-xs"
+                            title="Send Message"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
 
         {/* Edit Profile Modal */}
@@ -761,6 +935,49 @@ export default function StudentProfile() {
               </div>
 
               <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Unique Username / Handle
+                  </label>
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-extrabold text-xs">
+                      @
+                    </div>
+                    <input 
+                      type="text"
+                      required
+                      value={editUsername}
+                      onChange={(e) => setEditUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                      placeholder="e.g. jhon_doe"
+                      className={`w-full pl-7 pr-8 py-2 border rounded-xl bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:bg-white transition-all ${
+                        usernameStatus.available === true
+                          ? 'border-emerald-500/80 focus:border-emerald-600 ring-2 ring-emerald-500/10'
+                          : usernameStatus.available === false
+                          ? 'border-red-400 focus:border-red-500 ring-2 ring-red-500/10'
+                          : 'border-slate-200 dark:border-slate-700 focus:border-[#006e5d]'
+                      }`}
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+                      {checkingUsername ? (
+                        <Loader2 className="w-4 h-4 text-slate-400 animate-spin" />
+                      ) : usernameStatus.available === true ? (
+                        <Check className="w-4 h-4 text-emerald-500 stroke-[3]" />
+                      ) : usernameStatus.available === false ? (
+                        <X className="w-4 h-4 text-red-500 stroke-[3]" />
+                      ) : null}
+                    </div>
+                  </div>
+                  {editUsername.trim() && (
+                    <p className={`text-[10px] font-bold mt-1 flex items-center gap-1 ${
+                      usernameStatus.available === true 
+                        ? 'text-emerald-600' 
+                        : 'text-red-500'
+                    }`}>
+                      {usernameStatus.message}
+                    </p>
+                  )}
+                </div>
+
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                     Bio / Status

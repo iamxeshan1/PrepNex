@@ -196,6 +196,18 @@ export default function Chat() {
     const unsubMessages = onSnapshot(messagesQ, (snap) => {
       const fetched = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       setMessages(fetched);
+
+      // Symmetrically mark incoming unread messages from the other user as read in real-time
+      snap.docs.forEach(async (docSnap) => {
+        const data = docSnap.data();
+        if (data.senderId === selectedFriend.uid && !data.read) {
+          try {
+            await updateDoc(docSnap.ref, { read: true, status: 'read' });
+          } catch (e) {
+            console.error("Error updating read status:", e);
+          }
+        }
+      });
     }, (err) => {
       console.error("Error fetching messages:", err);
     });
@@ -333,7 +345,9 @@ export default function Chat() {
       await addDoc(collection(db, 'chats', chatId, 'messages'), {
         senderId: currentUser.uid,
         text: msgText,
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        read: false,
+        status: 'sent'
       });
 
     } catch (err) {
@@ -794,8 +808,19 @@ export default function Chat() {
                                   : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-bl-xs'
                               }`}>
                                 <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>
-                                <div className={`text-[9px] mt-1 text-right font-bold ${isMine ? 'text-emerald-200' : 'text-slate-400'}`}>
-                                  {new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                <div className="flex items-center justify-end gap-1 mt-1">
+                                  <span className={`text-[9px] font-bold ${isMine ? 'text-emerald-200' : 'text-slate-400'}`}>
+                                    {new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                  {isMine && (
+                                    <span className="inline-flex items-center shrink-0">
+                                      {msg.read ? (
+                                        <CheckCheck className="w-3.5 h-3.5 text-sky-200 stroke-[3]" title="Read" />
+                                      ) : (
+                                        <Check className="w-3.5 h-3.5 text-emerald-200/60 stroke-[2.5]" title="Sent" />
+                                      )}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             </div>
