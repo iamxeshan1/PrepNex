@@ -7,6 +7,7 @@ import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { Logo } from '../components/Logo';
 import { Layout } from '../components/Layout';
+import { isAppMode } from '../lib/appMode';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -21,7 +22,11 @@ export default function Login() {
     setError('');
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate('/exams');
+      if (isAppMode()) {
+        navigate('/exams');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       setError('Invalid email or password');
     } finally {
@@ -35,7 +40,11 @@ export default function Login() {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-      navigate('/exams');
+      if (isAppMode()) {
+        navigate('/exams');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       console.error("Google Login Error:", err);
       // Provide more specific feedback for common Firebase errors

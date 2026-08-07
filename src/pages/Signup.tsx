@@ -7,6 +7,7 @@ import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } f
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { Logo } from '../components/Logo';
 import { Layout } from '../components/Layout';
+import { isAppMode } from '../lib/appMode';
 
 export default function Signup() {
   const [name, setName] = useState('');
@@ -42,7 +43,11 @@ export default function Signup() {
         body: JSON.stringify({ email, name })
       }).catch(console.error);
 
-      navigate('/exams');
+      if (isAppMode()) {
+        navigate('/exams');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       setError(err.message || 'Signup failed');
     } finally {
@@ -56,7 +61,11 @@ export default function Signup() {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-      navigate('/exams');
+      if (isAppMode()) {
+        navigate('/exams');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       console.error("Google Login Error:", err);
       // Provide more specific feedback for common Firebase errors

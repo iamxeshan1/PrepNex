@@ -28,6 +28,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { db } from '../lib/firebase';
 import { doc, onSnapshot, collection, query, where, updateDoc } from 'firebase/firestore';
 import { useTheme } from '../context/ThemeContext';
+import { isAppMode } from '../lib/appMode';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAdmin } = useAuth();
@@ -404,11 +405,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 pb-20 lg:pb-0 animate-in fade-in duration-500">
+      <main className={`flex-1 animate-in fade-in duration-500 ${isAppMode() ? 'pb-20 lg:pb-0' : ''}`}>
         {children}
       </main>
 
       {/* Footer */}
+      {!isAppMode() && (
       <footer className="bg-[#002f26] py-20 relative overflow-hidden mt-12">
         {/* Glow Effects */}
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03] mix-blend-overlay"></div>
@@ -522,6 +524,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           </div>
         </div>
       </footer>
+      )}
 
       {/* Notifications Side Drawer */}
       <AnimatePresence>

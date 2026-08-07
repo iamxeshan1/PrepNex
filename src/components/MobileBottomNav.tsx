@@ -5,6 +5,7 @@ import { BookOpenText, MessageSquare, MessageCircle, LayoutDashboard, Bell } fro
 import { motion } from 'motion/react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { isAppMode } from '../lib/appMode';
 
 export const MobileBottomNav = () => {
   const { user } = useAuth();
@@ -50,8 +51,8 @@ export const MobileBottomNav = () => {
     return () => unsubChats();
   }, [user]);
 
-  // Only show navigation for logged in users
-  if (!user) return null;
+  // Only show navigation for logged in users in App Mode
+  if (!user || !isAppMode()) return null;
 
   const currentPath = location.pathname;
 

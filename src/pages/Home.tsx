@@ -56,6 +56,7 @@ import { motion } from 'motion/react';
 import { db } from '../lib/firebase';
 import { collection, query, getDocs, onSnapshot, limit, orderBy, doc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
+import { isAppMode } from '../lib/appMode';
 
 const ICON_MAP: Record<string, any> = {
   Brain,
@@ -122,10 +123,12 @@ export default function Home() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (user) {
-      navigate('/exams');
-    } else {
-      navigate('/login');
+    if (isAppMode()) {
+      if (user) {
+        navigate('/exams');
+      } else {
+        navigate('/login');
+      }
     }
   }, [user, authLoading, navigate]);
 

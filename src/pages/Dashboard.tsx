@@ -11,6 +11,7 @@ import { db } from '../lib/firebase';
 import { StudyPlanner } from '../components/StudyPlanner';
 import { TopPerformersLeaderboard } from '../components/TopPerformersLeaderboard';
 import { DailyStreakWidget } from '../components/DailyStreakWidget';
+import { isAppMode } from '../lib/appMode';
 
 export default function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -317,7 +318,7 @@ export default function Dashboard() {
       
       <div className="flex-1 flex flex-col w-full overflow-hidden">
           <DashboardTopHeader user={profile} onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
-          <main className="p-4 pb-24 lg:p-8 overflow-y-auto">
+          <main className={`p-4 lg:p-8 overflow-y-auto ${isAppMode() ? 'pb-24' : ''}`}>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
                   
                   {/* Payment Success Banner */}

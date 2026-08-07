@@ -44,9 +44,15 @@ export default function Chat() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to bottom of message list
+  // Scroll to bottom of message list without scrolling the entire window
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      const container = messagesEndRef.current.parentElement;
+      if (container) {
+        // Use standard scrollTop calculation to scroll only the chat feed
+        container.scrollTop = container.scrollHeight;
+      }
+    }
   };
 
   useEffect(() => {

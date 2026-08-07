@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SettingsProvider } from './context/SettingsContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -75,6 +75,7 @@ import { SplashScreen } from './components/SplashScreen';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { AnimatePresence } from 'motion/react';
 import { Toaster } from 'react-hot-toast';
+import { isAppMode } from './lib/appMode';
 
 const ProtectedRoute = ({ children, adminOnly = false }: { children: React.ReactNode, adminOnly?: boolean }) => {
   const { user, profile, loading, isAdmin } = useAuth();
@@ -86,8 +87,29 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: React.React
   return <>{children}</>;
 };
 
+const MobileAppRedirect = () => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (loading) return;
+    localStorage.setItem('prepnext_app_mode', 'true');
+    if (user) {
+      navigate('/exams', { replace: true });
+    } else {
+      navigate('/login', { replace: true });
+    }
+  }, [user, loading, navigate]);
+
+  return (
+    <div className="flex h-screen items-center justify-center bg-[#02100d]">
+      <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  );
+};
+
 export function AppContent() {
-  const [showSplash, setShowSplash] = React.useState(true);
+  const [showSplash, setShowSplash] = React.useState(isAppMode());
 
   React.useEffect(() => {
     const timer = setTimeout(() => {
@@ -108,6 +130,7 @@ export function AppContent() {
         <ScrollToTop />
         <React.Suspense fallback={<div className="flex h-screen items-center justify-center min-h-[50vh]"><div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div></div>}>
         <Routes>
+          <Route path="/app" element={<MobileAppRedirect />} />
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
