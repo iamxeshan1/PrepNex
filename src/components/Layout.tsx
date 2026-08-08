@@ -71,6 +71,20 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const [noticesCount, setNoticesCount] = React.useState(0);
   const [jobAlertsCount, setJobAlertsCount] = React.useState(0);
 
+  const parseDocTime = (data: any): number => {
+    if (!data) return 0;
+    const val = data.createdAt || data.updatedAt;
+    if (!val) return 0;
+    if (typeof val === 'number') return val;
+    if (typeof val === 'string') {
+      const ms = new Date(val).getTime();
+      return isNaN(ms) ? 0 : ms;
+    }
+    if (val.seconds) return val.seconds * 1000;
+    if (typeof val.toDate === 'function') return val.toDate().getTime();
+    return 0;
+  };
+
   React.useEffect(() => {
     if (location.pathname === '/announcements') {
       localStorage.setItem('last_seen_notices_time', Date.now().toString());
@@ -83,8 +97,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   }, [location.pathname]);
 
   React.useEffect(() => {
+    const handleNoticesRead = () => setNoticesCount(0);
+    const handleJobAlertsRead = () => setJobAlertsCount(0);
+    window.addEventListener('notices_read', handleNoticesRead);
+    window.addEventListener('job_alerts_read', handleJobAlertsRead);
+
     const unsubNotices = onSnapshot(collection(db, 'notices'), (snap) => {
-      if (window.location.pathname === '/announcements') {
+      if (location.pathname === '/announcements') {
         localStorage.setItem('last_seen_notices_time', Date.now().toString());
         setNoticesCount(0);
         return;
@@ -96,9 +115,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         const lastSeenMs = Number(lastSeenStr);
         let unread = 0;
         snap.docs.forEach((docSnap) => {
-          const data = docSnap.data();
-          const createdMs = data.createdAt ? new Date(data.createdAt).getTime() : 0;
-          if (createdMs > lastSeenMs) {
+          const docTime = parseDocTime(docSnap.data());
+          if (docTime > lastSeenMs) {
             unread++;
           }
         });
@@ -107,7 +125,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     }, (err) => console.error(err));
 
     const unsubJobAlerts = onSnapshot(collection(db, 'jobAlerts'), (snap) => {
-      if (window.location.pathname === '/job-alerts') {
+      if (location.pathname === '/job-alerts') {
         localStorage.setItem('last_seen_job_alerts_time', Date.now().toString());
         setJobAlertsCount(0);
         return;
@@ -119,9 +137,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         const lastSeenMs = Number(lastSeenStr);
         let unread = 0;
         snap.docs.forEach((docSnap) => {
-          const data = docSnap.data();
-          const createdMs = data.createdAt ? new Date(data.createdAt).getTime() : 0;
-          if (createdMs > lastSeenMs) {
+          const docTime = parseDocTime(docSnap.data());
+          if (docTime > lastSeenMs) {
             unread++;
           }
         });
@@ -130,10 +147,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     }, (err) => console.error(err));
 
     return () => {
+      window.removeEventListener('notices_read', handleNoticesRead);
+      window.removeEventListener('job_alerts_read', handleJobAlertsRead);
       unsubNotices();
       unsubJobAlerts();
     };
-  }, []);
+  }, [location.pathname]);
 
   React.useEffect(() => {
     if (!user) {

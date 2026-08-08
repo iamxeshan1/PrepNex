@@ -59,24 +59,44 @@ export default function Chat() {
     scrollToBottom();
   }, [messages]);
 
-  // Real-time online users presence map
+  // Real-time online users presence map & real-time profiles
   const [onlineUsersMap, setOnlineUsersMap] = useState<Record<string, { isOnline: boolean; lastSeen?: number }>>({});
+  const [usersMap, setUsersMap] = useState<Record<string, any>>({});
 
   useEffect(() => {
     const unsubUsers = onSnapshot(collection(db, 'users'), (snap) => {
       const statusMap: Record<string, { isOnline: boolean; lastSeen?: number }> = {};
+      const uMap: Record<string, any> = {};
       snap.docs.forEach((d) => {
         const data = d.data();
         statusMap[d.id] = {
           isOnline: Boolean(data.isOnline),
           lastSeen: data.lastSeen ? Number(data.lastSeen) : undefined
         };
+        uMap[d.id] = { uid: d.id, ...data };
       });
       setOnlineUsersMap(statusMap);
+      setUsersMap(uMap);
     });
 
     return () => unsubUsers();
   }, []);
+
+  const getUserProfile = (uid: string, fallback?: any) => {
+    const u = usersMap[uid];
+    const rawName = u?.fullName || u?.name || fallback?.name || fallback?.fullName || 'Aspirant';
+    const cleanHandle = (u?.username || fallback?.username || rawName.toLowerCase().replace(/[^a-z0-9_]/g, '')).toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const photoURL = u?.photoURL || fallback?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(rawName)}&background=006e5d&color=fff`;
+    const isPremium = Boolean(u?.isPremium || u?.role === 'admin' || fallback?.isPremium);
+    return {
+      uid,
+      name: rawName,
+      username: cleanHandle,
+      handle: `@${cleanHandle}`,
+      photoURL,
+      isPremium
+    };
+  };
 
   const isUserOnline = (uid: string) => {
     const info = onlineUsersMap[uid];
@@ -233,13 +253,14 @@ export default function Chat() {
         limit(20)
       );
       const snap = await getDocs(usersQ);
-      const queryLower = searchQuery.toLowerCase();
+      const queryLower = searchQuery.toLowerCase().replace(/^@/, '');
 
       const results = snap.docs
         .map(d => ({ uid: d.id, ...d.data() }))
         .filter((u: any) => 
           u.uid !== currentUser?.uid && 
-          ((u.name && u.name.toLowerCase().includes(queryLower)) || 
+          ((u.username && u.username.toLowerCase().includes(queryLower)) ||
+           (u.name && u.name.toLowerCase().includes(queryLower)) || 
            (u.fullName && u.fullName.toLowerCase().includes(queryLower)) ||
            (u.email && u.email.toLowerCase().includes(queryLower)))
         );
@@ -383,6 +404,8 @@ export default function Chat() {
     );
   }
 
+  const activeProf = selectedFriend ? getUserProfile(selectedFriend.uid, selectedFriend) : null;
+
   return (
     <Layout>
       <div className="bg-slate-100 dark:bg-slate-950 min-h-[calc(100vh-80px)] text-slate-900 dark:text-slate-100 flex flex-col">
@@ -455,9 +478,7 @@ export default function Chat() {
                 ) : (
                   friends.map((friend) => {
                     const isSelected = selectedFriend?.uid === friend.uid;
-                    const name = friend.name || 'Aspirant';
-                    const avatar = friend.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=006e5d&color=fff`;
-                    const isVerified = Boolean(friend.isPremium);
+                    const uProf = getUserProfile(friend.uid, friend);
 
                     return (
                       <button
@@ -476,8 +497,8 @@ export default function Chat() {
                         {/* Avatar BEFORE name */}
                         <div className="relative shrink-0">
                           <img 
-                            src={avatar} 
-                            alt={name} 
+                            src={uProf.photoURL} 
+                            alt={uProf.name} 
                             className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700"
                           />
                           {isUserOnline(friend.uid) ? (
@@ -485,7 +506,7 @@ export default function Chat() {
                           ) : (
                             <span className="absolute bottom-0 right-0 w-3 h-3 bg-slate-300 dark:bg-slate-600 rounded-full border-2 border-white dark:border-slate-900" title="Offline" />
                           )}
-                          {isVerified && (
+                          {uProf.isPremium && (
                             <div className="absolute -top-0.5 -right-0.5">
                               <VerifiedBadge size="xs" />
                             </div>
@@ -495,12 +516,12 @@ export default function Chat() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-1 mb-0.5">
                             <div className="flex items-center gap-1 min-w-0">
-                              <span className="font-extrabold text-xs text-slate-900 dark:text-white truncate">{name}</span>
-                              {isVerified && <VerifiedBadge size="xs" />}
+                              <span className="font-extrabold text-xs text-slate-900 dark:text-white truncate">{uProf.name}</span>
+                              {uProf.isPremium && <VerifiedBadge size="xs" />}
                             </div>
                           </div>
                           <span className="text-[11px] text-slate-400 font-medium block truncate">
-                            @{name.toLowerCase().replace(/\s+/g, '_')}
+                            {uProf.handle}
                           </span>
                         </div>
                       </button>
@@ -526,42 +547,45 @@ export default function Chat() {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {incomingRequests.map((req) => (
-                        <div key={req.id} className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 min-w-0">
-                            {/* Avatar BEFORE name */}
-                            <img 
-                              src={req.senderPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.senderName || 'Aspirant')}&background=006e5d&color=fff`} 
-                              alt={req.senderName} 
-                              className="w-8 h-8 rounded-full object-cover shrink-0"
-                            />
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1">
-                                <span className="font-bold text-xs text-slate-900 dark:text-white truncate">{req.senderName}</span>
-                                {req.senderIsPremium && <VerifiedBadge size="xs" />}
+                      {incomingRequests.map((req) => {
+                        const reqProf = getUserProfile(req.senderId, { name: req.senderName, photoURL: req.senderPhoto, isPremium: req.senderIsPremium });
+                        return (
+                          <div key={req.id} className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              {/* Avatar BEFORE name */}
+                              <img 
+                                src={reqProf.photoURL} 
+                                alt={reqProf.name} 
+                                className="w-8 h-8 rounded-full object-cover shrink-0"
+                              />
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1">
+                                  <span className="font-bold text-xs text-slate-900 dark:text-white truncate">{reqProf.name}</span>
+                                  {reqProf.isPremium && <VerifiedBadge size="xs" />}
+                                </div>
+                                <span className="text-[10px] text-slate-400 font-medium block">{reqProf.handle}</span>
                               </div>
-                              <span className="text-[10px] text-slate-400 font-medium block">Wants to be study friends</span>
+                            </div>
+
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button 
+                                onClick={() => handleAcceptRequest(req)}
+                                className="p-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-colors"
+                                title="Accept"
+                              >
+                                <Check className="w-4 h-4 stroke-[3]" />
+                              </button>
+                              <button 
+                                onClick={() => handleDeclineRequest(req.id)}
+                                className="p-1.5 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-300 transition-colors"
+                                title="Decline"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
                             </div>
                           </div>
-
-                          <div className="flex items-center gap-1 shrink-0">
-                            <button 
-                              onClick={() => handleAcceptRequest(req)}
-                              className="p-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-colors"
-                              title="Accept"
-                            >
-                              <Check className="w-4 h-4 stroke-[3]" />
-                            </button>
-                            <button 
-                              onClick={() => handleDeclineRequest(req.id)}
-                              className="p-1.5 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-300 transition-colors"
-                              title="Decline"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -578,26 +602,29 @@ export default function Chat() {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {sentRequests.map((req) => (
-                        <div key={req.id} className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <img 
-                              src={req.receiverPhoto || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.receiverName || 'Aspirant')}&background=006e5d&color=fff`} 
-                              alt={req.receiverName} 
-                              className="w-8 h-8 rounded-full object-cover shrink-0"
-                            />
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1">
-                                <span className="font-bold text-xs text-slate-900 dark:text-white truncate">{req.receiverName}</span>
-                                {req.receiverIsPremium && <VerifiedBadge size="xs" />}
+                      {sentRequests.map((req) => {
+                        const sentProf = getUserProfile(req.receiverId, { name: req.receiverName, photoURL: req.receiverPhoto, isPremium: req.receiverIsPremium });
+                        return (
+                          <div key={req.id} className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <img 
+                                src={sentProf.photoURL} 
+                                alt={sentProf.name} 
+                                className="w-8 h-8 rounded-full object-cover shrink-0"
+                              />
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1">
+                                  <span className="font-bold text-xs text-slate-900 dark:text-white truncate">{sentProf.name}</span>
+                                  {sentProf.isPremium && <VerifiedBadge size="xs" />}
+                                </div>
+                                <span className="text-[10px] text-amber-500 font-bold block flex items-center gap-1">
+                                  {sentProf.handle} • <Clock className="w-3 h-3" /> Waiting for response
+                                </span>
                               </div>
-                              <span className="text-[10px] text-amber-500 font-bold block flex items-center gap-1">
-                                <Clock className="w-3 h-3" /> Waiting for response
-                              </span>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -613,7 +640,7 @@ export default function Chat() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search students by name or email..."
+                    placeholder="Search students by name or handle..."
                     className="flex-1 px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 outline-none focus:border-[#006e5d] text-slate-900 dark:text-white"
                   />
                   <button 
@@ -627,9 +654,8 @@ export default function Chat() {
 
                 <div className="space-y-2 mt-2">
                   {searchResults.map((st) => {
-                    const stName = st.fullName || st.name || 'Aspirant';
+                    const stProf = getUserProfile(st.uid, st);
                     const isAlreadyFriend = friends.some(f => f.uid === st.uid);
-                    const isVerified = Boolean(st.isPremium || st.role === 'admin');
 
                     return (
                       <div key={st.uid} className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
@@ -637,8 +663,8 @@ export default function Chat() {
                           {/* Avatar BEFORE name */}
                           <div className="relative shrink-0">
                             <img 
-                              src={st.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(stName)}&background=006e5d&color=fff`} 
-                              alt={stName} 
+                              src={stProf.photoURL} 
+                              alt={stProf.name} 
                               className="w-9 h-9 rounded-full object-cover border border-slate-200"
                             />
                             {isUserOnline(st.uid) ? (
@@ -650,12 +676,12 @@ export default function Chat() {
                           <div className="min-w-0">
                             <div className="flex items-center gap-1">
                               <span className="font-black text-xs text-slate-900 dark:text-white group-hover:text-[#006e5d] transition-colors truncate">
-                                {stName}
+                                {stProf.name}
                               </span>
-                              {isVerified && <VerifiedBadge size="xs" />}
+                              {stProf.isPremium && <VerifiedBadge size="xs" />}
                             </div>
                             <span className="text-[10px] text-slate-400 font-medium block">
-                              @{stName.toLowerCase().replace(/\s+/g, '_')}
+                              {stProf.handle}
                             </span>
                           </div>
                         </Link>
@@ -692,55 +718,55 @@ export default function Chat() {
           {/* Right Chat Panel Window */}
           <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">
             
-            {selectedFriend ? (
+            {selectedFriend && activeProf ? (
               <>
                 {/* Chat Header Bar */}
-                <div className="p-3.5 sm:p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 flex flex-wrap items-center justify-between gap-2 min-w-0">
-                  
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    {/* Selected Friend Avatar BEFORE name */}
-                    <Link to={`/student/${selectedFriend.uid}`} className="relative shrink-0">
-                      <img 
-                        src={selectedFriend.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedFriend.name || 'Aspirant')}&background=006e5d&color=fff`} 
-                        alt={selectedFriend.name} 
-                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-[#006e5d]/30"
-                      />
-                      {isUserOnline(selectedFriend.uid) ? (
-                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 shadow-xs" title="Online now" />
-                      ) : (
-                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-slate-300 dark:bg-slate-600 rounded-full border-2 border-white dark:border-slate-900" title="Offline" />
-                      )}
-                      {selectedFriend.isPremium && (
-                        <div className="absolute -top-0.5 -right-0.5">
-                          <VerifiedBadge size="xs" />
-                        </div>
-                      )}
-                    </Link>
-
-                    <div className="min-w-0 flex-1">
-                      {/* Name followed immediately by Verification Badge */}
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <Link to={`/student/${selectedFriend.uid}`} className="font-black text-xs sm:text-sm text-slate-900 dark:text-white hover:text-[#006e5d] transition-colors truncate">
-                          {selectedFriend.name}
-                        </Link>
-                        {selectedFriend.isPremium && (
-                          <VerifiedBadge size="sm" title="Pass Pro Verified Aspirant" />
-                        )}
-                      </div>
+                    <div className="p-3.5 sm:p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 flex flex-wrap items-center justify-between gap-2 min-w-0">
                       
-                      <div className="flex items-center gap-1.5 text-slate-400 text-[10px] sm:text-[11px] font-medium flex-wrap">
-                        <span>@{selectedFriend.name?.toLowerCase().replace(/\s+/g, '_')}</span>
-                        <span>•</span>
-                        {isUserOnline(selectedFriend.uid) ? (
-                          <span className="text-emerald-500 font-extrabold flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Online
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 font-semibold">Offline</span>
-                        )}
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        {/* Selected Friend Avatar BEFORE name */}
+                        <Link to={`/student/${selectedFriend.uid}`} className="relative shrink-0">
+                          <img 
+                            src={activeProf.photoURL} 
+                            alt={activeProf.name} 
+                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-[#006e5d]/30"
+                          />
+                          {isUserOnline(selectedFriend.uid) ? (
+                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 shadow-xs" title="Online now" />
+                          ) : (
+                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-slate-300 dark:bg-slate-600 rounded-full border-2 border-white dark:border-slate-900" title="Offline" />
+                          )}
+                          {activeProf.isPremium && (
+                            <div className="absolute -top-0.5 -right-0.5">
+                              <VerifiedBadge size="xs" />
+                            </div>
+                          )}
+                        </Link>
+
+                        <div className="min-w-0 flex-1">
+                          {/* Name followed immediately by Verification Badge */}
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <Link to={`/student/${selectedFriend.uid}`} className="font-black text-xs sm:text-sm text-slate-900 dark:text-white hover:text-[#006e5d] transition-colors truncate">
+                              {activeProf.name}
+                            </Link>
+                            {activeProf.isPremium && (
+                              <VerifiedBadge size="sm" title="Pass Pro Verified Aspirant" />
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-1.5 text-slate-400 text-[10px] sm:text-[11px] font-medium flex-wrap">
+                            <span>{activeProf.handle}</span>
+                            <span>•</span>
+                            {isUserOnline(selectedFriend.uid) ? (
+                              <span className="text-emerald-500 font-extrabold flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Online
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 font-semibold">Offline</span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
 
                   <Link 
                     to={`/student/${selectedFriend.uid}`}

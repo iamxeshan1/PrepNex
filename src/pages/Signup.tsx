@@ -25,9 +25,12 @@ export default function Signup() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
+      const defaultUsername = name.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20) || email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
+
       await setDoc(doc(db, 'users', user.uid), {
         userId: user.uid,
         name,
+        username: defaultUsername,
         email,
         role: email === 'iamxeshan1@gmail.com' || email === 'prepnextedtech@gmail.com' ? 'admin' : 'student',
         purchasedExams: [],

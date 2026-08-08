@@ -11,6 +11,9 @@ export default function JobAlerts() {
   const [filter, setFilter] = useState('All');
 
   useEffect(() => {
+    localStorage.setItem('last_seen_job_alerts_time', Date.now().toString());
+    window.dispatchEvent(new Event('job_alerts_read'));
+
     const fetchAlerts = async () => {
       try {
         const q = query(collection(db, 'jobAlerts'), orderBy('createdAt', 'desc'));

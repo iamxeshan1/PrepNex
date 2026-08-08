@@ -20,6 +20,9 @@ export default function Announcements() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    localStorage.setItem('last_seen_notices_time', Date.now().toString());
+    window.dispatchEvent(new Event('notices_read'));
+
     const fetchNotices = async () => {
       try {
         const q = query(collection(db, 'notices'), orderBy('createdAt', 'desc'));

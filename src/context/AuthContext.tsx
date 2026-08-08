@@ -107,7 +107,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setProfile(null);
               alert("Your account has been blocked.");
             } else {
-              setProfile(data);
+              if (!data.username) {
+                const autoUsername = (data.name || data.fullName || authUser.displayName || authUser.email?.split('@')[0] || 'aspirant')
+                  .toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20) || 'aspirant';
+                updateDoc(userDocRef, { username: autoUsername }).catch(() => {});
+                setProfile({ ...data, username: autoUsername });
+              } else {
+                setProfile(data);
+              }
             }
             setLoading(false);
           } else {
@@ -115,8 +122,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const isGoogleUser = authUser.providerData.some(p => p.providerId === 'google.com');
             if (isGoogleUser) {
               const isAdminEmail = authUser.email === 'iamxeshan1@gmail.com' || authUser.email === 'prepnextedtech@gmail.com';
+              const autoUsername = (authUser.displayName || authUser.email?.split('@')[0] || 'aspirant')
+                .toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20) || 'aspirant';
               const newProfile = {
                 userId: authUser.uid,
+                username: autoUsername,
                 name: authUser.displayName || authUser.email?.split('@')[0] || 'User',
                 email: authUser.email,
                 photoURL: authUser.photoURL,
