@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useSettings } from '../context/SettingsContext';
 import { collection, getDocs, query, where, documentId, orderBy, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { StudyPlanner } from '../components/StudyPlanner';
 import { TopPerformersLeaderboard } from '../components/TopPerformersLeaderboard';
 import { DailyStreakWidget } from '../components/DailyStreakWidget';
 import { isAppMode } from '../lib/appMode';
@@ -610,7 +609,6 @@ export default function Dashboard() {
                   </div>
                   
                   {/* Drag and Drop Daily Study & Practice Planner */}
-                  <StudyPlanner userId={profile?.userId || profile?.uid || 'user'} />
 
                   {/* Top Performers Leaderboard Widget */}
                   <TopPerformersLeaderboard currentUserId={profile?.userId || profile?.uid} />

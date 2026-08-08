@@ -124,11 +124,7 @@ export default function Home() {
   useEffect(() => {
     if (authLoading) return;
     if (isAppMode()) {
-      if (user) {
-        navigate('/exams');
-      } else {
-        navigate('/login');
-      }
+      navigate('/exams', { replace: true });
     }
   }, [user, authLoading, navigate]);
 

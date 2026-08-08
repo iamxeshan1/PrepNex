@@ -88,18 +88,14 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: React.React
 };
 
 const MobileAppRedirect = () => {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
   const navigate = useNavigate();
 
   React.useEffect(() => {
     if (loading) return;
     localStorage.setItem('prepnext_app_mode', 'true');
-    if (user) {
-      navigate('/exams', { replace: true });
-    } else {
-      navigate('/login', { replace: true });
-    }
-  }, [user, loading, navigate]);
+    navigate('/exams', { replace: true });
+  }, [loading, navigate]);
 
   return (
     <div className="flex h-screen items-center justify-center bg-[#02100d]">

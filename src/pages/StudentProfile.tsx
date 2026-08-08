@@ -643,10 +643,10 @@ export default function StudentProfile() {
           </div>
 
           {/* Profile Navigation Tabs */}
-          <div className="flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 sm:rounded-t-2xl mb-4">
+          <div className="flex overflow-x-auto no-scrollbar whitespace-nowrap border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2 sm:px-4 sm:rounded-t-2xl mb-4 min-w-0">
             <button
               onClick={() => setActiveTab('posts')}
-              className={`py-3.5 px-4 text-xs font-black transition-all border-b-2 flex items-center gap-2 ${
+              className={`shrink-0 py-3.5 px-3.5 sm:px-4 text-xs font-black transition-all border-b-2 flex items-center gap-1.5 sm:gap-2 ${
                 activeTab === 'posts'
                   ? 'border-[#006e5d] text-[#006e5d] dark:text-emerald-400'
                   : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
@@ -658,7 +658,7 @@ export default function StudentProfile() {
             {canSeePerformance && (
               <button
                 onClick={() => setActiveTab('performance')}
-                className={`py-3.5 px-4 text-xs font-black transition-all border-b-2 flex items-center gap-2 ${
+                className={`shrink-0 py-3.5 px-3.5 sm:px-4 text-xs font-black transition-all border-b-2 flex items-center gap-1.5 sm:gap-2 ${
                   activeTab === 'performance'
                     ? 'border-[#006e5d] text-[#006e5d] dark:text-emerald-400'
                     : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
@@ -670,7 +670,7 @@ export default function StudentProfile() {
 
             <button
               onClick={() => setActiveTab('badges')}
-              className={`py-3.5 px-4 text-xs font-black transition-all border-b-2 flex items-center gap-2 ${
+              className={`shrink-0 py-3.5 px-3.5 sm:px-4 text-xs font-black transition-all border-b-2 flex items-center gap-1.5 sm:gap-2 ${
                 activeTab === 'badges'
                   ? 'border-[#006e5d] text-[#006e5d] dark:text-emerald-400'
                   : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
@@ -681,7 +681,7 @@ export default function StudentProfile() {
 
             <button
               onClick={() => setActiveTab('friends')}
-              className={`py-3.5 px-4 text-xs font-black transition-all border-b-2 flex items-center gap-2 ${
+              className={`shrink-0 py-3.5 px-3.5 sm:px-4 text-xs font-black transition-all border-b-2 flex items-center gap-1.5 sm:gap-2 ${
                 activeTab === 'friends'
                   ? 'border-[#006e5d] text-[#006e5d] dark:text-emerald-400'
                   : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'

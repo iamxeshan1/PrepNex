@@ -695,20 +695,20 @@ export default function Chat() {
             {selectedFriend ? (
               <>
                 {/* Chat Header Bar */}
-                <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 flex items-center justify-between">
+                <div className="p-3.5 sm:p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 flex flex-wrap items-center justify-between gap-2 min-w-0">
                   
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     {/* Selected Friend Avatar BEFORE name */}
                     <Link to={`/student/${selectedFriend.uid}`} className="relative shrink-0">
                       <img 
                         src={selectedFriend.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedFriend.name || 'Aspirant')}&background=006e5d&color=fff`} 
                         alt={selectedFriend.name} 
-                        className="w-10 h-10 rounded-full object-cover border-2 border-[#006e5d]/30"
+                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-[#006e5d]/30"
                       />
                       {isUserOnline(selectedFriend.uid) ? (
-                        <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 shadow-xs" title="Online now" />
+                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 shadow-xs" title="Online now" />
                       ) : (
-                        <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-slate-300 dark:bg-slate-600 rounded-full border-2 border-white dark:border-slate-900" title="Offline" />
+                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-slate-300 dark:bg-slate-600 rounded-full border-2 border-white dark:border-slate-900" title="Offline" />
                       )}
                       {selectedFriend.isPremium && (
                         <div className="absolute -top-0.5 -right-0.5">
@@ -717,10 +717,10 @@ export default function Chat() {
                       )}
                     </Link>
 
-                    <div>
+                    <div className="min-w-0 flex-1">
                       {/* Name followed immediately by Verification Badge */}
-                      <div className="flex items-center gap-1.5">
-                        <Link to={`/student/${selectedFriend.uid}`} className="font-black text-sm text-slate-900 dark:text-white hover:text-[#006e5d] transition-colors">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Link to={`/student/${selectedFriend.uid}`} className="font-black text-xs sm:text-sm text-slate-900 dark:text-white hover:text-[#006e5d] transition-colors truncate">
                           {selectedFriend.name}
                         </Link>
                         {selectedFriend.isPremium && (
@@ -728,27 +728,23 @@ export default function Chat() {
                         )}
                       </div>
                       
-                      <div className="flex items-center gap-2 text-slate-400 text-[11px] font-medium">
+                      <div className="flex items-center gap-1.5 text-slate-400 text-[10px] sm:text-[11px] font-medium flex-wrap">
                         <span>@{selectedFriend.name?.toLowerCase().replace(/\s+/g, '_')}</span>
                         <span>•</span>
                         {isUserOnline(selectedFriend.uid) ? (
                           <span className="text-emerald-500 font-extrabold flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Online Now
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Online
                           </span>
                         ) : (
                           <span className="text-slate-400 font-semibold">Offline</span>
                         )}
-                        <span>•</span>
-                        <span className={isFriend ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-amber-500 font-bold'}>
-                          {isFriend ? 'Study Friends ✓' : 'Not Friends Yet'}
-                        </span>
                       </div>
                     </div>
                   </div>
 
                   <Link 
                     to={`/student/${selectedFriend.uid}`}
-                    className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="shrink-0 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-[11px] sm:text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
                   >
                     View Social Profile
                   </Link>

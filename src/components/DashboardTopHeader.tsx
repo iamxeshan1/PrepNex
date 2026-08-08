@@ -30,7 +30,7 @@ export const DashboardTopHeader = ({ user, onMenuClick }: { user: any, onMenuCli
       <div className="flex items-center justify-end gap-4 lg:gap-6 flex-1">
         {/* Desktop View: Streak, Bell, Profile */}
         <div className="flex items-center gap-3 lg:gap-5">
-            <Link to="/profile" title="Your Practice Streak">
+            <Link to="/profile" title="Your Practice Streak" className="hidden lg:block">
               <SnapchatStreakBadge streakCount={Number(user?.studyStreak || user?.streak || 14)} size="sm" showLabel={false} />
             </Link>
             <button className="hidden lg:block relative p-2 hover:bg-slate-50 dark:hover:bg-emerald-950/20 rounded-full" aria-label="Notifications">
