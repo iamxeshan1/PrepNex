@@ -121,8 +121,12 @@ export default function Dashboard() {
   }, [location, db]);
 
   useEffect(() => {
+     let isMounted = true;
      const fetchDashboardData = async () => {
-         if (!profile) return;
+         if (!profile) {
+             setLoadingData(false);
+             return;
+         }
          try {
              const purchasedIds = profile.purchasedExams || [];
              
@@ -252,11 +256,12 @@ export default function Dashboard() {
          } catch (error) {
              console.error("Error fetching dashboard data:", error);
          } finally {
-             setLoadingData(false);
+             if (isMounted) setLoadingData(false);
          }
       };
       fetchDashboardData();
-   }, [profile]);
+      return () => { isMounted = false; };
+   }, [profile?.userId, profile?.purchasedExams?.length, profile?.isPremium]);
 
 
   // Calculate PrepScore out of 1000 based on progress

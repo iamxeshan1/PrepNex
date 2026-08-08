@@ -86,7 +86,7 @@ export default function Result() {
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto px-4 py-12">
+      <div className="max-w-4xl mx-auto px-4 py-12 pb-28">
         <header className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/5 text-primary mb-6 ring-8 ring-primary/5">
             <Award className="w-10 h-10" />

@@ -57,39 +57,7 @@ import { db } from '../lib/firebase';
 import { collection, query, getDocs, onSnapshot, limit, orderBy, doc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { isAppMode } from '../lib/appMode';
-
-const ICON_MAP: Record<string, any> = {
-  Brain,
-  Calculator,
-  Globe,
-  Microscope,
-  History,
-  Map,
-  Cpu,
-  FileText,
-  Palette,
-  BookOpen,
-  Atom,
-  Search,
-  MessageSquare,
-  Compass,
-  LayoutGrid,
-  Languages,
-  FlaskConical,
-  Dna,
-  Binary,
-  Code,
-  Music,
-  HeartPulse,
-  Scale,
-  Briefcase,
-  Church,
-  Sigma,
-  Zap,
-  Gamepad2,
-  Brush,
-  Variable
-};
+import { getSubjectIcon, getSubjectDescription, ICON_MAP } from '../lib/subjectHelpers';
 
 const COLOR_VARIANTS = [
   'bg-emerald-50 text-emerald-500',
@@ -525,24 +493,24 @@ export default function Home() {
                   <p className="text-slate-500 font-medium tracking-tight">Focus on your weaknesses with targeted modules.</p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-6">
                   {loading ? (
                     [1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-48 bg-slate-100 rounded-[1.5rem] animate-pulse" />)
                   ) : realSubjects.map((sub, idx) => {
-                    const IconComp = ICON_MAP[sub.icon] || BookOpen;
+                    const IconComp = getSubjectIcon(sub);
                     const colorClass = COLOR_VARIANTS[idx % COLOR_VARIANTS.length];
                     return (
                       <div 
                         key={sub.id} 
                         onClick={() => navigate(`/subject-tests/${sub.id}`)}
-                        className="flex flex-col items-center text-center p-8 bg-white border border-slate-100 rounded-[1.5rem] hover:shadow-xl transition-all cursor-pointer group shadow-sm"
+                        className="flex flex-col items-center text-center p-4 sm:p-7 bg-white border border-slate-100 rounded-[1.25rem] sm:rounded-[1.5rem] hover:shadow-xl transition-all cursor-pointer group shadow-sm"
                       >
-                        <div className={`w-14 h-14 ${colorClass} rounded-[1rem] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                          <IconComp className="w-7 h-7" />
+                        <div className={`w-11 h-11 sm:w-14 sm:h-14 ${colorClass} rounded-[0.85rem] sm:rounded-[1rem] flex items-center justify-center mb-3 sm:mb-5 group-hover:scale-110 transition-transform shrink-0`}>
+                          <IconComp className="w-5 h-5 sm:w-7 sm:h-7" />
                         </div>
-                        <h4 className="text-base font-sans font-[800] text-slate-900 mb-2 tracking-tight">{sub.name}</h4>
-                        <p className="text-[11px] font-medium text-slate-400 line-clamp-2">
-                          {sub.description || 'Master the concepts and shortcuts.'}
+                        <h4 className="text-xs sm:text-base font-sans font-[800] text-slate-900 mb-1.5 tracking-tight line-clamp-1">{sub.name}</h4>
+                        <p className="text-[10px] sm:text-[11px] font-medium text-slate-400 line-clamp-2 leading-tight">
+                          {getSubjectDescription(sub)}
                         </p>
                       </div>
                     );

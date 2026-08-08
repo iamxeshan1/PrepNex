@@ -105,8 +105,8 @@ export const MobileBottomNav = () => {
 
   const currentPath = location.pathname;
 
-  // Hide on test page (/test/:id) and result page (/result/:id) to allow full screen focus
-  if (currentPath.startsWith('/test/') || currentPath.startsWith('/result/')) {
+  // Hide on test page (/test/:id) to allow full screen focus during exam
+  if (currentPath.startsWith('/test/')) {
     return null;
   }
 

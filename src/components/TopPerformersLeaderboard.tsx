@@ -139,15 +139,19 @@ export function TopPerformersLeaderboard({ currentUserId }: TopPerformersLeaderb
   const [currentUserEntry, setCurrentUserEntry] = useState<LeaderboardEntry | null>(null);
   const [currentUserRank, setCurrentUserRank] = useState<number | null>(null);
 
-  // Real-time Firestore Sync
+  // Firestore Fetch for Leaderboard Data
   useEffect(() => {
-    setLoading(true);
-
-    const unsubUsers = onSnapshot(collection(db, 'users'), async (usersSnap) => {
+    let isMounted = true;
+    const fetchLeaderboard = async () => {
+      setLoading(true);
       try {
-        // Fetch test results to calculate aggregated scores
-        const resultsSnap = await getDocs(collection(db, 'results'));
-        
+        const [usersSnap, resultsSnap] = await Promise.all([
+          getDocs(collection(db, 'users')),
+          getDocs(collection(db, 'results'))
+        ]);
+
+        if (!isMounted) return;
+
         const now = new Date();
         const startOfMonthTimestamp = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
 
@@ -236,13 +240,14 @@ export function TopPerformersLeaderboard({ currentUserId }: TopPerformersLeaderb
         setLeaderboardData(combined);
       } catch (err) {
         console.error("Error computing leaderboard:", err);
-        setLeaderboardData(FALLBACK_TOP_PERFORMERS);
+        if (isMounted) setLeaderboardData(FALLBACK_TOP_PERFORMERS);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
-    });
+    };
 
-    return () => unsubUsers();
+    fetchLeaderboard();
+    return () => { isMounted = false; };
   }, []);
 
   // Sort and process current view list based on scope (global vs monthly) and metric (score vs tests)

@@ -43,39 +43,7 @@ import {
   LayoutGrid
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-
-const ICON_MAP: Record<string, any> = {
-  Brain,
-  Calculator,
-  Globe,
-  Microscope,
-  History,
-  Map,
-  Cpu,
-  FileText,
-  Palette,
-  BookOpen,
-  Atom,
-  Search,
-  MessageSquare,
-  Compass,
-  LayoutGrid,
-  Languages,
-  FlaskConical,
-  Dna,
-  Binary,
-  Code,
-  Music,
-  HeartPulse,
-  Scale,
-  Briefcase,
-  Church,
-  Sigma,
-  Zap,
-  Gamepad2,
-  Brush,
-  Variable
-};
+import { getSubjectIcon, getSubjectDescription, ICON_MAP } from '../lib/subjectHelpers';
 
 const COLOR_VARIANTS = [
   'bg-emerald-50 text-emerald-500',
@@ -162,7 +130,7 @@ export default function Subjects() {
   }, [subjectId]);
 
   if (subjectId) {
-    const IconComp = selectedSubject ? ICON_MAP[selectedSubject.icon] : BookOpen;
+    const IconComp = selectedSubject ? getSubjectIcon(selectedSubject) : BookOpen;
     return (
       <Layout>
         <div className="bg-slate-50 min-h-screen py-12">
@@ -184,7 +152,7 @@ export default function Subjects() {
                   </div>
                   <div>
                     <h1 className="text-2xl font-sans font-[800] text-slate-900 tracking-tight mb-2">{selectedSubject.name}</h1>
-                    <p className="text-sm text-slate-500 font-medium leading-relaxed">{selectedSubject.description || 'Focused training module for competitive excellence.'}</p>
+                    <p className="text-sm text-slate-500 font-medium leading-relaxed">{getSubjectDescription(selectedSubject)}</p>
                   </div>
                 </div>
 
@@ -272,29 +240,29 @@ export default function Subjects() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-64 bg-white rounded-[2.5rem] animate-pulse" />)}
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6 md:gap-8">
+                {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-56 bg-white rounded-[1.5rem] animate-pulse" />)}
               </div>
             ) : subjects.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6 md:gap-8">
                 {subjects.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase())).map((subject, index) => {
-                  const IconComp = ICON_MAP[subject.icon] || BookOpen;
+                  const IconComp = getSubjectIcon(subject);
                   const colorClass = COLOR_VARIANTS[index % COLOR_VARIANTS.length];
                   return (
                     <motion.div
                       key={subject.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
+                      transition={{ delay: index * 0.03 }}
                       onClick={() => navigate(`/subject-tests/${subject.id}`)}
-                      className="flex flex-col items-center text-center p-8 bg-white border border-slate-100 rounded-[1.5rem] hover:shadow-xl transition-all cursor-pointer group shadow-sm"
+                      className="flex flex-col items-center text-center p-4 sm:p-7 bg-white border border-slate-100 rounded-[1.25rem] sm:rounded-[1.5rem] hover:shadow-xl transition-all cursor-pointer group shadow-sm"
                     >
-                      <div className={`w-14 h-14 ${colorClass} rounded-[1rem] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                        <IconComp className="w-7 h-7" />
+                      <div className={`w-11 h-11 sm:w-14 sm:h-14 ${colorClass} rounded-[0.85rem] sm:rounded-[1rem] flex items-center justify-center mb-3 sm:mb-5 group-hover:scale-110 transition-transform shrink-0`}>
+                        <IconComp className="w-5 h-5 sm:w-7 sm:h-7" />
                       </div>
-                      <h4 className="text-base font-sans font-[800] text-slate-900 mb-2 tracking-tight">{subject.name}</h4>
-                      <p className="text-[11px] font-medium text-slate-400 line-clamp-2">
-                        {subject.description || 'Master the concepts and shortcuts.'}
+                      <h4 className="text-xs sm:text-base font-sans font-[800] text-slate-900 mb-1.5 tracking-tight line-clamp-1">{subject.name}</h4>
+                      <p className="text-[10px] sm:text-[11px] font-medium text-slate-400 line-clamp-2 leading-tight">
+                        {getSubjectDescription(subject)}
                       </p>
                     </motion.div>
                   )
