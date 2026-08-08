@@ -30,7 +30,9 @@ import {
   User,
   ShieldCheck,
   Megaphone,
-  Book
+  Book,
+  LogIn,
+  LogOut
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db } from '../lib/firebase';
@@ -48,7 +50,21 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const [searchValue, setSearchValue] = React.useState(initialSearch);
   const [socialLinks, setSocialLinks] = React.useState<any>({});
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [userProfile, setUserProfile] = React.useState<any>(null);
   const [messages, setMessages] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    if (!user) {
+      setUserProfile(null);
+      return;
+    }
+    const unsub = onSnapshot(doc(db, 'users', user.uid), (snap) => {
+      if (snap.exists()) {
+        setUserProfile(snap.data());
+      }
+    });
+    return () => unsub();
+  }, [user]);
   const [isNotifOpen, setIsNotifOpen] = React.useState(false);
   const [copiedId, setCopiedId] = React.useState<string | null>(null);
   const [currentTab, setCurrentTab] = React.useState<'inbox' | 'archived'>('inbox');
@@ -274,189 +290,299 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           </div>
         </div>
 
-        {/* Mobile Menu Overlay */}
+        {/* Mobile Menu Overlay Drawer */}
         <AnimatePresence>
           {isMobileMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="lg:hidden bg-white dark:bg-[#031d19] border-t border-slate-100 dark:border-emerald-950/50 overflow-hidden shadow-2xl"
-            >
-              <div className="px-4 py-5 space-y-2 max-h-[80vh] overflow-y-auto">
-                <Link 
-                  to="/exams" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/exams') ? 'bg-[#006e5d]/10 text-[#006e5d] dark:text-emerald-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
-                >
-                  <BookOpenText className="w-5 h-5 text-[#006e5d] dark:text-emerald-400 shrink-0" />
-                  <span>Mock Tests & Exam Series</span>
-                </Link>
+            <div className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end">
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs"
+              />
 
-                <Link 
-                  to="/subjects" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/subjects') ? 'bg-[#006e5d]/10 text-[#006e5d] dark:text-emerald-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
-                >
-                  <Library className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" />
-                  <span>Subjects & Syllabus</span>
-                </Link>
-
-                <Link 
-                  to="/leaderboard" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/leaderboard') ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
-                >
-                  <Trophy className="w-5 h-5 text-amber-500 shrink-0" />
-                  <span>Live Aspirant Leaderboard</span>
-                </Link>
-
-                <Link 
-                  to="/forum" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/forum') ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
-                >
-                  <MessageSquare className="w-5 h-5 text-blue-500 shrink-0" />
-                  <span>Aspirant Social Forum</span>
-                </Link>
-
-                <Link 
-                  to="/chat" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/chat') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
-                >
-                  <MessageCircle className="w-5 h-5 text-indigo-500 shrink-0" />
-                  <span>Peer Study Chat & Groups</span>
-                </Link>
-
-                {user && (
-                  <>
-                    <Link 
-                      to="/dashboard" 
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/dashboard') ? 'bg-emerald-50 text-[#006e5d] dark:bg-emerald-950/50 dark:text-emerald-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
-                    >
-                      <LayoutDashboard className="w-5 h-5 text-[#006e5d] dark:text-emerald-400 shrink-0" />
-                      <span>Student Dashboard</span>
-                    </Link>
-
-                    <Link 
-                      to="/profile" 
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/profile') ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
-                    >
-                      <User className="w-5 h-5 text-purple-500 shrink-0" />
-                      <span>My Profile & Settings</span>
-                    </Link>
-                  </>
-                )}
-
-                <Link 
-                  to="/job-alerts" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/job-alerts') ? 'bg-[#006e5d]/10 text-[#006e5d] dark:text-emerald-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
-                >
-                  <Bell className="w-5 h-5 text-blue-500 shrink-0" />
-                  <span>Job Alerts</span>
-                </Link>
-
-                <Link 
-                  to="/live-tests" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/live-tests') ? 'bg-[#006e5d]/10 text-[#006e5d] dark:text-emerald-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
-                >
-                  <Zap className="w-5 h-5 text-amber-500 shrink-0" />
-                  <span>Live Speed Tests</span>
-                </Link>
-
-                <Link 
-                  to="/announcements" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/announcements') ? 'bg-[#006e5d]/10 text-[#006e5d] dark:text-emerald-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
-                >
-                  <Megaphone className="w-5 h-5 text-rose-500 shrink-0" />
-                  <span>Announcements</span>
-                </Link>
-
-                <Link 
-                  to="/study-material" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/study-material') ? 'bg-[#006e5d]/10 text-[#006e5d] dark:text-emerald-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
-                >
-                  <Book className="w-5 h-5 text-emerald-600 shrink-0" />
-                  <span>Study Material & eBooks</span>
-                </Link>
-
-                {isAdmin && (
-                  <Link 
-                    to="/admin" 
+              {/* Slide-up Sheet */}
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 26, stiffness: 300 }}
+                className="relative bg-white dark:bg-[#031d19] border-t border-slate-200 dark:border-emerald-950/80 rounded-t-3xl p-5 shadow-2xl max-h-[88vh] flex flex-col overflow-hidden"
+              >
+                {/* Drawer Header */}
+                <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-emerald-950/60 mb-4 shrink-0">
+                  <div className="flex items-center gap-3">
+                    <span className="font-logo font-black text-2xl tracking-tight text-[#002f26] dark:text-emerald-400">PrepNext</span>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 dark:bg-emerald-950/80 text-[#006e5d] dark:text-emerald-300 tracking-wider">
+                      App Navigation
+                    </span>
+                  </div>
+                  <button
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 text-sm font-extrabold p-3 rounded-xl transition-colors bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-900/60`}
+                    className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-emerald-950/40 text-slate-400 dark:text-slate-500 transition-colors"
+                    aria-label="Close menu"
                   >
-                    <ShieldCheck className="w-5 h-5 text-purple-600 shrink-0" />
-                    <span>Admin Panel</span>
-                  </Link>
-                )}
-                
-                <div className="pt-4 border-t border-slate-100 dark:border-emerald-950/50">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Drawer Scrollable Content */}
+                <div className="overflow-y-auto pr-1 space-y-3 flex-1 pb-4">
+                  {/* User Profile / Welcome Card */}
                   {user ? (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-emerald-950/30 rounded-xl">
+                    <div 
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        navigate('/profile');
+                      }}
+                      className="p-4 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 dark:from-emerald-950/60 dark:to-teal-950/60 rounded-2xl border border-emerald-200/80 dark:border-emerald-800/50 flex items-center justify-between cursor-pointer hover:border-emerald-400 dark:hover:border-emerald-700 transition-all shadow-xs"
+                    >
+                      <div className="flex items-center gap-3.5 min-w-0">
                         <img 
-                          src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email || 'User'}&background=006e5d&color=fff`} 
+                          src={user.photoURL || userProfile?.profilePicture || `https://ui-avatars.com/api/?name=${userProfile?.name || user.displayName || user.email || 'User'}&background=006e5d&color=fff`} 
                           alt="User" 
-                          width="32"
-                          height="32"
-                          loading="lazy"
-                          className="w-8 h-8 rounded-full object-cover bg-slate-50 border border-slate-200 dark:border-emerald-900" 
+                          className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-emerald-950 shadow-md shrink-0"
                         />
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{user.displayName || 'Aspirant'}</p>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
+                          <h4 className="font-black text-sm text-slate-900 dark:text-white truncate">
+                            {userProfile?.name || user.displayName || 'Aspirant'}
+                          </h4>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
+                            {user.email}
+                          </p>
                         </div>
                       </div>
-                      <button 
-                        onClick={() => { setIsNotifOpen(true); setIsMobileMenuOpen(false); }}
-                        className="w-full flex items-center justify-between text-left text-xs font-bold p-3 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30"
-                      >
-                        <span className="flex items-center gap-2">
-                          <Bell className="w-4 h-4 text-[#006e5d] dark:text-emerald-400" />
-                          Student Message Inbox
-                        </span>
-                        {unreadCount > 0 && (
-                          <span className="bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
-                            {unreadCount} new
-                          </span>
-                        )}
-                      </button>
-                      <button 
-                        onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
-                        className="w-full text-left text-xs font-bold p-3 rounded-xl text-rose-600 dark:text-rose-400 bg-rose-50/50 dark:bg-rose-950/20 hover:bg-rose-100 transition-colors"
-                      >
-                        Log Out
-                      </button>
+                      <ChevronRight className="w-5 h-5 text-slate-400 dark:text-slate-500 shrink-0" />
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 gap-3 pt-2">
-                      <Link 
-                        to="/login" 
+                    <div className="p-4 bg-slate-50 dark:bg-emerald-950/40 rounded-2xl border border-slate-200 dark:border-emerald-900/40 flex items-center justify-between shadow-xs">
+                      <div>
+                        <h4 className="font-black text-sm text-slate-900 dark:text-white">Welcome, Aspirant!</h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Sign in to sync mock test progress & join chat.</p>
+                      </div>
+                      <Link
+                        to="/login"
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="text-center text-xs font-bold p-3 rounded-xl text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800"
+                        className="px-4 py-2 bg-[#006e5d] hover:bg-[#005a4d] text-white font-black text-xs rounded-xl shadow-md flex items-center gap-1.5 shrink-0 transition-all"
                       >
-                        Log In
-                      </Link>
-                      <Link 
-                        to="/signup" 
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="text-center text-xs font-bold p-3 rounded-xl text-white bg-[#006e5d] hover:bg-[#005a4d]"
-                      >
-                        Sign Up
+                        <LogIn className="w-4 h-4" /> Sign In
                       </Link>
                     </div>
                   )}
+
+                  {/* Navigation Links Grid */}
+                  <div className="space-y-1.5 pt-1">
+                    <Link 
+                      to="/exams" 
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center justify-between p-3.5 rounded-xl transition-all ${isActive('/exams') ? 'bg-[#006e5d]/10 text-[#006e5d] dark:text-emerald-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-emerald-100/70 dark:bg-emerald-950/80 text-[#006e5d] dark:text-emerald-400">
+                          <BookOpenText className="w-4 h-4" />
+                        </div>
+                        <span className="text-xs font-black">Mock Tests & Exam Series</span>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-400 opacity-60" />
+                    </Link>
+
+                    <Link 
+                      to="/subjects" 
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center justify-between p-3.5 rounded-xl transition-all ${isActive('/subjects') ? 'bg-[#006e5d]/10 text-[#006e5d] dark:text-emerald-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-teal-100/70 dark:bg-teal-950/80 text-teal-600 dark:text-teal-400">
+                          <Library className="w-4 h-4" />
+                        </div>
+                        <span className="text-xs font-black">Subjects & Syllabus</span>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-400 opacity-60" />
+                    </Link>
+
+                    <Link 
+                      to="/leaderboard" 
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center justify-between p-3.5 rounded-xl transition-all ${isActive('/leaderboard') ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-amber-100/70 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400">
+                          <Trophy className="w-4 h-4" />
+                        </div>
+                        <span className="text-xs font-black">Live Aspirant Leaderboard</span>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-400 opacity-60" />
+                    </Link>
+
+                    <Link 
+                      to="/forum" 
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center justify-between p-3.5 rounded-xl transition-all ${isActive('/forum') ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-blue-100/70 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400">
+                          <MessageSquare className="w-4 h-4" />
+                        </div>
+                        <span className="text-xs font-black">Aspirant Social Forum</span>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-400 opacity-60" />
+                    </Link>
+
+                    <Link 
+                      to="/chat" 
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center justify-between p-3.5 rounded-xl transition-all ${isActive('/chat') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-indigo-100/70 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400">
+                          <MessageCircle className="w-4 h-4" />
+                        </div>
+                        <span className="text-xs font-black">Peer Study Chat & Groups</span>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-400 opacity-60" />
+                    </Link>
+
+                    {user && (
+                      <>
+                        <Link 
+                          to="/dashboard" 
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className={`flex items-center justify-between p-3.5 rounded-xl transition-all ${isActive('/dashboard') ? 'bg-emerald-50 text-[#006e5d] dark:bg-emerald-950/50 dark:text-emerald-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-emerald-100/70 dark:bg-emerald-950/80 text-[#006e5d] dark:text-emerald-400">
+                              <LayoutDashboard className="w-4 h-4" />
+                            </div>
+                            <span className="text-xs font-black">Student Dashboard</span>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-slate-400 opacity-60" />
+                        </Link>
+
+                        <Link 
+                          to="/profile" 
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className={`flex items-center justify-between p-3.5 rounded-xl transition-all ${isActive('/profile') ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-purple-100/70 dark:bg-purple-950/80 text-purple-600 dark:text-purple-400">
+                              <User className="w-4 h-4" />
+                            </div>
+                            <span className="text-xs font-black">My Profile & Settings</span>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-slate-400 opacity-60" />
+                        </Link>
+
+                        <button 
+                          onClick={() => { setIsNotifOpen(true); setIsMobileMenuOpen(false); }}
+                          className="w-full flex items-center justify-between p-3.5 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30 transition-all text-left"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-emerald-100/70 dark:bg-emerald-950/80 text-[#006e5d] dark:text-emerald-400">
+                              <Bell className="w-4 h-4" />
+                            </div>
+                            <span className="text-xs font-black">Student Message Inbox</span>
+                          </div>
+                          {unreadCount > 0 ? (
+                            <span className="bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
+                              {unreadCount} new
+                            </span>
+                          ) : (
+                            <ChevronRight className="w-4 h-4 text-slate-400 opacity-60" />
+                          )}
+                        </button>
+                      </>
+                    )}
+
+                    <Link 
+                      to="/job-alerts" 
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center justify-between p-3.5 rounded-xl transition-all ${isActive('/job-alerts') ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-sky-100/70 dark:bg-sky-950/80 text-sky-600 dark:text-sky-400">
+                          <Bell className="w-4 h-4" />
+                        </div>
+                        <span className="text-xs font-black">Job Alerts</span>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-400 opacity-60" />
+                    </Link>
+
+                    <Link 
+                      to="/live-tests" 
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center justify-between p-3.5 rounded-xl transition-all ${isActive('/live-tests') ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-amber-100/70 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400">
+                          <Zap className="w-4 h-4" />
+                        </div>
+                        <span className="text-xs font-black">Live Speed Tests</span>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-400 opacity-60" />
+                    </Link>
+
+                    <Link 
+                      to="/announcements" 
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center justify-between p-3.5 rounded-xl transition-all ${isActive('/announcements') ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-rose-100/70 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400">
+                          <Megaphone className="w-4 h-4" />
+                        </div>
+                        <span className="text-xs font-black">Announcements</span>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-400 opacity-60" />
+                    </Link>
+
+                    <Link 
+                      to="/study-material" 
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center justify-between p-3.5 rounded-xl transition-all ${isActive('/study-material') ? 'bg-emerald-50 text-[#006e5d] dark:bg-emerald-950/40 dark:text-emerald-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-emerald-100/70 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400">
+                          <Book className="w-4 h-4" />
+                        </div>
+                        <span className="text-xs font-black">Study Material & eBooks</span>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-400 opacity-60" />
+                    </Link>
+
+                    {isAdmin && (
+                      <Link 
+                        to="/admin" 
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center justify-between p-3.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-900/60 transition-all"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-purple-200/70 dark:bg-purple-900/80 text-purple-700 dark:text-purple-300">
+                            <ShieldCheck className="w-4 h-4" />
+                          </div>
+                          <span className="text-xs font-black">Admin Panel</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-purple-400" />
+                      </Link>
+                    )}
+                  </div>
+
+                  {/* Sign Out Account */}
+                  {user && (
+                    <div className="pt-3 border-t border-slate-100 dark:border-emerald-950/60 mt-2">
+                      <button 
+                        onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
+                        className="w-full flex items-center justify-center gap-2 p-3.5 rounded-xl text-xs font-black text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors cursor-pointer"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Sign Out Account</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            </div>
           )}
         </AnimatePresence>
       </nav>
