@@ -668,12 +668,7 @@ export default function Dashboard() {
                   </div>
                 </motion.div>
                 
-                {/* Footer */}
-                <footer className="mt-12 py-8 border-t border-slate-100/60 pb-4 lg:pb-0">
-                  <p className="text-center text-xs text-slate-500 font-medium pb-4">
-                    © {new Date().getFullYear()} PrepNext. Built for Excellence in Competitive Examinations.
-                  </p>
-                </footer>
+
           </main>
       </div>
     </div>

@@ -127,12 +127,7 @@ export default function Announcements() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="py-12 border-t border-slate-200 mt-auto">
-        <div className="max-w-5xl mx-auto px-4 text-center">
-          <p className="text-sm font-bold text-slate-400">© {new Date().getFullYear()} PrepNext. Staying Ahead of the Curve.</p>
-        </div>
-      </footer>
+
     </div>
   );
 }

@@ -374,12 +374,7 @@ export default function Helpdesk() {
             )}
           </motion.div>
 
-          {/* Footer Component if needed */}
-          <footer className="mt-20 py-10 border-t border-slate-100/60 pb-10">
-            <p className="text-center text-[10px] text-slate-300 font-black uppercase tracking-[0.2em]">
-              Institutional Protocol • © {new Date().getFullYear()} PrepNext Resolution Services
-            </p>
-          </footer>
+
         </main>
       </div>
     </div>

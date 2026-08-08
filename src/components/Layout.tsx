@@ -22,7 +22,15 @@ import {
   Archive,
   Trash2,
   ArchiveRestore,
-  Inbox
+  Inbox,
+  Trophy,
+  BookOpenText,
+  Library,
+  LayoutDashboard,
+  User,
+  ShieldCheck,
+  Megaphone,
+  Book
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db } from '../lib/firebase';
@@ -273,94 +281,143 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="lg:hidden bg-white dark:bg-[#031d19] border-t border-slate-100 dark:border-emerald-950/50 overflow-hidden"
+              className="lg:hidden bg-white dark:bg-[#031d19] border-t border-slate-100 dark:border-emerald-950/50 overflow-hidden shadow-2xl"
             >
-              <div className="px-4 py-6 space-y-4">
+              <div className="px-4 py-5 space-y-2 max-h-[80vh] overflow-y-auto">
                 <Link 
                   to="/exams" 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/exams') ? 'bg-[#006e5d]/10 text-[#006e5d]' : 'text-slate-600'}`}
+                  className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/exams') ? 'bg-[#006e5d]/10 text-[#006e5d] dark:text-emerald-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
                 >
-                  Exams
+                  <BookOpenText className="w-5 h-5 text-[#006e5d] dark:text-emerald-400 shrink-0" />
+                  <span>Mock Tests & Exam Series</span>
                 </Link>
-                <Link 
-                  to="/job-alerts" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/job-alerts') ? 'bg-blue-50 text-blue-600' : 'text-slate-600'}`}
-                >
-                  Job Alerts
-                </Link>
+
                 <Link 
                   to="/subjects" 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/subjects') ? 'bg-[#006e5d]/10 text-[#006e5d]' : 'text-slate-600'}`}
+                  className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/subjects') ? 'bg-[#006e5d]/10 text-[#006e5d] dark:text-emerald-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
                 >
-                  Subjects
+                  <Library className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" />
+                  <span>Subjects & Syllabus</span>
                 </Link>
+
                 <Link 
-                  to="/live-tests" 
+                  to="/leaderboard" 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/live-tests') ? 'bg-[#006e5d]/10 text-[#006e5d]' : 'text-slate-600'}`}
+                  className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/leaderboard') ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
                 >
-                  Live Tests
+                  <Trophy className="w-5 h-5 text-amber-500 shrink-0" />
+                  <span>Live Aspirant Leaderboard</span>
                 </Link>
-                <Link 
-                  to="/announcements" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/announcements') ? 'bg-[#006e5d]/10 text-[#006e5d]' : 'text-slate-600'}`}
-                >
-                  Announcements
-                </Link>
-                <Link 
-                  to="/study-material" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/study-material') ? 'bg-[#006e5d]/10 text-[#006e5d]' : 'text-slate-600'}`}
-                >
-                  Study Material
-                </Link>
+
                 <Link 
                   to="/forum" 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block text-sm font-bold p-3 rounded-xl ${isActive('/forum') ? 'bg-[#006e5d]/10 text-[#006e5d]' : 'text-slate-600'}`}
+                  className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/forum') ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
                 >
-                  Community Forum
+                  <MessageSquare className="w-5 h-5 text-blue-500 shrink-0" />
+                  <span>Aspirant Social Forum</span>
                 </Link>
+
+                <Link 
+                  to="/chat" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/chat') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
+                >
+                  <MessageCircle className="w-5 h-5 text-indigo-500 shrink-0" />
+                  <span>Peer Study Chat & Groups</span>
+                </Link>
+
                 {user && (
-                  <Link 
-                    to="/dashboard" 
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`block text-sm font-bold p-3 rounded-xl ${isActive('/dashboard') ? 'bg-[#006e5d]/10 text-[#006e5d]' : 'text-slate-600'}`}
-                  >
-                    My Library
-                  </Link>
+                  <>
+                    <Link 
+                      to="/dashboard" 
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/dashboard') ? 'bg-emerald-50 text-[#006e5d] dark:bg-emerald-950/50 dark:text-emerald-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
+                    >
+                      <LayoutDashboard className="w-5 h-5 text-[#006e5d] dark:text-emerald-400 shrink-0" />
+                      <span>Student Dashboard</span>
+                    </Link>
+
+                    <Link 
+                      to="/profile" 
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/profile') ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
+                    >
+                      <User className="w-5 h-5 text-purple-500 shrink-0" />
+                      <span>My Profile & Settings</span>
+                    </Link>
+                  </>
                 )}
+
+                <Link 
+                  to="/job-alerts" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/job-alerts') ? 'bg-[#006e5d]/10 text-[#006e5d] dark:text-emerald-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
+                >
+                  <Bell className="w-5 h-5 text-blue-500 shrink-0" />
+                  <span>Job Alerts</span>
+                </Link>
+
+                <Link 
+                  to="/live-tests" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/live-tests') ? 'bg-[#006e5d]/10 text-[#006e5d] dark:text-emerald-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
+                >
+                  <Zap className="w-5 h-5 text-amber-500 shrink-0" />
+                  <span>Live Speed Tests</span>
+                </Link>
+
+                <Link 
+                  to="/announcements" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/announcements') ? 'bg-[#006e5d]/10 text-[#006e5d] dark:text-emerald-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
+                >
+                  <Megaphone className="w-5 h-5 text-rose-500 shrink-0" />
+                  <span>Announcements</span>
+                </Link>
+
+                <Link 
+                  to="/study-material" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 text-sm font-bold p-3 rounded-xl transition-colors ${isActive('/study-material') ? 'bg-[#006e5d]/10 text-[#006e5d] dark:text-emerald-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
+                >
+                  <Book className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <span>Study Material & eBooks</span>
+                </Link>
+
                 {isAdmin && (
                   <Link 
                     to="/admin" 
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`block text-sm font-bold p-3 rounded-xl ${isActive('/admin') ? 'bg-[#006e5d]/10 text-[#006e5d]' : 'text-slate-600'}`}
+                    className={`flex items-center gap-3 text-sm font-extrabold p-3 rounded-xl transition-colors bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-900/60`}
                   >
-                    Admin Panel
+                    <ShieldCheck className="w-5 h-5 text-purple-600 shrink-0" />
+                    <span>Admin Panel</span>
                   </Link>
                 )}
                 
-                <div className="pt-4 border-t border-slate-100">
+                <div className="pt-4 border-t border-slate-100 dark:border-emerald-950/50">
                   {user ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3 p-3">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-emerald-950/30 rounded-xl">
                         <img 
                           src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email || 'User'}&background=006e5d&color=fff`} 
                           alt="User" 
                           width="32"
                           height="32"
                           loading="lazy"
-                          className="w-8 h-8 rounded-full object-cover bg-slate-50" 
+                          className="w-8 h-8 rounded-full object-cover bg-slate-50 border border-slate-200 dark:border-emerald-900" 
                         />
-                        <span className="text-sm font-bold text-slate-900 truncate">{user.email}</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{user.displayName || 'Aspirant'}</p>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
+                        </div>
                       </div>
                       <button 
                         onClick={() => { setIsNotifOpen(true); setIsMobileMenuOpen(false); }}
-                        className="w-full flex items-center justify-between text-left text-sm font-bold p-3 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#002f26]/10"
+                        className="w-full flex items-center justify-between text-left text-xs font-bold p-3 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30"
                       >
                         <span className="flex items-center gap-2">
                           <Bell className="w-4 h-4 text-[#006e5d] dark:text-emerald-400" />
@@ -374,27 +431,27 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                       </button>
                       <button 
                         onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
-                        className="w-full text-left text-sm font-bold p-3 rounded-xl text-rose-600 hover:bg-rose-50"
+                        className="w-full text-left text-xs font-bold p-3 rounded-xl text-rose-600 dark:text-rose-400 bg-rose-50/50 dark:bg-rose-950/20 hover:bg-rose-100 transition-colors"
                       >
                         Log Out
                       </button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3 pt-2">
                       <Link 
                         to="/login" 
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="text-center text-sm font-bold p-3 rounded-xl text-slate-600 bg-slate-50"
+                        className="text-center text-xs font-bold p-3 rounded-xl text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800"
                       >
                         Log In
                       </Link>
-            <Link 
-            to="/signup" 
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="text-center text-sm font-bold p-3 rounded-xl text-white bg-[#006e5d]"
-          >
-            Sign Up
-          </Link>
+                      <Link 
+                        to="/signup" 
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="text-center text-xs font-bold p-3 rounded-xl text-white bg-[#006e5d] hover:bg-[#005a4d]"
+                      >
+                        Sign Up
+                      </Link>
                     </div>
                   )}
                 </div>
@@ -518,9 +575,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                </div>
             </div>
 
-            <p className="text-slate-500/70 text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] text-center">
-              © 2026 PREPNEXT EDTECH. MADE WITH CONVICTION.
-            </p>
+
           </div>
         </div>
       </footer>
