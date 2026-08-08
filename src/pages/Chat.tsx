@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { 
-  collection, query, orderBy, onSnapshot, addDoc, doc, getDoc, setDoc, updateDoc, where
+  collection, query, orderBy, onSnapshot, addDoc, doc, getDoc, setDoc, updateDoc, where, deleteDoc, limit
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { Layout } from '../components/Layout';
+import { VerifiedBadge } from '../components/VerifiedBadge';
 import { 
-  MessageSquare, Users, CheckCircle2, Clock, Shield, Lock, Send, Loader2, Megaphone, User, MessageCircle
+  MessageSquare, Users, Clock, Shield, Lock, Send, Loader2, Megaphone, User, MessageCircle,
+  UserPlus, UserCheck, UserX, Search, X, ChevronLeft, Sparkles, Share2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
@@ -59,8 +61,13 @@ interface DmMessage {
 export default function Chat() {
   const { user: currentUser, profile: currentProfile } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<'channels' | 'dms'>('channels');
+  // Active navigation tab
+  const [activeTab, setActiveTab] = useState<'channels' | 'chats' | 'requests' | 'find'>('channels');
+
+  // Responsive mobile navigation ('list' displays sidebar, 'chat' displays active stream)
+  const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
 
   // Channels State
   const [channels, setChannels] = useState<BroadcastingChannel[]>([]);
@@ -77,9 +84,23 @@ export default function Chat() {
   const [loadingDmMessages, setLoadingDmMessages] = useState(false);
   const [friends, setFriends] = useState<any[]>([]);
 
+  // Friendship & Request Tracking State (Maps/Sets for fast, real-time lookups)
+  const [friendIds, setFriendIds] = useState<Set<string>>(new Set());
+  const [sentRequests, setSentRequests] = useState<Map<string, string>>(new Map()); // targetUserId -> requestId
+  const [receivedRequests, setReceivedRequests] = useState<Map<string, { requestId: string, data: any }>>(new Map()); // senderUserId -> { requestId, data }
+  const [incomingRequestsList, setIncomingRequestsList] = useState<any[]>([]);
+  const [outgoingRequestsList, setOutgoingRequestsList] = useState<any[]>([]);
+
+  // Search/Directory State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [loadingSearch, setLoadingSearch] = useState(false);
+
   // Common UI State
   const [newMessage, setNewMessage] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -103,10 +124,12 @@ export default function Chat() {
     const userIdParam = searchParams.get('userId');
 
     if (userIdParam) {
-      setActiveTab('dms');
+      setActiveTab('chats');
       startOrGetDm(userIdParam);
+      setMobileView('chat');
     } else if (channelIdParam) {
       setActiveTab('channels');
+      setMobileView('chat');
     }
   }, [searchParams, currentUser]);
 
@@ -118,7 +141,7 @@ export default function Chat() {
       setChannels(data);
       setLoadingChannels(false);
 
-      // Select first channel automatically if none selected and not on DM mode
+      // Select first channel automatically if none selected and not on direct modes
       const activeIdParam = searchParams.get('channelId');
       if (activeIdParam) {
         const found = data.find(c => c.id === activeIdParam);
@@ -240,6 +263,117 @@ export default function Chat() {
     return () => unsub();
   }, [currentUser]);
 
+  // 1. Friendships Set listener
+  useEffect(() => {
+    if (!currentUser) return;
+    const q = query(
+      collection(db, 'friendships'),
+      where('users', 'array-contains', currentUser.uid)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      const ids = new Set<string>();
+      snap.docs.forEach(docSnap => {
+        const data = docSnap.data();
+        const otherId = data.users?.find((u: string) => u !== currentUser.uid);
+        if (otherId) ids.add(otherId);
+      });
+      setFriendIds(ids);
+    }, (err) => {
+      console.warn("Error listening to friendships:", err);
+    });
+    return () => unsub();
+  }, [currentUser]);
+
+  // 2. Sent Requests listener
+  useEffect(() => {
+    if (!currentUser) return;
+    const q = query(
+      collection(db, 'friend_requests'),
+      where('senderId', '==', currentUser.uid),
+      where('status', '==', 'pending')
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      const sent = new Map<string, string>();
+      const list = snap.docs.map(docSnap => {
+        const data = docSnap.data();
+        sent.set(data.receiverId, docSnap.id);
+        return { id: docSnap.id, ...data };
+      });
+      setSentRequests(sent);
+      setOutgoingRequestsList(list);
+    }, (err) => {
+      console.warn("Error listening to sent friend requests:", err);
+    });
+    return () => unsub();
+  }, [currentUser]);
+
+  // 3. Received Requests listener
+  useEffect(() => {
+    if (!currentUser) return;
+    const q = query(
+      collection(db, 'friend_requests'),
+      where('receiverId', '==', currentUser.uid),
+      where('status', '==', 'pending')
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      const rec = new Map<string, { requestId: string, data: any }>();
+      const list = snap.docs.map(docSnap => {
+        const data = docSnap.data();
+        rec.set(data.senderId, { requestId: docSnap.id, data });
+        return { id: docSnap.id, ...data };
+      });
+      setReceivedRequests(rec);
+      setIncomingRequestsList(list);
+    }, (err) => {
+      console.warn("Error listening to received friend requests:", err);
+    });
+    return () => unsub();
+  }, [currentUser]);
+
+  // Load all users for directory search
+  useEffect(() => {
+    if (activeTab === 'find' && allUsers.length === 0) {
+      setLoadingSearch(true);
+      getDocsQuery();
+    }
+  }, [activeTab, allUsers.length]);
+
+  const getDocsQuery = async () => {
+    try {
+      const q = query(collection(db, 'users'), limit(200));
+      const snap = await getDoc(doc(db, 'config', 'app')) // Dummy or just raw query
+      // Let's query collection directly
+      const qSnap = await getDoc(doc(db, 'users', 'dummy')); // Check if we can getDocs
+    } catch(e) {}
+
+    // Proper users query
+    const unsub = onSnapshot(query(collection(db, 'users'), orderBy('name', 'asc')), (snap) => {
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setAllUsers(list);
+      setLoadingSearch(false);
+    }, (err) => {
+      console.error("Error fetching directory users:", err);
+      setLoadingSearch(false);
+    });
+  };
+
+  // Live client-side filtering based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    const qClean = searchQuery.toLowerCase().trim();
+    const filtered = allUsers.filter(u => 
+      u.id !== currentUser?.uid && (
+        (u.name || '').toLowerCase().includes(qClean) || 
+        (u.username || '').toLowerCase().includes(qClean) ||
+        (u.email || '').toLowerCase().includes(qClean)
+      )
+    );
+    setSearchResults(filtered);
+  }, [searchQuery, allUsers, currentUser]);
+
   // Helper function to create or open a DM chat with another user
   const startOrGetDm = async (targetId: string) => {
     if (!currentUser) return;
@@ -319,7 +453,7 @@ export default function Chat() {
           createdAt: new Date().toISOString()
         });
 
-      } else if (activeTab === 'dms' && selectedDm) {
+      } else if (activeTab === 'chats' && selectedDm) {
         // Direct Peer message
         const myName = currentProfile?.name || currentUser.displayName || 'Aspirant';
 
@@ -344,6 +478,108 @@ export default function Chat() {
     }
   };
 
+  // Connection Request Handling Actions
+  const handleAcceptRequest = async (requestId: string, senderId: string, senderName: string, senderPhoto: string, senderIsPremium: boolean) => {
+    if (!currentUser) return;
+    setActionLoading(true);
+    try {
+      await updateDoc(doc(db, 'friend_requests', requestId), {
+        status: 'accepted'
+      });
+
+      const friendshipDocId = [currentUser.uid, senderId].sort().join('_');
+      const myName = currentProfile?.fullName || currentProfile?.name || currentUser.displayName || currentUser.email?.split('@')[0] || 'Aspirant';
+      
+      await setDoc(doc(db, 'friendships', friendshipDocId), {
+        users: [currentUser.uid, senderId],
+        createdAt: Date.now(),
+        user1: {
+          uid: currentUser.uid,
+          name: myName,
+          photoURL: currentProfile?.photoURL || currentUser.photoURL || '',
+          isPremium: Boolean(currentProfile?.isPremium)
+        },
+        user2: {
+          uid: senderId,
+          name: senderName,
+          photoURL: senderPhoto,
+          isPremium: Boolean(senderIsPremium)
+        }
+      });
+
+      toast.success(`Connected with ${senderName}!`);
+    } catch (err) {
+      console.error("Error accepting request:", err);
+      toast.error('Failed to accept request.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeclineRequest = async (requestId: string) => {
+    setActionLoading(true);
+    try {
+      await deleteDoc(doc(db, 'friend_requests', requestId));
+      toast.success('Connection request declined.');
+    } catch (err) {
+      console.error("Error declining request:", err);
+      toast.error('Failed to decline request.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCancelRequest = async (requestId: string) => {
+    setActionLoading(true);
+    try {
+      await deleteDoc(doc(db, 'friend_requests', requestId));
+      toast.success('Connection request cancelled.');
+    } catch (err) {
+      console.error("Error cancelling request:", err);
+      toast.error('Failed to cancel request.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleSendRequest = async (targetUser: any) => {
+    if (!currentUser) {
+      toast.error('Please log in first!');
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const myName = currentProfile?.fullName || currentProfile?.name || currentUser.displayName || currentUser.email?.split('@')[0] || 'Aspirant';
+      const myPhoto = currentProfile?.photoURL || currentUser.photoURL || '';
+
+      await addDoc(collection(db, 'friend_requests'), {
+        senderId: currentUser.uid,
+        senderName: myName,
+        senderPhoto: myPhoto,
+        senderIsPremium: Boolean(currentProfile?.isPremium || currentProfile?.role === 'admin'),
+        receiverId: targetUser.id || targetUser.uid,
+        receiverName: targetUser.name || 'Aspirant',
+        receiverPhoto: targetUser.profilePicture || targetUser.photoURL || '',
+        receiverIsPremium: Boolean(targetUser.isPremium || targetUser.role === 'admin'),
+        status: 'pending',
+        createdAt: Date.now()
+      });
+
+      toast.success(`Connection request sent to ${targetUser.name}!`);
+    } catch (err) {
+      console.error("Error sending request:", err);
+      toast.error('Failed to send request.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleStartMessageFromDirectory = (userId: string) => {
+    startOrGetDm(userId);
+    setActiveTab('chats');
+    setMobileView('chat');
+  };
+
   const isAdmin = currentProfile?.role === 'admin';
 
   return (
@@ -352,13 +588,16 @@ export default function Chat() {
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-1 h-full">
           
           {/* Sidebar Panel */}
-          <div className="w-full md:w-80 border-r border-slate-100 flex flex-col shrink-0">
+          <div className={`w-full md:w-80 border-r border-slate-100 flex flex-col shrink-0 ${mobileView === 'chat' ? 'hidden md:flex' : 'flex'}`}>
             {/* Header with Navigation Tabs */}
             <header className="p-4 border-b border-slate-50 shrink-0">
-              <div className="flex bg-slate-100 p-1 rounded-xl mb-3">
+              <div className="flex bg-slate-100 p-1 rounded-xl mb-3 overflow-x-auto scrollbar-none">
                 <button
-                  onClick={() => setActiveTab('channels')}
-                  className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                  onClick={() => {
+                    setActiveTab('channels');
+                    setSelectedDm(null);
+                  }}
+                  className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 px-3 whitespace-nowrap ${
                     activeTab === 'channels' 
                       ? 'bg-white text-[#006e5d] shadow-sm' 
                       : 'text-slate-500 hover:text-slate-700'
@@ -368,26 +607,75 @@ export default function Chat() {
                   Channels
                 </button>
                 <button
-                  onClick={() => setActiveTab('dms')}
-                  className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                    activeTab === 'dms' 
+                  onClick={() => {
+                    setActiveTab('chats');
+                    setSelectedChannel(null);
+                  }}
+                  className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 px-3 whitespace-nowrap ${
+                    activeTab === 'chats' 
                       ? 'bg-white text-[#006e5d] shadow-sm' 
                       : 'text-slate-500 hover:text-slate-700'
                   }`}
                 >
                   <MessageCircle className="w-4 h-4" />
-                  Direct
+                  Chats
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab('requests');
+                    setSelectedChannel(null);
+                    setSelectedDm(null);
+                  }}
+                  className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 px-3 relative whitespace-nowrap ${
+                    activeTab === 'requests' 
+                      ? 'bg-white text-[#006e5d] shadow-sm' 
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  <UserCheck className="w-4 h-4" />
+                  Requests
+                  {incomingRequestsList.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-sm">
+                      {incomingRequestsList.length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab('find');
+                    setSelectedChannel(null);
+                    setSelectedDm(null);
+                  }}
+                  className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 px-3 whitespace-nowrap ${
+                    activeTab === 'find' 
+                      ? 'bg-white text-[#006e5d] shadow-sm' 
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  <Search className="w-4 h-4" />
+                  Find
                 </button>
               </div>
 
               <h1 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
-                {activeTab === 'channels' ? (
+                {activeTab === 'channels' && (
                   <>
-                    <Users className="w-4 h-4 text-[#006e5d]" /> Broadcast Channels
+                    <Users className="w-4 h-4 text-[#006e5d]" /> Channels
                   </>
-                ) : (
+                )}
+                {activeTab === 'chats' && (
                   <>
                     <MessageSquare className="w-4 h-4 text-[#006e5d]" /> Direct Messages
+                  </>
+                )}
+                {activeTab === 'requests' && (
+                  <>
+                    <UserCheck className="w-4 h-4 text-[#006e5d]" /> Friend Requests
+                  </>
+                )}
+                {activeTab === 'find' && (
+                  <>
+                    <Search className="w-4 h-4 text-[#006e5d]" /> Find Friends
                   </>
                 )}
               </h1>
@@ -395,7 +683,7 @@ export default function Chat() {
 
             {/* Sidebar Body */}
             <div className="flex-1 overflow-y-auto p-3 space-y-2">
-              {activeTab === 'channels' ? (
+              {activeTab === 'channels' && (
                 // CHANNELS TAB
                 loadingChannels ? (
                   <div className="h-full flex flex-col items-center justify-center py-12">
@@ -416,6 +704,7 @@ export default function Chat() {
                         onClick={() => {
                           setSelectedChannel(chan);
                           setSelectedDm(null);
+                          setMobileView('chat');
                         }}
                         className={`w-full p-3 rounded-2xl border text-left transition-all flex items-center gap-3 ${
                           isSelected 
@@ -438,9 +727,7 @@ export default function Chat() {
                               {chan.name}
                             </span>
                             {chan.isVerified && (
-                              <span className="text-yellow-500 inline-block shrink-0">
-                                <CheckCircle2 className="w-3.5 h-3.5 fill-current text-white text-yellow-500" />
-                              </span>
+                              <VerifiedBadge size="xs" variant="yellow" title="Verified Broadcast Channel" className="ml-1" />
                             )}
                           </div>
                           <p className="text-[9px] text-slate-400 font-semibold tracking-wider uppercase mt-0.5">
@@ -451,8 +738,10 @@ export default function Chat() {
                     );
                   })
                 )
-              ) : (
-                // DMs TAB
+              )}
+
+              {activeTab === 'chats' && (
+                // CHATS / DMs TAB
                 <div className="space-y-4">
                   {/* Quick Connect Friends List */}
                   {friends.length > 0 && (
@@ -464,7 +753,10 @@ export default function Chat() {
                         {friends.map((friend) => (
                           <button
                             key={friend.friendId}
-                            onClick={() => startOrGetDm(friend.friendId)}
+                            onClick={() => {
+                              startOrGetDm(friend.friendId);
+                              setMobileView('chat');
+                            }}
                             className="flex flex-col items-center shrink-0 w-14 text-center group"
                           >
                             <div className="relative w-9 h-9 rounded-full overflow-hidden border-2 border-slate-100 group-hover:border-[#006e5d] transition-all bg-slate-50 flex items-center justify-center">
@@ -514,6 +806,7 @@ export default function Chat() {
                             onClick={() => {
                               setSelectedDm(chat);
                               setSelectedChannel(null);
+                              setMobileView('chat');
                             }}
                             className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-2.5 ${
                               isSelected 
@@ -554,33 +847,320 @@ export default function Chat() {
                   </div>
                 </div>
               )}
+
+              {activeTab === 'requests' && (
+                // REQUESTS MANAGEMENT TAB
+                <div className="space-y-4">
+                  {/* Incoming requests received */}
+                  <div className="space-y-2">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
+                      Received ({incomingRequestsList.length})
+                    </p>
+                    {incomingRequestsList.length === 0 ? (
+                      <p className="text-[10px] text-slate-400 italic px-1 py-1">No incoming requests</p>
+                    ) : (
+                      incomingRequestsList.map((req) => (
+                        <div key={req.id} className="p-3 bg-slate-50 border border-slate-100 rounded-xl space-y-2.5">
+                          <div className="flex items-center gap-2">
+                            <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-200 shrink-0 border border-slate-200">
+                              {req.senderPhoto ? (
+                                <img src={req.senderPhoto} alt={req.senderName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                              ) : (
+                                <User className="w-4 h-4 text-slate-400 m-auto mt-2" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs font-black text-slate-800 truncate block">
+                                  {req.senderName}
+                                </span>
+                                {req.senderIsPremium && (
+                                  <span className="w-2.5 h-2.5 bg-yellow-400 rounded-full inline-block shrink-0" />
+                                )}
+                              </div>
+                              <p className="text-[8px] text-slate-400 font-bold uppercase tracking-wider">
+                                Aspirant
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleAcceptRequest(req.id, req.senderId, req.senderName, req.senderPhoto, req.senderIsPremium)}
+                              disabled={actionLoading}
+                              className="flex-1 py-1.5 bg-[#006e5d] text-white font-extrabold text-[10px] uppercase tracking-wider rounded-lg hover:bg-[#005a4d] transition-all disabled:opacity-50"
+                            >
+                              Accept
+                            </button>
+                            <button
+                              onClick={() => handleDeclineRequest(req.id)}
+                              disabled={actionLoading}
+                              className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-extrabold text-[10px] uppercase tracking-wider rounded-lg transition-all disabled:opacity-50"
+                            >
+                              Decline
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Outgoing requests sent */}
+                  <div className="space-y-2 pt-2 border-t border-slate-100">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
+                      Sent Pending ({outgoingRequestsList.length})
+                    </p>
+                    {outgoingRequestsList.length === 0 ? (
+                      <p className="text-[10px] text-slate-400 italic px-1 py-1">No pending sent requests</p>
+                    ) : (
+                      outgoingRequestsList.map((req) => (
+                        <div key={req.id} className="p-3 bg-slate-50/50 border border-slate-100 rounded-xl flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <div className="relative w-7 h-7 rounded-full overflow-hidden bg-slate-200 shrink-0 border border-slate-200">
+                              {req.receiverPhoto ? (
+                                <img src={req.receiverPhoto} alt={req.receiverName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                              ) : (
+                                <User className="w-3.5 h-3.5 text-slate-400 m-auto mt-1.5" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <span className="text-xs font-bold text-slate-700 truncate block">
+                                {req.receiverName}
+                              </span>
+                              <span className="text-[8px] text-slate-400 flex items-center gap-0.5">
+                                <Clock className="w-2.5 h-2.5 animate-pulse text-yellow-500" /> Pending
+                              </span>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => handleCancelRequest(req.id)}
+                            disabled={actionLoading}
+                            className="p-1 hover:bg-rose-50 text-rose-500 rounded-lg transition-all"
+                            title="Cancel Request"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'find' && (
+                // FIND FRIENDS SEARCH TAB
+                <div className="space-y-3">
+                  {/* Search input bar */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Search aspirants by name..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border border-transparent rounded-xl focus:outline-none focus:ring-1 focus:ring-[#006e5d] text-xs font-medium"
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery('')}
+                        className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Dynamic query status or results */}
+                  {loadingSearch ? (
+                    <div className="flex flex-col items-center justify-center py-8">
+                      <Loader2 className="w-6 h-6 text-slate-300 animate-spin mb-1" />
+                      <p className="text-[9px] text-slate-400 uppercase font-black tracking-wider">Loading Directory...</p>
+                    </div>
+                  ) : searchQuery.trim() === '' ? (
+                    // Display Recommended to Connect (Top users)
+                    <div className="space-y-2">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
+                        Aspirant Directory
+                      </p>
+                      {allUsers.filter(u => u.id !== currentUser?.uid).slice(0, 15).map((u) => {
+                        const isFriend = friendIds.has(u.id);
+                        const isSentPending = sentRequests.has(u.id);
+                        const isReceivedPending = receivedRequests.has(u.id);
+
+                        return (
+                          <div key={u.id} className="p-2.5 bg-slate-50/50 border border-slate-100 rounded-xl flex items-center justify-between gap-2 hover:bg-slate-50 transition-all">
+                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                              <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-200 shrink-0 border border-slate-200">
+                                {u.profilePicture || u.photoURL ? (
+                                  <img src={u.profilePicture || u.photoURL} alt={u.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                ) : (
+                                  <User className="w-4 h-4 text-slate-400 m-auto mt-2" />
+                                )}
+                                {u.isPremium && (
+                                  <span className="absolute bottom-0 right-0 w-2 h-2 bg-yellow-400 rounded-full border border-white" />
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <span className="text-xs font-bold text-slate-800 truncate block">
+                                  {u.name || 'Aspirant'}
+                                </span>
+                                <p className="text-[9px] text-slate-400 truncate">
+                                  {u.bio || 'Dedicated aspirant 🚀'}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="shrink-0">
+                              {isFriend ? (
+                                <button
+                                  onClick={() => handleStartMessageFromDirectory(u.id)}
+                                  className="p-1.5 bg-[#006e5d]/10 text-[#006e5d] hover:bg-[#006e5d] hover:text-white rounded-lg transition-all"
+                                  title="Message"
+                                >
+                                  <MessageCircle className="w-4 h-4" />
+                                </button>
+                              ) : isSentPending ? (
+                                <span className="text-[9px] font-black uppercase text-yellow-600 bg-yellow-50 px-2 py-1 rounded-lg border border-yellow-200">
+                                  Sent
+                                </span>
+                              ) : isReceivedPending ? (
+                                <button
+                                  onClick={() => {
+                                    const reqInfo = receivedRequests.get(u.id);
+                                    if (reqInfo) handleAcceptRequest(reqInfo.requestId, u.id, u.name, u.profilePicture || u.photoURL, u.isPremium);
+                                  }}
+                                  className="p-1.5 bg-emerald-500 text-white hover:bg-emerald-600 rounded-lg transition-all"
+                                  title="Accept Connection"
+                                >
+                                  <UserCheck className="w-4 h-4" />
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleSendRequest(u)}
+                                  className="p-1.5 bg-slate-200 text-slate-700 hover:bg-[#006e5d] hover:text-white rounded-lg transition-all"
+                                  title="Connect"
+                                >
+                                  <UserPlus className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : searchResults.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic text-center py-6 px-2">No matching aspirants found</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
+                        Search Results ({searchResults.length})
+                      </p>
+                      {searchResults.map((u) => {
+                        const isFriend = friendIds.has(u.id);
+                        const isSentPending = sentRequests.has(u.id);
+                        const isReceivedPending = receivedRequests.has(u.id);
+
+                        return (
+                          <div key={u.id} className="p-2.5 bg-slate-50/50 border border-slate-100 rounded-xl flex items-center justify-between gap-2 hover:bg-slate-50 transition-all">
+                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                              <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-200 shrink-0 border border-slate-200">
+                                {u.profilePicture || u.photoURL ? (
+                                  <img src={u.profilePicture || u.photoURL} alt={u.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                ) : (
+                                  <User className="w-4 h-4 text-slate-400 m-auto mt-2" />
+                                )}
+                                {u.isPremium && (
+                                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-white" />
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <span className="text-xs font-bold text-slate-800 truncate block">
+                                  {u.name || 'Aspirant'}
+                                </span>
+                                <p className="text-[9px] text-slate-400 truncate">
+                                  {u.bio || 'Dedicated aspirant 🚀'}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="shrink-0">
+                              {isFriend ? (
+                                <button
+                                  onClick={() => handleStartMessageFromDirectory(u.id)}
+                                  className="p-1.5 bg-[#006e5d]/10 text-[#006e5d] hover:bg-[#006e5d] hover:text-white rounded-lg transition-all"
+                                  title="Message"
+                                >
+                                  <MessageCircle className="w-4 h-4" />
+                                </button>
+                              ) : isSentPending ? (
+                                <span className="text-[9px] font-black uppercase text-yellow-600 bg-yellow-50 px-2 py-1 rounded-lg border border-yellow-200">
+                                  Sent
+                                </span>
+                              ) : isReceivedPending ? (
+                                <button
+                                  onClick={() => {
+                                    const reqInfo = receivedRequests.get(u.id);
+                                    if (reqInfo) handleAcceptRequest(reqInfo.requestId, u.id, u.name, u.profilePicture || u.photoURL, u.isPremium);
+                                  }}
+                                  className="p-1.5 bg-emerald-500 text-white hover:bg-emerald-600 rounded-lg transition-all"
+                                  title="Accept Connection"
+                                >
+                                  <UserCheck className="w-4 h-4" />
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleSendRequest(u)}
+                                  className="p-1.5 bg-slate-200 text-slate-700 hover:bg-[#006e5d] hover:text-white rounded-lg transition-all"
+                                  title="Connect"
+                                >
+                                  <UserPlus className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Active Chat Box Area */}
-          <div className="hidden md:flex flex-1 flex-col bg-slate-50/15">
+          <div className={`flex-1 flex-col bg-slate-50/15 ${mobileView === 'list' ? 'hidden md:flex' : 'flex'}`}>
             {activeTab === 'channels' && selectedChannel ? (
               // CHANNEL STREAM
-              <div className="flex flex-col h-full overflow-hidden">
+              <div className="flex flex-col h-full overflow-hidden bg-white">
                 {/* Header */}
                 <header className="px-6 py-4 border-b border-slate-100 bg-white flex items-center justify-between shrink-0">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <button 
+                      onClick={() => setMobileView('list')} 
+                      className="md:hidden p-2 -ml-2 mr-1 text-slate-500 hover:text-slate-800"
+                    >
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+
                     <div className="w-10 h-10 bg-[#006e5d]/10 text-[#006e5d] rounded-xl flex items-center justify-center shrink-0">
                       {selectedChannel.icon === 'team' ? <Users className="w-5 h-5" /> :
                        selectedChannel.icon === 'megaphone' ? <Megaphone className="w-5 h-5" /> :
                        selectedChannel.icon === 'support' ? <Shield className="w-5 h-5" /> :
                        <MessageSquare className="w-5 h-5" />}
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <h2 className="text-base font-black text-slate-900 leading-none">{selectedChannel.name}</h2>
+                        <h2 className="text-base font-black text-slate-900 leading-none truncate">{selectedChannel.name}</h2>
                         {selectedChannel.isVerified && (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-yellow-400/10 text-yellow-600 border border-yellow-400/25">
-                            <CheckCircle2 className="w-3 h-3 fill-current text-white text-yellow-500" /> Verified
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-yellow-400/10 text-yellow-600 border border-yellow-400/25 shrink-0">
+                            <VerifiedBadge size="xs" variant="yellow" title="Verified Broadcast Channel" /> Verified
                           </span>
                         )}
                       </div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1 truncate">
                         Only verified admins can publish broadcasts
                       </p>
                     </div>
@@ -659,19 +1239,26 @@ export default function Chat() {
                   ) : (
                     <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-center gap-2 text-slate-400 select-none">
                       <Lock className="w-4 h-4 text-slate-400" />
-                      <span className="text-xs font-bold uppercase tracking-wider">
+                      <span className="text-xs font-bold uppercase tracking-wider text-center">
                         Only verified administrators can publish broadcasts to this stream
                       </span>
                     </div>
                   )}
                 </div>
               </div>
-            ) : activeTab === 'dms' && selectedDm ? (
+            ) : activeTab === 'chats' && selectedDm ? (
               // DM STREAM
-              <div className="flex flex-col h-full overflow-hidden">
+              <div className="flex flex-col h-full overflow-hidden bg-white">
                 {/* Header */}
                 <header className="px-6 py-4 border-b border-slate-100 bg-white flex items-center justify-between shrink-0">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <button 
+                      onClick={() => setMobileView('list')} 
+                      className="md:hidden p-2 -ml-2 mr-1 text-slate-500 hover:text-slate-800"
+                    >
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+
                     {(() => {
                       const otherUser = selectedDm.user1.uid === currentUser?.uid ? selectedDm.user2 : selectedDm.user1;
                       return (
@@ -686,16 +1273,16 @@ export default function Chat() {
                               <span className="absolute bottom-0 right-0 w-3 h-3 bg-yellow-400 rounded-full border border-white" />
                             )}
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <h2 className="text-base font-black text-slate-900 leading-none">{otherUser.name}</h2>
+                              <h2 className="text-base font-black text-slate-900 leading-none truncate">{otherUser.name}</h2>
                               {otherUser.isPremium && (
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-yellow-400/10 text-yellow-600 border border-yellow-400/25">
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-yellow-400/10 text-yellow-600 border border-yellow-400/25 shrink-0">
                                   Premium
                                 </span>
                               )}
                             </div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1 truncate">
                               Private 1-on-1 Direct Chat
                             </p>
                           </div>
@@ -770,8 +1357,41 @@ export default function Chat() {
                   </form>
                 </div>
               </div>
+            ) : activeTab === 'requests' ? (
+              // Connection Requests Dashboard
+              <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-white">
+                <div className="w-16 h-16 bg-[#006e5d]/10 rounded-full flex items-center justify-center text-[#006e5d] mb-4">
+                  <UserCheck className="w-8 h-8" />
+                </div>
+                <h3 className="text-lg font-black text-slate-800">Connection Requests Hub</h3>
+                <p className="text-sm text-slate-500 max-w-sm mt-2 leading-relaxed">
+                  Grow your study network! Accept incoming connection invitations or review requests you have sent to other aspirants preparing for their exams.
+                </p>
+                <div className="mt-6 flex gap-4 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    {incomingRequestsList.length} Pending Incoming
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                    {outgoingRequestsList.length} Pending Outgoing
+                  </span>
+                </div>
+              </div>
+            ) : activeTab === 'find' ? (
+              // Find Friends Directory Dashboard
+              <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-white">
+                <div className="w-16 h-16 bg-[#006e5d]/10 rounded-full flex items-center justify-center text-[#006e5d] mb-4">
+                  <Sparkles className="w-8 h-8 animate-pulse" />
+                </div>
+                <h3 className="text-lg font-black text-slate-800">Aspirant Directory</h3>
+                <p className="text-sm text-slate-500 max-w-sm mt-2 leading-relaxed">
+                  Search for civil services, board, and engineering aspirants preparing on PrepNext. Send a connection request to start a private conversation or collaborate.
+                </p>
+              </div>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-center p-12">
+              // Default Selection Illustration
+              <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-white">
                 <Megaphone className="w-12 h-12 text-slate-300 mb-4 animate-pulse" />
                 <h3 className="text-base font-black text-slate-700">Select Conversation Pipeline</h3>
                 <p className="text-xs text-slate-400 max-w-xs mt-1">

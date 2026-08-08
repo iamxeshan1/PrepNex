@@ -4,12 +4,14 @@ interface VerifiedBadgeProps {
   size?: 'xs' | 'sm' | 'md' | 'lg';
   className?: string;
   title?: string;
+  variant?: 'teal' | 'yellow';
 }
 
 export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({
   size = 'sm',
   className = '',
-  title = 'Pass Pro Verified Aspirant'
+  title = 'Pass Pro Verified Aspirant',
+  variant = 'teal'
 }) => {
   const sizeClasses = {
     xs: 'w-3.5 h-3.5',
@@ -17,6 +19,8 @@ export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({
     md: 'w-5 h-5',
     lg: 'w-6 h-6'
   };
+
+  const badgeColor = variant === 'yellow' ? '#f59e0b' : '#006e5d';
 
   return (
     <svg 
@@ -29,7 +33,7 @@ export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({
       {/* Mathematically Symmetrical Sharp-Pointed Edgy Rosette / Starburst */}
       <path 
         d="M12 1L14.2 3.8L17.5 2.5L18 6L21.5 6.5L20.2 9.8L23 12L20.2 14.2L21.5 17.5L18 18L17.5 21.5L14.2 20.2L12 23L9.8 20.2L6.5 21.5L6 18L2.5 17.5L3.8 14.2L1 12L3.8 9.8L2.5 6.5L6 6L6.5 2.5L9.8 3.8Z" 
-        fill="#006e5d"
+        fill={badgeColor}
       />
       {/* Symmetrical white checkmark */}
       <path 
