@@ -68,6 +68,72 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const [isNotifOpen, setIsNotifOpen] = React.useState(false);
   const [copiedId, setCopiedId] = React.useState<string | null>(null);
   const [currentTab, setCurrentTab] = React.useState<'inbox' | 'archived'>('inbox');
+  const [noticesCount, setNoticesCount] = React.useState(0);
+  const [jobAlertsCount, setJobAlertsCount] = React.useState(0);
+
+  React.useEffect(() => {
+    if (location.pathname === '/announcements') {
+      localStorage.setItem('last_seen_notices_time', Date.now().toString());
+      setNoticesCount(0);
+    }
+    if (location.pathname === '/job-alerts') {
+      localStorage.setItem('last_seen_job_alerts_time', Date.now().toString());
+      setJobAlertsCount(0);
+    }
+  }, [location.pathname]);
+
+  React.useEffect(() => {
+    const unsubNotices = onSnapshot(collection(db, 'notices'), (snap) => {
+      if (window.location.pathname === '/announcements') {
+        localStorage.setItem('last_seen_notices_time', Date.now().toString());
+        setNoticesCount(0);
+        return;
+      }
+      const lastSeenStr = localStorage.getItem('last_seen_notices_time');
+      if (!lastSeenStr) {
+        setNoticesCount(snap.docs.length);
+      } else {
+        const lastSeenMs = Number(lastSeenStr);
+        let unread = 0;
+        snap.docs.forEach((docSnap) => {
+          const data = docSnap.data();
+          const createdMs = data.createdAt ? new Date(data.createdAt).getTime() : 0;
+          if (createdMs > lastSeenMs) {
+            unread++;
+          }
+        });
+        setNoticesCount(unread);
+      }
+    }, (err) => console.error(err));
+
+    const unsubJobAlerts = onSnapshot(collection(db, 'jobAlerts'), (snap) => {
+      if (window.location.pathname === '/job-alerts') {
+        localStorage.setItem('last_seen_job_alerts_time', Date.now().toString());
+        setJobAlertsCount(0);
+        return;
+      }
+      const lastSeenStr = localStorage.getItem('last_seen_job_alerts_time');
+      if (!lastSeenStr) {
+        setJobAlertsCount(snap.docs.length);
+      } else {
+        const lastSeenMs = Number(lastSeenStr);
+        let unread = 0;
+        snap.docs.forEach((docSnap) => {
+          const data = docSnap.data();
+          const createdMs = data.createdAt ? new Date(data.createdAt).getTime() : 0;
+          if (createdMs > lastSeenMs) {
+            unread++;
+          }
+        });
+        setJobAlertsCount(unread);
+      }
+    }, (err) => console.error(err));
+
+    return () => {
+      unsubNotices();
+      unsubJobAlerts();
+    };
+  }, []);
 
   React.useEffect(() => {
     if (!user) {
@@ -101,6 +167,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     }).length;
   }, [messages, user]);
 
+  const totalHeaderNotifications = React.useMemo(() => {
+    return unreadCount + noticesCount + jobAlertsCount;
+  }, [unreadCount, noticesCount, jobAlertsCount]);
+
+  const showHeaderBadge = isAppMode() && totalHeaderNotifications > 0;
+
   const filteredMessages = React.useMemo(() => {
     if (!user) return [];
     return messages.filter(msg => {
@@ -128,6 +200,17 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       console.error("Failed to mark read:", err);
     }
   };
+
+  React.useEffect(() => {
+    if (isNotifOpen && user && messages.length > 0) {
+      messages.forEach(msg => {
+        const isRead = msg.readBy?.includes(user.uid);
+        if (!isRead) {
+          markAsRead(msg);
+        }
+      });
+    }
+  }, [isNotifOpen, user, messages]);
 
   const archiveMessage = async (msg: any) => {
     if (!user) return;
@@ -280,10 +363,19 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 {/* Mobile Menu Button */}
                 <button 
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="lg:hidden w-11 h-11 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors"
+                  className={`lg:hidden relative w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+                    showHeaderBadge
+                      ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400 border-2 border-rose-500 shadow-xs'
+                      : 'text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-emerald-950/40'
+                  }`}
                   aria-label="Toggle menu"
                 >
                   {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                  {showHeaderBadge && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 bg-rose-600 text-white rounded-full border-2 border-white dark:border-[#031d19] text-[10px] font-black flex items-center justify-center shadow-md animate-pulse">
+                      {totalHeaderNotifications > 99 ? '99+' : totalHeaderNotifications}
+                    </span>
+                  )}
                 </button>
               </div>
             </div>
@@ -506,7 +598,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                         </div>
                         <span className="text-xs font-black">Job Alerts</span>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-slate-400 opacity-60" />
+                      {jobAlertsCount > 0 ? (
+                        <span className="bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-xs">
+                          {jobAlertsCount}
+                        </span>
+                      ) : (
+                        <ChevronRight className="w-4 h-4 text-slate-400 opacity-60" />
+                      )}
                     </Link>
 
                     <Link 
@@ -534,7 +632,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                         </div>
                         <span className="text-xs font-black">Announcements</span>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-slate-400 opacity-60" />
+                      {noticesCount > 0 ? (
+                        <span className="bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-xs">
+                          {noticesCount}
+                        </span>
+                      ) : (
+                        <ChevronRight className="w-4 h-4 text-slate-400 opacity-60" />
+                      )}
                     </Link>
 
                     <Link 

@@ -16,11 +16,37 @@ export const MobileBottomNav = () => {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [unreadChatCount, setUnreadChatCount] = React.useState(0);
+  const [unreadChatMsgs, setUnreadChatMsgs] = React.useState(0);
+  const [pendingRequests, setPendingRequests] = React.useState(0);
+
+  // Real-time listener for incoming pending friend requests
+  React.useEffect(() => {
+    if (!user) {
+      setPendingRequests(0);
+      return;
+    }
+
+    const requestsQ = query(
+      collection(db, 'friend_requests'),
+      where('receiverId', '==', user.uid),
+      where('status', '==', 'pending')
+    );
+
+    const unsubRequests = onSnapshot(requestsQ, (snap) => {
+      setPendingRequests(snap.docs.length);
+    }, (err) => {
+      console.error("Error listening to pending friend requests:", err);
+    });
+
+    return () => unsubRequests();
+  }, [user]);
 
   // Real-time listener for unread chat messages for this user
   React.useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setUnreadChatMsgs(0);
+      return;
+    }
 
     // Listen to chats where the user is a participant
     const chatsQ = query(
@@ -28,27 +54,51 @@ export const MobileBottomNav = () => {
       where('participants', 'array-contains', user.uid)
     );
 
+    let childUnsubs: (() => void)[] = [];
+
     const unsubChats = onSnapshot(chatsQ, (snapshot) => {
-      snapshot.docs.forEach((chatDoc) => {
-        const chatId = chatDoc.id;
+      // Clean up previous child listeners before registering new ones
+      childUnsubs.forEach(unsub => unsub());
+      childUnsubs = [];
+
+      const chatIds = snapshot.docs.map((d) => d.id);
+      if (chatIds.length === 0) {
+        setUnreadChatMsgs(0);
+        return;
+      }
+
+      const unreadCountsMap = new Map<string, number>();
+
+      chatIds.forEach((cId) => {
         const messagesQ = query(
-          collection(db, 'chats', chatId, 'messages'),
+          collection(db, 'chats', cId, 'messages'),
           where('read', '==', false)
         );
 
-        onSnapshot(messagesQ, (msgSnap) => {
-          const unreadMsgs = msgSnap.docs.filter(
+        const u = onSnapshot(messagesQ, (msgSnap) => {
+          const unreadForChat = msgSnap.docs.filter(
             (doc) => doc.data().senderId !== user.uid
-          );
-          setUnreadChatCount((prev) => (unreadMsgs.length > 0 ? prev + 1 : prev));
+          ).length;
+          unreadCountsMap.set(cId, unreadForChat);
+
+          let total = 0;
+          unreadCountsMap.forEach((cnt) => { total += cnt; });
+          setUnreadChatMsgs(total);
         });
+
+        childUnsubs.push(u);
       });
     }, (err) => {
       console.error("Error listening to chats for badge:", err);
     });
 
-    return () => unsubChats();
+    return () => {
+      unsubChats();
+      childUnsubs.forEach(unsub => unsub());
+    };
   }, [user]);
+
+  const totalChatNotifications = location.pathname === '/chat' ? 0 : unreadChatMsgs + pendingRequests;
 
   // Only show navigation in App Mode
   if (!isAppMode()) return null;
@@ -85,7 +135,7 @@ export const MobileBottomNav = () => {
       name: 'Chat',
       icon: MessageCircle,
       path: '/chat',
-      badge: unreadChatCount > 0 ? unreadChatCount : undefined,
+      badge: totalChatNotifications > 0 ? totalChatNotifications : undefined,
       requiresAuth: true
     },
     {
@@ -122,13 +172,15 @@ export const MobileBottomNav = () => {
                   className={`w-5 h-5 transition-colors duration-250 ${
                     isActive
                       ? 'text-[#006e5d] dark:text-emerald-400'
+                      : item.badge !== undefined
+                      ? 'text-rose-500 font-bold'
                       : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
                   }`}
                 />
 
                 {item.badge !== undefined && (
-                  <span className="absolute -top-1 -right-1.5 bg-rose-500 text-white text-[9px] font-black min-w-[14px] h-[14px] px-0.5 rounded-full flex items-center justify-center border border-white dark:border-[#031d19] shadow-sm animate-pulse">
-                    {item.badge}
+                  <span className="absolute -top-1.5 -right-2 bg-rose-600 text-white text-[9px] font-black min-w-[16px] h-[16px] px-1 rounded-full flex items-center justify-center border-2 border-white dark:border-[#031d19] shadow-md animate-pulse">
+                    {item.badge > 99 ? '99+' : item.badge}
                   </span>
                 )}
               </div>
