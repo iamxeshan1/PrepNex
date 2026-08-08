@@ -163,30 +163,40 @@ export default function StudentProfile() {
         setTestResults(fetchedResults);
 
         // Fetch Friends Count and friends list
-        const friendshipsQ1 = query(
-          collection(db, 'friendships'),
-          where('users', 'array-contains', targetId)
-        );
-        const fSnap = await getDocs(friendshipsQ1);
-        setFriendCount(fSnap.size);
+        try {
+          const friendshipsQ1 = query(
+            collection(db, 'friendships'),
+            where('users', 'array-contains', targetId)
+          );
+          const fSnap = await getDocs(friendshipsQ1);
+          setFriendCount(fSnap.size);
 
-        const fetchedFriends = fSnap.docs.map(docSnap => {
-          const data = docSnap.data();
-          const otherUser = data.user1?.uid === targetId ? data.user2 : data.user1;
-          return {
-            id: docSnap.id,
-            friendId: otherUser?.uid || '',
-            name: otherUser?.name || 'Aspirant',
-            photoURL: otherUser?.photoURL || '',
-            isPremium: Boolean(otherUser?.isPremium)
-          };
-        }).filter(f => f.friendId !== '');
-        setFriends(fetchedFriends);
+          const fetchedFriends = fSnap.docs.map(docSnap => {
+            const data = docSnap.data();
+            const otherUser = data.user1?.uid === targetId ? data.user2 : data.user1;
+            return {
+              id: docSnap.id,
+              friendId: otherUser?.uid || '',
+              name: otherUser?.name || 'Aspirant',
+              photoURL: otherUser?.photoURL || '',
+              isPremium: Boolean(otherUser?.isPremium)
+            };
+          }).filter(f => f.friendId !== '');
+          setFriends(fetchedFriends);
+        } catch (err) {
+          console.warn("Friendships are disabled:", err);
+          setFriendCount(0);
+          setFriends([]);
+        }
         setFriendsLoading(false);
 
         // Check Friendship / Request Status if logged in & viewing another student
         if (currentUser && !isSelf) {
-          checkFriendStatus(currentUser.uid, targetId);
+          try {
+            checkFriendStatus(currentUser.uid, targetId);
+          } catch (err) {
+            console.warn("Check friend status is disabled:", err);
+          }
         }
 
       } catch (err) {
@@ -511,55 +521,66 @@ export default function StudentProfile() {
                     </button>
                   </>
                 ) : (
-                  <>
+                  <div className="flex items-center gap-2 flex-wrap">
                     {friendshipStatus === 'friends' && (
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <button 
-                          onClick={() => navigate(`/chat?userId=${targetId}`)}
-                          className="flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-full bg-[#006e5d] text-white font-extrabold text-xs hover:bg-[#005a4d] transition-all shadow-md shadow-emerald-600/20"
-                        >
-                          <MessageCircle className="w-4 h-4" /> Message
-                        </button>
-
-                        <button 
-                          disabled={actionLoading}
-                          onClick={handleRemoveFriend}
-                          className="flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80 font-extrabold text-xs hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-all shadow-xs disabled:opacity-50"
-                        >
-                          <UserX className="w-4 h-4" /> {actionLoading ? 'Removing...' : 'Remove Friend'}
-                        </button>
-                      </div>
+                      <button 
+                        onClick={() => navigate(`/chat?userId=${targetId}`)}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#006e5d] text-white font-extrabold text-xs hover:bg-[#005a4d] transition-all shadow-md shadow-emerald-600/20"
+                      >
+                        <MessageCircle className="w-4 h-4" /> Message
+                      </button>
                     )}
 
                     {friendshipStatus === 'none' && (
                       <button 
-                        disabled={actionLoading}
                         onClick={handleSendFriendRequest}
-                        className="flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-extrabold text-xs hover:opacity-90 transition-all shadow-md disabled:opacity-50"
+                        disabled={actionLoading}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-extrabold text-xs transition-all shadow-xs disabled:opacity-50"
                       >
-                        <UserPlus className="w-4 h-4" /> {actionLoading ? 'Sending...' : 'Add Friend'}
+                        <UserPlus className="w-4 h-4 text-emerald-500" /> Connect
                       </button>
                     )}
 
                     {friendshipStatus === 'pending_sent' && (
                       <button 
                         disabled
-                        className="flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-extrabold text-xs cursor-default"
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-slate-50 dark:bg-slate-800/50 text-slate-400 font-extrabold text-xs border border-slate-200 dark:border-slate-800"
                       >
-                        <Clock className="w-4 h-4 text-amber-500" /> Request Sent
+                        <Clock className="w-4 h-4 animate-pulse" /> Pending Request
                       </button>
                     )}
 
                     {friendshipStatus === 'pending_received' && (
                       <button 
-                        disabled={actionLoading}
                         onClick={handleAcceptFriendRequest}
-                        className="flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-emerald-600 text-white font-extrabold text-xs hover:bg-emerald-500 transition-all shadow-md shadow-emerald-500/20 disabled:opacity-50"
+                        disabled={actionLoading}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-emerald-500 text-white hover:bg-emerald-600 font-extrabold text-xs transition-all shadow-md shadow-emerald-500/20 disabled:opacity-50"
                       >
-                        <UserCheck className="w-4 h-4" /> {actionLoading ? 'Accepting...' : 'Accept Request'}
+                        <UserCheck className="w-4 h-4" /> Accept Connection
                       </button>
                     )}
-                  </>
+
+                    {friendshipStatus === 'friends' && (
+                      <button 
+                        onClick={handleRemoveFriend}
+                        disabled={actionLoading}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-rose-200 hover:bg-rose-50 dark:border-rose-950 dark:hover:bg-rose-950/30 text-rose-600 font-extrabold text-xs transition-all disabled:opacity-50"
+                      >
+                        <UserX className="w-4 h-4" /> Disconnect
+                      </button>
+                    )}
+
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(window.location.href);
+                        toast.success('Profile link copied!');
+                      }}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-300 dark:border-slate-700 font-extrabold text-xs text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shadow-xs"
+                      title="Share Profile"
+                    >
+                      <Share2 className="w-3.5 h-3.5" /> Share
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -715,17 +736,6 @@ export default function StudentProfile() {
               }`}
             >
               <Award className="w-4 h-4" /> Earned Badges
-            </button>
-
-            <button
-              onClick={() => setActiveTab('friends')}
-              className={`shrink-0 py-3.5 px-3.5 sm:px-4 text-xs font-black transition-all border-b-2 flex items-center gap-1.5 sm:gap-2 ${
-                activeTab === 'friends'
-                  ? 'border-[#006e5d] text-[#006e5d] dark:text-emerald-400'
-                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-              }`}
-            >
-              <UserCheck className="w-4 h-4" /> Friends ({friendCount})
             </button>
           </div>
 
@@ -894,68 +904,6 @@ export default function StudentProfile() {
                 </p>
               </div>
 
-            </div>
-          )}
-
-          {/* TAB 4: Friends List */}
-          {activeTab === 'friends' && (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs">
-              <h3 className="text-sm font-extrabold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <UserCheck className="w-4 h-4 text-[#006e5d]" /> Active Connections
-              </h3>
-
-              {friendsLoading ? (
-                <div className="text-center py-6 text-xs text-slate-400 font-medium">
-                  Loading connections...
-                </div>
-              ) : friends.length === 0 ? (
-                <div className="text-center py-8 text-xs text-slate-500 font-medium">
-                  No friends added yet.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {friends.map(friend => {
-                    const friendAvatar = friend.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(friend.name)}&background=006e5d&color=fff`;
-                    return (
-                      <div key={friend.id} className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <img 
-                            src={friendAvatar} 
-                            alt={friend.name} 
-                            className="w-10 h-10 rounded-full object-cover bg-slate-200"
-                          />
-                          <div>
-                            <h4 className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1">
-                              {friend.name}
-                              {friend.isPremium && <VerifiedBadge size="xs" />}
-                            </h4>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase">
-                              Aspirant
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1.5">
-                          <Link 
-                            to={`/student/${friend.friendId}`}
-                            className="p-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-300 transition-all text-xs"
-                            title="View Profile"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </Link>
-                          <Link 
-                            to={`/chat?userId=${friend.friendId}`}
-                            className="p-1.5 bg-[#006e5d]/10 hover:bg-[#006e5d]/20 text-[#006e5d] dark:text-emerald-400 rounded-lg transition-all text-xs"
-                            title="Send Message"
-                          >
-                            <MessageCircle className="w-4 h-4" />
-                          </Link>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
             </div>
           )}
 

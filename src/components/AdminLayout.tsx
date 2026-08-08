@@ -99,7 +99,6 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
   const managementItems = [
     { label: 'Dashboard', path: '/admin', icon: LayoutDashboard },
     { label: 'User Directory', path: '/admin/users', icon: Users },
-    { label: 'Student Chat Monitor', path: '/admin/chat-monitor', icon: Shield },
     { label: 'Exam Catalog', path: '/admin/exams', icon: ClipboardList },
     { label: 'Live Test Sessions', path: '/admin/live-tests', icon: Activity },
     { label: 'Mock Test Bank', path: '/admin/mock-tests', icon: FileBox },

@@ -9,97 +9,12 @@ import {
   Trophy
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { db } from '../lib/firebase';
 import { isAppMode } from '../lib/appMode';
 
 export const MobileBottomNav = () => {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [unreadChatMsgs, setUnreadChatMsgs] = React.useState(0);
-  const [pendingRequests, setPendingRequests] = React.useState(0);
-
-  // Real-time listener for incoming pending friend requests
-  React.useEffect(() => {
-    if (!user) {
-      setPendingRequests(0);
-      return;
-    }
-
-    const requestsQ = query(
-      collection(db, 'friend_requests'),
-      where('receiverId', '==', user.uid),
-      where('status', '==', 'pending')
-    );
-
-    const unsubRequests = onSnapshot(requestsQ, (snap) => {
-      setPendingRequests(snap.docs.length);
-    }, (err) => {
-      console.error("Error listening to pending friend requests:", err);
-    });
-
-    return () => unsubRequests();
-  }, [user]);
-
-  // Real-time listener for unread chat messages for this user
-  React.useEffect(() => {
-    if (!user) {
-      setUnreadChatMsgs(0);
-      return;
-    }
-
-    // Listen to chats where the user is a participant
-    const chatsQ = query(
-      collection(db, 'chats'),
-      where('participants', 'array-contains', user.uid)
-    );
-
-    let childUnsubs: (() => void)[] = [];
-
-    const unsubChats = onSnapshot(chatsQ, (snapshot) => {
-      // Clean up previous child listeners before registering new ones
-      childUnsubs.forEach(unsub => unsub());
-      childUnsubs = [];
-
-      const chatIds = snapshot.docs.map((d) => d.id);
-      if (chatIds.length === 0) {
-        setUnreadChatMsgs(0);
-        return;
-      }
-
-      const unreadCountsMap = new Map<string, number>();
-
-      chatIds.forEach((cId) => {
-        const messagesQ = query(
-          collection(db, 'chats', cId, 'messages'),
-          where('read', '==', false)
-        );
-
-        const u = onSnapshot(messagesQ, (msgSnap) => {
-          const unreadForChat = msgSnap.docs.filter(
-            (doc) => doc.data().senderId !== user.uid
-          ).length;
-          unreadCountsMap.set(cId, unreadForChat);
-
-          let total = 0;
-          unreadCountsMap.forEach((cnt) => { total += cnt; });
-          setUnreadChatMsgs(total);
-        });
-
-        childUnsubs.push(u);
-      });
-    }, (err) => {
-      console.error("Error listening to chats for badge:", err);
-    });
-
-    return () => {
-      unsubChats();
-      childUnsubs.forEach(unsub => unsub());
-    };
-  }, [user]);
-
-  const totalChatNotifications = location.pathname === '/chat' ? 0 : unreadChatMsgs + pendingRequests;
 
   // Only show navigation in App Mode
   if (!isAppMode()) return null;
@@ -119,7 +34,7 @@ export const MobileBottomNav = () => {
     navigate(path);
   };
 
-  const mainNavItems = [
+  const mainNavItems: any[] = [
     {
       name: 'Tests',
       icon: BookOpenText,
@@ -136,7 +51,6 @@ export const MobileBottomNav = () => {
       name: 'Chat',
       icon: MessageCircle,
       path: '/chat',
-      badge: totalChatNotifications > 0 ? totalChatNotifications : undefined,
       requiresAuth: true
     },
     {

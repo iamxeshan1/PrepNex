@@ -30,7 +30,6 @@ const AdminSubjects = React.lazy(() => import('./pages/Admin/Subjects'));
 const AdminRevenue = React.lazy(() => import('./pages/Admin/Revenue'));
 const AdminPremiumPlan = React.lazy(() => import('./pages/Admin/PremiumPlan'));
 const AdminUsers = React.lazy(() => import('./pages/Admin/Users'));
-const AdminChatMonitor = React.lazy(() => import('./pages/Admin/ChatMonitor'));
 const AdminCoupons = React.lazy(() => import('./pages/Admin/Coupons'));
 const AdminJobAlerts = React.lazy(() => import('./pages/Admin/JobAlerts'));
 const AdminForum = React.lazy(() => import('./pages/Admin/Forum'));
@@ -202,11 +201,6 @@ export function AppContent() {
           <Route path="/admin/users" element={
             <ProtectedRoute adminOnly>
               <AdminUsers />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/chat-monitor" element={
-            <ProtectedRoute adminOnly>
-              <AdminChatMonitor />
             </ProtectedRoute>
           } />
           <Route path="/admin/coupons" element={
