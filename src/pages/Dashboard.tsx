@@ -23,7 +23,7 @@ export default function Dashboard() {
   const [upcomingTests, setUpcomingTests] = useState<any[]>([]);
   const [discoverExams, setDiscoverExams] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
-  const [notices, setNotices] = useState<any[]>([]);
+
   const [paymentSuccessInfo, setPaymentSuccessInfo] = useState<{orderId: string, paymentId: string} | null>(null);
 
   const [subjectPerformance, setSubjectPerformance] = useState<any[]>([]);
@@ -135,14 +135,12 @@ export default function Dashboard() {
                allExamsSnap,
                agenciesSnap,
                liveTestsSnap,
-               noticesSnap,
                resultsSnap,
                subjectsSnap
              ] = await Promise.allSettled([
                getDocs(collection(db, 'exams')),
                getDocs(collection(db, 'agencies')),
                getDocs(collection(db, 'liveTests')),
-               getDocs(query(collection(db, 'notices'), orderBy('createdAt', 'desc'), limit(3))),
                getDocs(query(collection(db, 'results'), where('userId', '==', profile.userId))),
                getDocs(collection(db, 'subjects'))
              ]);
@@ -150,7 +148,7 @@ export default function Dashboard() {
              const allExams = allExamsSnap.status === 'fulfilled' ? allExamsSnap.value.docs.map(doc => ({ id: doc.id, ...doc.data() as any })) : [];
              const allAgencies = agenciesSnap.status === 'fulfilled' ? agenciesSnap.value.docs.map(doc => ({ id: doc.id, ...doc.data() as any })) : [];
              const allLiveTests = liveTestsSnap.status === 'fulfilled' ? liveTestsSnap.value.docs.map(doc => ({ id: doc.id, ...doc.data() as any })) : [];
-             const currentNotices = noticesSnap.status === 'fulfilled' ? noticesSnap.value.docs.map(doc => ({ id: doc.id, ...doc.data() as any })) : [];
+
              const currentResults = resultsSnap.status === 'fulfilled' ? resultsSnap.value.docs.map(doc => ({ id: doc.id, ...doc.data() as any })) : [];
              const currentSubjects = subjectsSnap.status === 'fulfilled' ? subjectsSnap.value.docs.map(doc => ({ id: doc.id, ...doc.data() as any })) : [];
  
@@ -188,8 +186,7 @@ export default function Dashboard() {
              const newExams = examsWithAgencyLogos.filter(ex => !purchasedIds.includes(ex.id)).slice(0, 3);
              setDiscoverExams(newExams);
  
-             // Fetch latest announcements
-             setNotices(currentNotices);
+
  
              // Subject Performance
              // Fetch subjects mapping to get proper names
@@ -562,57 +559,27 @@ export default function Dashboard() {
                      </div>
                   </div>
 
-                  {/* Announcements & Discover New */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                      <div className="lg:col-span-2 bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col">
-                          <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                                <Megaphone className="w-5 h-5 text-[#006e5d]" /> Platform Announcements
-                            </h3>
-                            <button onClick={() => navigate('/announcements')} className="text-[#006e5d] text-[10px] font-black uppercase tracking-wider hover:underline">View All Updates</button>
-                          </div>
-                          
-                          <div className="space-y-4 flex-1">
-                            {notices.length > 0 ? notices.map((notice) => (
-                              <div key={notice.id} className="p-4 rounded-3xl border border-slate-50 bg-slate-50/30 group hover:bg-slate-50 transition-all flex items-start gap-4">
-                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                                   notice.type === 'warning' ? 'bg-amber-100 text-amber-600' :
-                                   notice.type === 'update' ? 'bg-[#006e5d]/10 text-[#006e5d]' :
-                                   'bg-[#006e5d]/10 text-[#006e5d]'
-                                 }`}>
-                                    {notice.type === 'warning' ? <AlertTriangle className="w-5 h-5" /> : 
-                                     notice.type === 'update' ? <Zap className="w-5 h-5" /> : 
-                                     <Info className="w-5 h-5" />}
-                                 </div>
-                                 <div className="flex-1 min-w-0">
-                                    <h4 className="font-bold text-[#001f19] text-sm truncate">{notice.title}</h4>
-                                    <p className="text-xs text-slate-500 line-clamp-1">{notice.content}</p>
-                                 </div>
-                                 <div className="text-right shrink-0">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase">{new Date(notice.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</p>
-                                 </div>
-                              </div>
-                            )) : (
-                              <div className="h-full flex flex-col items-center justify-center py-10 opacity-50">
-                                 <Megaphone className="w-10 h-10 mb-3 text-slate-300" />
-                                 <p className="text-sm font-medium text-slate-400">No announcements yet</p>
-                              </div>
-                            )}
-                          </div>
+                  {/* Discover New */}
+                  <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col mb-8">
+                      <div className="flex justify-between items-center mb-6">
+                          <h3 className="text-lg font-black text-slate-900">Discover New Exams</h3>
+                          <button onClick={() => navigate('/exams')} className="text-[#006e5d] text-[10px] font-black uppercase tracking-wider hover:underline">View All</button>
                       </div>
-                      <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col">
-                          <h3 className="text-lg font-black text-slate-900 mb-6">Discover New</h3>
-                          <div className="space-y-4 flex-1">
-                              {discoverExams.length > 0 ? discoverExams.map(ex => (
-                                  <div key={ex.id} onClick={() => navigate(`/exam/${ex.id}`)} className="p-4 border rounded-2xl flex items-center justify-between hover:bg-slate-50 cursor-pointer">
-                                      <p className="text-sm font-bold text-slate-700">{ex.name || ex.title}</p>
-                                      <span className="text-xs text-slate-400">→</span>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          {discoverExams.length > 0 ? discoverExams.map(ex => (
+                              <div key={ex.id} onClick={() => navigate(`/exam/${ex.id}`)} className="p-5 border border-slate-100 rounded-2xl hover:border-[#006e5d] hover:shadow-md transition-all cursor-pointer flex flex-col justify-between bg-slate-50/20">
+                                  <div>
+                                      <h4 className="font-extrabold text-[#001f19] text-base mb-1 truncate">{ex.name || ex.title}</h4>
+                                      <p className="text-xs text-slate-500 line-clamp-2 mb-4">{ex.description || 'Explore syllabus, test series and mock questions.'}</p>
                                   </div>
-                              )) : (
-                                  <p className="text-sm text-slate-500">No new exams available right now.</p>
-                              )}
-                          </div>
-                          <button onClick={() => navigate('/exams')} className="w-full mt-4 py-3 bg-[#006e5d]/5 text-[#006e5d] font-bold rounded-2xl text-sm">Browse Categories</button>
+                                  <div className="flex items-center justify-between mt-auto pt-3 border-t border-slate-100">
+                                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{ex.organization || 'Exam'}</span>
+                                      <span className="text-xs text-[#006e5d] font-black flex items-center gap-1">Start Prep →</span>
+                                  </div>
+                              </div>
+                          )) : (
+                              <div className="col-span-3 text-center py-6 text-slate-500 text-sm">No new exams available right now.</div>
+                          )}
                       </div>
                   </div>
                   

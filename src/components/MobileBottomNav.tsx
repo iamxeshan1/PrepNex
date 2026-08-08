@@ -133,12 +133,6 @@ export const MobileBottomNav = () => {
       requiresAuth: false
     },
     {
-      name: 'Ranks',
-      icon: Trophy,
-      path: '/leaderboard',
-      requiresAuth: false
-    },
-    {
       name: 'Chat',
       icon: MessageCircle,
       path: '/chat',

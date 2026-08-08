@@ -20,18 +20,18 @@
       },
       "required": ["userId", "name", "email", "role"]
     },
-    "Notice": {
-      "title": "Notice",
-      "description": "Global announcement or notice.",
+    "BroadcastingChannel": {
+      "title": "BroadcastingChannel",
+      "description": "Verified channel where only admins can send broadcast updates.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
-        "title": { "type": "string" },
-        "content": { "type": "string" },
-        "type": { "type": "string", "enum": ["info", "warning", "update"] },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "name": { "type": "string" },
+        "isVerified": { "type": "boolean" },
+        "createdAt": { "type": "number" },
+        "createdBy": { "type": "string" }
       },
-      "required": ["title", "content", "type"]
+      "required": ["name", "isVerified", "createdAt"]
     },
     "Thought": {
       "title": "Thought of the Day",
@@ -259,24 +259,19 @@
       },
       "required": ["sessionId", "userId", "date", "minutes"]
     },
-    "UserMessage": {
-      "title": "UserMessage",
-      "description": "Direct message, gift voucher, or coupon sent by admin to a single user or all users.",
+    "ChannelMessage": {
+      "title": "ChannelMessage",
+      "description": "A broadcast message sent inside a verified broadcasting channel.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "title": { "type": "string" },
-        "content": { "type": "string" },
-        "type": { "type": "string", "enum": ["message", "voucher", "coupon"] },
-        "code": { "type": "string" },
+        "channelId": { "type": "string" },
         "senderId": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "readBy": { "type": "array", "items": { "type": "string" } },
-        "deletedBy": { "type": "array", "items": { "type": "string" } },
-        "archivedBy": { "type": "array", "items": { "type": "string" } }
+        "senderName": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "number" }
       },
-      "required": ["userId", "title", "content", "type", "createdAt"]
+      "required": ["channelId", "senderId", "text", "createdAt"]
     },
     "StudyGroup": {
       "title": "StudyGroup",

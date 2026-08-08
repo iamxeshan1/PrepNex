@@ -46,7 +46,7 @@ const AdminEditLiveTest = React.lazy(() => import('./pages/Admin/EditLiveTest'))
 const AdminReviews = React.lazy(() => import('./pages/Admin/Reviews'));
 const AdminStudyMaterial = React.lazy(() => import('./pages/Admin/StudyMaterial'));
 const AdminPushNotifications = React.lazy(() => import('./pages/Admin/PushNotifications'));
-const AdminDirectBroadcasts = React.lazy(() => import('./pages/Admin/DirectBroadcasts'));
+const AdminBroadcasts = React.lazy(() => import('./pages/Admin/Broadcasts'));
 const AdminPopupAnnouncement = React.lazy(() => import('./pages/Admin/PopupAnnouncement'));
 const Premium = React.lazy(() => import('./pages/Premium'));
 const Subjects = React.lazy(() => import('./pages/Subjects'));
@@ -64,7 +64,7 @@ const Leaderboard = React.lazy(() => import('./pages/Leaderboard'));
 const Chat = React.lazy(() => import('./pages/Chat'));
 const Transactions = React.lazy(() => import('./pages/Transactions'));
 const About = React.lazy(() => import('./pages/About'));
-const Announcements = React.lazy(() => import('./pages/Announcements'));
+
 const MySubscriptions = React.lazy(() => import('./pages/MySubscriptions'));
 const LiveTests = React.lazy(() => import('./pages/LiveTests'));
 const ResetPassword = React.lazy(() => import('./pages/ResetPassword'));
@@ -151,7 +151,7 @@ export function AppContent() {
           <Route path="/subjects" element={<Subjects />} />
           <Route path="/premium" element={<Premium />} />
           <Route path="/about" element={<About />} />
-          <Route path="/announcements" element={<Announcements />} />
+
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/exam/:examId" element={<ExamDetail />} />
@@ -313,9 +313,9 @@ export function AppContent() {
             </ProtectedRoute>
           } />
 
-          <Route path="/admin/direct-broadcasts" element={
+          <Route path="/admin/broadcasts" element={
             <ProtectedRoute adminOnly>
-              <AdminDirectBroadcasts />
+              <AdminBroadcasts />
             </ProtectedRoute>
           } />
 

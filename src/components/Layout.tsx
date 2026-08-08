@@ -51,7 +51,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const [socialLinks, setSocialLinks] = React.useState<any>({});
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [userProfile, setUserProfile] = React.useState<any>(null);
-  const [messages, setMessages] = React.useState<any[]>([]);
+  const messages: any[] = [];
 
   React.useEffect(() => {
     if (!user) {
@@ -97,32 +97,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   }, [location.pathname]);
 
   React.useEffect(() => {
-    const handleNoticesRead = () => setNoticesCount(0);
     const handleJobAlertsRead = () => setJobAlertsCount(0);
-    window.addEventListener('notices_read', handleNoticesRead);
     window.addEventListener('job_alerts_read', handleJobAlertsRead);
-
-    const unsubNotices = onSnapshot(collection(db, 'notices'), (snap) => {
-      if (location.pathname === '/announcements') {
-        localStorage.setItem('last_seen_notices_time', Date.now().toString());
-        setNoticesCount(0);
-        return;
-      }
-      const lastSeenStr = localStorage.getItem('last_seen_notices_time');
-      if (!lastSeenStr) {
-        setNoticesCount(snap.docs.length);
-      } else {
-        const lastSeenMs = Number(lastSeenStr);
-        let unread = 0;
-        snap.docs.forEach((docSnap) => {
-          const docTime = parseDocTime(docSnap.data());
-          if (docTime > lastSeenMs) {
-            unread++;
-          }
-        });
-        setNoticesCount(unread);
-      }
-    }, (err) => console.error(err));
 
     const unsubJobAlerts = onSnapshot(collection(db, 'jobAlerts'), (snap) => {
       if (location.pathname === '/job-alerts') {
@@ -147,34 +123,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     }, (err) => console.error(err));
 
     return () => {
-      window.removeEventListener('notices_read', handleNoticesRead);
       window.removeEventListener('job_alerts_read', handleJobAlertsRead);
-      unsubNotices();
       unsubJobAlerts();
     };
   }, [location.pathname]);
-
-  React.useEffect(() => {
-    if (!user) {
-      setMessages([]);
-      return;
-    }
-
-    const q = query(
-      collection(db, 'user_messages'),
-      where('userId', 'in', [user.uid, 'all'])
-    );
-
-    const unsub = onSnapshot(q, (snap) => {
-      const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      list.sort((a: any, b: any) => {
-        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
-      });
-      setMessages(list);
-    });
-
-    return () => unsub();
-  }, [user]);
 
   const unreadCount = React.useMemo(() => {
     if (!user) return 0;
@@ -321,7 +273,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 <Link to="/live-tests" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/live-tests') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>Live Tests</Link>
                 <Link to="/study-material" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/study-material') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>Study Material</Link>
                 <Link to="/forum" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/forum') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>Forum</Link>
-                <Link to="/leaderboard" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/leaderboard') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>Leaderboard</Link>
                 {user && (
                   <>
                     <Link to="/chat" className={`text-sm font-[700] tracking-tight transition-colors flex items-center gap-1 ${isActive('/chat') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>
@@ -346,14 +297,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                       <Zap className="w-3.5 h-3.5 fill-current" />
                       Get Pass Pro
                     </Link>
-                    <button onClick={() => setIsNotifOpen(true)} className="relative w-10 h-10 rounded-full flex items-center justify-center text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-emerald-950/30 transition-colors" aria-label="Notifications">
-                      <Bell className="w-5 h-5" />
-                      {unreadCount > 0 && (
-                        <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white rounded-full border border-white dark:border-[#031d19] text-[9px] font-black flex items-center justify-center shadow-lg">
-                          {unreadCount}
-                        </span>
-                      )}
-                    </button>
+
                     <button onClick={handleLogout} className="text-sm font-bold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors">Log Out</button>
                     <Link to="/profile" className="w-9 h-9 rounded-full overflow-hidden border border-slate-200 cursor-pointer hover:border-[#006e5d] transition-colors bg-slate-50">
                       <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email || 'User'}&background=006e5d&color=fff`} alt="User" className="w-full h-full object-cover" width="36" height="36" fetchPriority="high" />
@@ -586,24 +530,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                           <ChevronRight className="w-4 h-4 text-slate-400 opacity-60" />
                         </Link>
 
-                        <button 
-                          onClick={() => { setIsNotifOpen(true); setIsMobileMenuOpen(false); }}
-                          className="w-full flex items-center justify-between p-3.5 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30 transition-all text-left"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-emerald-100/70 dark:bg-emerald-950/80 text-[#006e5d] dark:text-emerald-400">
-                              <Bell className="w-4 h-4" />
-                            </div>
-                            <span className="text-xs font-black">Student Message Inbox</span>
-                          </div>
-                          {unreadCount > 0 ? (
-                            <span className="bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
-                              {unreadCount} new
-                            </span>
-                          ) : (
-                            <ChevronRight className="w-4 h-4 text-slate-400 opacity-60" />
-                          )}
-                        </button>
+
                       </>
                     )}
 
@@ -641,25 +568,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                       <ChevronRight className="w-4 h-4 text-slate-400 opacity-60" />
                     </Link>
 
-                    <Link 
-                      to="/announcements" 
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={`flex items-center justify-between p-3.5 rounded-xl transition-all ${isActive('/announcements') ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-emerald-950/30'}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-rose-100/70 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400">
-                          <Megaphone className="w-4 h-4" />
-                        </div>
-                        <span className="text-xs font-black">Announcements</span>
-                      </div>
-                      {noticesCount > 0 ? (
-                        <span className="bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-xs">
-                          {noticesCount}
-                        </span>
-                      ) : (
-                        <ChevronRight className="w-4 h-4 text-slate-400 opacity-60" />
-                      )}
-                    </Link>
+
 
                     <Link 
                       to="/study-material" 

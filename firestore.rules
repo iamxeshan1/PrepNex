@@ -133,10 +133,16 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Notices
-    match /notices/{noticeId} {
-      allow read: if true;
-      allow write: if isAdmin();
+    // Broadcasting Channels
+    match /broadcasting_channels/{channelId} {
+      allow read: if isSignedIn();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin();
+
+      match /messages/{messageId} {
+        allow read: if isSignedIn();
+        allow create, update, delete: if isAdmin();
+      }
     }
 
     // Subjects
@@ -177,18 +183,6 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // User Messages / Vouchers / Coupons
-    match /user_messages/{messageId} {
-      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.userId == 'all' || isAdmin());
-      allow create: if isAdmin();
-      allow update: if isAdmin() || (
-        isSignedIn() && 
-        (resource.data.userId == request.auth.uid || resource.data.userId == 'all') &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy', 'deletedBy', 'archivedBy'])
-      );
-      allow delete: if isAdmin();
-    }
-
     // Job Alerts
     match /jobAlerts/{alertId} {
       allow read: if true;
@@ -218,32 +212,10 @@ service cloud.firestore {
       }
     }
 
-    // Friend Requests
-    match /friend_requests/{requestId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
-      allow update, delete: if isSignedIn() && (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid || isAdmin());
-    }
 
-    // Friendships
-    match /friendships/{friendshipId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.resource.data.users.hasAny([request.auth.uid]);
-      allow update, delete: if isSignedIn() && (resource.data.users.hasAny([request.auth.uid]) || isAdmin());
-    }
 
-    // Chats and Direct Messages
-    match /chats/{chatId} {
-      allow read: if isSignedIn() && (resource.data.participants.hasAny([request.auth.uid]) || isAdmin());
-      allow create: if isSignedIn() && request.resource.data.participants.hasAny([request.auth.uid]);
-      allow update: if isSignedIn() && (resource.data.participants.hasAny([request.auth.uid]) || isAdmin());
       
-      match /messages/{messageId} {
-        allow read: if isSignedIn();
-        allow create: if isSignedIn() && (request.resource.data.senderId == request.auth.uid || isAdmin());
-        allow update, delete: if isSignedIn() && (resource.data.senderId == request.auth.uid || isAdmin());
-      }
-    }
+
 
     // Study Groups
     match /study_groups/{groupId} {
