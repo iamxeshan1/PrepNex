@@ -60,6 +60,7 @@ const Exams = React.lazy(() => import('./pages/Exams'));
 const Performance = React.lazy(() => import('./pages/Performance'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 const StudentProfile = React.lazy(() => import('./pages/StudentProfile'));
+const Leaderboard = React.lazy(() => import('./pages/Leaderboard'));
 const Chat = React.lazy(() => import('./pages/Chat'));
 const Transactions = React.lazy(() => import('./pages/Transactions'));
 const About = React.lazy(() => import('./pages/About'));
@@ -349,6 +350,7 @@ export function AppContent() {
             </ProtectedRoute>
           } />
           <Route path="/job-alerts" element={<JobAlerts />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/forum" element={<Forum />} />
           <Route path="/forum/:id" element={<ForumThread />} />
           

@@ -166,11 +166,58 @@ export default function Chat() {
     };
   }, [currentUser]);
 
+  // Real-time listener for last messages across all chats
+  const [recentChatsMap, setRecentChatsMap] = useState<Record<string, { lastMessage: string; lastMessageTime: number }>>({});
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const chatsQ = query(
+      collection(db, 'chats'),
+      where('participants', 'array-contains', currentUser.uid)
+    );
+
+    const unsubChats = onSnapshot(chatsQ, (snap) => {
+      const cMap: Record<string, { lastMessage: string; lastMessageTime: number }> = {};
+      snap.docs.forEach((d) => {
+        const data = d.data();
+        const otherId = data.participants?.find((p: string) => p !== currentUser.uid);
+        if (otherId) {
+          cMap[otherId] = {
+            lastMessage: data.lastMessage || '',
+            lastMessageTime: Number(data.lastMessageTime || data.updatedAt || 0)
+          };
+        }
+      });
+      setRecentChatsMap(cMap);
+    });
+
+    return () => unsubChats();
+  }, [currentUser]);
+
+  // Format timestamp like WhatsApp
+  const formatLastMessageTime = (timestamp?: number) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    
+    if (isToday) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    const isThisYear = date.getFullYear() === now.getFullYear();
+    if (isThisYear) {
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+    return date.toLocaleDateString([], { year: '2-digit', month: 'short', day: 'numeric' });
+  };
+
   // Handle selecting active friend to chat
   useEffect(() => {
     if (!activeUserIdParam || !currentUser) {
-      if (friends.length > 0 && !selectedFriend) {
-        // Auto-select first friend
+      // Only auto-select on desktop (md screens >= 768px)
+      if (friends.length > 0 && !selectedFriend && window.innerWidth >= 768) {
         setSelectedFriend(friends[0]);
         setIsFriend(true);
       }
@@ -413,7 +460,7 @@ export default function Chat() {
         <div className="max-w-7xl w-full mx-auto p-2 sm:p-4 md:p-6 flex-1 flex flex-col md:flex-row gap-4 h-[calc(100vh-100px)] min-h-[600px]">
           
           {/* Left Sidebar Pane: Friends, Requests & Discovery */}
-          <div className="w-full md:w-80 lg:w-96 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col shrink-0 overflow-hidden">
+          <div className={`w-full md:w-80 lg:w-96 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex-col shrink-0 overflow-hidden ${selectedFriend ? 'hidden md:flex' : 'flex'}`}>
             
             {/* Navigation Tabs */}
             <div className="p-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between gap-1">
@@ -460,7 +507,7 @@ export default function Chat() {
             {activeTab === 'chats' && (
               <div className="flex-1 overflow-y-auto p-3 space-y-1">
                 {loadingFriends ? (
-                  <div className="text-center py-10 text-xs text-slate-400 font-medium">Loading friends list...</div>
+                  <div className="text-center py-10 text-xs text-slate-400 font-medium">Loading chats...</div>
                 ) : friends.length === 0 ? (
                   <div className="text-center py-12 px-4">
                     <Users className="w-10 h-10 text-slate-300 mx-auto mb-2" />
@@ -476,57 +523,75 @@ export default function Chat() {
                     </button>
                   </div>
                 ) : (
-                  friends.map((friend) => {
-                    const isSelected = selectedFriend?.uid === friend.uid;
-                    const uProf = getUserProfile(friend.uid, friend);
+                  [...friends]
+                    .sort((a, b) => {
+                      const timeA = recentChatsMap[a.uid]?.lastMessageTime || 0;
+                      const timeB = recentChatsMap[b.uid]?.lastMessageTime || 0;
+                      return timeB - timeA;
+                    })
+                    .map((friend) => {
+                      const isSelected = selectedFriend?.uid === friend.uid;
+                      const uProf = getUserProfile(friend.uid, friend);
+                      const chatInfo = recentChatsMap[friend.uid];
+                      const lastMsg = chatInfo?.lastMessage;
+                      const lastTime = formatLastMessageTime(chatInfo?.lastMessageTime);
 
-                    return (
-                      <button
-                        key={friend.uid}
-                        onClick={() => {
-                          setSelectedFriend(friend);
-                          setIsFriend(true);
-                          setSearchParams({ userId: friend.uid });
-                        }}
-                        className={`w-full p-3 rounded-2xl flex items-center gap-3 transition-all text-left ${
-                          isSelected 
-                            ? 'bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80' 
-                            : 'hover:bg-slate-50 dark:hover:bg-slate-800/60 border border-transparent'
-                        }`}
-                      >
-                        {/* Avatar BEFORE name */}
-                        <div className="relative shrink-0">
-                          <img 
-                            src={uProf.photoURL} 
-                            alt={uProf.name} 
-                            className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700"
-                          />
-                          {isUserOnline(friend.uid) ? (
-                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 shadow-xs" title="Online now" />
-                          ) : (
-                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-slate-300 dark:bg-slate-600 rounded-full border-2 border-white dark:border-slate-900" title="Offline" />
-                          )}
-                          {uProf.isPremium && (
-                            <div className="absolute -top-0.5 -right-0.5">
-                              <VerifiedBadge size="xs" />
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-1 mb-0.5">
-                            <div className="flex items-center gap-1 min-w-0">
-                              <span className="font-extrabold text-xs text-slate-900 dark:text-white truncate">{uProf.name}</span>
-                              {uProf.isPremium && <VerifiedBadge size="xs" />}
-                            </div>
+                      return (
+                        <button
+                          key={friend.uid}
+                          onClick={() => {
+                            setSelectedFriend(friend);
+                            setIsFriend(true);
+                            setSearchParams({ userId: friend.uid });
+                          }}
+                          className={`w-full p-3 rounded-2xl flex items-center gap-3 transition-all text-left ${
+                            isSelected 
+                              ? 'bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 shadow-xs' 
+                              : 'hover:bg-slate-50 dark:hover:bg-slate-800/60 border border-transparent'
+                          }`}
+                        >
+                          {/* Avatar BEFORE name */}
+                          <div className="relative shrink-0">
+                            <img 
+                              src={uProf.photoURL} 
+                              alt={uProf.name} 
+                              className="w-11 h-11 rounded-full object-cover border border-slate-200 dark:border-slate-700"
+                            />
+                            {isUserOnline(friend.uid) ? (
+                              <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 shadow-xs" title="Online now" />
+                            ) : (
+                              <span className="absolute bottom-0 right-0 w-3 h-3 bg-slate-300 dark:bg-slate-600 rounded-full border-2 border-white dark:border-slate-900" title="Offline" />
+                            )}
+                            {uProf.isPremium && (
+                              <div className="absolute -top-0.5 -right-0.5">
+                                <VerifiedBadge size="xs" />
+                              </div>
+                            )}
                           </div>
-                          <span className="text-[11px] text-slate-400 font-medium block truncate">
-                            {uProf.handle}
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1 mb-0.5">
+                              <div className="flex items-center gap-1 min-w-0">
+                                <span className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white truncate">{uProf.name}</span>
+                                {uProf.isPremium && <VerifiedBadge size="xs" />}
+                              </div>
+                              {lastTime && (
+                                <span className="text-[10px] text-slate-400 font-bold shrink-0">{lastTime}</span>
+                              )}
+                            </div>
+
+                            {/* Last message preview */}
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate leading-snug">
+                              {lastMsg ? (
+                                lastMsg
+                              ) : (
+                                <span className="italic text-slate-400">{uProf.handle} • Start chatting</span>
+                              )}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })
                 )}
               </div>
             )}
@@ -716,14 +781,26 @@ export default function Chat() {
           </div>
 
           {/* Right Chat Panel Window */}
-          <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">
+          <div className={`flex-1 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex-col overflow-hidden ${selectedFriend ? 'flex' : 'hidden md:flex'}`}>
             
             {selectedFriend && activeProf ? (
               <>
                 {/* Chat Header Bar */}
                     <div className="p-3.5 sm:p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 flex flex-wrap items-center justify-between gap-2 min-w-0">
                       
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
+                        {/* Back Arrow button for mobile WhatsApp navigation */}
+                        <button
+                          onClick={() => {
+                            setSelectedFriend(null);
+                            setSearchParams({});
+                          }}
+                          className="md:hidden p-1.5 -ml-1 text-[#006e5d] hover:bg-emerald-50 dark:hover:bg-emerald-950/60 rounded-xl transition-colors flex items-center gap-1 font-black text-xs shrink-0"
+                          title="Back to chats list"
+                        >
+                          <ArrowLeft className="w-5 h-5" />
+                        </button>
+
                         {/* Selected Friend Avatar BEFORE name */}
                         <Link to={`/student/${selectedFriend.uid}`} className="relative shrink-0">
                           <img 

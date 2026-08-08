@@ -321,6 +321,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 <Link to="/live-tests" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/live-tests') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>Live Tests</Link>
                 <Link to="/study-material" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/study-material') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>Study Material</Link>
                 <Link to="/forum" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/forum') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>Forum</Link>
+                <Link to="/leaderboard" className={`text-sm font-[700] tracking-tight transition-colors ${isActive('/leaderboard') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>Leaderboard</Link>
                 {user && (
                   <>
                     <Link to="/chat" className={`text-sm font-[700] tracking-tight transition-colors flex items-center gap-1 ${isActive('/chat') ? 'text-[#006e5d] dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>

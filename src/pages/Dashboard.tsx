@@ -420,12 +420,15 @@ export default function Dashboard() {
                                 <TrendingUp className="w-6 h-6" />
                             </div>
                         </div>
-                        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between">
+                        <div 
+                          onClick={() => navigate('/leaderboard')}
+                          className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between cursor-pointer hover:border-[#006e5d] transition-all group"
+                        >
                             <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">GLOBAL RANK</p>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 group-hover:text-[#006e5d] transition-colors">GLOBAL RANK</p>
                                 <h3 className="text-2xl font-black text-slate-900">#{globalRank.toLocaleString()}<span className="text-sm text-slate-400 ml-1">/45.2k</span></h3>
                             </div>
-                            <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center group-hover:bg-[#006e5d]/10 group-hover:text-[#006e5d] transition-colors">
                                 <Award className="w-6 h-6" />
                             </div>
                         </div>

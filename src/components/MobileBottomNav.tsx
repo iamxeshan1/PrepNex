@@ -5,7 +5,8 @@ import {
   BookOpenText, 
   Library, 
   MessageCircle, 
-  LayoutDashboard 
+  LayoutDashboard,
+  Trophy
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
@@ -129,6 +130,12 @@ export const MobileBottomNav = () => {
       name: 'Subjects',
       icon: Library,
       path: '/subjects',
+      requiresAuth: false
+    },
+    {
+      name: 'Ranks',
+      icon: Trophy,
+      path: '/leaderboard',
       requiresAuth: false
     },
     {

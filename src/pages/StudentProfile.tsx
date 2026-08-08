@@ -8,7 +8,7 @@ import { VerifiedBadge } from '../components/VerifiedBadge';
 import { SnapchatStreakBadge } from '../components/SnapchatStreakBadge';
 import { 
   User, MapPin, Calendar, Award, Trophy, MessageSquare, 
-  UserPlus, UserCheck, MessageCircle, BarChart2, Share2, 
+  UserPlus, UserCheck, UserX, MessageCircle, BarChart2, Share2, 
   Edit3, Sparkles, CheckCircle2, ShieldCheck, Heart, 
   BookOpen, Target, Clock, ArrowLeft, Send, Check, X,
   Search, ExternalLink, AtSign, Loader2
@@ -327,6 +327,34 @@ export default function StudentProfile() {
     }
   };
 
+  const handleRemoveFriend = async () => {
+    if (!currentUser || !targetId) return;
+    if (!window.confirm('Are you sure you want to remove this friend?')) return;
+
+    setActionLoading(true);
+    try {
+      const friendshipDocId = [currentUser.uid, targetId].sort().join('_');
+      await deleteDoc(doc(db, 'friendships', friendshipDocId));
+
+      // Clean up any friend request documents between these two users
+      const reqQ1 = query(collection(db, 'friend_requests'), where('senderId', '==', currentUser.uid), where('receiverId', '==', targetId));
+      const reqQ2 = query(collection(db, 'friend_requests'), where('senderId', '==', targetId), where('receiverId', '==', currentUser.uid));
+      const [snap1, snap2] = await Promise.all([getDocs(reqQ1), getDocs(reqQ2)]);
+      
+      const deletions = [...snap1.docs, ...snap2.docs].map(d => deleteDoc(d.ref));
+      await Promise.all(deletions);
+
+      setFriendshipStatus('none');
+      setFriendCount(prev => Math.max(0, prev - 1));
+      toast.success('Friend removed successfully.');
+    } catch (err) {
+      console.error("Error removing friend:", err);
+      toast.error('Failed to remove friend.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleSaveProfileEdit = async () => {
     if (!currentUser) return;
     const cleanUsername = editUsername.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
@@ -485,12 +513,22 @@ export default function StudentProfile() {
                 ) : (
                   <>
                     {friendshipStatus === 'friends' && (
-                      <button 
-                        onClick={() => navigate(`/chat?userId=${targetId}`)}
-                        className="flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#006e5d] text-white font-extrabold text-xs hover:bg-[#005a4d] transition-all shadow-md shadow-emerald-600/20"
-                      >
-                        <MessageCircle className="w-4 h-4" /> Message Friend
-                      </button>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button 
+                          onClick={() => navigate(`/chat?userId=${targetId}`)}
+                          className="flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-full bg-[#006e5d] text-white font-extrabold text-xs hover:bg-[#005a4d] transition-all shadow-md shadow-emerald-600/20"
+                        >
+                          <MessageCircle className="w-4 h-4" /> Message
+                        </button>
+
+                        <button 
+                          disabled={actionLoading}
+                          onClick={handleRemoveFriend}
+                          className="flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80 font-extrabold text-xs hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-all shadow-xs disabled:opacity-50"
+                        >
+                          <UserX className="w-4 h-4" /> {actionLoading ? 'Removing...' : 'Remove Friend'}
+                        </button>
+                      </div>
                     )}
 
                     {friendshipStatus === 'none' && (
