@@ -29,6 +29,7 @@ export interface LeaderboardEntry {
 
 interface TopPerformersLeaderboardProps {
   currentUserId?: string;
+  showAll?: boolean;
 }
 
 // Default high-performing aspirants fallback data if database has few registered users
@@ -119,7 +120,7 @@ const FALLBACK_TOP_PERFORMERS: LeaderboardEntry[] = [
   }
 ];
 
-export function TopPerformersLeaderboard({ currentUserId }: TopPerformersLeaderboardProps) {
+export function TopPerformersLeaderboard({ currentUserId, showAll = false }: TopPerformersLeaderboardProps) {
   const navigate = useNavigate();
 
   // Time Scope Toggle: 'global' vs 'monthly'
@@ -127,6 +128,9 @@ export function TopPerformersLeaderboard({ currentUserId }: TopPerformersLeaderb
 
   // Sorting Metric Toggle: 'score' vs 'tests'
   const [metric, setMetric] = useState<'score' | 'tests'>('score');
+
+  // Exam category filter: 'all' | 'jkssb' | 'jkpsc' | 'ssc' | 'banking'
+  const [selectedExamCategory, setSelectedExamCategory] = useState<string>('all');
 
   // Filter query
   const [searchQuery, setSearchQuery] = useState('');
@@ -254,6 +258,13 @@ export function TopPerformersLeaderboard({ currentUserId }: TopPerformersLeaderb
   const processedList = React.useMemo(() => {
     let list = [...leaderboardData];
 
+    // Filter by exam category if selected
+    if (selectedExamCategory !== 'all') {
+      list = list.filter(item => 
+        item.targetExam && item.targetExam.toLowerCase().includes(selectedExamCategory.toLowerCase())
+      );
+    }
+
     // Filter by search query if any
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -306,7 +317,7 @@ export function TopPerformersLeaderboard({ currentUserId }: TopPerformersLeaderb
   }, [processedList, currentUserId]);
 
   const top3 = processedList.slice(0, 3);
-  const remainingList = processedList.slice(3, 10);
+  const remainingList = showAll ? processedList.slice(3) : processedList.slice(3, 10);
 
   // Podium mappings
   const firstPlace = top3.find(t => t.rank === 1);
@@ -384,6 +395,44 @@ export function TopPerformersLeaderboard({ currentUserId }: TopPerformersLeaderb
             </button>
           </div>
 
+        </div>
+      </div>
+
+      {/* Search & Category Filters Bar */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-1">
+        {/* Search input */}
+        <div className="relative w-full md:w-80">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search aspirant, district or exam..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006e5d] text-xs font-semibold text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+          />
+        </div>
+
+        {/* Category Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 no-scrollbar whitespace-nowrap">
+          {[
+            { id: 'all', label: 'All Exams' },
+            { id: 'jkssb', label: 'JKSSB' },
+            { id: 'jkpsc', label: 'JKPSC' },
+            { id: 'ssc', label: 'SSC' },
+            { id: 'banking', label: 'Banking' },
+          ].map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedExamCategory(cat.id)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                selectedExamCategory === cat.id
+                  ? 'bg-slate-900 text-white dark:bg-emerald-500 dark:text-slate-950 shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
         </div>
       </div>
 

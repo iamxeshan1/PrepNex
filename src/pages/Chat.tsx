@@ -930,14 +930,40 @@ export default function Chat() {
                       <p className="text-xs text-slate-400 italic px-1 py-2">No pending sent requests.</p>
                     ) : (
                       <div className="space-y-2">
-                        {outgoingRequestsList.map((req) => (
-                          <div key={req.id} className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-100 flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-700 truncate">{req.targetName}</span>
-                            <span className="text-[9px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full uppercase border border-amber-200">
-                              Pending
-                            </span>
-                          </div>
-                        ))}
+                        {outgoingRequestsList.map((req) => {
+                          const nameToDisplay = req.receiverName || req.targetName || req.receiverEmail || 'Aspirant';
+                          const photoToDisplay = req.receiverPhoto || '';
+                          return (
+                            <div key={req.id} className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-100 flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0 overflow-hidden border border-slate-200">
+                                  {photoToDisplay ? (
+                                    <img src={photoToDisplay} alt={nameToDisplay} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <User className="w-4 h-4 text-slate-500" />
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-bold text-slate-800 truncate">{nameToDisplay}</p>
+                                  <p className="text-[10px] text-amber-600 font-semibold">Request Sent</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <span className="text-[9px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full uppercase border border-amber-200">
+                                  Pending
+                                </span>
+                                <button
+                                  onClick={() => handleCancelRequest(req.id)}
+                                  disabled={actionLoading}
+                                  className="p-1 bg-slate-100 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
+                                  title="Cancel Request"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>

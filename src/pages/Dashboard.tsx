@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useSettings } from '../context/SettingsContext';
 import { collection, getDocs, query, where, documentId, orderBy, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { TopPerformersLeaderboard } from '../components/TopPerformersLeaderboard';
 import { DailyStreakWidget } from '../components/DailyStreakWidget';
 import { isAppMode } from '../lib/appMode';
 
@@ -575,9 +574,6 @@ export default function Dashboard() {
                   
                   {/* Drag and Drop Daily Study & Practice Planner */}
 
-                  {/* Top Performers Leaderboard Widget */}
-                  <TopPerformersLeaderboard currentUserId={profile?.userId || profile?.uid} />
-                  
                   {/* Subject Performance Analysis */}
                   <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 shadow-sm">
                     <h3 className="text-lg font-black text-slate-900 mb-6">Subject Performance Analysis</h3>
