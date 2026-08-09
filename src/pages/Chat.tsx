@@ -416,6 +416,7 @@ export default function Chat() {
       if (chatSnap.exists()) {
         setSelectedDm({ id: chatSnap.id, ...chatSnap.data() } as DmChat);
         setSelectedChannel(null);
+        setMobileView('chat');
       } else {
         const userRef = doc(db, 'users', targetId);
         const userSnap = await getDoc(userRef);
@@ -429,13 +430,13 @@ export default function Chat() {
           users: [currentUser.uid, targetId],
           user1: {
             uid: currentUser.uid,
-            name: myUserData.name || currentUser.displayName || 'Aspirant',
-            photoURL: myUserData.profilePicture || currentUser.photoURL || '',
-            isPremium: Boolean(myUserData.isPremium)
+            name: myUserData.name || myUserData.fullName || currentProfile?.fullName || currentProfile?.name || currentUser.displayName || 'Aspirant',
+            photoURL: myUserData.profilePicture || myUserData.photoURL || currentProfile?.photoURL || currentUser.photoURL || '',
+            isPremium: Boolean(myUserData.isPremium || currentProfile?.isPremium)
           },
           user2: {
             uid: targetId,
-            name: targetUserData.name || 'Aspirant',
+            name: targetUserData.name || targetUserData.fullName || 'Aspirant',
             photoURL: targetUserData.profilePicture || targetUserData.photoURL || '',
             isPremium: Boolean(targetUserData.isPremium)
           },
@@ -447,6 +448,7 @@ export default function Chat() {
         await setDoc(chatRef, newChatData);
         setSelectedDm({ id: chatId, ...newChatData } as DmChat);
         setSelectedChannel(null);
+        setMobileView('chat');
       }
     } catch (err) {
       console.error("Error starting DM:", err);
@@ -821,7 +823,20 @@ export default function Chat() {
                       </div>
                     ) : (
                       filteredDms.map((chat) => {
-                        const otherUser = chat.user1.uid === currentUser?.uid ? chat.user2 : chat.user1;
+                        const getOtherUser = (c: DmChat) => {
+                          if (c.user1 && c.user2) {
+                            return c.user1.uid === currentUser?.uid ? c.user2 : c.user1;
+                          }
+                          if (c.user1 && c.user1.uid !== currentUser?.uid) return c.user1;
+                          if (c.user2 && c.user2.uid !== currentUser?.uid) return c.user2;
+                          return {
+                            uid: c.users?.find(u => u !== currentUser?.uid) || '',
+                            name: 'Aspirant',
+                            photoURL: '',
+                            isPremium: false
+                          };
+                        };
+                        const otherUser = getOtherUser(chat);
                         const isSelected = selectedDm?.id === chat.id;
 
                         return (
@@ -1190,7 +1205,20 @@ export default function Chat() {
                     </button>
 
                     {(() => {
-                      const otherUser = selectedDm.user1.uid === currentUser?.uid ? selectedDm.user2 : selectedDm.user1;
+                      const getOtherUser = (c: DmChat) => {
+                        if (c.user1 && c.user2) {
+                          return c.user1.uid === currentUser?.uid ? c.user2 : c.user1;
+                        }
+                        if (c.user1 && c.user1.uid !== currentUser?.uid) return c.user1;
+                        if (c.user2 && c.user2.uid !== currentUser?.uid) return c.user2;
+                        return {
+                          uid: c.users?.find(u => u !== currentUser?.uid) || '',
+                          name: 'Aspirant',
+                          photoURL: '',
+                          isPremium: false
+                        };
+                      };
+                      const otherUser = getOtherUser(selectedDm);
                       return (
                         <button 
                           onClick={() => navigate(`/student/${otherUser.uid}`)}
