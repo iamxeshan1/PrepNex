@@ -46,6 +46,8 @@ export default function StudentProfile() {
 
   // Edit Bio / Profile Modal
   const [showEditModal, setShowEditModal] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
   const [editBio, setEditBio] = useState('');
   const [editDistrict, setEditDistrict] = useState('');
   const [editState, setEditState] = useState('');
@@ -117,6 +119,8 @@ export default function StudentProfile() {
       if (userSnap.exists()) {
         const data = userSnap.data();
         setStudentData({ id: userSnap.id, ...data });
+        setEditName(data.name || data.fullName || '');
+        setEditPhone(data.phoneNumber || data.phone || '');
         setEditBio(data.bio || 'Dedicated aspirant preparing for competitive exams on PrepNext 🚀');
         setEditDistrict(data.district || '');
         setEditState(data.state || '');
@@ -367,6 +371,25 @@ export default function StudentProfile() {
 
   const handleSaveProfileEdit = async () => {
     if (!currentUser) return;
+
+    const cleanName = editName.trim();
+    if (!cleanName) {
+      toast.error('Full Name is required.');
+      return;
+    }
+
+    const cleanPhone = editPhone.trim();
+    if (!cleanPhone) {
+      toast.error('Mobile Number is required.');
+      return;
+    }
+
+    const numericPhone = cleanPhone.replace(/[^0-9]/g, '');
+    if (numericPhone.length < 10) {
+      toast.error('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+
     const cleanUsername = editUsername.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
     if (!cleanUsername || cleanUsername.length < 3 || cleanUsername.length > 20) {
       toast.error('Username must be between 3 and 20 characters.');
@@ -397,6 +420,10 @@ export default function StudentProfile() {
       }
 
       await updateDoc(doc(db, 'users', currentUser.uid), {
+        name: cleanName,
+        fullName: cleanName,
+        phoneNumber: cleanPhone,
+        phone: cleanPhone,
         username: cleanUsername,
         bio: editBio.trim(),
         district: editDistrict.trim(),
@@ -407,6 +434,10 @@ export default function StudentProfile() {
 
       setStudentData((prev: any) => ({
         ...prev,
+        name: cleanName,
+        fullName: cleanName,
+        phoneNumber: cleanPhone,
+        phone: cleanPhone,
         username: cleanUsername,
         bio: editBio.trim(),
         district: editDistrict.trim(),
@@ -921,6 +952,34 @@ export default function StudentProfile() {
               </div>
 
               <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Full Name <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="text"
+                    required
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="e.g. Rahul Sharma"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-[#006e5d]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Mobile Number <span className="text-red-500">* (Mandatory)</span>
+                  </label>
+                  <input 
+                    type="tel"
+                    required
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                    placeholder="e.g. 9876543210"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-[#006e5d]"
+                  />
+                </div>
+
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                     Unique Username / Handle

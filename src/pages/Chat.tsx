@@ -93,6 +93,9 @@ export default function Chat() {
   const [incomingRequestsList, setIncomingRequestsList] = useState<any[]>([]);
   const [outgoingRequestsList, setOutgoingRequestsList] = useState<any[]>([]);
 
+  // Sidebar Tab navigation ('chats', 'requests', 'find')
+  const [sidebarTab, setSidebarTab] = useState<'chats' | 'requests' | 'find'>('chats');
+
   // Search/Directory State
   const [searchQuery, setSearchQuery] = useState('');
   const [directorySearchQuery, setDirectorySearchQuery] = useState('');
@@ -623,273 +626,445 @@ export default function Chat() {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 h-[calc(100vh-140px)] flex flex-col">
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-1 h-full">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-2 sm:py-6 h-[calc(100vh-80px)] sm:h-[calc(100vh-120px)] flex flex-col w-full min-w-0">
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-1 h-full min-w-0 w-full">
           
           {/* Sidebar Panel - Unified Channels & Chats List */}
-          <div className={`w-full md:w-80 border-r border-slate-100 flex flex-col shrink-0 ${mobileView === 'chat' ? 'hidden md:flex' : 'flex'}`}>
+          <div className={`w-full md:w-80 border-r border-slate-100 flex flex-col shrink-0 min-w-0 ${mobileView === 'chat' ? 'hidden md:flex' : 'flex'}`}>
             
-            {/* Sidebar Header with global connections actions */}
-            <header className="p-4 border-b border-slate-50 shrink-0 space-y-3">
+            {/* Sidebar Header with Navigation Tabs */}
+            <header className="p-3 sm:p-4 border-b border-slate-100 shrink-0 space-y-3">
               <div className="flex items-center justify-between">
-                <h1 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
                   <MessageSquare className="w-5 h-5 text-[#006e5d]" /> Inbox
                 </h1>
-                
-                {/* Global Connection Controls */}
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setShowFindModal(true)}
-                    className="p-1.5 hover:bg-slate-50 text-slate-600 hover:text-[#006e5d] rounded-xl transition-all relative group"
-                    title="Find Friends"
-                  >
-                    <Search className="w-4 h-4" />
-                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-[9px] font-black uppercase text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                      Find People
-                    </span>
-                  </button>
+              </div>
 
-                  <button
-                    onClick={() => setShowRequestsModal(true)}
-                    className="p-1.5 hover:bg-slate-50 text-slate-600 hover:text-[#006e5d] rounded-xl transition-all relative group"
-                    title="Friend Requests"
-                  >
-                    <UserCheck className="w-4 h-4" />
-                    {incomingRequestsList.length > 0 && (
-                      <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                    )}
-                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-[9px] font-black uppercase text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                      Requests ({incomingRequestsList.length})
-                    </span>
-                  </button>
+              {/* Sidebar Navigation Tabs */}
+              <div className="flex bg-slate-100/80 p-1 rounded-2xl gap-1">
+                <button
+                  onClick={() => setSidebarTab('chats')}
+                  className={`flex-1 py-1.5 text-[11px] font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                    sidebarTab === 'chats'
+                      ? 'bg-white text-[#006e5d] shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  Chats
+                </button>
+
+                <button
+                  onClick={() => setSidebarTab('requests')}
+                  className={`flex-1 py-1.5 text-[11px] font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 relative ${
+                    sidebarTab === 'requests'
+                      ? 'bg-white text-[#006e5d] shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <UserCheck className="w-3.5 h-3.5" />
+                  Requests
+                  {incomingRequestsList.length > 0 && (
+                    <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                  )}
+                </button>
+
+                <button
+                  onClick={() => setSidebarTab('find')}
+                  className={`flex-1 py-1.5 text-[11px] font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                    sidebarTab === 'find'
+                      ? 'bg-white text-[#006e5d] shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <Search className="w-3.5 h-3.5" />
+                  Find
+                </button>
+              </div>
+
+              {/* Filter search bar in Chats tab */}
+              {sidebarTab === 'chats' && (
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search chats & channels..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-transparent rounded-xl focus:outline-none focus:ring-1 focus:ring-[#006e5d] text-xs font-semibold text-slate-700"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
-              </div>
-
-              {/* Sidebar Search Bar */}
-              <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search chats & channels..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-transparent rounded-xl focus:outline-none focus:ring-1 focus:ring-[#006e5d] text-xs font-semibold text-slate-700"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
+              )}
             </header>
 
-            {/* Sidebar Scrollable Body - Unified Conversations List */}
+            {/* Sidebar Scrollable Content based on active tab */}
             <div className="flex-1 overflow-y-auto p-3 space-y-4">
               
-              {/* Quick Connections Carousel */}
-              {friends.length > 0 && (
-                <div className="border-b border-slate-50 pb-3">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1 mb-2">
-                    My Connections
-                  </p>
-                  <div className="flex gap-2 overflow-x-auto pb-1 px-1 scrollbar-none">
-                    {friends.map((friend) => (
-                      <button
-                        key={friend.friendId}
-                        onClick={() => startOrGetDm(friend.friendId)}
-                        className="flex flex-col items-center shrink-0 w-12 text-center group"
-                      >
-                        <div className="relative w-8 h-8 rounded-full overflow-hidden border-2 border-slate-100 group-hover:border-[#006e5d] transition-all bg-slate-50 flex items-center justify-center">
-                          {friend.photoURL ? (
-                            <img src={friend.photoURL} alt={friend.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                          ) : (
-                            <User className="w-3.5 h-3.5 text-slate-400" />
-                          )}
-                          {friend.isPremium && (
-                            <span className="absolute bottom-0 right-0 w-2 h-2 bg-yellow-400 rounded-full border border-white" />
-                          )}
-                        </div>
-                        <span className="text-[8px] font-black text-slate-600 truncate w-full mt-1 group-hover:text-slate-900 leading-none">
-                          {friend.name.split(' ')[0]}
-                        </span>
-                      </button>
-                    ))}
+              {/* TAB 1: CHATS (Channels & Direct Messages) */}
+              {sidebarTab === 'chats' && (
+                <>
+                  {/* Quick Connections Carousel */}
+                  {friends.length > 0 && (
+                    <div className="border-b border-slate-50 pb-3">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1 mb-2">
+                        My Connections
+                      </p>
+                      <div className="flex gap-2 overflow-x-auto pb-1 px-1 scrollbar-none">
+                        {friends.map((friend) => (
+                          <button
+                            key={friend.friendId}
+                            onClick={() => startOrGetDm(friend.friendId)}
+                            className="flex flex-col items-center shrink-0 w-12 text-center group"
+                          >
+                            <div className="relative w-8 h-8 rounded-full overflow-hidden border-2 border-slate-100 group-hover:border-[#006e5d] transition-all bg-slate-50 flex items-center justify-center">
+                              {friend.photoURL ? (
+                                <img src={friend.photoURL} alt={friend.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                              ) : (
+                                <User className="w-3.5 h-3.5 text-slate-400" />
+                              )}
+                              {friend.isPremium && (
+                                <span className="absolute bottom-0 right-0 w-2 h-2 bg-yellow-400 rounded-full border border-white" />
+                              )}
+                            </div>
+                            <span className="text-[8px] font-black text-slate-600 truncate w-full mt-1 group-hover:text-slate-900 leading-none">
+                              {friend.name.split(' ')[0]}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* BROADCAST CHANNELS SECTION */}
+                  <div className="space-y-1.5">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
+                      Broadcast Channels
+                    </p>
+                    {loadingChannels ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="w-4 h-4 text-slate-300 animate-spin" />
+                      </div>
+                    ) : filteredChannels.length === 0 ? (
+                      <p className="text-[10px] text-slate-400 italic px-1">No channels found</p>
+                    ) : (
+                      filteredChannels.map((chan) => {
+                        const isSelected = selectedChannel?.id === chan.id;
+                        return (
+                          <button
+                            key={chan.id}
+                            onClick={() => {
+                              setSelectedChannel(chan);
+                              setSelectedDm(null);
+                              setMobileView('chat');
+                            }}
+                            className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-2.5 ${
+                              isSelected 
+                                ? 'bg-teal-50/40 border-[#006e5d]/30 text-[#006e5d]' 
+                                : 'bg-slate-50/20 border-transparent hover:bg-slate-50'
+                            }`}
+                          >
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                              isSelected ? 'bg-[#006e5d] text-white' : 'bg-slate-100 text-slate-500'
+                            }`}>
+                              {chan.icon === 'team' ? <Users className="w-4 h-4" /> :
+                               chan.icon === 'megaphone' ? <Megaphone className="w-4 h-4" /> :
+                               chan.icon === 'support' ? <Shield className="w-4 h-4" /> :
+                               <MessageSquare className="w-4 h-4" />}
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1">
+                                <span className={`text-xs font-bold truncate block ${isSelected ? 'text-[#001f19]' : 'text-slate-800'}`}>
+                                  {chan.name}
+                                </span>
+                                {chan.isVerified && (
+                                  <VerifiedBadge size="xs" variant="yellow" title="Verified Channel" className="ml-0.5 shrink-0" />
+                                )}
+                              </div>
+                              <p className="text-[8px] text-slate-400 font-bold uppercase tracking-wider">
+                                Official Update
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  {/* DIRECT CHATS SECTION */}
+                  <div className="space-y-1.5 pt-2 border-t border-slate-50">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
+                      Direct Messages
+                    </p>
+                    {loadingDms ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="w-4 h-4 text-slate-300 animate-spin" />
+                      </div>
+                    ) : filteredDms.length === 0 ? (
+                      <div className="text-center py-6 px-2 opacity-70">
+                        <MessageSquare className="w-6 h-6 text-slate-300 mx-auto mb-1" />
+                        <p className="text-[10px] font-bold text-slate-500">No active conversations</p>
+                        <button 
+                          onClick={() => setSidebarTab('find')}
+                          className="text-[9px] font-black uppercase text-[#006e5d] mt-1 hover:underline block mx-auto"
+                        >
+                          Find aspirants to chat
+                        </button>
+                      </div>
+                    ) : (
+                      filteredDms.map((chat) => {
+                        const otherUser = chat.user1.uid === currentUser?.uid ? chat.user2 : chat.user1;
+                        const isSelected = selectedDm?.id === chat.id;
+
+                        return (
+                          <button
+                            key={chat.id}
+                            onClick={() => {
+                              setSelectedDm(chat);
+                              setSelectedChannel(null);
+                              setMobileView('chat');
+                            }}
+                            className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-2.5 ${
+                              isSelected 
+                                ? 'bg-teal-50/40 border-[#006e5d]/30 text-[#006e5d]' 
+                                : 'bg-slate-50/20 border-transparent hover:bg-slate-50'
+                            }`}
+                          >
+                            <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
+                              {otherUser.photoURL ? (
+                                <img src={otherUser.photoURL} alt={otherUser.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                              ) : (
+                                <User className="w-4 h-4 text-slate-400" />
+                              )}
+                              {otherUser.isPremium && (
+                                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-white" />
+                              )}
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between">
+                                <span className={`text-xs font-bold truncate ${isSelected ? 'text-[#001f19]' : 'text-slate-800'}`}>
+                                  {otherUser.name}
+                                </span>
+                                {chat.lastMessageAt && (
+                                  <span className="text-[8px] text-slate-400 font-semibold shrink-0">
+                                    {new Date(chat.lastMessageAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[9px] text-slate-400 truncate font-semibold mt-0.5">
+                                {chat.lastMessage || 'Conversation started'}
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* TAB 2: REQUESTS */}
+              {sidebarTab === 'requests' && (
+                <div className="space-y-4">
+                  {/* Incoming Requests */}
+                  <div>
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2 px-1">
+                      Incoming Connection Requests ({incomingRequestsList.length})
+                    </h3>
+                    {incomingRequestsList.length === 0 ? (
+                      <p className="text-xs text-slate-400 italic px-1 py-2">No pending requests received.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {incomingRequestsList.map((req) => (
+                          <div key={req.id} className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+                                {req.senderPhoto ? (
+                                  <img src={req.senderPhoto} alt={req.senderName} className="w-full h-full object-cover" />
+                                ) : (
+                                  <User className="w-3.5 h-3.5 text-slate-500" />
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-bold text-slate-800 truncate">{req.senderName}</p>
+                                <p className="text-[9px] text-slate-400">Wants to connect with you</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-1.5 pt-1">
+                              <button
+                                onClick={() => handleAcceptRequest(req.id, req.senderId, req.senderName, req.senderPhoto, Boolean(req.senderIsPremium))}
+                                disabled={actionLoading}
+                                className="flex-1 py-1 bg-[#006e5d] text-white rounded-lg text-[10px] font-extrabold flex items-center justify-center gap-1 hover:bg-[#005a4d] transition-colors"
+                              >
+                                <UserCheck className="w-3 h-3" /> Accept
+                              </button>
+                              <button
+                                onClick={() => handleDeclineRequest(req.id)}
+                                disabled={actionLoading}
+                                className="p-1 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-extrabold hover:bg-slate-300 transition-colors"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Outgoing Requests */}
+                  <div className="pt-2 border-t border-slate-100">
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2 px-1">
+                      Sent Connection Requests ({outgoingRequestsList.length})
+                    </h3>
+                    {outgoingRequestsList.length === 0 ? (
+                      <p className="text-xs text-slate-400 italic px-1 py-2">No pending sent requests.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {outgoingRequestsList.map((req) => (
+                          <div key={req.id} className="p-2.5 bg-slate-50/50 rounded-xl border border-slate-100 flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-700 truncate">{req.targetName}</span>
+                            <span className="text-[9px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full uppercase border border-amber-200">
+                              Pending
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
 
-              {/* BROADCAST CHANNELS SECTION */}
-              <div className="space-y-1.5">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
-                  Broadcast Channels
-                </p>
-                {loadingChannels ? (
-                  <div className="flex items-center justify-center py-4">
-                    <Loader2 className="w-4 h-4 text-slate-300 animate-spin" />
+              {/* TAB 3: FIND ASPIRANTS */}
+              {sidebarTab === 'find' && (
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Find aspirants by name..."
+                      value={directorySearchQuery}
+                      onChange={(e) => setDirectorySearchQuery(e.target.value)}
+                      className="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-transparent rounded-xl focus:outline-none focus:ring-1 focus:ring-[#006e5d] text-xs font-semibold text-slate-700"
+                    />
                   </div>
-                ) : filteredChannels.length === 0 ? (
-                  <p className="text-[10px] text-slate-400 italic px-1">No channels found</p>
-                ) : (
-                  filteredChannels.map((chan) => {
-                    const isSelected = selectedChannel?.id === chan.id;
-                    return (
-                      <button
-                        key={chan.id}
-                        onClick={() => {
-                          setSelectedChannel(chan);
-                          setSelectedDm(null);
-                          setMobileView('chat');
-                        }}
-                        className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-2.5 ${
-                          isSelected 
-                            ? 'bg-teal-50/40 border-[#006e5d]/30 text-[#006e5d]' 
-                            : 'bg-slate-50/20 border-transparent hover:bg-slate-50'
-                        }`}
-                      >
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                          isSelected ? 'bg-[#006e5d] text-white' : 'bg-slate-100 text-slate-500'
-                        }`}>
-                          {chan.icon === 'team' ? <Users className="w-4 h-4" /> :
-                           chan.icon === 'megaphone' ? <Megaphone className="w-4 h-4" /> :
-                           chan.icon === 'support' ? <Shield className="w-4 h-4" /> :
-                           <MessageSquare className="w-4 h-4" />}
-                        </div>
 
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1">
-                            <span className={`text-xs font-bold truncate block ${isSelected ? 'text-[#001f19]' : 'text-slate-800'}`}>
-                              {chan.name}
-                            </span>
-                            {chan.isVerified && (
-                              <VerifiedBadge size="xs" variant="yellow" title="Verified Channel" className="ml-0.5 shrink-0" />
-                            )}
+                  {loadingSearch ? (
+                    <div className="flex items-center justify-center py-6">
+                      <Loader2 className="w-4 h-4 text-slate-300 animate-spin" />
+                    </div>
+                  ) : searchResults.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic text-center py-4">No aspirants found.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {searchResults.map((user) => {
+                        const isConnected = friendIds.has(user.id);
+                        const isPending = sentRequests.has(user.id);
+
+                        return (
+                          <div key={user.id} className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between gap-2">
+                            <button
+                              onClick={() => navigate(`/student/${user.id}`)}
+                              className="flex items-center gap-2 min-w-0 text-left group"
+                            >
+                              <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0 overflow-hidden border border-slate-200">
+                                {user.photoURL ? (
+                                  <img src={user.photoURL} alt={user.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <User className="w-4 h-4 text-slate-400" />
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-bold text-slate-800 group-hover:text-[#006e5d] truncate">
+                                  {user.name || user.fullName || 'Aspirant'}
+                                </p>
+                                <p className="text-[9px] text-slate-400 truncate">
+                                  {user.username ? `@${user.username}` : user.targetExam || 'Competitive Aspirant'}
+                                </p>
+                              </div>
+                            </button>
+
+                            <div>
+                              {isConnected ? (
+                                <button
+                                  onClick={() => startOrGetDm(user.id)}
+                                  className="px-2.5 py-1 bg-[#006e5d] text-white rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 hover:bg-[#005a4d]"
+                                >
+                                  <MessageSquare className="w-3 h-3" /> Chat
+                                </button>
+                              ) : isPending ? (
+                                <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                                  Sent
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => handleSendRequest(user)}
+                                  disabled={actionLoading}
+                                  className="px-2.5 py-1 bg-slate-900 text-white rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 hover:bg-slate-800"
+                                >
+                                  <UserPlus className="w-3 h-3" /> Connect
+                                </button>
+                              )}
+                            </div>
                           </div>
-                          <p className="text-[8px] text-slate-400 font-bold uppercase tracking-wider">
-                            Official Update
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-
-              {/* DIRECT CHATS SECTION */}
-              <div className="space-y-1.5 pt-2 border-t border-slate-50">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
-                  Direct Messages
-                </p>
-                {loadingDms ? (
-                  <div className="flex items-center justify-center py-4">
-                    <Loader2 className="w-4 h-4 text-slate-300 animate-spin" />
-                  </div>
-                ) : filteredDms.length === 0 ? (
-                  <div className="text-center py-6 px-2 opacity-70">
-                    <MessageSquare className="w-6 h-6 text-slate-300 mx-auto mb-1" />
-                    <p className="text-[10px] font-bold text-slate-500">No active conversations</p>
-                    <button 
-                      onClick={() => setShowFindModal(true)}
-                      className="text-[9px] font-black uppercase text-[#006e5d] mt-1 hover:underline block mx-auto"
-                    >
-                      Connect with people
-                    </button>
-                  </div>
-                ) : (
-                  filteredDms.map((chat) => {
-                    const otherUser = chat.user1.uid === currentUser?.uid ? chat.user2 : chat.user1;
-                    const isSelected = selectedDm?.id === chat.id;
-
-                    return (
-                      <button
-                        key={chat.id}
-                        onClick={() => {
-                          setSelectedDm(chat);
-                          setSelectedChannel(null);
-                          setMobileView('chat');
-                        }}
-                        className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-2.5 ${
-                          isSelected 
-                            ? 'bg-teal-50/40 border-[#006e5d]/30 text-[#006e5d]' 
-                            : 'bg-slate-50/20 border-transparent hover:bg-slate-50'
-                        }`}
-                      >
-                        <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
-                          {otherUser.photoURL ? (
-                            <img src={otherUser.photoURL} alt={otherUser.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                          ) : (
-                            <User className="w-4 h-4 text-slate-400" />
-                          )}
-                          {otherUser.isPremium && (
-                            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-white" />
-                          )}
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between">
-                            <span className={`text-xs font-bold truncate ${isSelected ? 'text-[#001f19]' : 'text-slate-800'}`}>
-                              {otherUser.name}
-                            </span>
-                            {chat.lastMessageAt && (
-                              <span className="text-[8px] text-slate-400 font-semibold shrink-0">
-                                {new Date(chat.lastMessageAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-[9px] text-slate-400 truncate font-semibold mt-0.5">
-                            {chat.lastMessage || 'Conversation started'}
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })
-                )}
-              </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
 
             </div>
           </div>
 
-          {/* Active Chat Stream Area */}
-          <div className={`flex-1 flex-col bg-slate-50/15 ${mobileView === 'list' ? 'hidden md:flex' : 'flex'}`}>
+          {/* Active Chat Stream Area - Mobile Responsive */}
+          <div className={`flex-1 flex-col bg-slate-50/15 overflow-hidden min-w-0 w-full ${mobileView === 'list' ? 'hidden md:flex' : 'flex'}`}>
             {selectedChannel ? (
               // CHANNEL STREAM RENDERER
-              <div className="flex flex-col h-full overflow-hidden bg-white">
+              <div className="flex flex-col h-full overflow-hidden bg-white min-w-0 w-full">
                 {/* Header */}
-                <header className="px-6 py-4 border-b border-slate-100 bg-white flex items-center justify-between shrink-0">
-                  <div className="flex items-center gap-3 min-w-0">
+                <header className="px-3 sm:px-6 py-3 sm:py-4 border-b border-slate-100 bg-white flex items-center justify-between shrink-0 min-w-0 w-full">
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                     <button 
                       onClick={() => setMobileView('list')} 
-                      className="md:hidden p-2 -ml-2 mr-1 text-slate-500 hover:text-slate-800"
+                      className="md:hidden p-1.5 -ml-1 text-slate-500 hover:text-slate-800 shrink-0"
                     >
                       <ChevronLeft className="w-6 h-6" />
                     </button>
 
-                    <div className="w-10 h-10 bg-[#006e5d]/10 text-[#006e5d] rounded-xl flex items-center justify-center shrink-0">
-                      {selectedChannel.icon === 'team' ? <Users className="w-5 h-5" /> :
-                       selectedChannel.icon === 'megaphone' ? <Megaphone className="w-5 h-5" /> :
-                       selectedChannel.icon === 'support' ? <Shield className="w-5 h-5" /> :
-                       <MessageSquare className="w-5 h-5" />}
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#006e5d]/10 text-[#006e5d] rounded-xl flex items-center justify-center shrink-0">
+                      {selectedChannel.icon === 'team' ? <Users className="w-4 h-4 sm:w-5 sm:h-5" /> :
+                       selectedChannel.icon === 'megaphone' ? <Megaphone className="w-4 h-4 sm:w-5 sm:h-5" /> :
+                       selectedChannel.icon === 'support' ? <Shield className="w-4 h-4 sm:w-5 sm:h-5" /> :
+                       <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />}
                     </div>
                     <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <h2 className="text-base font-black text-slate-900 leading-none truncate">{selectedChannel.name}</h2>
+                      <div className="flex items-center gap-1">
+                        <h2 className="text-sm sm:text-base font-black text-slate-900 leading-none truncate">{selectedChannel.name}</h2>
                         {selectedChannel.isVerified && (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-yellow-400/10 text-yellow-600 border border-yellow-400/25 shrink-0">
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-wider bg-yellow-400/10 text-yellow-600 border border-yellow-400/25 shrink-0">
                             Verified
                           </span>
                         )}
                       </div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1 truncate">
+                      <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5 sm:mt-1 truncate">
                         Official updates published by Verified Admins
                       </p>
                     </div>
                   </div>
                 </header>
 
-                {/* Messages Stream */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {/* Messages Stream - Fully Responsive Cards */}
+                <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 min-w-0 w-full">
                   {loadingMessages ? (
                     <div className="h-full flex flex-col items-center justify-center">
                       <Loader2 className="w-8 h-8 text-slate-200 animate-spin mb-2" />
@@ -905,17 +1080,17 @@ export default function Chat() {
                     </div>
                   ) : (
                     messages.map((msg, index) => (
-                      <div key={msg.id || index} className="flex gap-4 items-start bg-white p-5 rounded-3xl border border-slate-100 shadow-xs max-w-2xl">
-                        <div className="w-10 h-10 rounded-xl bg-[#006e5d]/10 text-[#006e5d] flex items-center justify-center shrink-0">
-                          {selectedChannel.icon === 'team' ? <Users className="w-5 h-5" /> :
-                           selectedChannel.icon === 'megaphone' ? <Megaphone className="w-5 h-5" /> :
-                           selectedChannel.icon === 'support' ? <Shield className="w-5 h-5" /> :
-                           <MessageSquare className="w-5 h-5" />}
+                      <div key={msg.id || index} className="flex gap-2.5 sm:gap-4 items-start bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-xs max-w-2xl min-w-0 w-full">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#006e5d]/10 text-[#006e5d] flex items-center justify-center shrink-0">
+                          {selectedChannel.icon === 'team' ? <Users className="w-4 h-4 sm:w-5 sm:h-5" /> :
+                           selectedChannel.icon === 'megaphone' ? <Megaphone className="w-4 h-4 sm:w-5 sm:h-5" /> :
+                           selectedChannel.icon === 'support' ? <Shield className="w-4 h-4 sm:w-5 sm:h-5" /> :
+                           <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />}
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="flex items-center gap-1.5">
+                          <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="text-xs font-black text-slate-900">{msg.senderName}</span>
                               <span className="text-[8px] font-black px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-600 tracking-wider uppercase border border-yellow-500/20">
                                 Team Admin
@@ -934,7 +1109,7 @@ export default function Chat() {
                               </span>
                             </div>
                           </div>
-                          <p className="text-xs text-slate-600 font-medium leading-relaxed whitespace-pre-wrap pr-8">
+                          <p className="text-xs text-slate-700 font-medium leading-relaxed whitespace-pre-wrap break-words min-w-0 w-full pr-1 sm:pr-4">
                             {msg.content}
                           </p>
                         </div>
@@ -945,29 +1120,29 @@ export default function Chat() {
                 </div>
 
                 {/* Dispatcher Actions */}
-                <div className="border-t border-slate-100 p-4 bg-white shrink-0">
+                <div className="border-t border-slate-100 p-3 sm:p-4 bg-white shrink-0">
                   {isAdmin ? (
-                    <form onSubmit={handleSendMessage} className="flex gap-3">
+                    <form onSubmit={handleSendMessage} className="flex gap-2 sm:gap-3">
                       <input
                         type="text"
                         required
-                        placeholder={`Broadcast update as ${selectedChannel.name}...`}
-                        className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-[#006e5d]/15 text-sm font-medium text-slate-800"
+                        placeholder={`Broadcast update...`}
+                        className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl sm:rounded-2xl outline-none focus:ring-2 focus:ring-[#006e5d]/15 text-xs sm:text-sm font-medium text-slate-800"
                         value={newMessage}
                         onChange={e => setNewMessage(e.target.value)}
                       />
                       <button
                         type="submit"
                         disabled={sendingMessage || !newMessage.trim()}
-                        className="px-6 py-3 bg-[#006e5d] hover:bg-[#005a4d] text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-50 shadow-md shadow-teal-50"
+                        className="px-4 sm:px-6 py-2.5 sm:py-3 bg-[#006e5d] hover:bg-[#005a4d] text-white rounded-xl sm:rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-50 shadow-md shadow-teal-50"
                       >
                         {sendingMessage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                        Broadcast
+                        <span className="hidden sm:inline">Broadcast</span>
                       </button>
                     </form>
                   ) : (
-                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-center gap-2 text-slate-400 select-none">
-                      <Lock className="w-4 h-4 text-slate-400" />
+                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex items-center justify-center gap-2 text-slate-400 select-none">
+                      <Lock className="w-4 h-4 text-slate-400 shrink-0" />
                       <span className="text-[10px] font-bold uppercase tracking-wider text-center">
                         Only verified administrators can publish broadcasts to this stream
                       </span>
@@ -977,13 +1152,13 @@ export default function Chat() {
               </div>
             ) : selectedDm ? (
               // DIRECT DM STREAM RENDERER
-              <div className="flex flex-col h-full overflow-hidden bg-white">
+              <div className="flex flex-col h-full overflow-hidden bg-white min-w-0 w-full">
                 {/* Header */}
-                <header className="px-6 py-4 border-b border-slate-100 bg-white flex items-center justify-between shrink-0">
-                  <div className="flex items-center gap-3 min-w-0">
+                <header className="px-3 sm:px-6 py-3 sm:py-4 border-b border-slate-100 bg-white flex items-center justify-between shrink-0 min-w-0 w-full">
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                     <button 
                       onClick={() => setMobileView('list')} 
-                      className="md:hidden p-2 -ml-2 mr-1 text-slate-500 hover:text-slate-800"
+                      className="md:hidden p-1.5 -ml-1 text-slate-500 hover:text-slate-800 shrink-0"
                     >
                       <ChevronLeft className="w-6 h-6" />
                     </button>
@@ -993,29 +1168,29 @@ export default function Chat() {
                       return (
                         <button 
                           onClick={() => navigate(`/student/${otherUser.uid}`)}
-                          className="flex items-center gap-3 text-left hover:opacity-80 transition-all min-w-0 group"
+                          className="flex items-center gap-2.5 sm:gap-3 text-left hover:opacity-80 transition-all min-w-0 group"
                           title="View Profile"
                         >
-                          <div className="relative w-10 h-10 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200 group-hover:scale-105 transition-transform">
+                          <div className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200 group-hover:scale-105 transition-transform">
                             {otherUser.photoURL ? (
                               <img src={otherUser.photoURL} alt={otherUser.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                             ) : (
-                              <User className="w-5 h-5 text-slate-400" />
+                              <User className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
                             )}
                             {otherUser.isPremium && (
-                              <span className="absolute bottom-0 right-0 w-3 h-3 bg-yellow-400 rounded-full border border-white" />
+                              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-white" />
                             )}
                           </div>
                           <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <h2 className="text-base font-black text-slate-900 group-hover:text-[#006e5d] transition-colors leading-none truncate">{otherUser.name}</h2>
+                            <div className="flex items-center gap-1">
+                              <h2 className="text-sm sm:text-base font-black text-slate-900 group-hover:text-[#006e5d] transition-colors leading-none truncate">{otherUser.name}</h2>
                               {otherUser.isPremium && (
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-yellow-400/10 text-yellow-600 border border-yellow-400/25 shrink-0">
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-wider bg-yellow-400/10 text-yellow-600 border border-yellow-400/25 shrink-0">
                                   Premium
                                 </span>
                               )}
                             </div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1 truncate">
+                            <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5 sm:mt-1 truncate">
                               Private 1-on-1 Direct Chat • View Profile
                             </p>
                           </div>
@@ -1026,7 +1201,7 @@ export default function Chat() {
                 </header>
 
                 {/* Messages Stream */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/10">
+                <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 bg-slate-50/10 min-w-0 w-full">
                   {loadingDmMessages ? (
                     <div className="h-full flex flex-col items-center justify-center">
                       <Loader2 className="w-8 h-8 text-slate-200 animate-spin mb-2" />
@@ -1046,14 +1221,14 @@ export default function Chat() {
                       return (
                         <div 
                           key={msg.id || index} 
-                          className={`flex gap-3 max-w-xl ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
+                          className={`flex gap-3 max-w-[88%] sm:max-w-md ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
                         >
-                          <div className={`p-4 rounded-3xl border text-xs font-medium leading-relaxed shadow-xs ${
+                          <div className={`p-3 sm:p-4 rounded-2xl sm:rounded-3xl border text-xs font-medium leading-relaxed shadow-xs break-words min-w-0 ${
                             isMe 
                               ? 'bg-[#006e5d] text-white border-transparent rounded-tr-none' 
                               : 'bg-white text-slate-700 border-slate-100 rounded-tl-none'
                           }`}>
-                            <p className="whitespace-pre-wrap">{msg.content}</p>
+                            <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                             <div className={`text-[8px] mt-1.5 flex items-center justify-end gap-1 ${
                               isMe ? 'text-teal-200/80' : 'text-slate-400'
                             }`}>
@@ -1069,23 +1244,23 @@ export default function Chat() {
                 </div>
 
                 {/* Dispatcher Actions */}
-                <div className="border-t border-slate-100 p-4 bg-white shrink-0">
-                  <form onSubmit={handleSendMessage} className="flex gap-3">
+                <div className="border-t border-slate-100 p-3 sm:p-4 bg-white shrink-0">
+                  <form onSubmit={handleSendMessage} className="flex gap-2 sm:gap-3">
                     <input
                       type="text"
                       required
                       placeholder="Type your message..."
-                      className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-[#006e5d]/15 text-sm font-medium text-slate-800"
+                      className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl sm:rounded-2xl outline-none focus:ring-2 focus:ring-[#006e5d]/15 text-xs sm:text-sm font-medium text-slate-800"
                       value={newMessage}
                       onChange={e => setNewMessage(e.target.value)}
                     />
                     <button
                       type="submit"
                       disabled={sendingMessage || !newMessage.trim()}
-                      className="px-6 py-3 bg-[#006e5d] hover:bg-[#005a4d] text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-50 shadow-md shadow-teal-50"
+                      className="px-4 sm:px-6 py-2.5 sm:py-3 bg-[#006e5d] hover:bg-[#005a4d] text-white rounded-xl sm:rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-50 shadow-md shadow-teal-50"
                     >
                       {sendingMessage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                      Send
+                      <span className="hidden sm:inline">Send</span>
                     </button>
                   </form>
                 </div>

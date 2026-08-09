@@ -118,7 +118,7 @@ export default function Dashboard() {
           window.history.replaceState({ path: newUrl }, '', newUrl);
         }
     }
-  }, [location, db]);
+  }, [location.search, db]);
 
   useEffect(() => {
      let isMounted = true;
@@ -281,16 +281,6 @@ export default function Dashboard() {
   };
 
   const globalRank = calculateGlobalRank(prepScore);
-
-  // Live Test countdown timer mock
-  const [timeLeft, setTimeLeft] = useState(2535); // 00:42:15 in seconds
-  
-  useEffect(() => {
-    const timer = setInterval(() => {
-        setTimeLeft(prev => prev > 0 ? prev - 1 : 0);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
