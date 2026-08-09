@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { 
-  collection, query, orderBy, onSnapshot, addDoc, doc, getDoc, setDoc, updateDoc, where, deleteDoc, limit
+  collection, query, orderBy, onSnapshot, addDoc, doc, getDoc, setDoc, updateDoc, where, deleteDoc, limit, arrayUnion
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
@@ -9,7 +9,7 @@ import { Layout } from '../components/Layout';
 import { VerifiedBadge } from '../components/VerifiedBadge';
 import { 
   MessageSquare, Users, Clock, Shield, Lock, Send, Loader2, Megaphone, User, MessageCircle,
-  UserPlus, UserCheck, UserX, Search, X, ChevronLeft, Sparkles, Share2
+  UserPlus, UserCheck, UserX, Search, X, ChevronLeft, Sparkles, Share2, Bell, CheckCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
@@ -29,6 +29,7 @@ interface ChannelMessage {
   senderIcon: string;
   content: string;
   createdAt: any;
+  readBy?: string[];
 }
 
 interface DmChat {
@@ -63,28 +64,29 @@ export default function Chat() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // Active navigation tab
-  const [activeTab, setActiveTab] = useState<'channels' | 'chats' | 'requests' | 'find'>('channels');
-
   // Responsive mobile navigation ('list' displays sidebar, 'chat' displays active stream)
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
 
-  // Channels State
+  // Unified Conversations State
   const [channels, setChannels] = useState<BroadcastingChannel[]>([]);
-  const [selectedChannel, setSelectedChannel] = useState<BroadcastingChannel | null>(null);
-  const [messages, setMessages] = useState<ChannelMessage[]>([]);
-  const [loadingChannels, setLoadingChannels] = useState(true);
-  const [loadingMessages, setLoadingMessages] = useState(false);
-
-  // DMs State
   const [dms, setDms] = useState<DmChat[]>([]);
+  
+  // Selected conversation (mutual-exclusion)
+  const [selectedChannel, setSelectedChannel] = useState<BroadcastingChannel | null>(null);
   const [selectedDm, setSelectedDm] = useState<DmChat | null>(null);
-  const [dmMessages, setDmMessages] = useState<DmMessage[]>([]);
-  const [loadingDms, setLoadingDms] = useState(true);
-  const [loadingDmMessages, setLoadingDmMessages] = useState(false);
-  const [friends, setFriends] = useState<any[]>([]);
 
-  // Friendship & Request Tracking State (Maps/Sets for fast, real-time lookups)
+  // Messages Streams
+  const [messages, setMessages] = useState<ChannelMessage[]>([]);
+  const [dmMessages, setDmMessages] = useState<DmMessage[]>([]);
+
+  // Loading States
+  const [loadingChannels, setLoadingChannels] = useState(true);
+  const [loadingDms, setLoadingDms] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [loadingDmMessages, setLoadingDmMessages] = useState(false);
+
+  // Friendship & Request Tracking State
+  const [friends, setFriends] = useState<any[]>([]);
   const [friendIds, setFriendIds] = useState<Set<string>>(new Set());
   const [sentRequests, setSentRequests] = useState<Map<string, string>>(new Map()); // targetUserId -> requestId
   const [receivedRequests, setReceivedRequests] = useState<Map<string, { requestId: string, data: any }>>(new Map()); // senderUserId -> { requestId, data }
@@ -93,9 +95,14 @@ export default function Chat() {
 
   // Search/Directory State
   const [searchQuery, setSearchQuery] = useState('');
+  const [directorySearchQuery, setDirectorySearchQuery] = useState('');
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [loadingSearch, setLoadingSearch] = useState(false);
+
+  // Modals Overlay State
+  const [showFindModal, setShowFindModal] = useState(false);
+  const [showRequestsModal, setShowRequestsModal] = useState(false);
 
   // Common UI State
   const [newMessage, setNewMessage] = useState('');
@@ -116,24 +123,27 @@ export default function Chat() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, dmMessages]);
+  }, [messages, dmMessages, selectedChannel, selectedDm]);
 
-  // Handle auto-selection and URL search params for channels & direct chats
+  // Handle URL parameters for direct navigation
   useEffect(() => {
     const channelIdParam = searchParams.get('channelId');
     const userIdParam = searchParams.get('userId');
 
     if (userIdParam) {
-      setActiveTab('chats');
       startOrGetDm(userIdParam);
       setMobileView('chat');
-    } else if (channelIdParam) {
-      setActiveTab('channels');
-      setMobileView('chat');
+    } else if (channelIdParam && channels.length > 0) {
+      const chan = channels.find(c => c.id === channelIdParam);
+      if (chan) {
+        setSelectedChannel(chan);
+        setSelectedDm(null);
+        setMobileView('chat');
+      }
     }
-  }, [searchParams, currentUser]);
+  }, [searchParams, currentUser, channels]);
 
-  // Listen to channels
+  // Listen to broadcasting channels
   useEffect(() => {
     const q = query(collection(db, 'broadcasting_channels'), orderBy('createdAt', 'desc'));
     const unsub = onSnapshot(q, (snap) => {
@@ -141,12 +151,10 @@ export default function Chat() {
       setChannels(data);
       setLoadingChannels(false);
 
-      // Select first channel automatically if none selected and not on direct modes
-      const activeIdParam = searchParams.get('channelId');
-      if (activeIdParam) {
-        const found = data.find(c => c.id === activeIdParam);
-        if (found) setSelectedChannel(found);
-      } else if (data.length > 0 && !selectedChannel) {
+      // Auto-select first channel on load if no conversation is selected yet and there are no URL parameters
+      const channelIdParam = searchParams.get('channelId');
+      const userIdParam = searchParams.get('userId');
+      if (data.length > 0 && !selectedChannel && !selectedDm && !channelIdParam && !userIdParam) {
         setSelectedChannel(data[0]);
       }
     }, (err) => {
@@ -155,7 +163,7 @@ export default function Chat() {
     });
 
     return () => unsub();
-  }, [searchParams, selectedChannel]);
+  }, [searchParams]);
 
   // Listen to messages of selected channel
   useEffect(() => {
@@ -181,6 +189,33 @@ export default function Chat() {
 
     return () => unsub();
   }, [selectedChannel]);
+
+  // Mark broadcast messages as read when a student views them
+  useEffect(() => {
+    if (!currentUser || !selectedChannel || messages.length === 0) return;
+
+    // Only students/non-admins mark as read
+    const isStudent = currentProfile?.role !== 'admin';
+    if (!isStudent) return;
+
+    // Only mark messages in 'Team Prepnext' broadcast channel as read (or any channel with Prepnext in its name)
+    const isPrepnextChannel = selectedChannel.name.toLowerCase().includes('prepnext');
+    if (!isPrepnextChannel) return;
+
+    messages.forEach(async (msg) => {
+      const readByList = msg.readBy || [];
+      if (!readByList.includes(currentUser.uid)) {
+        try {
+          const msgRef = doc(db, 'broadcasting_channels', selectedChannel.id, 'messages', msg.id);
+          await updateDoc(msgRef, {
+            readBy: arrayUnion(currentUser.uid)
+          });
+        } catch (error) {
+          console.error("Failed to mark broadcast message as read:", error);
+        }
+      }
+    });
+  }, [currentUser, selectedChannel, messages, currentProfile]);
 
   // Listen to user's DMs list
   useEffect(() => {
@@ -234,7 +269,7 @@ export default function Chat() {
     return () => unsub();
   }, [selectedDm]);
 
-  // Fetch student friendships to start new conversations easily
+  // Fetch connections list for horizontal quick chat avatars
   useEffect(() => {
     if (!currentUser) return;
 
@@ -257,13 +292,13 @@ export default function Chat() {
       }).filter(f => f.friendId !== '');
       setFriends(list);
     }, (err) => {
-      console.warn("Friendships list failed or permissions omitted:", err);
+      console.warn("Connections loading failed or skipped:", err);
     });
 
     return () => unsub();
   }, [currentUser]);
 
-  // 1. Friendships Set listener
+  // Listen to friendships IDs set
   useEffect(() => {
     if (!currentUser) return;
     const q = query(
@@ -279,12 +314,12 @@ export default function Chat() {
       });
       setFriendIds(ids);
     }, (err) => {
-      console.warn("Error listening to friendships:", err);
+      console.warn("Friendships IDs query failed:", err);
     });
     return () => unsub();
   }, [currentUser]);
 
-  // 2. Sent Requests listener
+  // Listen to outgoing sent friend requests
   useEffect(() => {
     if (!currentUser) return;
     const q = query(
@@ -302,12 +337,12 @@ export default function Chat() {
       setSentRequests(sent);
       setOutgoingRequestsList(list);
     }, (err) => {
-      console.warn("Error listening to sent friend requests:", err);
+      console.warn("Sent requests tracking error:", err);
     });
     return () => unsub();
   }, [currentUser]);
 
-  // 3. Received Requests listener
+  // Listen to incoming received friend requests
   useEffect(() => {
     if (!currentUser) return;
     const q = query(
@@ -325,29 +360,18 @@ export default function Chat() {
       setReceivedRequests(rec);
       setIncomingRequestsList(list);
     }, (err) => {
-      console.warn("Error listening to received friend requests:", err);
+      console.warn("Incoming requests tracking error:", err);
     });
     return () => unsub();
   }, [currentUser]);
 
-  // Load all users for directory search
+  // Listen to all users directory when modal is visible
   useEffect(() => {
-    if (activeTab === 'find' && allUsers.length === 0) {
-      setLoadingSearch(true);
-      getDocsQuery();
-    }
-  }, [activeTab, allUsers.length]);
+    if (!showFindModal) return;
 
-  const getDocsQuery = async () => {
-    try {
-      const q = query(collection(db, 'users'), limit(200));
-      const snap = await getDoc(doc(db, 'config', 'app')) // Dummy or just raw query
-      // Let's query collection directly
-      const qSnap = await getDoc(doc(db, 'users', 'dummy')); // Check if we can getDocs
-    } catch(e) {}
-
-    // Proper users query
-    const unsub = onSnapshot(query(collection(db, 'users'), orderBy('name', 'asc')), (snap) => {
+    setLoadingSearch(true);
+    const q = query(collection(db, 'users'), orderBy('name', 'asc'), limit(200));
+    const unsub = onSnapshot(q, (snap) => {
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       setAllUsers(list);
       setLoadingSearch(false);
@@ -355,26 +379,29 @@ export default function Chat() {
       console.error("Error fetching directory users:", err);
       setLoadingSearch(false);
     });
-  };
 
-  // Live client-side filtering based on search query
+    return () => unsub();
+  }, [showFindModal]);
+
+  // Filter Directory Users based on query input
   useEffect(() => {
-    if (!searchQuery.trim()) {
+    if (!directorySearchQuery.trim()) {
       setSearchResults([]);
       return;
     }
-    const qClean = searchQuery.toLowerCase().trim();
+    const qClean = directorySearchQuery.toLowerCase().trim();
     const filtered = allUsers.filter(u => 
       u.id !== currentUser?.uid && (
         (u.name || '').toLowerCase().includes(qClean) || 
         (u.username || '').toLowerCase().includes(qClean) ||
-        (u.email || '').toLowerCase().includes(qClean)
+        (u.email || '').toLowerCase().includes(qClean) ||
+        (u.bio || '').toLowerCase().includes(qClean)
       )
     );
     setSearchResults(filtered);
-  }, [searchQuery, allUsers, currentUser]);
+  }, [directorySearchQuery, allUsers, currentUser]);
 
-  // Helper function to create or open a DM chat with another user
+  // Start or fetch active DM conversation
   const startOrGetDm = async (targetId: string) => {
     if (!currentUser) return;
     setLoadingDms(true);
@@ -385,13 +412,12 @@ export default function Chat() {
       
       if (chatSnap.exists()) {
         setSelectedDm({ id: chatSnap.id, ...chatSnap.data() } as DmChat);
+        setSelectedChannel(null);
       } else {
-        // Fetch target user info
         const userRef = doc(db, 'users', targetId);
         const userSnap = await getDoc(userRef);
         const targetUserData = userSnap.exists() ? userSnap.data() : {};
         
-        // Fetch current user info
         const myRef = doc(db, 'users', currentUser.uid);
         const mySnap = await getDoc(myRef);
         const myUserData = mySnap.exists() ? mySnap.data() : {};
@@ -417,6 +443,7 @@ export default function Chat() {
 
         await setDoc(chatRef, newChatData);
         setSelectedDm({ id: chatId, ...newChatData } as DmChat);
+        setSelectedChannel(null);
       }
     } catch (err) {
       console.error("Error starting DM:", err);
@@ -426,6 +453,7 @@ export default function Chat() {
     }
   };
 
+  // Dispatch message sender
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !currentUser) return;
@@ -435,8 +463,7 @@ export default function Chat() {
     setSendingMessage(true);
 
     try {
-      if (activeTab === 'channels' && selectedChannel) {
-        // Broadcast Channel Message (Admin only)
+      if (selectedChannel) {
         const isAdmin = currentProfile?.role === 'admin';
         if (!isAdmin) {
           toast.error('Only administrators are authorized to send broadcasts.');
@@ -453,8 +480,7 @@ export default function Chat() {
           createdAt: new Date().toISOString()
         });
 
-      } else if (activeTab === 'chats' && selectedDm) {
-        // Direct Peer message
+      } else if (selectedDm) {
         const myName = currentProfile?.name || currentUser.displayName || 'Aspirant';
 
         await addDoc(collection(db, 'chats', selectedDm.id, 'messages'), {
@@ -508,6 +534,8 @@ export default function Chat() {
       });
 
       toast.success(`Connected with ${senderName}!`);
+      // Automatically refresh active friend list on connection accepted
+      startOrGetDm(senderId);
     } catch (err) {
       console.error("Error accepting request:", err);
       toast.error('Failed to accept request.');
@@ -576,127 +604,136 @@ export default function Chat() {
 
   const handleStartMessageFromDirectory = (userId: string) => {
     startOrGetDm(userId);
-    setActiveTab('chats');
     setMobileView('chat');
+    setShowFindModal(false);
   };
 
   const isAdmin = currentProfile?.role === 'admin';
+
+  // Client-side filtering for search input in sidebar
+  const filteredChannels = channels.filter(c => 
+    c.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredDms = dms.filter(chat => {
+    const otherUser = chat.user1.uid === currentUser?.uid ? chat.user2 : chat.user1;
+    return otherUser.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+           (chat.lastMessage || '').toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 h-[calc(100vh-140px)] flex flex-col">
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-1 h-full">
           
-          {/* Sidebar Panel */}
+          {/* Sidebar Panel - Unified Channels & Chats List */}
           <div className={`w-full md:w-80 border-r border-slate-100 flex flex-col shrink-0 ${mobileView === 'chat' ? 'hidden md:flex' : 'flex'}`}>
-            {/* Header with Navigation Tabs */}
-            <header className="p-4 border-b border-slate-50 shrink-0">
-              <div className="flex bg-slate-100 p-1 rounded-xl mb-3 overflow-x-auto scrollbar-none">
-                <button
-                  onClick={() => {
-                    setActiveTab('channels');
-                    setSelectedDm(null);
-                  }}
-                  className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 px-3 whitespace-nowrap ${
-                    activeTab === 'channels' 
-                      ? 'bg-white text-[#006e5d] shadow-sm' 
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  <Megaphone className="w-4 h-4" />
-                  Channels
-                </button>
-                <button
-                  onClick={() => {
-                    setActiveTab('chats');
-                    setSelectedChannel(null);
-                  }}
-                  className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 px-3 whitespace-nowrap ${
-                    activeTab === 'chats' 
-                      ? 'bg-white text-[#006e5d] shadow-sm' 
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  Chats
-                </button>
-                <button
-                  onClick={() => {
-                    setActiveTab('requests');
-                    setSelectedChannel(null);
-                    setSelectedDm(null);
-                  }}
-                  className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 px-3 relative whitespace-nowrap ${
-                    activeTab === 'requests' 
-                      ? 'bg-white text-[#006e5d] shadow-sm' 
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  <UserCheck className="w-4 h-4" />
-                  Requests
-                  {incomingRequestsList.length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-sm">
-                      {incomingRequestsList.length}
+            
+            {/* Sidebar Header with global connections actions */}
+            <header className="p-4 border-b border-slate-50 shrink-0 space-y-3">
+              <div className="flex items-center justify-between">
+                <h1 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-[#006e5d]" /> Inbox
+                </h1>
+                
+                {/* Global Connection Controls */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setShowFindModal(true)}
+                    className="p-1.5 hover:bg-slate-50 text-slate-600 hover:text-[#006e5d] rounded-xl transition-all relative group"
+                    title="Find Friends"
+                  >
+                    <Search className="w-4 h-4" />
+                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-[9px] font-black uppercase text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                      Find People
                     </span>
-                  )}
-                </button>
-                <button
-                  onClick={() => {
-                    setActiveTab('find');
-                    setSelectedChannel(null);
-                    setSelectedDm(null);
-                  }}
-                  className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 px-3 whitespace-nowrap ${
-                    activeTab === 'find' 
-                      ? 'bg-white text-[#006e5d] shadow-sm' 
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  <Search className="w-4 h-4" />
-                  Find
-                </button>
+                  </button>
+
+                  <button
+                    onClick={() => setShowRequestsModal(true)}
+                    className="p-1.5 hover:bg-slate-50 text-slate-600 hover:text-[#006e5d] rounded-xl transition-all relative group"
+                    title="Friend Requests"
+                  >
+                    <UserCheck className="w-4 h-4" />
+                    {incomingRequestsList.length > 0 && (
+                      <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                    )}
+                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-[9px] font-black uppercase text-white bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                      Requests ({incomingRequestsList.length})
+                    </span>
+                  </button>
+                </div>
               </div>
 
-              <h1 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
-                {activeTab === 'channels' && (
-                  <>
-                    <Users className="w-4 h-4 text-[#006e5d]" /> Channels
-                  </>
+              {/* Sidebar Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search chats & channels..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-transparent rounded-xl focus:outline-none focus:ring-1 focus:ring-[#006e5d] text-xs font-semibold text-slate-700"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 )}
-                {activeTab === 'chats' && (
-                  <>
-                    <MessageSquare className="w-4 h-4 text-[#006e5d]" /> Direct Messages
-                  </>
-                )}
-                {activeTab === 'requests' && (
-                  <>
-                    <UserCheck className="w-4 h-4 text-[#006e5d]" /> Friend Requests
-                  </>
-                )}
-                {activeTab === 'find' && (
-                  <>
-                    <Search className="w-4 h-4 text-[#006e5d]" /> Find Friends
-                  </>
-                )}
-              </h1>
+              </div>
             </header>
 
-            {/* Sidebar Body */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-2">
-              {activeTab === 'channels' && (
-                // CHANNELS TAB
-                loadingChannels ? (
-                  <div className="h-full flex flex-col items-center justify-center py-12">
-                    <Loader2 className="w-8 h-8 text-slate-200 animate-spin mb-2" />
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Syncing Channels...</p>
+            {/* Sidebar Scrollable Body - Unified Conversations List */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-4">
+              
+              {/* Quick Connections Carousel */}
+              {friends.length > 0 && (
+                <div className="border-b border-slate-50 pb-3">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1 mb-2">
+                    My Connections
+                  </p>
+                  <div className="flex gap-2 overflow-x-auto pb-1 px-1 scrollbar-none">
+                    {friends.map((friend) => (
+                      <button
+                        key={friend.friendId}
+                        onClick={() => startOrGetDm(friend.friendId)}
+                        className="flex flex-col items-center shrink-0 w-12 text-center group"
+                      >
+                        <div className="relative w-8 h-8 rounded-full overflow-hidden border-2 border-slate-100 group-hover:border-[#006e5d] transition-all bg-slate-50 flex items-center justify-center">
+                          {friend.photoURL ? (
+                            <img src={friend.photoURL} alt={friend.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          ) : (
+                            <User className="w-3.5 h-3.5 text-slate-400" />
+                          )}
+                          {friend.isPremium && (
+                            <span className="absolute bottom-0 right-0 w-2 h-2 bg-yellow-400 rounded-full border border-white" />
+                          )}
+                        </div>
+                        <span className="text-[8px] font-black text-slate-600 truncate w-full mt-1 group-hover:text-slate-900 leading-none">
+                          {friend.name.split(' ')[0]}
+                        </span>
+                      </button>
+                    ))}
                   </div>
-                ) : channels.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center opacity-60 py-12">
-                    <Megaphone className="w-10 h-10 text-slate-300 mb-2" />
-                    <p className="text-sm font-bold text-slate-800">No active channels</p>
+                </div>
+              )}
+
+              {/* BROADCAST CHANNELS SECTION */}
+              <div className="space-y-1.5">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
+                  Broadcast Channels
+                </p>
+                {loadingChannels ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-4 h-4 text-slate-300 animate-spin" />
                   </div>
+                ) : filteredChannels.length === 0 ? (
+                  <p className="text-[10px] text-slate-400 italic px-1">No channels found</p>
                 ) : (
-                  channels.map((chan) => {
+                  filteredChannels.map((chan) => {
                     const isSelected = selectedChannel?.id === chan.id;
                     return (
                       <button
@@ -706,13 +743,13 @@ export default function Chat() {
                           setSelectedDm(null);
                           setMobileView('chat');
                         }}
-                        className={`w-full p-3 rounded-2xl border text-left transition-all flex items-center gap-3 ${
+                        className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-2.5 ${
                           isSelected 
                             ? 'bg-teal-50/40 border-[#006e5d]/30 text-[#006e5d]' 
                             : 'bg-slate-50/20 border-transparent hover:bg-slate-50'
                         }`}
                       >
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                           isSelected ? 'bg-[#006e5d] text-white' : 'bg-slate-100 text-slate-500'
                         }`}>
                           {chan.icon === 'team' ? <Users className="w-4 h-4" /> :
@@ -723,417 +760,101 @@ export default function Chat() {
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1">
-                            <span className={`text-xs font-black truncate block ${isSelected ? 'text-[#001f19]' : 'text-slate-800'}`}>
+                            <span className={`text-xs font-bold truncate block ${isSelected ? 'text-[#001f19]' : 'text-slate-800'}`}>
                               {chan.name}
                             </span>
                             {chan.isVerified && (
-                              <VerifiedBadge size="xs" variant="yellow" title="Verified Broadcast Channel" className="ml-1" />
+                              <VerifiedBadge size="xs" variant="yellow" title="Verified Channel" className="ml-0.5 shrink-0" />
                             )}
                           </div>
-                          <p className="text-[9px] text-slate-400 font-semibold tracking-wider uppercase mt-0.5">
-                            Official Channel
+                          <p className="text-[8px] text-slate-400 font-bold uppercase tracking-wider">
+                            Official Update
                           </p>
                         </div>
                       </button>
                     );
                   })
-                )
-              )}
+                )}
+              </div>
 
-              {activeTab === 'chats' && (
-                // CHATS / DMs TAB
-                <div className="space-y-4">
-                  {/* Quick Connect Friends List */}
-                  {friends.length > 0 && (
-                    <div className="border-b border-slate-100 pb-3">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1 mb-2">
-                        My Connections
-                      </p>
-                      <div className="flex gap-2 overflow-x-auto pb-1 px-1 scrollbar-none">
-                        {friends.map((friend) => (
-                          <button
-                            key={friend.friendId}
-                            onClick={() => {
-                              startOrGetDm(friend.friendId);
-                              setMobileView('chat');
-                            }}
-                            className="flex flex-col items-center shrink-0 w-14 text-center group"
-                          >
-                            <div className="relative w-9 h-9 rounded-full overflow-hidden border-2 border-slate-100 group-hover:border-[#006e5d] transition-all bg-slate-50 flex items-center justify-center">
-                              {friend.photoURL ? (
-                                <img src={friend.photoURL} alt={friend.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                              ) : (
-                                <User className="w-4 h-4 text-slate-400" />
-                              )}
-                              {friend.isPremium && (
-                                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-white" />
-                              )}
-                            </div>
-                            <span className="text-[9px] font-bold text-slate-600 truncate w-full mt-1 group-hover:text-slate-900">
-                              {friend.name.split(' ')[0]}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Active DM Chats */}
-                  <div className="space-y-1.5">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
-                      Recent Chats
-                    </p>
-                    {loadingDms ? (
-                      <div className="flex justify-center py-6">
-                        <Loader2 className="w-5 h-5 text-slate-300 animate-spin" />
-                      </div>
-                    ) : dms.length === 0 ? (
-                      <div className="text-center py-8 px-4 opacity-70">
-                        <MessageSquare className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                        <p className="text-xs font-bold text-slate-600">No active chats</p>
-                        <p className="text-[10px] text-slate-400 mt-1">
-                          Connect with friends on their profile pages to start private DMs!
-                        </p>
-                      </div>
-                    ) : (
-                      dms.map((chat) => {
-                        const otherUser = chat.user1.uid === currentUser?.uid ? chat.user2 : chat.user1;
-                        const isSelected = selectedDm?.id === chat.id;
-
-                        return (
-                          <button
-                            key={chat.id}
-                            onClick={() => {
-                              setSelectedDm(chat);
-                              setSelectedChannel(null);
-                              setMobileView('chat');
-                            }}
-                            className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-2.5 ${
-                              isSelected 
-                                ? 'bg-teal-50/40 border-[#006e5d]/30 text-[#006e5d]' 
-                                : 'bg-slate-50/20 border-transparent hover:bg-slate-50'
-                            }`}
-                          >
-                            <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center shrink-0 border border-slate-100">
-                              {otherUser.photoURL ? (
-                                <img src={otherUser.photoURL} alt={otherUser.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                              ) : (
-                                <User className="w-4 h-4 text-slate-400" />
-                              )}
-                              {otherUser.isPremium && (
-                                <span className="absolute bottom-0 right-0 w-2 h-2 bg-yellow-400 rounded-full border border-white" />
-                              )}
-                            </div>
-
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center justify-between">
-                                <span className={`text-xs font-black truncate ${isSelected ? 'text-[#001f19]' : 'text-slate-800'}`}>
-                                  {otherUser.name}
-                                </span>
-                                {chat.lastMessageAt && (
-                                  <span className="text-[8px] text-slate-400 font-medium shrink-0">
-                                    {new Date(chat.lastMessageAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-[10px] text-slate-400 truncate font-medium mt-0.5">
-                                {chat.lastMessage || 'Open conversation'}
-                              </p>
-                            </div>
-                          </button>
-                        );
-                      })
-                    )}
+              {/* DIRECT CHATS SECTION */}
+              <div className="space-y-1.5 pt-2 border-t border-slate-50">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
+                  Direct Messages
+                </p>
+                {loadingDms ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-4 h-4 text-slate-300 animate-spin" />
                   </div>
-                </div>
-              )}
-
-              {activeTab === 'requests' && (
-                // REQUESTS MANAGEMENT TAB
-                <div className="space-y-4">
-                  {/* Incoming requests received */}
-                  <div className="space-y-2">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
-                      Received ({incomingRequestsList.length})
-                    </p>
-                    {incomingRequestsList.length === 0 ? (
-                      <p className="text-[10px] text-slate-400 italic px-1 py-1">No incoming requests</p>
-                    ) : (
-                      incomingRequestsList.map((req) => (
-                        <div key={req.id} className="p-3 bg-slate-50 border border-slate-100 rounded-xl space-y-2.5">
-                          <div className="flex items-center gap-2">
-                            <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-200 shrink-0 border border-slate-200">
-                              {req.senderPhoto ? (
-                                <img src={req.senderPhoto} alt={req.senderName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                              ) : (
-                                <User className="w-4 h-4 text-slate-400 m-auto mt-2" />
-                              )}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs font-black text-slate-800 truncate block">
-                                  {req.senderName}
-                                </span>
-                                {req.senderIsPremium && (
-                                  <span className="w-2.5 h-2.5 bg-yellow-400 rounded-full inline-block shrink-0" />
-                                )}
-                              </div>
-                              <p className="text-[8px] text-slate-400 font-bold uppercase tracking-wider">
-                                Aspirant
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleAcceptRequest(req.id, req.senderId, req.senderName, req.senderPhoto, req.senderIsPremium)}
-                              disabled={actionLoading}
-                              className="flex-1 py-1.5 bg-[#006e5d] text-white font-extrabold text-[10px] uppercase tracking-wider rounded-lg hover:bg-[#005a4d] transition-all disabled:opacity-50"
-                            >
-                              Accept
-                            </button>
-                            <button
-                              onClick={() => handleDeclineRequest(req.id)}
-                              disabled={actionLoading}
-                              className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-extrabold text-[10px] uppercase tracking-wider rounded-lg transition-all disabled:opacity-50"
-                            >
-                              Decline
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    )}
+                ) : filteredDms.length === 0 ? (
+                  <div className="text-center py-6 px-2 opacity-70">
+                    <MessageSquare className="w-6 h-6 text-slate-300 mx-auto mb-1" />
+                    <p className="text-[10px] font-bold text-slate-500">No active conversations</p>
+                    <button 
+                      onClick={() => setShowFindModal(true)}
+                      className="text-[9px] font-black uppercase text-[#006e5d] mt-1 hover:underline block mx-auto"
+                    >
+                      Connect with people
+                    </button>
                   </div>
+                ) : (
+                  filteredDms.map((chat) => {
+                    const otherUser = chat.user1.uid === currentUser?.uid ? chat.user2 : chat.user1;
+                    const isSelected = selectedDm?.id === chat.id;
 
-                  {/* Outgoing requests sent */}
-                  <div className="space-y-2 pt-2 border-t border-slate-100">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
-                      Sent Pending ({outgoingRequestsList.length})
-                    </p>
-                    {outgoingRequestsList.length === 0 ? (
-                      <p className="text-[10px] text-slate-400 italic px-1 py-1">No pending sent requests</p>
-                    ) : (
-                      outgoingRequestsList.map((req) => (
-                        <div key={req.id} className="p-3 bg-slate-50/50 border border-slate-100 rounded-xl flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <div className="relative w-7 h-7 rounded-full overflow-hidden bg-slate-200 shrink-0 border border-slate-200">
-                              {req.receiverPhoto ? (
-                                <img src={req.receiverPhoto} alt={req.receiverName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                              ) : (
-                                <User className="w-3.5 h-3.5 text-slate-400 m-auto mt-1.5" />
-                              )}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <span className="text-xs font-bold text-slate-700 truncate block">
-                                {req.receiverName}
-                              </span>
-                              <span className="text-[8px] text-slate-400 flex items-center gap-0.5">
-                                <Clock className="w-2.5 h-2.5 animate-pulse text-yellow-500" /> Pending
-                              </span>
-                            </div>
-                          </div>
-
-                          <button
-                            onClick={() => handleCancelRequest(req.id)}
-                            disabled={actionLoading}
-                            className="p-1 hover:bg-rose-50 text-rose-500 rounded-lg transition-all"
-                            title="Cancel Request"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'find' && (
-                // FIND FRIENDS SEARCH TAB
-                <div className="space-y-3">
-                  {/* Search input bar */}
-                  <div className="relative">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                    <input
-                      type="text"
-                      placeholder="Search aspirants by name..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border border-transparent rounded-xl focus:outline-none focus:ring-1 focus:ring-[#006e5d] text-xs font-medium"
-                    />
-                    {searchQuery && (
+                    return (
                       <button
-                        onClick={() => setSearchQuery('')}
-                        className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                        key={chat.id}
+                        onClick={() => {
+                          setSelectedDm(chat);
+                          setSelectedChannel(null);
+                          setMobileView('chat');
+                        }}
+                        className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-2.5 ${
+                          isSelected 
+                            ? 'bg-teal-50/40 border-[#006e5d]/30 text-[#006e5d]' 
+                            : 'bg-slate-50/20 border-transparent hover:bg-slate-50'
+                        }`}
                       >
-                        <X className="w-4 h-4" />
+                        <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
+                          {otherUser.photoURL ? (
+                            <img src={otherUser.photoURL} alt={otherUser.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          ) : (
+                            <User className="w-4 h-4 text-slate-400" />
+                          )}
+                          {otherUser.isPremium && (
+                            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-white" />
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className={`text-xs font-bold truncate ${isSelected ? 'text-[#001f19]' : 'text-slate-800'}`}>
+                              {otherUser.name}
+                            </span>
+                            {chat.lastMessageAt && (
+                              <span className="text-[8px] text-slate-400 font-semibold shrink-0">
+                                {new Date(chat.lastMessageAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[9px] text-slate-400 truncate font-semibold mt-0.5">
+                            {chat.lastMessage || 'Conversation started'}
+                          </p>
+                        </div>
                       </button>
-                    )}
-                  </div>
+                    );
+                  })
+                )}
+              </div>
 
-                  {/* Dynamic query status or results */}
-                  {loadingSearch ? (
-                    <div className="flex flex-col items-center justify-center py-8">
-                      <Loader2 className="w-6 h-6 text-slate-300 animate-spin mb-1" />
-                      <p className="text-[9px] text-slate-400 uppercase font-black tracking-wider">Loading Directory...</p>
-                    </div>
-                  ) : searchQuery.trim() === '' ? (
-                    // Display Recommended to Connect (Top users)
-                    <div className="space-y-2">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
-                        Aspirant Directory
-                      </p>
-                      {allUsers.filter(u => u.id !== currentUser?.uid).slice(0, 15).map((u) => {
-                        const isFriend = friendIds.has(u.id);
-                        const isSentPending = sentRequests.has(u.id);
-                        const isReceivedPending = receivedRequests.has(u.id);
-
-                        return (
-                          <div key={u.id} className="p-2.5 bg-slate-50/50 border border-slate-100 rounded-xl flex items-center justify-between gap-2 hover:bg-slate-50 transition-all">
-                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                              <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-200 shrink-0 border border-slate-200">
-                                {u.profilePicture || u.photoURL ? (
-                                  <img src={u.profilePicture || u.photoURL} alt={u.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                                ) : (
-                                  <User className="w-4 h-4 text-slate-400 m-auto mt-2" />
-                                )}
-                                {u.isPremium && (
-                                  <span className="absolute bottom-0 right-0 w-2 h-2 bg-yellow-400 rounded-full border border-white" />
-                                )}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <span className="text-xs font-bold text-slate-800 truncate block">
-                                  {u.name || 'Aspirant'}
-                                </span>
-                                <p className="text-[9px] text-slate-400 truncate">
-                                  {u.bio || 'Dedicated aspirant 🚀'}
-                                </p>
-                              </div>
-                            </div>
-
-                            {/* Actions */}
-                            <div className="shrink-0">
-                              {isFriend ? (
-                                <button
-                                  onClick={() => handleStartMessageFromDirectory(u.id)}
-                                  className="p-1.5 bg-[#006e5d]/10 text-[#006e5d] hover:bg-[#006e5d] hover:text-white rounded-lg transition-all"
-                                  title="Message"
-                                >
-                                  <MessageCircle className="w-4 h-4" />
-                                </button>
-                              ) : isSentPending ? (
-                                <span className="text-[9px] font-black uppercase text-yellow-600 bg-yellow-50 px-2 py-1 rounded-lg border border-yellow-200">
-                                  Sent
-                                </span>
-                              ) : isReceivedPending ? (
-                                <button
-                                  onClick={() => {
-                                    const reqInfo = receivedRequests.get(u.id);
-                                    if (reqInfo) handleAcceptRequest(reqInfo.requestId, u.id, u.name, u.profilePicture || u.photoURL, u.isPremium);
-                                  }}
-                                  className="p-1.5 bg-emerald-500 text-white hover:bg-emerald-600 rounded-lg transition-all"
-                                  title="Accept Connection"
-                                >
-                                  <UserCheck className="w-4 h-4" />
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() => handleSendRequest(u)}
-                                  className="p-1.5 bg-slate-200 text-slate-700 hover:bg-[#006e5d] hover:text-white rounded-lg transition-all"
-                                  title="Connect"
-                                >
-                                  <UserPlus className="w-4 h-4" />
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : searchResults.length === 0 ? (
-                    <p className="text-xs text-slate-400 italic text-center py-6 px-2">No matching aspirants found</p>
-                  ) : (
-                    <div className="space-y-1.5">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
-                        Search Results ({searchResults.length})
-                      </p>
-                      {searchResults.map((u) => {
-                        const isFriend = friendIds.has(u.id);
-                        const isSentPending = sentRequests.has(u.id);
-                        const isReceivedPending = receivedRequests.has(u.id);
-
-                        return (
-                          <div key={u.id} className="p-2.5 bg-slate-50/50 border border-slate-100 rounded-xl flex items-center justify-between gap-2 hover:bg-slate-50 transition-all">
-                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                              <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-200 shrink-0 border border-slate-200">
-                                {u.profilePicture || u.photoURL ? (
-                                  <img src={u.profilePicture || u.photoURL} alt={u.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                                ) : (
-                                  <User className="w-4 h-4 text-slate-400 m-auto mt-2" />
-                                )}
-                                {u.isPremium && (
-                                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-white" />
-                                )}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <span className="text-xs font-bold text-slate-800 truncate block">
-                                  {u.name || 'Aspirant'}
-                                </span>
-                                <p className="text-[9px] text-slate-400 truncate">
-                                  {u.bio || 'Dedicated aspirant 🚀'}
-                                </p>
-                              </div>
-                            </div>
-
-                            {/* Actions */}
-                            <div className="shrink-0">
-                              {isFriend ? (
-                                <button
-                                  onClick={() => handleStartMessageFromDirectory(u.id)}
-                                  className="p-1.5 bg-[#006e5d]/10 text-[#006e5d] hover:bg-[#006e5d] hover:text-white rounded-lg transition-all"
-                                  title="Message"
-                                >
-                                  <MessageCircle className="w-4 h-4" />
-                                </button>
-                              ) : isSentPending ? (
-                                <span className="text-[9px] font-black uppercase text-yellow-600 bg-yellow-50 px-2 py-1 rounded-lg border border-yellow-200">
-                                  Sent
-                                </span>
-                              ) : isReceivedPending ? (
-                                <button
-                                  onClick={() => {
-                                    const reqInfo = receivedRequests.get(u.id);
-                                    if (reqInfo) handleAcceptRequest(reqInfo.requestId, u.id, u.name, u.profilePicture || u.photoURL, u.isPremium);
-                                  }}
-                                  className="p-1.5 bg-emerald-500 text-white hover:bg-emerald-600 rounded-lg transition-all"
-                                  title="Accept Connection"
-                                >
-                                  <UserCheck className="w-4 h-4" />
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() => handleSendRequest(u)}
-                                  className="p-1.5 bg-slate-200 text-slate-700 hover:bg-[#006e5d] hover:text-white rounded-lg transition-all"
-                                  title="Connect"
-                                >
-                                  <UserPlus className="w-4 h-4" />
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Active Chat Box Area */}
+          {/* Active Chat Stream Area */}
           <div className={`flex-1 flex-col bg-slate-50/15 ${mobileView === 'list' ? 'hidden md:flex' : 'flex'}`}>
-            {activeTab === 'channels' && selectedChannel ? (
-              // CHANNEL STREAM
+            {selectedChannel ? (
+              // CHANNEL STREAM RENDERER
               <div className="flex flex-col h-full overflow-hidden bg-white">
                 {/* Header */}
                 <header className="px-6 py-4 border-b border-slate-100 bg-white flex items-center justify-between shrink-0">
@@ -1156,12 +877,12 @@ export default function Chat() {
                         <h2 className="text-base font-black text-slate-900 leading-none truncate">{selectedChannel.name}</h2>
                         {selectedChannel.isVerified && (
                           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-yellow-400/10 text-yellow-600 border border-yellow-400/25 shrink-0">
-                            <VerifiedBadge size="xs" variant="yellow" title="Verified Broadcast Channel" /> Verified
+                            Verified
                           </span>
                         )}
                       </div>
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1 truncate">
-                        Only verified admins can publish broadcasts
+                        Official updates published by Verified Admins
                       </p>
                     </div>
                   </div>
@@ -1179,7 +900,7 @@ export default function Chat() {
                       <Megaphone className="w-10 h-10 text-slate-300 mb-2" />
                       <p className="text-sm font-bold text-slate-800">Beginning of Broadcast Feed</p>
                       <p className="text-xs text-slate-400 max-w-xs mt-1">
-                        Announcements from the admin team will appear in real-time.
+                        Official announcements from PrepNext Admins appear in real-time.
                       </p>
                     </div>
                   ) : (
@@ -1200,10 +921,18 @@ export default function Chat() {
                                 Team Admin
                               </span>
                             </div>
-                            <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                              <Clock className="w-3.5 h-3.5" />
-                              {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              {selectedChannel.name.toLowerCase().includes('prepnext') && msg.readBy && msg.readBy.length > 0 && (
+                                <div className="flex items-center gap-0.5 text-blue-500 font-black" title={`Viewed by ${msg.readBy.length} student${msg.readBy.length > 1 ? 's' : ''}`}>
+                                  <CheckCheck className="w-3.5 h-3.5 text-blue-500" />
+                                  <span className="text-[9px]">{msg.readBy.length}</span>
+                                </div>
+                              )}
+                              <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                                <Clock className="w-3.5 h-3.5" />
+                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
                           </div>
                           <p className="text-xs text-slate-600 font-medium leading-relaxed whitespace-pre-wrap pr-8">
                             {msg.content}
@@ -1222,15 +951,15 @@ export default function Chat() {
                       <input
                         type="text"
                         required
-                        placeholder={`Broadcast official update as ${selectedChannel.name}...`}
-                        className="flex-1 px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-[#006e5d]/15 text-sm font-medium"
+                        placeholder={`Broadcast update as ${selectedChannel.name}...`}
+                        className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-[#006e5d]/15 text-sm font-medium text-slate-800"
                         value={newMessage}
                         onChange={e => setNewMessage(e.target.value)}
                       />
                       <button
                         type="submit"
                         disabled={sendingMessage || !newMessage.trim()}
-                        className="px-6 py-3.5 bg-[#006e5d] hover:bg-[#005a4d] text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-50 shadow-md shadow-teal-50"
+                        className="px-6 py-3 bg-[#006e5d] hover:bg-[#005a4d] text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-50 shadow-md shadow-teal-50"
                       >
                         {sendingMessage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                         Broadcast
@@ -1239,15 +968,15 @@ export default function Chat() {
                   ) : (
                     <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-center gap-2 text-slate-400 select-none">
                       <Lock className="w-4 h-4 text-slate-400" />
-                      <span className="text-xs font-bold uppercase tracking-wider text-center">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-center">
                         Only verified administrators can publish broadcasts to this stream
                       </span>
                     </div>
                   )}
                 </div>
               </div>
-            ) : activeTab === 'chats' && selectedDm ? (
-              // DM STREAM
+            ) : selectedDm ? (
+              // DIRECT DM STREAM RENDERER
               <div className="flex flex-col h-full overflow-hidden bg-white">
                 {/* Header */}
                 <header className="px-6 py-4 border-b border-slate-100 bg-white flex items-center justify-between shrink-0">
@@ -1262,8 +991,12 @@ export default function Chat() {
                     {(() => {
                       const otherUser = selectedDm.user1.uid === currentUser?.uid ? selectedDm.user2 : selectedDm.user1;
                       return (
-                        <>
-                          <div className="relative w-10 h-10 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
+                        <button 
+                          onClick={() => navigate(`/student/${otherUser.uid}`)}
+                          className="flex items-center gap-3 text-left hover:opacity-80 transition-all min-w-0 group"
+                          title="View Profile"
+                        >
+                          <div className="relative w-10 h-10 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200 group-hover:scale-105 transition-transform">
                             {otherUser.photoURL ? (
                               <img src={otherUser.photoURL} alt={otherUser.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                             ) : (
@@ -1275,7 +1008,7 @@ export default function Chat() {
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <h2 className="text-base font-black text-slate-900 leading-none truncate">{otherUser.name}</h2>
+                              <h2 className="text-base font-black text-slate-900 group-hover:text-[#006e5d] transition-colors leading-none truncate">{otherUser.name}</h2>
                               {otherUser.isPremium && (
                                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-yellow-400/10 text-yellow-600 border border-yellow-400/25 shrink-0">
                                   Premium
@@ -1283,17 +1016,17 @@ export default function Chat() {
                               )}
                             </div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1 truncate">
-                              Private 1-on-1 Direct Chat
+                              Private 1-on-1 Direct Chat • View Profile
                             </p>
                           </div>
-                        </>
+                        </button>
                       );
                     })()}
                   </div>
                 </header>
 
                 {/* Messages Stream */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/30">
+                <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/10">
                   {loadingDmMessages ? (
                     <div className="h-full flex flex-col items-center justify-center">
                       <Loader2 className="w-8 h-8 text-slate-200 animate-spin mb-2" />
@@ -1342,14 +1075,14 @@ export default function Chat() {
                       type="text"
                       required
                       placeholder="Type your message..."
-                      className="flex-1 px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-[#006e5d]/15 text-sm font-medium"
+                      className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-[#006e5d]/15 text-sm font-medium text-slate-800"
                       value={newMessage}
                       onChange={e => setNewMessage(e.target.value)}
                     />
                     <button
                       type="submit"
                       disabled={sendingMessage || !newMessage.trim()}
-                      className="px-6 py-3.5 bg-[#006e5d] hover:bg-[#005a4d] text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-50 shadow-md shadow-teal-50"
+                      className="px-6 py-3 bg-[#006e5d] hover:bg-[#005a4d] text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-50 shadow-md shadow-teal-50"
                     >
                       {sendingMessage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                       Send
@@ -1357,45 +1090,13 @@ export default function Chat() {
                   </form>
                 </div>
               </div>
-            ) : activeTab === 'requests' ? (
-              // Connection Requests Dashboard
-              <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-white">
-                <div className="w-16 h-16 bg-[#006e5d]/10 rounded-full flex items-center justify-center text-[#006e5d] mb-4">
-                  <UserCheck className="w-8 h-8" />
-                </div>
-                <h3 className="text-lg font-black text-slate-800">Connection Requests Hub</h3>
-                <p className="text-sm text-slate-500 max-w-sm mt-2 leading-relaxed">
-                  Grow your study network! Accept incoming connection invitations or review requests you have sent to other aspirants preparing for their exams.
-                </p>
-                <div className="mt-6 flex gap-4 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    {incomingRequestsList.length} Pending Incoming
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
-                    {outgoingRequestsList.length} Pending Outgoing
-                  </span>
-                </div>
-              </div>
-            ) : activeTab === 'find' ? (
-              // Find Friends Directory Dashboard
-              <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-white">
-                <div className="w-16 h-16 bg-[#006e5d]/10 rounded-full flex items-center justify-center text-[#006e5d] mb-4">
-                  <Sparkles className="w-8 h-8 animate-pulse" />
-                </div>
-                <h3 className="text-lg font-black text-slate-800">Aspirant Directory</h3>
-                <p className="text-sm text-slate-500 max-w-sm mt-2 leading-relaxed">
-                  Search for civil services, board, and engineering aspirants preparing on PrepNext. Send a connection request to start a private conversation or collaborate.
-                </p>
-              </div>
             ) : (
               // Default Selection Illustration
               <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-white">
                 <Megaphone className="w-12 h-12 text-slate-300 mb-4 animate-pulse" />
                 <h3 className="text-base font-black text-slate-700">Select Conversation Pipeline</h3>
                 <p className="text-xs text-slate-400 max-w-xs mt-1">
-                  Choose a verified channel or direct chat conversation from the left sidebar to start messaging.
+                  Choose an official broadcast channel or click a direct conversation connection on the left sidebar to start messaging.
                 </p>
               </div>
             )}
@@ -1403,6 +1104,369 @@ export default function Chat() {
 
         </div>
       </div>
+
+      {/* MODAL: FIND PEOPLE DIRECTORY */}
+      <AnimatePresence>
+        {showFindModal && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="bg-white rounded-3xl border border-slate-100 shadow-2xl w-full max-w-lg overflow-hidden max-h-[85vh] flex flex-col"
+            >
+              <header className="p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-[#006e5d]/10 flex items-center justify-center text-[#006e5d]">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-slate-900 text-sm">Aspirant Directory</h3>
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Search & Connect</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowFindModal(false);
+                    setDirectorySearchQuery('');
+                  }}
+                  className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50 transition-all"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </header>
+
+              <div className="p-4 bg-slate-50 border-b border-slate-100 shrink-0">
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search aspirants by name, bio or email..."
+                    value={directorySearchQuery}
+                    onChange={(e) => setDirectorySearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#006e5d] text-xs font-semibold text-slate-700"
+                  />
+                  {directorySearchQuery && (
+                    <button
+                      onClick={() => setDirectorySearchQuery('')}
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 space-y-2.5 min-h-[250px]">
+                {loadingSearch ? (
+                  <div className="h-full flex flex-col items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 text-slate-200 animate-spin mb-2" />
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Loading Aspirants...</p>
+                  </div>
+                ) : directorySearchQuery.trim() === '' ? (
+                  <div className="space-y-2">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
+                      Aspirant Pool
+                    </p>
+                    {allUsers.filter(u => u.id !== currentUser?.uid).slice(0, 20).map((u) => {
+                      const isFriend = friendIds.has(u.id);
+                      const isSentPending = sentRequests.has(u.id);
+                      const isReceivedPending = receivedRequests.has(u.id);
+
+                      return (
+                        <div key={u.id} className="p-3 bg-slate-50/55 border border-slate-100 rounded-2xl flex items-center justify-between gap-3 hover:bg-slate-50 transition-all">
+                          <button 
+                            onClick={() => navigate(`/student/${u.id}`)}
+                            className="flex items-center gap-3 min-w-0 flex-1 text-left hover:opacity-80 transition-all group"
+                            title="View Profile"
+                          >
+                            <div className="relative w-9 h-9 rounded-full overflow-hidden bg-slate-200 shrink-0 border border-slate-200 group-hover:scale-105 transition-transform">
+                              {u.profilePicture || u.photoURL ? (
+                                <img src={u.profilePicture || u.photoURL} alt={u.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                              ) : (
+                                <User className="w-5 h-5 text-slate-400 m-auto mt-2" />
+                              )}
+                              {u.isPremium && (
+                                <span className="absolute bottom-0 right-0 w-2 h-2 bg-yellow-400 rounded-full border border-white" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <span className="text-xs font-black text-slate-800 group-hover:text-[#006e5d] transition-colors truncate block">
+                                {u.name || 'Aspirant'}
+                              </span>
+                              <p className="text-[9px] text-slate-400 truncate font-semibold">
+                                {u.bio || 'Dedicated PrepNext aspirant 🚀 • Click to view profile'}
+                              </p>
+                            </div>
+                          </button>
+
+                          <div className="shrink-0">
+                            {isFriend ? (
+                              <button
+                                onClick={() => handleStartMessageFromDirectory(u.id)}
+                                className="p-2 bg-[#006e5d]/10 text-[#006e5d] hover:bg-[#006e5d] hover:text-white rounded-xl transition-all"
+                                title="Message"
+                              >
+                                <MessageCircle className="w-4 h-4" />
+                              </button>
+                            ) : isSentPending ? (
+                              <span className="text-[9px] font-black uppercase text-yellow-600 bg-yellow-50 px-2 py-1 rounded-lg border border-yellow-200">
+                                Sent
+                              </span>
+                            ) : isReceivedPending ? (
+                              <button
+                                onClick={() => {
+                                  const reqInfo = receivedRequests.get(u.id);
+                                  if (reqInfo) handleAcceptRequest(reqInfo.requestId, u.id, u.name, u.profilePicture || u.photoURL, u.isPremium);
+                                }}
+                                className="p-2 bg-emerald-500 text-white hover:bg-emerald-600 rounded-xl transition-all"
+                                title="Accept Connection"
+                              >
+                                <UserCheck className="w-4 h-4" />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleSendRequest(u)}
+                                className="p-2 bg-slate-100 text-slate-700 hover:bg-[#006e5d] hover:text-white rounded-xl transition-all"
+                                title="Connect"
+                              >
+                                <UserPlus className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : searchResults.length === 0 ? (
+                  <div className="text-center py-12 px-4 opacity-70">
+                    <UserX className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                    <p className="text-xs font-bold text-slate-500">No matches found</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">Double check spelling or search keywords</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
+                      Search Results ({searchResults.length})
+                    </p>
+                    {searchResults.map((u) => {
+                      const isFriend = friendIds.has(u.id);
+                      const isSentPending = sentRequests.has(u.id);
+                      const isReceivedPending = receivedRequests.has(u.id);
+
+                      return (
+                        <div key={u.id} className="p-3 bg-slate-50/55 border border-slate-100 rounded-2xl flex items-center justify-between gap-3 hover:bg-slate-50 transition-all">
+                          <button 
+                            onClick={() => navigate(`/student/${u.id}`)}
+                            className="flex items-center gap-3 min-w-0 flex-1 text-left hover:opacity-80 transition-all group"
+                            title="View Profile"
+                          >
+                            <div className="relative w-9 h-9 rounded-full overflow-hidden bg-slate-200 shrink-0 border border-slate-200 group-hover:scale-105 transition-transform">
+                              {u.profilePicture || u.photoURL ? (
+                                <img src={u.profilePicture || u.photoURL} alt={u.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                              ) : (
+                                <User className="w-5 h-5 text-slate-400 m-auto mt-2" />
+                              )}
+                              {u.isPremium && (
+                                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-white" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <span className="text-xs font-black text-slate-800 group-hover:text-[#006e5d] transition-colors truncate block">
+                                {u.name || 'Aspirant'}
+                              </span>
+                              <p className="text-[9px] text-slate-400 truncate font-semibold">
+                                {u.bio || 'Dedicated PrepNext aspirant 🚀 • Click to view profile'}
+                              </p>
+                            </div>
+                          </button>
+
+                          <div className="shrink-0">
+                            {isFriend ? (
+                              <button
+                                onClick={() => handleStartMessageFromDirectory(u.id)}
+                                className="p-2 bg-[#006e5d]/10 text-[#006e5d] hover:bg-[#006e5d] hover:text-white rounded-xl transition-all"
+                                title="Message"
+                              >
+                                <MessageCircle className="w-4 h-4" />
+                              </button>
+                            ) : isSentPending ? (
+                              <span className="text-[9px] font-black uppercase text-yellow-600 bg-yellow-50 px-2 py-1 rounded-lg border border-yellow-200">
+                                Sent
+                              </span>
+                            ) : isReceivedPending ? (
+                              <button
+                                onClick={() => {
+                                  const reqInfo = receivedRequests.get(u.id);
+                                  if (reqInfo) handleAcceptRequest(reqInfo.requestId, u.id, u.name, u.profilePicture || u.photoURL, u.isPremium);
+                                }}
+                                className="p-2 bg-emerald-500 text-white hover:bg-emerald-600 rounded-xl transition-all"
+                                title="Accept Connection"
+                              >
+                                <UserCheck className="w-4 h-4" />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleSendRequest(u)}
+                                className="p-2 bg-slate-100 text-slate-700 hover:bg-[#006e5d] hover:text-white rounded-xl transition-all"
+                                title="Connect"
+                              >
+                                <UserPlus className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL: FRIEND REQUESTS MANAGEMENT */}
+      <AnimatePresence>
+        {showRequestsModal && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="bg-white rounded-3xl border border-slate-100 shadow-2xl w-full max-w-md overflow-hidden max-h-[80vh] flex flex-col"
+            >
+              <header className="p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-[#006e5d]/10 flex items-center justify-center text-[#006e5d]">
+                    <Bell className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-slate-900 text-sm">Connection Requests</h3>
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Manage Invites</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowRequestsModal(false)}
+                  className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50 transition-all"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </header>
+
+              <div className="flex-1 overflow-y-auto p-5 space-y-5">
+                
+                {/* Received Invites Section */}
+                <div className="space-y-2.5">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
+                    Received ({incomingRequestsList.length})
+                  </p>
+                  {incomingRequestsList.length === 0 ? (
+                    <p className="text-[11px] text-slate-400 italic px-1">No incoming connection requests.</p>
+                  ) : (
+                    incomingRequestsList.map((req) => (
+                      <div key={req.id} className="p-3 bg-slate-50 border border-slate-100 rounded-2xl space-y-2.5">
+                        <button 
+                          onClick={() => navigate(`/student/${req.senderId}`)}
+                          className="flex items-center gap-2.5 text-left hover:opacity-80 transition-all min-w-0 group"
+                          title="View Profile"
+                        >
+                          <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-200 shrink-0 border border-slate-200 group-hover:scale-105 transition-transform">
+                            {req.senderPhoto ? (
+                              <img src={req.senderPhoto} alt={req.senderName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            ) : (
+                              <User className="w-4 h-4 text-slate-400 m-auto mt-2" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs font-black text-slate-800 group-hover:text-[#006e5d] transition-colors truncate block">
+                                {req.senderName}
+                              </span>
+                              {req.senderIsPremium && (
+                                <span className="w-2.5 h-2.5 bg-yellow-400 rounded-full inline-block shrink-0" />
+                              )}
+                            </div>
+                            <p className="text-[8px] text-slate-400 font-bold uppercase tracking-wider">
+                              PrepNext Aspirant • View Profile
+                            </p>
+                          </div>
+                        </button>
+
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleAcceptRequest(req.id, req.senderId, req.senderName, req.senderPhoto, req.senderIsPremium)}
+                            disabled={actionLoading}
+                            className="flex-1 py-1.5 bg-[#006e5d] text-white font-black text-[10px] uppercase tracking-wider rounded-lg hover:bg-[#005a4d] transition-all disabled:opacity-50"
+                          >
+                            Accept
+                          </button>
+                          <button
+                            onClick={() => handleDeclineRequest(req.id)}
+                            disabled={actionLoading}
+                            className="px-3 py-1.5 bg-slate-200 text-slate-700 font-black text-[10px] uppercase tracking-wider rounded-lg hover:bg-slate-300 transition-all disabled:opacity-50"
+                          >
+                            Decline
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Sent Invites Section */}
+                <div className="space-y-2.5 pt-4 border-t border-slate-100">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
+                    Sent Pending ({outgoingRequestsList.length})
+                  </p>
+                  {outgoingRequestsList.length === 0 ? (
+                    <p className="text-[11px] text-slate-400 italic px-1">No pending sent requests.</p>
+                  ) : (
+                    outgoingRequestsList.map((req) => (
+                      <div key={req.id} className="p-3 bg-slate-50/50 border border-slate-100 rounded-2xl flex items-center justify-between gap-2.5">
+                        <button 
+                          onClick={() => navigate(`/student/${req.receiverId}`)}
+                          className="flex items-center gap-2.5 min-w-0 flex-1 text-left hover:opacity-80 transition-all group"
+                          title="View Profile"
+                        >
+                          <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-200 shrink-0 border border-slate-200 group-hover:scale-105 transition-transform">
+                            {req.receiverPhoto ? (
+                              <img src={req.receiverPhoto} alt={req.receiverName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            ) : (
+                              <User className="w-4 h-4 text-slate-400 m-auto mt-2" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <span className="text-xs font-black text-slate-800 group-hover:text-[#006e5d] transition-colors truncate block">
+                              {req.receiverName}
+                            </span>
+                            <span className="text-[8px] text-slate-400 flex items-center gap-0.5 font-bold uppercase tracking-wider">
+                              <Clock className="w-2.5 h-2.5 text-yellow-500" /> Pending • View Profile
+                            </span>
+                          </div>
+                        </button>
+
+                        <button
+                          onClick={() => handleCancelRequest(req.id)}
+                          disabled={actionLoading}
+                          className="p-1.5 hover:bg-rose-50 text-rose-500 rounded-lg transition-all"
+                          title="Cancel Invitation"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </Layout>
   );
 }
