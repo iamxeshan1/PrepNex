@@ -231,21 +231,21 @@ service cloud.firestore {
 
     // Friendships
     match /friendships/{friendshipId} {
-      allow read: if isSignedIn() && (resource.data.users.hasAny([request.auth.uid]) || isAdmin());
-      allow create: if isSignedIn() && request.resource.data.users.hasAny([request.auth.uid]);
-      allow update: if isSignedIn() && (resource.data.users.hasAny([request.auth.uid]) || isAdmin());
-      allow delete: if isSignedIn() && (resource.data.users.hasAny([request.auth.uid]) || isAdmin());
+      allow read: if isSignedIn() && (resource == null || (resource.data != null && 'users' in resource.data && request.auth.uid in resource.data.users) || isAdmin());
+      allow create: if isSignedIn() && ('users' in request.resource.data && request.auth.uid in request.resource.data.users);
+      allow update: if isSignedIn() && (resource == null || (resource.data != null && 'users' in resource.data && request.auth.uid in resource.data.users) || isAdmin());
+      allow delete: if isSignedIn() && (resource == null || (resource.data != null && 'users' in resource.data && request.auth.uid in resource.data.users) || isAdmin());
     }
 
     // Direct Chats (DMs)
     match /chats/{chatId} {
-      allow read: if isSignedIn() && (resource == null || resource.data.users.hasAny([request.auth.uid]) || isAdmin());
+      allow read: if isSignedIn() && (resource == null || (resource.data != null && 'users' in resource.data && request.auth.uid in resource.data.users) || isAdmin());
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && (resource == null || resource.data.users.hasAny([request.auth.uid]) || isAdmin());
+      allow update: if isSignedIn() && (resource == null || (resource.data != null && 'users' in resource.data && request.auth.uid in resource.data.users) || isAdmin());
       allow delete: if isAdmin();
 
       match /messages/{messageId} {
-        allow read: if isSignedIn();
+        allow read: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.users || isAdmin());
         allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
         allow update, delete: if isSignedIn() && (resource.data.senderId == request.auth.uid || isAdmin());
       }
@@ -253,10 +253,10 @@ service cloud.firestore {
 
     // Study Groups
     match /study_groups/{groupId} {
-      allow read: if isSignedIn() && (resource.data.isPrivate == false || resource.data.members.hasAny([request.auth.uid]) || isAdmin());
+      allow read: if isSignedIn() && (resource == null || resource.data.isPrivate == false || (resource.data != null && 'members' in resource.data && request.auth.uid in resource.data.members) || isAdmin());
       allow create: if isSignedIn() && request.resource.data.creatorId == request.auth.uid;
-      allow update: if isSignedIn() && (resource.data.members.hasAny([request.auth.uid]) || isAdmin());
-      allow delete: if isSignedIn() && (resource.data.creatorId == request.auth.uid || isAdmin());
+      allow update: if isSignedIn() && (resource == null || (resource.data != null && 'members' in resource.data && request.auth.uid in resource.data.members) || isAdmin());
+      allow delete: if isSignedIn() && (resource == null || resource.data.creatorId == request.auth.uid || isAdmin());
 
       match /messages/{messageId} {
         allow read: if isSignedIn();
