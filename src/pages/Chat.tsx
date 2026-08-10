@@ -51,6 +51,7 @@ interface DmChat {
   };
   lastMessage: string;
   lastMessageAt: string;
+  createdAt?: string;
 }
 
 interface DmMessage {
@@ -213,7 +214,7 @@ export default function Chat() {
         snap.docs.forEach(docSnap => {
           const msgData = docSnap.data();
           const readByList = msgData.readBy || [];
-          if (!readByList.includes(currentUser.uid)) {
+          if (msgData.senderId !== currentUser.uid && !readByList.includes(currentUser.uid)) {
             unread++;
           }
 
@@ -246,7 +247,7 @@ export default function Chat() {
 
     messages.forEach(async (msg) => {
       const readByList = msg.readBy || [];
-      if (!readByList.includes(currentUser.uid)) {
+      if (msg.senderId !== currentUser.uid && !readByList.includes(currentUser.uid)) {
         try {
           const msgRef = doc(db, 'broadcasting_channels', selectedChannel.id, 'messages', msg.id);
           await updateDoc(msgRef, {
@@ -258,6 +259,54 @@ export default function Chat() {
       }
     });
   }, [currentUser, selectedChannel, messages]);
+
+  // Unread DM messages tracking per DM chat
+  const [dmUnreadCounts, setDmUnreadCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!currentUser || dms.length === 0) return;
+
+    const unsubs = dms.map(chat => {
+      const q = query(collection(db, 'chats', chat.id, 'messages'));
+      return onSnapshot(q, (snap) => {
+        let unread = 0;
+        snap.docs.forEach(docSnap => {
+          const msgData = docSnap.data();
+          const readByList = msgData.readBy || [];
+          if (msgData.senderId !== currentUser.uid && !readByList.includes(currentUser.uid)) {
+            unread++;
+          }
+        });
+        setDmUnreadCounts(prev => ({ ...prev, [chat.id]: unread }));
+      }, (err) => {
+        console.warn(`Unread DM count tracking error for chat ${chat.id}:`, err);
+      });
+    });
+
+    return () => unsubs.forEach(unsub => unsub());
+  }, [currentUser, dms]);
+
+  // Mark DM messages as read when a DM chat is selected/opened
+  useEffect(() => {
+    if (!currentUser || !selectedDm || dmMessages.length === 0) return;
+
+    dmMessages.forEach(async (msg) => {
+      const readByList = msg.readBy || [];
+      if (msg.senderId !== currentUser.uid && !readByList.includes(currentUser.uid)) {
+        try {
+          const msgRef = doc(db, 'chats', selectedDm.id, 'messages', msg.id);
+          await updateDoc(msgRef, {
+            readBy: arrayUnion(currentUser.uid)
+          });
+        } catch (error) {
+          console.error("Failed to mark DM message as read:", error);
+        }
+      }
+    });
+  }, [currentUser, selectedDm, dmMessages]);
+
+  const totalBroadcastUnread = (Object.values(channelUnreadCounts) as number[]).reduce((a: number, b: number) => a + b, 0);
+  const totalDmUnread = (Object.values(dmUnreadCounts) as number[]).reduce((a: number, b: number) => a + b, 0);
 
   // Listen to user's DMs list
   useEffect(() => {
@@ -451,6 +500,7 @@ export default function Chat() {
     if (existingDm) {
       setSelectedDm(existingDm);
       setSelectedChannel(null);
+      setSidebarTab('chats');
       setMobileView('chat');
       return;
     }
@@ -464,6 +514,7 @@ export default function Chat() {
       if (chatSnap.exists()) {
         setSelectedDm({ id: chatSnap.id, ...chatSnap.data() } as DmChat);
         setSelectedChannel(null);
+        setSidebarTab('chats');
         setMobileView('chat');
       } else {
         let targetUserData: any = {};
@@ -497,11 +548,36 @@ export default function Chat() {
         await setDoc(chatRef, newChatData);
         setSelectedDm({ id: chatId, ...newChatData } as DmChat);
         setSelectedChannel(null);
+        setSidebarTab('chats');
         setMobileView('chat');
       }
     } catch (err) {
       console.error("Error starting DM:", err);
-      toast.error("Failed to load conversation");
+      // Fallback: local optimistic DM object so chat box still opens!
+      const chatId = [currentUser.uid, targetId].sort().join('_');
+      const fallbackChat: DmChat = {
+        id: chatId,
+        users: [currentUser.uid, targetId],
+        user1: {
+          uid: currentUser.uid,
+          name: currentProfile?.fullName || currentProfile?.name || currentUser.displayName || 'Aspirant',
+          photoURL: currentProfile?.photoURL || currentUser.photoURL || '',
+          isPremium: Boolean(currentProfile?.isPremium)
+        },
+        user2: {
+          uid: targetId,
+          name: 'Aspirant',
+          photoURL: '',
+          isPremium: false
+        },
+        createdAt: new Date().toISOString(),
+        lastMessage: 'Conversation started',
+        lastMessageAt: new Date().toISOString()
+      };
+      setSelectedDm(fallbackChat);
+      setSelectedChannel(null);
+      setSidebarTab('chats');
+      setMobileView('chat');
     } finally {
       setLoadingDms(false);
     }
@@ -537,22 +613,39 @@ export default function Chat() {
           senderName: senderName,
           senderIcon: isAdmin ? selectedChannel.icon : 'user',
           content: content,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          readBy: [currentUser.uid]
         });
 
       } else if (selectedDm) {
         const myName = currentProfile?.fullName || currentProfile?.name || currentUser.displayName || 'Aspirant';
 
+        // Ensure parent chat document exists before adding subcollection message
+        const chatRef = doc(db, 'chats', selectedDm.id);
+        const chatSnap = await getDoc(chatRef);
+        if (!chatSnap.exists()) {
+          const targetId = selectedDm.users?.find(u => u !== currentUser.uid) || '';
+          await setDoc(chatRef, {
+            users: [currentUser.uid, targetId],
+            user1: selectedDm.user1 || { uid: currentUser.uid, name: myName, photoURL: '', isPremium: false },
+            user2: selectedDm.user2 || { uid: targetId, name: 'Aspirant', photoURL: '', isPremium: false },
+            createdAt: new Date().toISOString(),
+            lastMessage: content,
+            lastMessageAt: new Date().toISOString()
+          });
+        } else {
+          await updateDoc(chatRef, {
+            lastMessage: content,
+            lastMessageAt: new Date().toISOString()
+          });
+        }
+
         await addDoc(collection(db, 'chats', selectedDm.id, 'messages'), {
           senderId: currentUser.uid,
           senderName: myName,
           content: content,
-          createdAt: new Date().toISOString()
-        });
-
-        await updateDoc(doc(db, 'chats', selectedDm.id), {
-          lastMessage: content,
-          lastMessageAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          readBy: [currentUser.uid]
         });
       }
     } catch (err) {
@@ -714,7 +807,7 @@ export default function Chat() {
               <div className="flex bg-slate-100/80 p-1 rounded-2xl gap-1">
                 <button
                   onClick={() => setSidebarTab('chats')}
-                  className={`flex-1 py-1.5 text-[11px] font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                  className={`flex-1 py-1.5 text-[11px] font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 relative ${
                     sidebarTab === 'chats'
                       ? 'bg-white text-[#006e5d] shadow-xs'
                       : 'text-slate-500 hover:text-slate-800'
@@ -722,6 +815,11 @@ export default function Chat() {
                 >
                   <MessageSquare className="w-3.5 h-3.5" />
                   Chats
+                  {(totalBroadcastUnread + totalDmUnread) > 0 && (
+                    <span className="px-1.5 py-0.5 bg-rose-500 text-white text-[9px] font-black rounded-full animate-pulse shadow-xs">
+                      {(totalBroadcastUnread + totalDmUnread) > 99 ? '99+' : (totalBroadcastUnread + totalDmUnread)}
+                    </span>
+                  )}
                 </button>
 
                 <button
@@ -735,7 +833,7 @@ export default function Chat() {
                   <UserCheck className="w-3.5 h-3.5" />
                   Requests
                   {incomingRequestsList.length > 0 && (
-                    <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                    <span className="w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
                   )}
                 </button>
 
@@ -788,27 +886,40 @@ export default function Chat() {
                         My Connections
                       </p>
                       <div className="flex gap-2 overflow-x-auto pb-1 px-1 scrollbar-none">
-                        {friends.map((friend) => (
-                          <button
-                            key={friend.friendId}
-                            onClick={() => startOrGetDm(friend.friendId)}
-                            className="flex flex-col items-center shrink-0 w-12 text-center group"
-                          >
-                            <div className="relative w-8 h-8 rounded-full overflow-hidden border-2 border-slate-100 group-hover:border-[#006e5d] transition-all bg-slate-50 flex items-center justify-center">
-                              {friend.photoURL ? (
-                                <img src={friend.photoURL} alt={friend.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                              ) : (
-                                <User className="w-3.5 h-3.5 text-slate-400" />
-                              )}
-                              {friend.isPremium && (
-                                <span className="absolute bottom-0 right-0 w-2 h-2 bg-yellow-400 rounded-full border border-white" />
-                              )}
-                            </div>
-                            <span className="text-[8px] font-black text-slate-600 truncate w-full mt-1 group-hover:text-slate-900 leading-none">
-                              {friend.name.split(' ')[0]}
-                            </span>
-                          </button>
-                        ))}
+                        {friends.map((friend) => {
+                          const friendChat = dms.find(d => d.users?.includes(friend.friendId));
+                          const unreadCount = friendChat ? (dmUnreadCounts[friendChat.id] || 0) : 0;
+
+                          return (
+                            <button
+                              key={friend.friendId}
+                              onClick={() => startOrGetDm(friend.friendId)}
+                              className="flex flex-col items-center shrink-0 w-12 text-center group"
+                            >
+                              <div className={`relative w-8 h-8 rounded-full overflow-hidden border-2 ${
+                                unreadCount > 0 ? 'border-rose-500 ring-2 ring-rose-200' : 'border-slate-100 group-hover:border-[#006e5d]'
+                              } transition-all bg-slate-50 flex items-center justify-center`}>
+                                {friend.photoURL ? (
+                                  <img src={friend.photoURL} alt={friend.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                ) : (
+                                  <User className="w-3.5 h-3.5 text-slate-400" />
+                                )}
+                                {unreadCount > 0 ? (
+                                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-rose-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border border-white">
+                                    {unreadCount > 9 ? '9+' : unreadCount}
+                                  </span>
+                                ) : friend.isPremium ? (
+                                  <span className="absolute bottom-0 right-0 w-2 h-2 bg-yellow-400 rounded-full border border-white" />
+                                ) : null}
+                              </div>
+                              <span className={`text-[8px] truncate w-full mt-1 leading-none ${
+                                unreadCount > 0 ? 'font-black text-rose-600' : 'font-black text-slate-600 group-hover:text-slate-900'
+                              }`}>
+                                {friend.name.split(' ')[0]}
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -841,22 +952,29 @@ export default function Chat() {
                             className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-2.5 ${
                               isSelected 
                                 ? 'bg-teal-50/40 border-[#006e5d]/30 text-[#006e5d]' 
+                                : unreadCount > 0
+                                ? 'bg-rose-50/40 border-rose-200/60 hover:bg-rose-50/60'
                                 : 'bg-slate-50/20 border-transparent hover:bg-slate-50'
                             }`}
                           >
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 relative ${
                               isSelected ? 'bg-[#006e5d] text-white' : 'bg-slate-100 text-slate-500'
                             }`}>
                               {chan.icon === 'team' ? <Users className="w-4 h-4" /> :
                                chan.icon === 'megaphone' ? <Megaphone className="w-4 h-4" /> :
                                chan.icon === 'support' ? <Shield className="w-4 h-4" /> :
                                <MessageSquare className="w-4 h-4" />}
+                              {unreadCount > 0 && (
+                                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border border-white" />
+                              )}
                             </div>
 
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center justify-between gap-1">
                                 <div className="flex items-center gap-1 min-w-0">
-                                  <span className={`text-xs font-bold truncate block ${isSelected ? 'text-[#001f19]' : 'text-slate-800'}`}>
+                                  <span className={`text-xs truncate block ${
+                                    isSelected ? 'font-bold text-[#001f19]' : unreadCount > 0 ? 'font-black text-rose-950' : 'font-bold text-slate-800'
+                                  }`}>
                                     {chan.name}
                                   </span>
                                   {chan.isVerified && (
@@ -865,12 +983,12 @@ export default function Chat() {
                                 </div>
                                 <div className="flex items-center gap-1.5 shrink-0">
                                   {latestMsg?.createdAt && (
-                                    <span className="text-[9px] font-semibold text-slate-400">
+                                    <span className={`text-[9px] ${unreadCount > 0 ? 'font-bold text-rose-500' : 'font-semibold text-slate-400'}`}>
                                       {new Date(latestMsg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                   )}
                                   {unreadCount > 0 && (
-                                    <span className="bg-[#006e5d] text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0 shadow-xs animate-pulse">
+                                    <span className="bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0 shadow-xs animate-pulse">
                                       {unreadCount > 99 ? '99+' : unreadCount}
                                     </span>
                                   )}
@@ -878,7 +996,7 @@ export default function Chat() {
                               </div>
 
                               {latestMsg ? (
-                                <p className={`text-[11px] truncate mt-0.5 ${unreadCount > 0 ? 'font-bold text-slate-900' : 'text-slate-500'}`}>
+                                <p className={`text-[11px] truncate mt-0.5 ${unreadCount > 0 ? 'font-black text-rose-700' : 'font-medium text-slate-500'}`}>
                                   {latestMsg.senderName ? `${latestMsg.senderName}: ` : ''}{latestMsg.content}
                                 </p>
                               ) : (
@@ -933,6 +1051,7 @@ export default function Chat() {
                         };
                         const otherUser = getOtherUser(chat);
                         const isSelected = selectedDm?.id === chat.id;
+                        const unreadCount = dmUnreadCounts[chat.id] || 0;
 
                         return (
                           <button
@@ -945,6 +1064,8 @@ export default function Chat() {
                             className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-2.5 ${
                               isSelected 
                                 ? 'bg-teal-50/40 border-[#006e5d]/30 text-[#006e5d]' 
+                                : unreadCount > 0
+                                ? 'bg-rose-50/40 border-rose-200/60 hover:bg-rose-50/60'
                                 : 'bg-slate-50/20 border-transparent hover:bg-slate-50'
                             }`}
                           >
@@ -954,23 +1075,34 @@ export default function Chat() {
                               ) : (
                                 <User className="w-4 h-4 text-slate-400" />
                               )}
-                              {otherUser.isPremium && (
+                              {unreadCount > 0 ? (
+                                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-rose-500 rounded-full border border-white" />
+                              ) : otherUser.isPremium ? (
                                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-white" />
-                              )}
+                              ) : null}
                             </div>
 
                             <div className="min-w-0 flex-1">
-                              <div className="flex items-center justify-between">
-                                <span className={`text-xs font-bold truncate ${isSelected ? 'text-[#001f19]' : 'text-slate-800'}`}>
+                              <div className="flex items-center justify-between gap-1">
+                                <span className={`text-xs truncate ${
+                                  isSelected ? 'font-bold text-[#001f19]' : unreadCount > 0 ? 'font-black text-rose-950' : 'font-bold text-slate-800'
+                                }`}>
                                   {otherUser.name}
                                 </span>
-                                {chat.lastMessageAt && (
-                                  <span className="text-[8px] text-slate-400 font-semibold shrink-0">
-                                    {new Date(chat.lastMessageAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                                  </span>
-                                )}
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  {chat.lastMessageAt && (
+                                    <span className={`text-[8px] ${unreadCount > 0 ? 'font-bold text-rose-500' : 'font-semibold text-slate-400'}`}>
+                                      {new Date(chat.lastMessageAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                    </span>
+                                  )}
+                                  {unreadCount > 0 && (
+                                    <span className="bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0 shadow-xs animate-pulse">
+                                      {unreadCount > 99 ? '99+' : unreadCount}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                              <p className="text-[9px] text-slate-400 truncate font-semibold mt-0.5">
+                              <p className={`text-[9px] truncate mt-0.5 ${unreadCount > 0 ? 'font-black text-rose-700' : 'text-slate-400 font-semibold'}`}>
                                 {chat.lastMessage || 'Conversation started'}
                               </p>
                             </div>
