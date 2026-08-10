@@ -545,16 +545,15 @@ export default function Chat() {
     const cachedName = cachedProfile?.fullName || cachedProfile?.name || cachedProfile?.displayName;
     const resolvedDirectoryName = userMatch?.fullName || userMatch?.name || userMatch?.displayName;
 
-    const name = (chatUser?.name && chatUser.name !== 'Aspirant') 
-      ? chatUser.name 
-      : (friendMatch?.name && friendMatch.name !== 'Aspirant') 
-      ? friendMatch.name 
-      : (resolvedDirectoryName && resolvedDirectoryName !== 'Aspirant')
+    const name = (resolvedDirectoryName && resolvedDirectoryName !== 'Aspirant')
       ? resolvedDirectoryName
       : (cachedName && cachedName !== 'Aspirant')
       ? cachedName
-      : (chatUser?.name && chatUser.name !== 'Aspirant' ? chatUser.name : '')
-      || 'Aspirant';
+      : (friendMatch?.name && friendMatch.name !== 'Aspirant') 
+      ? friendMatch.name 
+      : (chatUser?.name && chatUser.name !== 'Aspirant') 
+      ? chatUser.name 
+      : 'Aspirant';
 
     const photoURL = chatUser?.photoURL 
       || friendMatch?.photoURL 
@@ -997,7 +996,13 @@ export default function Chat() {
     friends.forEach(friend => {
       if (friend.friendId && !existingOtherUserIds.has(friend.friendId)) {
         const chatId = [currentUser?.uid || '', friend.friendId].sort().join('_');
-        const myName = currentProfile?.fullName || currentProfile?.name || currentUser?.displayName || 'Aspirant';
+        const userInDir = allUsers.find(u => u.id === friend.friendId || (u as any).uid === friend.friendId);
+        const cachedP = userProfilesCache[friend.friendId];
+        const resolvedFriendName = userInDir?.fullName || userInDir?.name || userInDir?.displayName || cachedP?.fullName || cachedP?.name || friend.name || 'Aspirant';
+        const friendPhoto = userInDir?.photoURL || cachedP?.photoURL || friend.photoURL || '';
+        const friendIsPremium = Boolean(userInDir?.isPremium ?? cachedP?.isPremium ?? friend.isPremium);
+
+        const myName = currentProfile?.fullName || currentProfile?.name || currentProfile?.displayName || currentUser?.displayName || 'Aspirant';
         const myPhoto = currentProfile?.photoURL || currentUser?.photoURL || '';
         const myIsPremium = Boolean(currentProfile?.isPremium);
 
@@ -1012,15 +1017,15 @@ export default function Chat() {
             isPremium: myIsPremium
           } : {
             uid: friend.friendId,
-            name: friend.name,
-            photoURL: friend.photoURL,
-            isPremium: friend.isPremium
+            name: resolvedFriendName,
+            photoURL: friendPhoto,
+            isPremium: friendIsPremium
           },
           user2: isUser1 ? {
             uid: friend.friendId,
-            name: friend.name,
-            photoURL: friend.photoURL,
-            isPremium: friend.isPremium
+            name: resolvedFriendName,
+            photoURL: friendPhoto,
+            isPremium: friendIsPremium
           } : {
             uid: currentUser?.uid || '',
             name: myName,
@@ -1045,7 +1050,7 @@ export default function Chat() {
       const t2 = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
       return t2 - t1;
     });
-  }, [dms, friends, currentUser, currentProfile, dmUnreadCounts]);
+  }, [dms, friends, currentUser, currentProfile, dmUnreadCounts, allUsers, userProfilesCache]);
 
   const filteredDms = useMemo(() => {
     return combinedAspirantChats.filter(chat => {

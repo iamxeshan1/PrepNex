@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, orderBy, limit, onSnapshot } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { updateProfile } from 'firebase/auth';
+import { auth, db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { Layout } from '../components/Layout';
 import { VerifiedBadge } from '../components/VerifiedBadge';
@@ -453,6 +454,7 @@ export default function StudentProfile() {
       await updateDoc(doc(db, 'users', currentUser.uid), {
         name: cleanName,
         fullName: cleanName,
+        displayName: cleanName,
         phoneNumber: cleanPhone,
         phone: cleanPhone,
         username: cleanUsername,
@@ -463,10 +465,19 @@ export default function StudentProfile() {
         updatedAt: new Date().toISOString()
       });
 
+      if (auth.currentUser) {
+        try {
+          await updateProfile(auth.currentUser, { displayName: cleanName });
+        } catch (e) {
+          console.warn("Could not update auth displayName:", e);
+        }
+      }
+
       setStudentData((prev: any) => ({
         ...prev,
         name: cleanName,
         fullName: cleanName,
+        displayName: cleanName,
         phoneNumber: cleanPhone,
         phone: cleanPhone,
         username: cleanUsername,

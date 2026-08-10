@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { updateProfile } from 'firebase/auth';
+import { auth, db } from '../lib/firebase';
 import { User, Phone, MapPin, Building, Map, CheckCircle2, AlertCircle, ArrowLeft, AtSign, Loader2, Check, X } from 'lucide-react';
 import { DashboardSidebar } from '../components/DashboardSidebar';
 import { DashboardTopHeader } from '../components/DashboardTopHeader';
@@ -148,13 +149,26 @@ export default function Profile() {
         return setError('This username is already taken. Please choose another one.');
       }
 
+      const cleanName = formData.name.trim();
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, {
         ...formData,
+        name: cleanName,
+        fullName: cleanName,
+        displayName: cleanName,
+        phoneNumber: formData.phone.trim(),
         username: cleanUsername,
         profileCompleted: true,
         updatedAt: new Date().toISOString()
       });
+
+      if (auth.currentUser) {
+        try {
+          await updateProfile(auth.currentUser, { displayName: cleanName });
+        } catch (e) {
+          console.warn('Could not update Firebase Auth displayName:', e);
+        }
+      }
       setSuccess('Profile and username updated successfully!');
     } catch (err: any) {
       console.error('Error updating profile:', err);
