@@ -510,7 +510,7 @@ export default function Chat() {
   // User profiles cache for background resolution
   const [userProfilesCache, setUserProfilesCache] = useState<Record<string, any>>({});
 
-  // Timestamp formatting helper
+  // Timestamp formatting helper for chat inbox list (WhatsApp style)
   const formatChatTimestamp = (isoString?: string) => {
     if (!isoString) return '';
     const date = new Date(isoString);
@@ -518,9 +518,26 @@ export default function Chat() {
     const now = new Date();
     const isToday = date.toDateString() === now.toDateString();
     if (isToday) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
     }
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday';
+    }
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays < 7) {
+      return date.toLocaleDateString('en-US', { weekday: 'short' });
+    }
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  // 12-hour time formatter for individual message bubbles (WhatsApp style)
+  const formatTime12h = (isoOrDate?: string | Date) => {
+    if (!isoOrDate) return '';
+    const date = new Date(isoOrDate);
+    if (isNaN(date.getTime())) return '';
+    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
   };
 
   // Helper to extract the other party's resolved info in a 1-on-1 DM chat
@@ -1257,8 +1274,8 @@ export default function Chat() {
                                 </div>
                                 <div className="flex items-center gap-1.5 shrink-0">
                                   {latestMsg?.createdAt && (
-                                    <span className={`text-[9px] ${unreadCount > 0 ? 'font-bold text-rose-500' : 'font-semibold text-slate-400'}`}>
-                                      {new Date(latestMsg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    <span className={`text-[10px] ${unreadCount > 0 ? 'font-bold text-rose-500' : 'font-medium text-slate-400'}`}>
+                                      {formatChatTimestamp(latestMsg.createdAt)}
                                     </span>
                                   )}
                                   {unreadCount > 0 && (
@@ -1358,22 +1375,22 @@ export default function Chat() {
                                 }`}>
                                   {otherUser.name}
                                 </span>
-                                <div className="flex items-center gap-1.5 shrink-0">
-                                  {chat.lastMessageAt && (
-                                    <span className={`text-[8px] ${unreadCount > 0 ? 'font-bold text-rose-500' : 'font-semibold text-slate-400'}`}>
-                                      {formatChatTimestamp(chat.lastMessageAt)}
-                                    </span>
-                                  )}
-                                  {unreadCount > 0 && (
-                                    <span className="bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0 shadow-xs animate-pulse">
-                                      {unreadCount > 99 ? '99+' : unreadCount}
-                                    </span>
-                                  )}
-                                </div>
+                                {chat.lastMessageAt && (
+                                  <span className={`text-[10px] shrink-0 ${unreadCount > 0 ? 'font-bold text-rose-500' : 'font-medium text-slate-400'}`}>
+                                    {formatChatTimestamp(chat.lastMessageAt)}
+                                  </span>
+                                )}
                               </div>
-                              <p className={`text-[9px] truncate mt-0.5 ${unreadCount > 0 ? 'font-black text-rose-700' : 'text-slate-400 font-semibold'}`}>
-                                {chat.lastMessage || 'Tap to start conversation'}
-                              </p>
+                              <div className="flex items-center justify-between gap-2 mt-0.5">
+                                <p className={`text-[11px] truncate flex-1 ${unreadCount > 0 ? 'font-black text-rose-700' : 'text-slate-500 font-medium'}`}>
+                                  {chat.lastMessage || 'Tap to start conversation'}
+                                </p>
+                                {unreadCount > 0 && (
+                                  <span className="bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0 shadow-xs animate-pulse">
+                                    {unreadCount > 99 ? '99+' : unreadCount}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </button>
                         );
@@ -1567,9 +1584,9 @@ export default function Chat() {
           <div className={`flex-1 flex-col bg-slate-50/15 overflow-hidden min-w-0 w-full ${mobileView === 'list' ? 'hidden md:flex' : 'flex'}`}>
             {selectedChannel ? (
               // CHANNEL STREAM RENDERER
-              <div className="flex flex-col h-full overflow-hidden bg-white min-w-0 w-full">
-                {/* Header */}
-                <header className="px-3 sm:px-6 py-3 sm:py-4 border-b border-slate-100 bg-white flex items-center justify-between shrink-0 min-w-0 w-full">
+              <div className="flex flex-col h-full overflow-hidden bg-white min-w-0 w-full relative">
+                {/* Header - Fixed at Top */}
+                <header className="sticky top-0 z-20 px-3 sm:px-6 py-3 sm:py-3.5 border-b border-slate-100 bg-white/95 backdrop-blur-md flex items-center justify-between shrink-0 min-w-0 w-full shadow-2xs">
                   <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                     <button 
                       onClick={() => setMobileView('list')} 
@@ -1600,8 +1617,8 @@ export default function Chat() {
                   </div>
                 </header>
 
-                {/* Messages Stream - Fully Responsive Cards */}
-                <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 min-w-0 w-full">
+                {/* Messages Stream - Scrollable */}
+                <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 bg-[#efeae2]/15 min-w-0 w-full">
                   {loadingMessages ? (
                     <div className="h-full flex flex-col items-center justify-center">
                       <Loader2 className="w-8 h-8 text-slate-200 animate-spin mb-2" />
@@ -1650,7 +1667,7 @@ export default function Chat() {
                                 )}
                                 <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
                                   <Clock className="w-3.5 h-3.5" />
-                                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  {formatTime12h(msg.createdAt)}
                                 </span>
                               </div>
                             </div>
@@ -1665,8 +1682,8 @@ export default function Chat() {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Dispatcher Actions */}
-                <div className="border-t border-slate-100 p-3 sm:p-4 bg-white shrink-0">
+                {/* Dispatcher Actions - Fixed at Bottom */}
+                <div className="sticky bottom-0 z-20 border-t border-slate-100 p-3 sm:p-4 bg-white shrink-0 shadow-2xs">
                   {isAdmin || selectedChannel.allowAspirantMessages || selectedChannel.whoCanPost === 'everyone' ? (
                     <form onSubmit={handleSendMessage} className="flex gap-2 sm:gap-3">
                       <input
@@ -1698,9 +1715,9 @@ export default function Chat() {
               </div>
             ) : selectedDm ? (
               // DIRECT DM STREAM RENDERER
-              <div className="flex flex-col h-full overflow-hidden bg-white min-w-0 w-full">
-                {/* Header */}
-                <header className="px-3 sm:px-6 py-3 sm:py-4 border-b border-slate-100 bg-white flex items-center justify-between shrink-0 min-w-0 w-full">
+              <div className="flex flex-col h-full overflow-hidden bg-white min-w-0 w-full relative">
+                {/* Header - Fixed Aspirant Name Header at Top */}
+                <header className="sticky top-0 z-20 px-3 sm:px-6 py-3 sm:py-3.5 border-b border-slate-100 bg-white/95 backdrop-blur-md flex items-center justify-between shrink-0 min-w-0 w-full shadow-2xs">
                   <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                     <button 
                       onClick={() => setMobileView('list')} 
@@ -1746,8 +1763,8 @@ export default function Chat() {
                   </div>
                 </header>
 
-                {/* Messages Stream */}
-                <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 bg-slate-50/10 min-w-0 w-full">
+                {/* Messages Stream - Scrollable */}
+                <div className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-2.5 sm:space-y-3 bg-[#efeae2]/15 min-w-0 w-full">
                   {loadingDmMessages ? (
                     <div className="h-full flex flex-col items-center justify-center">
                       <Loader2 className="w-8 h-8 text-slate-200 animate-spin mb-2" />
@@ -1765,25 +1782,33 @@ export default function Chat() {
                     dmMessages.map((msg, index) => {
                       const isMe = msg.senderId === currentUser?.uid;
                       const senderDisplayName = getSenderDisplayName(msg.senderId, msg.senderName);
+                      const formattedTime = formatTime12h(msg.createdAt);
+
                       return (
                         <div 
                           key={msg.id || index} 
-                          className={`flex gap-3 max-w-[88%] sm:max-w-md ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
+                          className={`flex gap-2 max-w-[88%] sm:max-w-md ${isMe ? 'ml-auto' : 'mr-auto'}`}
                         >
-                          <div className={`p-3 sm:p-4 rounded-2xl sm:rounded-3xl border text-xs font-medium leading-relaxed shadow-xs break-words min-w-0 ${
+                          <div className={`px-3.5 py-2.5 rounded-2xl sm:rounded-3xl border text-xs sm:text-sm leading-relaxed shadow-2xs min-w-[120px] ${
                             isMe 
-                              ? 'bg-[#006e5d] text-white border-transparent rounded-tr-none' 
-                              : 'bg-white text-slate-700 border-slate-100 rounded-tl-none'
+                              ? 'bg-[#006e5d] text-white border-transparent rounded-tr-xs' 
+                              : 'bg-white text-slate-800 border-slate-100/90 rounded-tl-xs'
                           }`}>
-                            <p className={`text-[10px] font-black mb-1 ${isMe ? 'text-teal-100/90' : 'text-[#006e5d]'}`}>
-                              {isMe ? 'You' : senderDisplayName}
-                            </p>
-                            <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                            <div className={`text-[8px] mt-1.5 flex items-center justify-end gap-1 ${
-                              isMe ? 'text-teal-200/80' : 'text-slate-400'
-                            }`}>
-                              <Clock className="w-3 h-3" />
-                              {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {!isMe && (
+                              <p className="text-[10px] font-black text-[#006e5d] mb-0.5">
+                                {senderDisplayName}
+                              </p>
+                            )}
+                            <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
+                              <p className="whitespace-pre-wrap break-words flex-1 min-w-0 font-medium text-xs sm:text-[13px]">
+                                {msg.content}
+                              </p>
+                              <span className={`text-[9px] font-semibold whitespace-nowrap ml-auto shrink-0 flex items-center gap-1 select-none pt-0.5 ${
+                                isMe ? 'text-teal-100/90' : 'text-slate-400'
+                              }`}>
+                                {formattedTime}
+                                {isMe && <CheckCheck className="w-3.5 h-3.5 text-teal-200 inline" />}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -1793,21 +1818,21 @@ export default function Chat() {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Dispatcher Actions */}
-                <div className="border-t border-slate-100 p-3 sm:p-4 bg-white shrink-0">
+                {/* Dispatcher Actions - Fixed Message Textbox at Bottom */}
+                <div className="sticky bottom-0 z-20 border-t border-slate-100 p-3 sm:p-4 bg-white shrink-0 shadow-2xs">
                   <form onSubmit={handleSendMessage} className="flex gap-2 sm:gap-3">
                     <input
                       type="text"
                       required
                       placeholder="Type your message..."
-                      className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl sm:rounded-2xl outline-none focus:ring-2 focus:ring-[#006e5d]/15 text-xs sm:text-sm font-medium text-slate-800"
+                      className="flex-1 px-3.5 sm:px-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200/90 rounded-xl sm:rounded-2xl outline-none focus:ring-2 focus:ring-[#006e5d]/20 text-xs sm:text-sm font-medium text-slate-800 placeholder-slate-400"
                       value={newMessage}
                       onChange={e => setNewMessage(e.target.value)}
                     />
                     <button
                       type="submit"
                       disabled={sendingMessage || !newMessage.trim()}
-                      className="px-4 sm:px-6 py-2.5 sm:py-3 bg-[#006e5d] hover:bg-[#005a4d] text-white rounded-xl sm:rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-50 shadow-md shadow-teal-50"
+                      className="px-4 sm:px-6 py-2.5 sm:py-3 bg-[#006e5d] hover:bg-[#005a4d] text-white rounded-xl sm:rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-50 shadow-md shadow-teal-50 shrink-0"
                     >
                       {sendingMessage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                       <span className="hidden sm:inline">Send</span>
