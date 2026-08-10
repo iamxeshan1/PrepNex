@@ -491,6 +491,22 @@ export default function Chat() {
     setSearchResults(filtered);
   }, [directorySearchQuery, allUsers, currentUser]);
 
+  // User profiles cache for background resolution
+  const [userProfilesCache, setUserProfilesCache] = useState<Record<string, any>>({});
+
+  // Timestamp formatting helper
+  const formatChatTimestamp = (isoString?: string) => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return '';
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    if (isToday) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  };
+
   // Helper to extract the other party's resolved info in a 1-on-1 DM chat
   const getOtherUser = (c: DmChat) => {
     let otherUid = c.users?.find(u => u !== currentUser?.uid) || '';
@@ -507,21 +523,54 @@ export default function Chat() {
     }
 
     const friendMatch = friends.find(f => f.friendId === otherUid);
-    const userMatch = allUsers.find(u => u.id === otherUid);
+    const userMatch = allUsers.find(u => u.id === otherUid || (u as any).uid === otherUid);
+    const cachedProfile = userProfilesCache[otherUid];
+
+    const cachedName = cachedProfile?.fullName || cachedProfile?.name || cachedProfile?.displayName;
+    const resolvedDirectoryName = userMatch?.fullName || userMatch?.name || userMatch?.displayName;
 
     const name = (chatUser?.name && chatUser.name !== 'Aspirant') 
       ? chatUser.name 
       : (friendMatch?.name && friendMatch.name !== 'Aspirant') 
       ? friendMatch.name 
-      : (userMatch?.fullName || userMatch?.name) 
-      || chatUser?.name 
+      : (resolvedDirectoryName && resolvedDirectoryName !== 'Aspirant')
+      ? resolvedDirectoryName
+      : (cachedName && cachedName !== 'Aspirant')
+      ? cachedName
+      : (chatUser?.name && chatUser.name !== 'Aspirant' ? chatUser.name : '')
       || 'Aspirant';
 
-    const photoURL = chatUser?.photoURL || friendMatch?.photoURL || userMatch?.photoURL || userMatch?.profilePicture || '';
-    const isPremium = Boolean(chatUser?.isPremium || friendMatch?.isPremium || userMatch?.isPremium);
+    const photoURL = chatUser?.photoURL 
+      || friendMatch?.photoURL 
+      || userMatch?.photoURL 
+      || userMatch?.profilePicture 
+      || cachedProfile?.photoURL 
+      || cachedProfile?.profilePicture 
+      || '';
+
+    const isPremium = Boolean(chatUser?.isPremium || friendMatch?.isPremium || userMatch?.isPremium || cachedProfile?.isPremium);
 
     return { uid: otherUid, name, photoURL, isPremium };
   };
+
+  // Automatically fetch profiles for DM participants whose name is Aspirant or unknown
+  useEffect(() => {
+    if (!currentUser || dms.length === 0) return;
+
+    dms.forEach((chat) => {
+      const otherUid = chat.users?.find(u => u !== currentUser.uid);
+      if (!otherUid) return;
+
+      const other = getOtherUser(chat);
+      if ((other.name === 'Aspirant' || !other.photoURL) && !userProfilesCache[otherUid]) {
+        getDoc(doc(db, 'users', otherUid)).then(userSnap => {
+          if (userSnap.exists()) {
+            setUserProfilesCache(prev => ({ ...prev, [otherUid]: userSnap.data() }));
+          }
+        }).catch(e => console.warn("Could not fetch DM participant profile:", otherUid, e));
+      }
+    });
+  }, [currentUser, dms, allUsers, friends]);
 
   // Helper to extract sender's display name from profile, friends, or user directory
   const getSenderDisplayName = (senderId?: string, fallbackName?: string) => {
@@ -532,7 +581,13 @@ export default function Chat() {
       if (myName && myName !== 'Aspirant') return myName;
     }
 
-    const userInDirectory = allUsers.find(u => u.id === senderId);
+    const cachedProfile = userProfilesCache[senderId];
+    if (cachedProfile) {
+      const name = cachedProfile.fullName || cachedProfile.name || cachedProfile.displayName;
+      if (name && name !== 'Aspirant') return name;
+    }
+
+    const userInDirectory = allUsers.find(u => u.id === senderId || (u as any).uid === senderId);
     if (userInDirectory) {
       const name = userInDirectory.fullName || userInDirectory.name || userInDirectory.displayName;
       if (name && name !== 'Aspirant') return name;
@@ -917,8 +972,8 @@ export default function Chat() {
   );
 
   const filteredDms = dms.filter(chat => {
-    const otherUser = chat.user1.uid === currentUser?.uid ? chat.user2 : chat.user1;
-    return otherUser.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    const otherUser = getOtherUser(chat);
+    return (otherUser.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
            (chat.lastMessage || '').toLowerCase().includes(searchQuery.toLowerCase());
   });
 
@@ -1214,7 +1269,7 @@ export default function Chat() {
                                 <div className="flex items-center gap-1.5 shrink-0">
                                   {chat.lastMessageAt && (
                                     <span className={`text-[8px] ${unreadCount > 0 ? 'font-bold text-rose-500' : 'font-semibold text-slate-400'}`}>
-                                      {new Date(chat.lastMessageAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                      {formatChatTimestamp(chat.lastMessageAt)}
                                     </span>
                                   )}
                                   {unreadCount > 0 && (
