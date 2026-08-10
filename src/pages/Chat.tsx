@@ -195,10 +195,11 @@ export default function Chat() {
     return () => unsub();
   }, [selectedChannel]);
 
-  // Unread broadcast message tracking per channel
+  // Unread broadcast message tracking per channel & latest message snippet
   const [channelUnreadCounts, setChannelUnreadCounts] = useState<Record<string, number>>({});
+  const [channelLatestMessages, setChannelLatestMessages] = useState<Record<string, { content: string; createdAt: string; senderName?: string }>>({});
 
-  // Real-time listener for unread messages count across channels
+  // Real-time listener for unread messages count & latest message across channels
   useEffect(() => {
     if (!currentUser || channels.length === 0) return;
 
@@ -206,14 +207,31 @@ export default function Chat() {
       const q = query(collection(db, 'broadcasting_channels', channel.id, 'messages'));
       return onSnapshot(q, (snap) => {
         let unread = 0;
+        let latestMsg: { content: string; createdAt: string; senderName?: string } | null = null;
+        let latestTime = 0;
+
         snap.docs.forEach(docSnap => {
           const msgData = docSnap.data();
           const readByList = msgData.readBy || [];
           if (!readByList.includes(currentUser.uid)) {
             unread++;
           }
+
+          const msgTime = msgData.createdAt ? new Date(msgData.createdAt).getTime() : 0;
+          if (msgTime >= latestTime) {
+            latestTime = msgTime;
+            latestMsg = {
+              content: msgData.content || '',
+              createdAt: msgData.createdAt || '',
+              senderName: msgData.senderName || ''
+            };
+          }
         });
+
         setChannelUnreadCounts(prev => ({ ...prev, [channel.id]: unread }));
+        if (latestMsg) {
+          setChannelLatestMessages(prev => ({ ...prev, [channel.id]: latestMsg! }));
+        }
       }, (err) => {
         console.warn(`Unread count tracking error for channel ${channel.id}:`, err);
       });
@@ -809,6 +827,9 @@ export default function Chat() {
                     ) : (
                       filteredChannels.map((chan) => {
                         const isSelected = selectedChannel?.id === chan.id;
+                        const latestMsg = channelLatestMessages[chan.id];
+                        const unreadCount = channelUnreadCounts[chan.id] || 0;
+
                         return (
                           <button
                             key={chan.id}
@@ -842,18 +863,32 @@ export default function Chat() {
                                     <VerifiedBadge size="xs" variant="yellow" title="Verified Channel" className="ml-0.5 shrink-0" />
                                   )}
                                 </div>
-                                {channelUnreadCounts[chan.id] > 0 && (
-                                  <span className="bg-[#006e5d] text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0 shadow-xs animate-pulse">
-                                    {channelUnreadCounts[chan.id] > 99 ? '99+' : channelUnreadCounts[chan.id]}
-                                  </span>
-                                )}
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  {latestMsg?.createdAt && (
+                                    <span className="text-[9px] font-semibold text-slate-400">
+                                      {new Date(latestMsg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                  )}
+                                  {unreadCount > 0 && (
+                                    <span className="bg-[#006e5d] text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0 shadow-xs animate-pulse">
+                                      {unreadCount > 99 ? '99+' : unreadCount}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                              <p className="text-[8px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
-                                <span>Official Update</span>
-                                {(chan.allowAspirantMessages || chan.whoCanPost === 'everyone') && (
-                                  <span className="text-teal-600 font-extrabold">• Open Chat</span>
-                                )}
-                              </p>
+
+                              {latestMsg ? (
+                                <p className={`text-[11px] truncate mt-0.5 ${unreadCount > 0 ? 'font-bold text-slate-900' : 'text-slate-500'}`}>
+                                  {latestMsg.senderName ? `${latestMsg.senderName}: ` : ''}{latestMsg.content}
+                                </p>
+                              ) : (
+                                <p className="text-[8px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1 mt-0.5">
+                                  <span>Official Update</span>
+                                  {(chan.allowAspirantMessages || chan.whoCanPost === 'everyone') && (
+                                    <span className="text-teal-600 font-extrabold">• Open Chat</span>
+                                  )}
+                                </p>
+                              )}
                             </div>
                           </button>
                         );
