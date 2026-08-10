@@ -19,6 +19,8 @@ interface BroadcastingChannel {
   name: string;
   icon: string; // 'team', 'megaphone', 'support'
   isVerified: boolean;
+  allowAspirantMessages?: boolean;
+  whoCanPost?: 'admin_only' | 'everyone';
   createdAt: any;
 }
 
@@ -193,17 +195,36 @@ export default function Chat() {
     return () => unsub();
   }, [selectedChannel]);
 
+  // Unread broadcast message tracking per channel
+  const [channelUnreadCounts, setChannelUnreadCounts] = useState<Record<string, number>>({});
+
+  // Real-time listener for unread messages count across channels
+  useEffect(() => {
+    if (!currentUser || channels.length === 0) return;
+
+    const unsubs = channels.map(channel => {
+      const q = query(collection(db, 'broadcasting_channels', channel.id, 'messages'));
+      return onSnapshot(q, (snap) => {
+        let unread = 0;
+        snap.docs.forEach(docSnap => {
+          const msgData = docSnap.data();
+          const readByList = msgData.readBy || [];
+          if (!readByList.includes(currentUser.uid)) {
+            unread++;
+          }
+        });
+        setChannelUnreadCounts(prev => ({ ...prev, [channel.id]: unread }));
+      }, (err) => {
+        console.warn(`Unread count tracking error for channel ${channel.id}:`, err);
+      });
+    });
+
+    return () => unsubs.forEach(unsub => unsub());
+  }, [currentUser, channels]);
+
   // Mark broadcast messages as read when a student views them
   useEffect(() => {
     if (!currentUser || !selectedChannel || messages.length === 0) return;
-
-    // Only students/non-admins mark as read
-    const isStudent = currentProfile?.role !== 'admin';
-    if (!isStudent) return;
-
-    // Only mark messages in 'Team Prepnext' broadcast channel as read (or any channel with Prepnext in its name)
-    const isPrepnextChannel = selectedChannel.name.toLowerCase().includes('prepnext');
-    if (!isPrepnextChannel) return;
 
     messages.forEach(async (msg) => {
       const readByList = msg.readBy || [];
@@ -218,7 +239,7 @@ export default function Chat() {
         }
       }
     });
-  }, [currentUser, selectedChannel, messages, currentProfile]);
+  }, [currentUser, selectedChannel, messages]);
 
   // Listen to user's DMs list
   useEffect(() => {
@@ -368,12 +389,12 @@ export default function Chat() {
     return () => unsub();
   }, [currentUser]);
 
-  // Listen to all users directory when modal is visible
+  // Listen to all users directory when modal or find tab is active
   useEffect(() => {
-    if (!showFindModal) return;
+    if (!showFindModal && sidebarTab !== 'find') return;
 
     setLoadingSearch(true);
-    const q = query(collection(db, 'users'), orderBy('name', 'asc'), limit(200));
+    const q = query(collection(db, 'users'), limit(200));
     const unsub = onSnapshot(q, (snap) => {
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       setAllUsers(list);
@@ -384,29 +405,38 @@ export default function Chat() {
     });
 
     return () => unsub();
-  }, [showFindModal]);
+  }, [showFindModal, sidebarTab]);
 
-  // Filter Directory Users based on query input
+  // Filter Directory Users based on query input (or show all aspirants if empty)
   useEffect(() => {
+    const listWithoutSelf = allUsers.filter(u => u.id !== currentUser?.uid);
     if (!directorySearchQuery.trim()) {
-      setSearchResults([]);
+      setSearchResults(listWithoutSelf);
       return;
     }
     const qClean = directorySearchQuery.toLowerCase().trim();
-    const filtered = allUsers.filter(u => 
-      u.id !== currentUser?.uid && (
-        (u.name || '').toLowerCase().includes(qClean) || 
-        (u.username || '').toLowerCase().includes(qClean) ||
-        (u.email || '').toLowerCase().includes(qClean) ||
-        (u.bio || '').toLowerCase().includes(qClean)
-      )
+    const filtered = listWithoutSelf.filter(u => 
+      (u.name || u.fullName || '').toLowerCase().includes(qClean) || 
+      (u.username || '').toLowerCase().includes(qClean) ||
+      (u.email || '').toLowerCase().includes(qClean) ||
+      (u.bio || u.targetExam || '').toLowerCase().includes(qClean)
     );
     setSearchResults(filtered);
   }, [directorySearchQuery, allUsers, currentUser]);
 
   // Start or fetch active DM conversation
   const startOrGetDm = async (targetId: string) => {
-    if (!currentUser) return;
+    if (!currentUser || !targetId || targetId === currentUser.uid) return;
+
+    // Check if conversation already exists in active DMs list
+    const existingDm = dms.find(d => d.users?.includes(targetId));
+    if (existingDm) {
+      setSelectedDm(existingDm);
+      setSelectedChannel(null);
+      setMobileView('chat');
+      return;
+    }
+
     setLoadingDms(true);
     try {
       const chatId = [currentUser.uid, targetId].sort().join('_');
@@ -418,21 +448,22 @@ export default function Chat() {
         setSelectedChannel(null);
         setMobileView('chat');
       } else {
-        const userRef = doc(db, 'users', targetId);
-        const userSnap = await getDoc(userRef);
-        const targetUserData = userSnap.exists() ? userSnap.data() : {};
-        
-        const myRef = doc(db, 'users', currentUser.uid);
-        const mySnap = await getDoc(myRef);
-        const myUserData = mySnap.exists() ? mySnap.data() : {};
+        let targetUserData: any = {};
+        try {
+          const userRef = doc(db, 'users', targetId);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) targetUserData = userSnap.data();
+        } catch (e) {
+          console.warn("Could not fetch target user data:", e);
+        }
 
         const newChatData = {
           users: [currentUser.uid, targetId],
           user1: {
             uid: currentUser.uid,
-            name: myUserData.name || myUserData.fullName || currentProfile?.fullName || currentProfile?.name || currentUser.displayName || 'Aspirant',
-            photoURL: myUserData.profilePicture || myUserData.photoURL || currentProfile?.photoURL || currentUser.photoURL || '',
-            isPremium: Boolean(myUserData.isPremium || currentProfile?.isPremium)
+            name: currentProfile?.fullName || currentProfile?.name || currentUser.displayName || 'Aspirant',
+            photoURL: currentProfile?.photoURL || currentUser.photoURL || '',
+            isPremium: Boolean(currentProfile?.isPremium)
           },
           user2: {
             uid: targetId,
@@ -470,23 +501,29 @@ export default function Chat() {
     try {
       if (selectedChannel) {
         const isAdmin = currentProfile?.role === 'admin';
-        if (!isAdmin) {
-          toast.error('Only administrators are authorized to send broadcasts.');
+        const allowAspirants = selectedChannel.allowAspirantMessages || selectedChannel.whoCanPost === 'everyone';
+
+        if (!isAdmin && !allowAspirants) {
+          toast.error('Only administrators are authorized to send broadcasts in this channel.');
           setNewMessage(content);
           setSendingMessage(false);
           return;
         }
 
+        const senderName = isAdmin 
+          ? selectedChannel.name 
+          : (currentProfile?.fullName || currentProfile?.name || currentUser.displayName || 'Aspirant');
+
         await addDoc(collection(db, 'broadcasting_channels', selectedChannel.id, 'messages'), {
           senderId: currentUser.uid,
-          senderName: selectedChannel.name,
-          senderIcon: selectedChannel.icon,
+          senderName: senderName,
+          senderIcon: isAdmin ? selectedChannel.icon : 'user',
           content: content,
           createdAt: new Date().toISOString()
         });
 
       } else if (selectedDm) {
-        const myName = currentProfile?.name || currentUser.displayName || 'Aspirant';
+        const myName = currentProfile?.fullName || currentProfile?.name || currentUser.displayName || 'Aspirant';
 
         await addDoc(collection(db, 'chats', selectedDm.id, 'messages'), {
           senderId: currentUser.uid,
@@ -580,25 +617,38 @@ export default function Chat() {
       toast.error('Please log in first!');
       return;
     }
+    const targetId = targetUser.id || targetUser.uid;
+    if (!targetId || targetId === currentUser.uid) return;
+
+    if (friendIds.has(targetId)) {
+      toast.error('You are already connected with this aspirant!');
+      return;
+    }
+    if (sentRequests.has(targetId)) {
+      toast.error('Connection request already pending!');
+      return;
+    }
+
     setActionLoading(true);
     try {
       const myName = currentProfile?.fullName || currentProfile?.name || currentUser.displayName || currentUser.email?.split('@')[0] || 'Aspirant';
       const myPhoto = currentProfile?.photoURL || currentUser.photoURL || '';
+      const reqId = `${currentUser.uid}_${targetId}`;
 
-      await addDoc(collection(db, 'friend_requests'), {
+      await setDoc(doc(db, 'friend_requests', reqId), {
         senderId: currentUser.uid,
         senderName: myName,
         senderPhoto: myPhoto,
         senderIsPremium: Boolean(currentProfile?.isPremium || currentProfile?.role === 'admin'),
-        receiverId: targetUser.id || targetUser.uid,
-        receiverName: targetUser.name || 'Aspirant',
+        receiverId: targetId,
+        receiverName: targetUser.name || targetUser.fullName || 'Aspirant',
         receiverPhoto: targetUser.profilePicture || targetUser.photoURL || '',
         receiverIsPremium: Boolean(targetUser.isPremium || targetUser.role === 'admin'),
         status: 'pending',
         createdAt: Date.now()
       });
 
-      toast.success(`Connection request sent to ${targetUser.name}!`);
+      toast.success(`Connection request sent to ${targetUser.name || targetUser.fullName || 'Aspirant'}!`);
     } catch (err) {
       console.error("Error sending request:", err);
       toast.error('Failed to send request.');
@@ -783,16 +833,26 @@ export default function Chat() {
                             </div>
 
                             <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1">
-                                <span className={`text-xs font-bold truncate block ${isSelected ? 'text-[#001f19]' : 'text-slate-800'}`}>
-                                  {chan.name}
-                                </span>
-                                {chan.isVerified && (
-                                  <VerifiedBadge size="xs" variant="yellow" title="Verified Channel" className="ml-0.5 shrink-0" />
+                              <div className="flex items-center justify-between gap-1">
+                                <div className="flex items-center gap-1 min-w-0">
+                                  <span className={`text-xs font-bold truncate block ${isSelected ? 'text-[#001f19]' : 'text-slate-800'}`}>
+                                    {chan.name}
+                                  </span>
+                                  {chan.isVerified && (
+                                    <VerifiedBadge size="xs" variant="yellow" title="Verified Channel" className="ml-0.5 shrink-0" />
+                                  )}
+                                </div>
+                                {channelUnreadCounts[chan.id] > 0 && (
+                                  <span className="bg-[#006e5d] text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0 shadow-xs animate-pulse">
+                                    {channelUnreadCounts[chan.id] > 99 ? '99+' : channelUnreadCounts[chan.id]}
+                                  </span>
                                 )}
                               </div>
-                              <p className="text-[8px] text-slate-400 font-bold uppercase tracking-wider">
-                                Official Update
+                              <p className="text-[8px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                                <span>Official Update</span>
+                                {(chan.allowAspirantMessages || chan.whoCanPost === 'everyone') && (
+                                  <span className="text-teal-600 font-extrabold">• Open Chat</span>
+                                )}
                               </p>
                             </div>
                           </button>
@@ -1133,9 +1193,15 @@ export default function Chat() {
                           <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="text-xs font-black text-slate-900">{msg.senderName}</span>
-                              <span className="text-[8px] font-black px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-600 tracking-wider uppercase border border-yellow-500/20">
-                                Team Admin
-                              </span>
+                              {msg.senderIcon !== 'user' ? (
+                                <span className="text-[8px] font-black px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-600 tracking-wider uppercase border border-yellow-500/20">
+                                  Team Admin
+                                </span>
+                              ) : (
+                                <span className="text-[8px] font-black px-1.5 py-0.5 rounded bg-teal-500/10 text-[#006e5d] tracking-wider uppercase border border-teal-500/20">
+                                  Aspirant
+                                </span>
+                              )}
                             </div>
                             <div className="flex items-center gap-2">
                               {selectedChannel.name.toLowerCase().includes('prepnext') && msg.readBy && msg.readBy.length > 0 && (
@@ -1162,12 +1228,12 @@ export default function Chat() {
 
                 {/* Dispatcher Actions */}
                 <div className="border-t border-slate-100 p-3 sm:p-4 bg-white shrink-0">
-                  {isAdmin ? (
+                  {isAdmin || selectedChannel.allowAspirantMessages || selectedChannel.whoCanPost === 'everyone' ? (
                     <form onSubmit={handleSendMessage} className="flex gap-2 sm:gap-3">
                       <input
                         type="text"
                         required
-                        placeholder={`Broadcast update...`}
+                        placeholder={isAdmin ? "Broadcast update..." : "Send a message in channel..."}
                         className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl sm:rounded-2xl outline-none focus:ring-2 focus:ring-[#006e5d]/15 text-xs sm:text-sm font-medium text-slate-800"
                         value={newMessage}
                         onChange={e => setNewMessage(e.target.value)}
@@ -1178,7 +1244,7 @@ export default function Chat() {
                         className="px-4 sm:px-6 py-2.5 sm:py-3 bg-[#006e5d] hover:bg-[#005a4d] text-white rounded-xl sm:rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-50 shadow-md shadow-teal-50"
                       >
                         {sendingMessage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                        <span className="hidden sm:inline">Broadcast</span>
+                        <span className="hidden sm:inline">{isAdmin ? "Broadcast" : "Send"}</span>
                       </button>
                     </form>
                   ) : (

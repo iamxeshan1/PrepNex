@@ -229,31 +229,52 @@ export default function StudentProfile() {
         return;
       }
 
-      // Check pending friend request sent by me
+      // Check pending friend request sent by me using deterministic ID
+      const reqSentId = `${myUid}_${otherUid}`;
+      const reqSentRef = doc(db, 'friend_requests', reqSentId);
+      const reqSentSnap = await getDoc(reqSentRef);
+
+      if (reqSentSnap.exists() && reqSentSnap.data()?.status === 'pending') {
+        setFriendshipStatus('pending_sent');
+        setRequestId(reqSentSnap.id);
+        return;
+      }
+
+      // Check pending friend request received from them using deterministic ID
+      const reqRecId = `${otherUid}_${myUid}`;
+      const reqRecRef = doc(db, 'friend_requests', reqRecId);
+      const reqRecSnap = await getDoc(reqRecRef);
+
+      if (reqRecSnap.exists() && reqRecSnap.data()?.status === 'pending') {
+        setFriendshipStatus('pending_received');
+        setRequestId(reqRecSnap.id);
+        return;
+      }
+
+      // Fallback query search if created with old random ID
       const reqSentQ = query(
         collection(db, 'friend_requests'),
         where('senderId', '==', myUid),
         where('receiverId', '==', otherUid),
         where('status', '==', 'pending')
       );
-      const reqSentSnap = await getDocs(reqSentQ);
-      if (!reqSentSnap.empty) {
+      const reqSentQuerySnap = await getDocs(reqSentQ);
+      if (!reqSentQuerySnap.empty) {
         setFriendshipStatus('pending_sent');
-        setRequestId(reqSentSnap.docs[0].id);
+        setRequestId(reqSentQuerySnap.docs[0].id);
         return;
       }
 
-      // Check pending friend request received from them
       const reqRecQ = query(
         collection(db, 'friend_requests'),
         where('senderId', '==', otherUid),
         where('receiverId', '==', myUid),
         where('status', '==', 'pending')
       );
-      const reqRecSnap = await getDocs(reqRecQ);
-      if (!reqRecSnap.empty) {
+      const reqRecQuerySnap = await getDocs(reqRecQ);
+      if (!reqRecQuerySnap.empty) {
         setFriendshipStatus('pending_received');
-        setRequestId(reqRecSnap.docs[0].id);
+        setRequestId(reqRecQuerySnap.docs[0].id);
         return;
       }
 
@@ -264,9 +285,18 @@ export default function StudentProfile() {
   };
 
   const handleSendFriendRequest = async () => {
-    if (!currentUser) {
+    if (!currentUser || !targetId) {
       toast.error('Please log in to send friend requests!');
       navigate('/login');
+      return;
+    }
+
+    if (friendshipStatus !== 'none') {
+      if (friendshipStatus === 'pending_sent') {
+        toast.error('Friend request already sent!');
+      } else if (friendshipStatus === 'friends') {
+        toast.error('You are already connected!');
+      }
       return;
     }
 
@@ -274,8 +304,9 @@ export default function StudentProfile() {
     try {
       const myName = currentProfile?.fullName || currentProfile?.name || currentUser.displayName || currentUser.email?.split('@')[0] || 'Aspirant';
       const myPhoto = currentProfile?.photoURL || currentUser.photoURL || '';
+      const reqId = `${currentUser.uid}_${targetId}`;
 
-      const reqRef = await addDoc(collection(db, 'friend_requests'), {
+      await setDoc(doc(db, 'friend_requests', reqId), {
         senderId: currentUser.uid,
         senderName: myName,
         senderPhoto: myPhoto,
@@ -289,7 +320,7 @@ export default function StudentProfile() {
       });
 
       setFriendshipStatus('pending_sent');
-      setRequestId(reqRef.id);
+      setRequestId(reqId);
       toast.success('Friend request sent!');
     } catch (err) {
       console.error("Error sending friend request:", err);

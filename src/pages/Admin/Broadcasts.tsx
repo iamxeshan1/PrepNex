@@ -3,6 +3,7 @@ import { AdminLayout } from '../../components/AdminLayout';
 import { 
   collection, 
   addDoc, 
+  updateDoc,
   query, 
   orderBy, 
   onSnapshot, 
@@ -17,6 +18,9 @@ import {
   Send, 
   Trash2, 
   Plus, 
+  Edit3,
+  Lock,
+  Globe,
   CheckCircle2, 
   Clock, 
   Shield, 
@@ -28,7 +32,8 @@ import {
   User,
   Hash,
   AlertTriangle,
-  Sparkles
+  Sparkles,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ConfirmationModal from '../../components/ConfirmationModal';
@@ -39,6 +44,8 @@ interface BroadcastingChannel {
   name: string;
   icon: string; // e.g. 'team', 'megaphone', 'support'
   isVerified: boolean;
+  allowAspirantMessages?: boolean;
+  whoCanPost?: 'admin_only' | 'everyone';
   createdAt: any;
 }
 
@@ -60,10 +67,20 @@ export default function Broadcasts() {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [creatingChannel, setCreatingChannel] = useState(false);
 
+  // Edit Channel Modal State
+  const [editingChannel, setEditingChannel] = useState<BroadcastingChannel | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    icon: 'team',
+    whoCanPost: 'admin_only' as 'admin_only' | 'everyone'
+  });
+  const [savingEdit, setSavingEdit] = useState(false);
+
   // Channel Creation Form State
   const [channelForm, setChannelForm] = useState({
     name: 'Team Prepnext',
-    icon: 'team'
+    icon: 'team',
+    whoCanPost: 'admin_only' as 'admin_only' | 'everyone'
   });
 
   // Message Send Form State
@@ -137,11 +154,15 @@ export default function Broadcasts() {
 
     setCreatingChannel(true);
     try {
+      const allowAspirantMessages = channelForm.whoCanPost === 'everyone';
+
       // Add channel document
       const docRef = await addDoc(collection(db, 'broadcasting_channels'), {
         name: channelForm.name.trim(),
         icon: channelForm.icon,
         isVerified: true, // Admin-created channels are always automatically verified
+        allowAspirantMessages: allowAspirantMessages,
+        whoCanPost: channelForm.whoCanPost,
         createdAt: new Date().toISOString()
       });
 
@@ -163,7 +184,8 @@ export default function Broadcasts() {
       // Reset form to default
       setChannelForm({
         name: 'Team Prepnext',
-        icon: 'team'
+        icon: 'team',
+        whoCanPost: 'admin_only'
       });
     } catch (err) {
       console.error(err);
@@ -174,6 +196,62 @@ export default function Broadcasts() {
       });
     } finally {
       setCreatingChannel(false);
+    }
+  };
+
+  // Open Edit Channel Modal
+  const handleOpenEditChannel = (channel: BroadcastingChannel) => {
+    setEditingChannel(channel);
+    setEditForm({
+      name: channel.name,
+      icon: channel.icon || 'team',
+      whoCanPost: channel.whoCanPost || (channel.allowAspirantMessages ? 'everyone' : 'admin_only')
+    });
+  };
+
+  // Update existing channel
+  const handleUpdateChannel = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingChannel || !editForm.name.trim()) return;
+
+    setSavingEdit(true);
+    try {
+      const allowAspirantMessages = editForm.whoCanPost === 'everyone';
+      const channelRef = doc(db, 'broadcasting_channels', editingChannel.id);
+
+      await updateDoc(channelRef, {
+        name: editForm.name.trim(),
+        icon: editForm.icon,
+        allowAspirantMessages: allowAspirantMessages,
+        whoCanPost: editForm.whoCanPost
+      });
+
+      // Update local state if currently selected
+      if (selectedChannel?.id === editingChannel.id) {
+        setSelectedChannel(prev => prev ? {
+          ...prev,
+          name: editForm.name.trim(),
+          icon: editForm.icon,
+          allowAspirantMessages: allowAspirantMessages,
+          whoCanPost: editForm.whoCanPost
+        } : null);
+      }
+
+      setToast({
+        isVisible: true,
+        message: 'Channel settings updated successfully!',
+        type: 'success'
+      });
+      setEditingChannel(null);
+    } catch (err) {
+      console.error("Error updating channel:", err);
+      setToast({
+        isVisible: true,
+        message: 'Failed to update channel.',
+        type: 'error'
+      });
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -324,6 +402,20 @@ export default function Broadcasts() {
                 </select>
               </div>
 
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">
+                  Who Can Post Messages?
+                </label>
+                <select
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-[#006e5d]/10 outline-none"
+                  value={channelForm.whoCanPost}
+                  onChange={e => setChannelForm({ ...channelForm, whoCanPost: e.target.value as 'admin_only' | 'everyone' })}
+                >
+                  <option value="admin_only">🔒 Only Admin (Broadcast Only)</option>
+                  <option value="everyone">🌐 Admin + Aspirants (Everyone can post)</option>
+                </select>
+              </div>
+
               <button
                 type="submit"
                 disabled={creatingChannel}
@@ -379,22 +471,44 @@ export default function Broadcasts() {
                               </span>
                             )}
                           </div>
-                          <p className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">
-                            Verified Broadcast Pipeline
-                          </p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className={`inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md ${
+                              chan.allowAspirantMessages || chan.whoCanPost === 'everyone'
+                                ? 'bg-teal-50 text-teal-700 border border-teal-200'
+                                : 'bg-slate-100 text-slate-500 border border-slate-200'
+                            }`}>
+                              {chan.allowAspirantMessages || chan.whoCanPost === 'everyone' ? (
+                                <><Globe className="w-2.5 h-2.5" /> Everyone Can Post</>
+                              ) : (
+                                <><Lock className="w-2.5 h-2.5" /> Only Admin</>
+                              )}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteChannel(chan);
-                        }}
-                        className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all shrink-0"
-                        title="Delete Channel"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenEditChannel(chan);
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-[#006e5d] hover:bg-teal-50 rounded-lg transition-all"
+                          title="Edit Channel Settings"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteChannel(chan);
+                          }}
+                          className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                          title="Delete Channel"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -431,11 +545,22 @@ export default function Broadcasts() {
                   </div>
                 </div>
 
-                <div className="text-right">
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">Created</span>
-                  <span className="text-xs font-black text-slate-600">
-                    {new Date(selectedChannel.createdAt).toLocaleDateString()}
-                  </span>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => handleOpenEditChannel(selectedChannel)}
+                    className="p-2 text-slate-500 hover:text-[#006e5d] hover:bg-slate-100 rounded-xl transition-all flex items-center gap-1.5 text-xs font-bold"
+                    title="Edit Channel Settings"
+                  >
+                    <Edit3 className="w-4 h-4 text-[#006e5d]" />
+                    <span>Edit Channel</span>
+                  </button>
+
+                  <div className="text-right border-l border-slate-200 pl-3">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">Created</span>
+                    <span className="text-xs font-black text-slate-600">
+                      {new Date(selectedChannel.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -526,6 +651,94 @@ export default function Broadcasts() {
           )}
         </div>
       </div>
+
+      {/* Edit Channel Modal */}
+      <AnimatePresence>
+        {editingChannel && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 relative"
+            >
+              <button
+                onClick={() => setEditingChannel(null)}
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <h3 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-[#006e5d]" /> Edit Channel Settings
+              </h3>
+
+              <form onSubmit={handleUpdateChannel} className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">
+                    Channel Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#006e5d]/10"
+                    value={editForm.name}
+                    onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">
+                    Icon Identifier
+                  </label>
+                  <select
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#006e5d]/10"
+                    value={editForm.icon}
+                    onChange={e => setEditForm({ ...editForm, icon: e.target.value })}
+                  >
+                    <option value="team">Team / Users Icon 👥</option>
+                    <option value="megaphone">Megaphone Icon 📢</option>
+                    <option value="support">Help/Shield Icon 🛡️</option>
+                    <option value="academic">Academic/Graduation Icon 🎓</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">
+                    Who Can Post Messages?
+                  </label>
+                  <select
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-[#006e5d]/10"
+                    value={editForm.whoCanPost}
+                    onChange={e => setEditForm({ ...editForm, whoCanPost: e.target.value as 'admin_only' | 'everyone' })}
+                  >
+                    <option value="admin_only">🔒 Only Admin (Broadcast Only)</option>
+                    <option value="everyone">🌐 Admin + Aspirants (Everyone can post)</option>
+                  </select>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-3">
+                  <button
+                    type="button"
+                    onClick={() => setEditingChannel(null)}
+                    className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingEdit || !editForm.name.trim()}
+                    className="px-5 py-2.5 bg-[#006e5d] hover:bg-[#005a4d] text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {savingEdit ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <ConfirmationModal
         isOpen={confirmModal.isOpen}
