@@ -263,11 +263,24 @@ export default function Chat() {
   // Unread DM messages tracking per DM chat
   const [dmUnreadCounts, setDmUnreadCounts] = useState<Record<string, number>>({});
 
-  useEffect(() => {
-    if (!currentUser || dms.length === 0) return;
+  // Stable list of chat IDs to track unread messages (from active DMs & connected friends)
+  const chatIdsToTrack = useMemo(() => {
+    if (!currentUser) return [];
+    const ids = new Set<string>();
+    dms.forEach(d => { if (d.id) ids.add(d.id); });
+    friends.forEach(f => {
+      if (f.friendId) {
+        ids.add([currentUser.uid, f.friendId].sort().join('_'));
+      }
+    });
+    return Array.from(ids);
+  }, [currentUser, dms, friends]);
 
-    const unsubs = dms.map(chat => {
-      const q = query(collection(db, 'chats', chat.id, 'messages'));
+  useEffect(() => {
+    if (!currentUser || chatIdsToTrack.length === 0) return;
+
+    const unsubs = chatIdsToTrack.map(chatId => {
+      const q = query(collection(db, 'chats', chatId, 'messages'));
       return onSnapshot(q, (snap) => {
         let unread = 0;
         snap.docs.forEach(docSnap => {
@@ -277,14 +290,17 @@ export default function Chat() {
             unread++;
           }
         });
-        setDmUnreadCounts(prev => ({ ...prev, [chat.id]: unread }));
+        setDmUnreadCounts(prev => {
+          if (prev[chatId] === unread) return prev;
+          return { ...prev, [chatId]: unread };
+        });
       }, (err) => {
-        console.warn(`Unread DM count tracking error for chat ${chat.id}:`, err);
+        console.warn(`Unread DM count tracking error for chat ${chatId}:`, err);
       });
     });
 
     return () => unsubs.forEach(unsub => unsub());
-  }, [currentUser, dms]);
+  }, [currentUser, chatIdsToTrack]);
 
   // Mark DM messages as read when a DM chat is selected/opened
   useEffect(() => {
@@ -1139,8 +1155,9 @@ export default function Chat() {
                       </p>
                       <div className="flex gap-2 overflow-x-auto pb-1 px-1 scrollbar-none">
                         {friends.map((friend) => {
+                          const friendChatId = [currentUser?.uid || '', friend.friendId].sort().join('_');
                           const friendChat = dms.find(d => d.users?.includes(friend.friendId));
-                          const unreadCount = friendChat ? (dmUnreadCounts[friendChat.id] || 0) : 0;
+                          const unreadCount = (friendChat ? dmUnreadCounts[friendChat.id] : 0) || (dmUnreadCounts[friendChatId] || 0);
 
                           return (
                             <button
