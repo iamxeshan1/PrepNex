@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { 
   collection, query, orderBy, onSnapshot, addDoc, doc, getDoc, setDoc, updateDoc, where, deleteDoc, limit, arrayUnion
@@ -971,11 +971,73 @@ export default function Chat() {
     c.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredDms = dms.filter(chat => {
-    const otherUser = getOtherUser(chat);
-    return (otherUser.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
-           (chat.lastMessage || '').toLowerCase().includes(searchQuery.toLowerCase());
-  });
+  // Unified Aspirant Direct Messages list combining active DM chats and connected friends
+  const combinedAspirantChats = useMemo(() => {
+    const list: DmChat[] = [...dms];
+    const existingOtherUserIds = new Set(
+      dms.map(chat => chat.users?.find(u => u !== currentUser?.uid)).filter(Boolean)
+    );
+
+    friends.forEach(friend => {
+      if (friend.friendId && !existingOtherUserIds.has(friend.friendId)) {
+        const chatId = [currentUser?.uid || '', friend.friendId].sort().join('_');
+        const myName = currentProfile?.fullName || currentProfile?.name || currentUser?.displayName || 'Aspirant';
+        const myPhoto = currentProfile?.photoURL || currentUser?.photoURL || '';
+        const myIsPremium = Boolean(currentProfile?.isPremium);
+
+        const isUser1 = (currentUser?.uid || '') < friend.friendId;
+        list.push({
+          id: chatId,
+          users: [currentUser?.uid || '', friend.friendId],
+          user1: isUser1 ? {
+            uid: currentUser?.uid || '',
+            name: myName,
+            photoURL: myPhoto,
+            isPremium: myIsPremium
+          } : {
+            uid: friend.friendId,
+            name: friend.name,
+            photoURL: friend.photoURL,
+            isPremium: friend.isPremium
+          },
+          user2: isUser1 ? {
+            uid: friend.friendId,
+            name: friend.name,
+            photoURL: friend.photoURL,
+            isPremium: friend.isPremium
+          } : {
+            uid: currentUser?.uid || '',
+            name: myName,
+            photoURL: myPhoto,
+            isPremium: myIsPremium
+          },
+          createdAt: new Date().toISOString(),
+          lastMessage: 'Tap to start conversation',
+          lastMessageAt: ''
+        });
+      }
+    });
+
+    // Sort: unread chats first, then by lastMessageAt descending
+    return list.sort((a, b) => {
+      const unreadA = dmUnreadCounts[a.id] || 0;
+      const unreadB = dmUnreadCounts[b.id] || 0;
+      if (unreadA > 0 && unreadB === 0) return -1;
+      if (unreadB > 0 && unreadA === 0) return 1;
+
+      const t1 = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
+      const t2 = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
+      return t2 - t1;
+    });
+  }, [dms, friends, currentUser, currentProfile, dmUnreadCounts]);
+
+  const filteredDms = useMemo(() => {
+    return combinedAspirantChats.filter(chat => {
+      const otherUser = getOtherUser(chat);
+      return (otherUser.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+             (chat.lastMessage || '').toLowerCase().includes(searchQuery.toLowerCase());
+    });
+  }, [combinedAspirantChats, searchQuery]);
 
   return (
     <Layout>
@@ -1204,11 +1266,19 @@ export default function Chat() {
                     )}
                   </div>
 
-                  {/* DIRECT CHATS SECTION */}
-                  <div className="space-y-1.5 pt-2 border-t border-slate-50">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
-                      Direct Messages
-                    </p>
+                  {/* ASPIRANT CHATS SECTION */}
+                  <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                    <div className="flex items-center justify-between px-1 mb-1">
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                        <Users className="w-3.5 h-3.5 text-[#006e5d]" /> Aspirant Chats
+                      </p>
+                      {totalDmUnread > 0 && (
+                        <span className="bg-rose-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full animate-pulse shadow-xs">
+                          {totalDmUnread > 99 ? '99+' : totalDmUnread} unread
+                        </span>
+                      )}
+                    </div>
+
                     {loadingDms ? (
                       <div className="flex items-center justify-center py-4">
                         <Loader2 className="w-4 h-4 text-slate-300 animate-spin" />
@@ -1216,7 +1286,7 @@ export default function Chat() {
                     ) : filteredDms.length === 0 ? (
                       <div className="text-center py-6 px-2 opacity-70">
                         <MessageSquare className="w-6 h-6 text-slate-300 mx-auto mb-1" />
-                        <p className="text-[10px] font-bold text-slate-500">No active conversations</p>
+                        <p className="text-[10px] font-bold text-slate-500">No aspirant chats found</p>
                         <button 
                           onClick={() => setSidebarTab('find')}
                           className="text-[9px] font-black uppercase text-[#006e5d] mt-1 hover:underline block mx-auto"
@@ -1234,15 +1304,13 @@ export default function Chat() {
                           <button
                             key={chat.id}
                             onClick={() => {
-                              setSelectedDm(chat);
-                              setSelectedChannel(null);
-                              setMobileView('chat');
+                              startOrGetDm(otherUser.uid);
                             }}
                             className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-2.5 ${
                               isSelected 
                                 ? 'bg-teal-50/40 border-[#006e5d]/30 text-[#006e5d]' 
                                 : unreadCount > 0
-                                ? 'bg-rose-50/40 border-rose-200/60 hover:bg-rose-50/60'
+                                ? 'bg-rose-50/60 border-rose-200 hover:bg-rose-50/80 shadow-xs'
                                 : 'bg-slate-50/20 border-transparent hover:bg-slate-50'
                             }`}
                           >
@@ -1253,7 +1321,9 @@ export default function Chat() {
                                 <User className="w-4 h-4 text-slate-400" />
                               )}
                               {unreadCount > 0 ? (
-                                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-rose-500 rounded-full border border-white" />
+                                <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-rose-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-xs animate-pulse">
+                                  {unreadCount > 9 ? '!' : unreadCount}
+                                </span>
                               ) : otherUser.isPremium ? (
                                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-white" />
                               ) : null}
@@ -1280,7 +1350,7 @@ export default function Chat() {
                                 </div>
                               </div>
                               <p className={`text-[9px] truncate mt-0.5 ${unreadCount > 0 ? 'font-black text-rose-700' : 'text-slate-400 font-semibold'}`}>
-                                {chat.lastMessage || 'Conversation started'}
+                                {chat.lastMessage || 'Tap to start conversation'}
                               </p>
                             </div>
                           </button>
