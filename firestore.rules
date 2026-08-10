@@ -239,10 +239,7 @@ service cloud.firestore {
 
     // Direct Chats (DMs)
     match /chats/{chatId} {
-      allow get: if isSignedIn() && (resource == null || chatId.matches('.*' + request.auth.uid + '.*') || ('users' in resource.data && request.auth.uid in resource.data.users) || isAdmin());
-      allow list: if isSignedIn() && (('users' in resource.data && request.auth.uid in resource.data.users) || chatId.matches('.*' + request.auth.uid + '.*') || isAdmin());
-      allow create, update: if isSignedIn();
-      allow delete: if isAdmin();
+      allow read, write: if isSignedIn();
 
       match /messages/{messageId} {
         allow read, write: if isSignedIn();

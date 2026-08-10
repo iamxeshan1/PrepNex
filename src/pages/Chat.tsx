@@ -456,9 +456,9 @@ export default function Chat() {
     return () => unsub();
   }, [currentUser]);
 
-  // Listen to all users directory when modal or find tab is active
+  // Listen to all users directory
   useEffect(() => {
-    if (!showFindModal && sidebarTab !== 'find') return;
+    if (!currentUser) return;
 
     setLoadingSearch(true);
     const q = query(collection(db, 'users'), limit(200));
@@ -467,12 +467,12 @@ export default function Chat() {
       setAllUsers(list);
       setLoadingSearch(false);
     }, (err) => {
-      console.error("Error fetching directory users:", err);
+      console.warn("Directory users load warning:", err);
       setLoadingSearch(false);
     });
 
     return () => unsub();
-  }, [showFindModal, sidebarTab]);
+  }, [currentUser]);
 
   // Filter Directory Users based on query input (or show all aspirants if empty)
   useEffect(() => {
@@ -491,13 +491,109 @@ export default function Chat() {
     setSearchResults(filtered);
   }, [directorySearchQuery, allUsers, currentUser]);
 
+  // Helper to extract the other party's resolved info in a 1-on-1 DM chat
+  const getOtherUser = (c: DmChat) => {
+    let otherUid = c.users?.find(u => u !== currentUser?.uid) || '';
+    let chatUser: any = null;
+    if (c.user1 && c.user2) {
+      chatUser = c.user1.uid === currentUser?.uid ? c.user2 : c.user1;
+    } else if (c.user1 && c.user1.uid !== currentUser?.uid) {
+      chatUser = c.user1;
+    } else if (c.user2 && c.user2.uid !== currentUser?.uid) {
+      chatUser = c.user2;
+    }
+    if (!otherUid && chatUser?.uid) {
+      otherUid = chatUser.uid;
+    }
+
+    const friendMatch = friends.find(f => f.friendId === otherUid);
+    const userMatch = allUsers.find(u => u.id === otherUid);
+
+    const name = (chatUser?.name && chatUser.name !== 'Aspirant') 
+      ? chatUser.name 
+      : (friendMatch?.name && friendMatch.name !== 'Aspirant') 
+      ? friendMatch.name 
+      : (userMatch?.fullName || userMatch?.name) 
+      || chatUser?.name 
+      || 'Aspirant';
+
+    const photoURL = chatUser?.photoURL || friendMatch?.photoURL || userMatch?.photoURL || userMatch?.profilePicture || '';
+    const isPremium = Boolean(chatUser?.isPremium || friendMatch?.isPremium || userMatch?.isPremium);
+
+    return { uid: otherUid, name, photoURL, isPremium };
+  };
+
+  // Helper to extract sender's display name from profile, friends, or user directory
+  const getSenderDisplayName = (senderId?: string, fallbackName?: string) => {
+    if (!senderId) return (fallbackName && fallbackName !== 'Aspirant') ? fallbackName : 'Aspirant';
+
+    if (currentUser && senderId === currentUser.uid) {
+      const myName = currentProfile?.fullName || currentProfile?.name || currentUser.displayName;
+      if (myName && myName !== 'Aspirant') return myName;
+    }
+
+    const userInDirectory = allUsers.find(u => u.id === senderId);
+    if (userInDirectory) {
+      const name = userInDirectory.fullName || userInDirectory.name || userInDirectory.displayName;
+      if (name && name !== 'Aspirant') return name;
+    }
+
+    const friendInList = friends.find(f => f.friendId === senderId);
+    if (friendInList?.name && friendInList.name !== 'Aspirant') {
+      return friendInList.name;
+    }
+
+    if (selectedDm) {
+      const other = getOtherUser(selectedDm);
+      if (other.uid === senderId && other.name && other.name !== 'Aspirant') {
+        return other.name;
+      }
+    }
+
+    if (fallbackName && fallbackName !== 'Aspirant') {
+      return fallbackName;
+    }
+
+    return 'Aspirant';
+  };
+
   // Start or fetch active DM conversation
   const startOrGetDm = async (targetId: string) => {
     if (!currentUser || !targetId || targetId === currentUser.uid) return;
 
+    const friendMatch = friends.find(f => f.friendId === targetId);
+    const userMatch = allUsers.find(u => u.id === targetId);
+
+    let targetUserData: any = {};
+    try {
+      const userRef = doc(db, 'users', targetId);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) targetUserData = userSnap.data();
+    } catch (e) {
+      console.warn("Could not fetch target user data:", e);
+    }
+
+    const targetName = friendMatch?.name || userMatch?.fullName || userMatch?.name || targetUserData.fullName || targetUserData.name || 'Aspirant';
+    const targetPhoto = friendMatch?.photoURL || userMatch?.photoURL || userMatch?.profilePicture || targetUserData.photoURL || targetUserData.profilePicture || '';
+    const targetIsPremium = Boolean(friendMatch?.isPremium || userMatch?.isPremium || targetUserData.isPremium);
+
+    const myName = currentProfile?.fullName || currentProfile?.name || currentUser.displayName || 'Aspirant';
+    const myPhoto = currentProfile?.photoURL || currentUser.photoURL || '';
+    const myIsPremium = Boolean(currentProfile?.isPremium);
+
     // Check if conversation already exists in active DMs list
     const existingDm = dms.find(d => d.users?.includes(targetId));
     if (existingDm) {
+      // Enrich target user info if saved with 'Aspirant' or missing photo
+      if (existingDm.user1 && existingDm.user2) {
+        if (existingDm.user1.uid === targetId && (existingDm.user1.name === 'Aspirant' || !existingDm.user1.photoURL) && targetName !== 'Aspirant') {
+          existingDm.user1.name = targetName;
+          existingDm.user1.photoURL = targetPhoto || existingDm.user1.photoURL;
+        } else if (existingDm.user2.uid === targetId && (existingDm.user2.name === 'Aspirant' || !existingDm.user2.photoURL) && targetName !== 'Aspirant') {
+          existingDm.user2.name = targetName;
+          existingDm.user2.photoURL = targetPhoto || existingDm.user2.photoURL;
+        }
+      }
       setSelectedDm(existingDm);
       setSelectedChannel(null);
       setSidebarTab('chats');
@@ -512,33 +608,47 @@ export default function Chat() {
       const chatSnap = await getDoc(chatRef);
       
       if (chatSnap.exists()) {
-        setSelectedDm({ id: chatSnap.id, ...chatSnap.data() } as DmChat);
+        const fetchedData = chatSnap.data();
+        const chatObj: DmChat = { id: chatSnap.id, ...fetchedData } as DmChat;
+        
+        if (chatObj.user1?.uid === targetId && (chatObj.user1.name === 'Aspirant' || !chatObj.user1.photoURL) && targetName !== 'Aspirant') {
+          chatObj.user1.name = targetName;
+          chatObj.user1.photoURL = targetPhoto || chatObj.user1.photoURL;
+        }
+        if (chatObj.user2?.uid === targetId && (chatObj.user2.name === 'Aspirant' || !chatObj.user2.photoURL) && targetName !== 'Aspirant') {
+          chatObj.user2.name = targetName;
+          chatObj.user2.photoURL = targetPhoto || chatObj.user2.photoURL;
+        }
+
+        setSelectedDm(chatObj);
         setSelectedChannel(null);
         setSidebarTab('chats');
         setMobileView('chat');
       } else {
-        let targetUserData: any = {};
-        try {
-          const userRef = doc(db, 'users', targetId);
-          const userSnap = await getDoc(userRef);
-          if (userSnap.exists()) targetUserData = userSnap.data();
-        } catch (e) {
-          console.warn("Could not fetch target user data:", e);
-        }
-
+        const isUser1 = currentUser.uid < targetId;
         const newChatData = {
           users: [currentUser.uid, targetId],
-          user1: {
+          user1: isUser1 ? {
             uid: currentUser.uid,
-            name: currentProfile?.fullName || currentProfile?.name || currentUser.displayName || 'Aspirant',
-            photoURL: currentProfile?.photoURL || currentUser.photoURL || '',
-            isPremium: Boolean(currentProfile?.isPremium)
-          },
-          user2: {
+            name: myName,
+            photoURL: myPhoto,
+            isPremium: myIsPremium
+          } : {
             uid: targetId,
-            name: targetUserData.name || targetUserData.fullName || 'Aspirant',
-            photoURL: targetUserData.profilePicture || targetUserData.photoURL || '',
-            isPremium: Boolean(targetUserData.isPremium)
+            name: targetName,
+            photoURL: targetPhoto,
+            isPremium: targetIsPremium
+          },
+          user2: isUser1 ? {
+            uid: targetId,
+            name: targetName,
+            photoURL: targetPhoto,
+            isPremium: targetIsPremium
+          } : {
+            uid: currentUser.uid,
+            name: myName,
+            photoURL: myPhoto,
+            isPremium: myIsPremium
           },
           createdAt: new Date().toISOString(),
           lastMessage: 'Conversation started',
@@ -553,22 +663,22 @@ export default function Chat() {
       }
     } catch (err) {
       console.error("Error starting DM:", err);
-      // Fallback: local optimistic DM object so chat box still opens!
+      // Fallback: local optimistic DM object with resolved target details
       const chatId = [currentUser.uid, targetId].sort().join('_');
       const fallbackChat: DmChat = {
         id: chatId,
         users: [currentUser.uid, targetId],
         user1: {
           uid: currentUser.uid,
-          name: currentProfile?.fullName || currentProfile?.name || currentUser.displayName || 'Aspirant',
-          photoURL: currentProfile?.photoURL || currentUser.photoURL || '',
-          isPremium: Boolean(currentProfile?.isPremium)
+          name: myName,
+          photoURL: myPhoto,
+          isPremium: myIsPremium
         },
         user2: {
           uid: targetId,
-          name: 'Aspirant',
-          photoURL: '',
-          isPremium: false
+          name: targetName,
+          photoURL: targetPhoto,
+          isPremium: targetIsPremium
         },
         createdAt: new Date().toISOString(),
         lastMessage: 'Conversation started',
@@ -619,16 +729,41 @@ export default function Chat() {
 
       } else if (selectedDm) {
         const myName = currentProfile?.fullName || currentProfile?.name || currentUser.displayName || 'Aspirant';
+        const myPhoto = currentProfile?.photoURL || currentUser.photoURL || '';
+        const myIsPremium = Boolean(currentProfile?.isPremium);
+
+        const targetUserObj = getOtherUser(selectedDm);
 
         // Ensure parent chat document exists before adding subcollection message
         const chatRef = doc(db, 'chats', selectedDm.id);
         const chatSnap = await getDoc(chatRef);
         if (!chatSnap.exists()) {
-          const targetId = selectedDm.users?.find(u => u !== currentUser.uid) || '';
+          const targetId = targetUserObj.uid || selectedDm.users?.find(u => u !== currentUser.uid) || '';
+          const isUser1 = currentUser.uid < targetId;
           await setDoc(chatRef, {
             users: [currentUser.uid, targetId],
-            user1: selectedDm.user1 || { uid: currentUser.uid, name: myName, photoURL: '', isPremium: false },
-            user2: selectedDm.user2 || { uid: targetId, name: 'Aspirant', photoURL: '', isPremium: false },
+            user1: isUser1 ? {
+              uid: currentUser.uid,
+              name: myName,
+              photoURL: myPhoto,
+              isPremium: myIsPremium
+            } : {
+              uid: targetId,
+              name: targetUserObj.name,
+              photoURL: targetUserObj.photoURL,
+              isPremium: targetUserObj.isPremium
+            },
+            user2: isUser1 ? {
+              uid: targetId,
+              name: targetUserObj.name,
+              photoURL: targetUserObj.photoURL,
+              isPremium: targetUserObj.isPremium
+            } : {
+              uid: currentUser.uid,
+              name: myName,
+              photoURL: myPhoto,
+              isPremium: myIsPremium
+            },
             createdAt: new Date().toISOString(),
             lastMessage: content,
             lastMessageAt: new Date().toISOString()
@@ -1036,19 +1171,6 @@ export default function Chat() {
                       </div>
                     ) : (
                       filteredDms.map((chat) => {
-                        const getOtherUser = (c: DmChat) => {
-                          if (c.user1 && c.user2) {
-                            return c.user1.uid === currentUser?.uid ? c.user2 : c.user1;
-                          }
-                          if (c.user1 && c.user1.uid !== currentUser?.uid) return c.user1;
-                          if (c.user2 && c.user2.uid !== currentUser?.uid) return c.user2;
-                          return {
-                            uid: c.users?.find(u => u !== currentUser?.uid) || '',
-                            name: 'Aspirant',
-                            photoURL: '',
-                            isPremium: false
-                          };
-                        };
                         const otherUser = getOtherUser(chat);
                         const isSelected = selectedDm?.id === chat.id;
                         const unreadCount = dmUnreadCounts[chat.id] || 0;
@@ -1347,48 +1469,51 @@ export default function Chat() {
                       </p>
                     </div>
                   ) : (
-                    messages.map((msg, index) => (
-                      <div key={msg.id || index} className="flex gap-2.5 sm:gap-4 items-start bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-xs max-w-2xl min-w-0 w-full">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#006e5d]/10 text-[#006e5d] flex items-center justify-center shrink-0">
-                          {selectedChannel.icon === 'team' ? <Users className="w-4 h-4 sm:w-5 sm:h-5" /> :
-                           selectedChannel.icon === 'megaphone' ? <Megaphone className="w-4 h-4 sm:w-5 sm:h-5" /> :
-                           selectedChannel.icon === 'support' ? <Shield className="w-4 h-4 sm:w-5 sm:h-5" /> :
-                           <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="text-xs font-black text-slate-900">{msg.senderName}</span>
-                              {msg.senderIcon !== 'user' ? (
-                                <span className="text-[8px] font-black px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-600 tracking-wider uppercase border border-yellow-500/20">
-                                  Team Admin
-                                </span>
-                              ) : (
-                                <span className="text-[8px] font-black px-1.5 py-0.5 rounded bg-teal-500/10 text-[#006e5d] tracking-wider uppercase border border-teal-500/20">
-                                  Aspirant
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {selectedChannel.name.toLowerCase().includes('prepnext') && msg.readBy && msg.readBy.length > 0 && (
-                                <div className="flex items-center gap-0.5 text-blue-500 font-black" title={`Viewed by ${msg.readBy.length} student${msg.readBy.length > 1 ? 's' : ''}`}>
-                                  <CheckCheck className="w-3.5 h-3.5 text-blue-500" />
-                                  <span className="text-[9px]">{msg.readBy.length}</span>
-                                </div>
-                              )}
-                              <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                                <Clock className="w-3.5 h-3.5" />
-                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                            </div>
+                    messages.map((msg, index) => {
+                      const senderDisplayName = getSenderDisplayName(msg.senderId, msg.senderName);
+                      return (
+                        <div key={msg.id || index} className="flex gap-2.5 sm:gap-4 items-start bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 shadow-xs max-w-2xl min-w-0 w-full">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#006e5d]/10 text-[#006e5d] flex items-center justify-center shrink-0">
+                            {selectedChannel.icon === 'team' ? <Users className="w-4 h-4 sm:w-5 sm:h-5" /> :
+                             selectedChannel.icon === 'megaphone' ? <Megaphone className="w-4 h-4 sm:w-5 sm:h-5" /> :
+                             selectedChannel.icon === 'support' ? <Shield className="w-4 h-4 sm:w-5 sm:h-5" /> :
+                             <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />}
                           </div>
-                          <p className="text-xs text-slate-700 font-medium leading-relaxed whitespace-pre-wrap break-words min-w-0 w-full pr-1 sm:pr-4">
-                            {msg.content}
-                          </p>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-xs font-black text-slate-900">{senderDisplayName}</span>
+                                {msg.senderIcon !== 'user' ? (
+                                  <span className="text-[8px] font-black px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-600 tracking-wider uppercase border border-yellow-500/20">
+                                    Team Admin
+                                  </span>
+                                ) : (
+                                  <span className="text-[8px] font-black px-1.5 py-0.5 rounded bg-teal-500/10 text-[#006e5d] tracking-wider uppercase border border-teal-500/20">
+                                    Aspirant
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {selectedChannel.name.toLowerCase().includes('prepnext') && msg.readBy && msg.readBy.length > 0 && (
+                                  <div className="flex items-center gap-0.5 text-blue-500 font-black" title={`Viewed by ${msg.readBy.length} student${msg.readBy.length > 1 ? 's' : ''}`}>
+                                    <CheckCheck className="w-3.5 h-3.5 text-blue-500" />
+                                    <span className="text-[9px]">{msg.readBy.length}</span>
+                                  </div>
+                                )}
+                                <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                                  <Clock className="w-3.5 h-3.5" />
+                                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                            </div>
+                            <p className="text-xs text-slate-700 font-medium leading-relaxed whitespace-pre-wrap break-words min-w-0 w-full pr-1 sm:pr-4">
+                              {msg.content}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                   <div ref={messagesEndRef} />
                 </div>
@@ -1438,19 +1563,6 @@ export default function Chat() {
                     </button>
 
                     {(() => {
-                      const getOtherUser = (c: DmChat) => {
-                        if (c.user1 && c.user2) {
-                          return c.user1.uid === currentUser?.uid ? c.user2 : c.user1;
-                        }
-                        if (c.user1 && c.user1.uid !== currentUser?.uid) return c.user1;
-                        if (c.user2 && c.user2.uid !== currentUser?.uid) return c.user2;
-                        return {
-                          uid: c.users?.find(u => u !== currentUser?.uid) || '',
-                          name: 'Aspirant',
-                          photoURL: '',
-                          isPremium: false
-                        };
-                      };
                       const otherUser = getOtherUser(selectedDm);
                       return (
                         <button 
@@ -1505,6 +1617,7 @@ export default function Chat() {
                   ) : (
                     dmMessages.map((msg, index) => {
                       const isMe = msg.senderId === currentUser?.uid;
+                      const senderDisplayName = getSenderDisplayName(msg.senderId, msg.senderName);
                       return (
                         <div 
                           key={msg.id || index} 
@@ -1515,6 +1628,9 @@ export default function Chat() {
                               ? 'bg-[#006e5d] text-white border-transparent rounded-tr-none' 
                               : 'bg-white text-slate-700 border-slate-100 rounded-tl-none'
                           }`}>
+                            <p className={`text-[10px] font-black mb-1 ${isMe ? 'text-teal-100/90' : 'text-[#006e5d]'}`}>
+                              {isMe ? 'You' : senderDisplayName}
+                            </p>
                             <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                             <div className={`text-[8px] mt-1.5 flex items-center justify-end gap-1 ${
                               isMe ? 'text-teal-200/80' : 'text-slate-400'
