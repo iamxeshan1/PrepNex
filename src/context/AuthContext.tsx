@@ -107,49 +107,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setProfile(null);
               alert("Your account has been blocked.");
             } else {
-              if (!data.username) {
-                const autoUsername = (data.name || data.fullName || authUser.displayName || authUser.email?.split('@')[0] || 'aspirant')
+              const updates: any = {};
+              let currentUsername = data.username;
+              if (!currentUsername) {
+                currentUsername = (data.name || data.fullName || authUser.displayName || authUser.email?.split('@')[0] || 'aspirant')
                   .toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20) || 'aspirant';
-                updateDoc(userDocRef, { username: autoUsername }).catch(() => {});
-                setProfile({ ...data, username: autoUsername });
-              } else {
-                setProfile(data);
+                updates.username = currentUsername;
               }
+              const nowIso = new Date().toISOString();
+              if (!data.lastLogin || (Date.now() - new Date(data.lastLogin).getTime() > 300000)) {
+                updates.lastLogin = nowIso;
+                updates.isOnline = true;
+                updates.lastSeen = Date.now();
+              }
+              if (Object.keys(updates).length > 0) {
+                updateDoc(userDocRef, updates).catch(() => {});
+              }
+              setProfile({ ...data, ...updates });
             }
             setLoading(false);
           } else {
-            // Only auto-create profile in AuthContext for Google users
-            const isGoogleUser = authUser.providerData.some(p => p.providerId === 'google.com');
-            if (isGoogleUser) {
-              const isAdminEmail = authUser.email === 'iamxeshan1@gmail.com' || authUser.email === 'prepnextedtech@gmail.com';
-              const autoUsername = (authUser.displayName || authUser.email?.split('@')[0] || 'aspirant')
-                .toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20) || 'aspirant';
-              const newProfile = {
-                userId: authUser.uid,
-                username: autoUsername,
-                name: authUser.displayName || authUser.email?.split('@')[0] || 'User',
-                email: authUser.email,
-                photoURL: authUser.photoURL,
-                role: isAdminEmail ? 'admin' : 'student',
-                isPremium: false,
-                premiumExpiry: null,
-                purchasedExams: [],
-                testsAttempted: 0,
-                averageScore: 0,
-                profileCompleted: false, // Explicitly false for new users
-                createdAt: new Date().toISOString(),
-                isOnline: true,
-                lastSeen: Date.now()
-              };
-              try {
-                await setDoc(userDocRef, newProfile);
-              } catch (err) {
-                console.error("Failed to auto-create Google user profile:", err);
-              }
-            } else {
-              // For non-Google (email/password), Signup.tsx creates it.
-              setProfile(null);
-              setLoading(false);
+            // Auto-create user profile in Firestore for any authenticated user
+            const isAdminEmail = authUser.email === 'iamxeshan1@gmail.com' || authUser.email === 'prepnextedtech@gmail.com';
+            const autoUsername = (authUser.displayName || authUser.email?.split('@')[0] || 'aspirant')
+              .toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20) || 'aspirant';
+            const nowIso = new Date().toISOString();
+            const newProfile = {
+              userId: authUser.uid,
+              uid: authUser.uid,
+              username: autoUsername,
+              name: authUser.displayName || authUser.email?.split('@')[0] || 'Aspirant User',
+              fullName: authUser.displayName || authUser.email?.split('@')[0] || 'Aspirant User',
+              email: authUser.email || '',
+              photoURL: authUser.photoURL || '',
+              role: isAdminEmail ? 'admin' : 'student',
+              isPremium: false,
+              premiumExpiry: null,
+              purchasedExams: [],
+              testsAttempted: 0,
+              averageScore: 0,
+              profileCompleted: false,
+              createdAt: nowIso,
+              lastLogin: nowIso,
+              isOnline: true,
+              lastSeen: Date.now()
+            };
+            try {
+              await setDoc(userDocRef, newProfile);
+            } catch (err) {
+              console.error("Failed to auto-create user profile in Firestore:", err);
             }
           }
         }, (error) => {

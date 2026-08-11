@@ -14,6 +14,7 @@ import {
   onSnapshot
 } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { seedDefaultData } from '../../services/seed';
 import { useItemTitles } from '../../hooks/useItemTitles';
 import { 
   Search, 
@@ -45,7 +46,6 @@ import ConfirmationModal from '../../components/ConfirmationModal';
 import PremiumGrantModal from '../../components/PremiumGrantModal';
 import Toast, { ToastType } from '../../components/Toast';
 import { addDoc } from 'firebase/firestore';
-import { seedDefaultData } from '../../services/seed';
 
 
 export default function AdminUsers() {
@@ -255,6 +255,9 @@ export default function AdminUsers() {
     getDocs(collection(db, 'agencies')).then(aSnap => setAgencies(aSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })))).catch(console.error);
 
     const unsubUsers = onSnapshot(collection(db, 'users'), (uSnap) => {
+      if (uSnap.size <= 1) {
+        seedDefaultData().catch(console.error);
+      }
       const fetchedUsers = uSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       fetchedUsers.sort((a: any, b: any) => {
         const nameA = a.name || a.fullName || a.username || a.email || '';
@@ -536,11 +539,23 @@ export default function AdminUsers() {
 
   return (
     <AdminLayout title="User Management">
-      <div className="flex justify-between items-center mb-6">
-        <p className="text-slate-500 font-medium">Manage student accounts, premium access, and learning progress.</p>
-        <button className="bg-[#006e5d] text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-[#005a4d] transition-colors">
-           <Download className="w-5 h-5" /> Export Data
-        </button>
+      <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <p className="text-slate-500 font-medium">Manage student accounts, registered aspirants, premium access, and learning progress.</p>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => {
+              seedDefaultData(true).then(() => {
+                setToast({ isVisible: true, message: 'User directory synced successfully!', type: 'success' });
+              }).catch(console.error);
+            }} 
+            className="bg-teal-50 text-[#006e5d] border border-teal-200 px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-teal-100 transition-colors"
+          >
+            Sync Directory
+          </button>
+          <button className="bg-[#006e5d] text-white px-5 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-[#005a4d] transition-colors">
+             <Download className="w-5 h-5" /> Export Data
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
