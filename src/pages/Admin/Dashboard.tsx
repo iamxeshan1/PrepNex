@@ -23,8 +23,10 @@ import {
   ArrowRight,
   GraduationCap,
   Download,
-  RefreshCw
+  RefreshCw,
+  Database
 } from 'lucide-react';
+import { seedDefaultData } from '../../services/seed';
 import { 
   AreaChart, 
   Area, 
@@ -113,6 +115,20 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleForceSeedData = async () => {
+    setSyncing(true);
+    setSyncStatus("Restoring all default exams, tests, questions, subjects & users...");
+    try {
+      await seedDefaultData(true);
+      setSyncStatus("Database restored successfully! All questions, mocks & subjects are online.");
+      setTimeout(() => setSyncStatus(null), 5000);
+    } catch (err: any) {
+      setSyncStatus(`Restore failed: ${err.message}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   useEffect(() => {
     const unsubUsers = onSnapshot(collection(db, 'users'), (snap) => {
       setStats(prev => ({ ...prev, users: snap.size }));
@@ -183,6 +199,27 @@ export default function AdminDashboard() {
           )}
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          <Link
+            to="/admin/backup"
+            className="px-5 py-2.5 bg-[#006e5d] hover:bg-[#005a4d] text-white font-bold text-sm flex items-center gap-2 border border-[#006e5d] shadow-sm rounded-none transition-all"
+            title="Export JSON backup or restore Firestore collections"
+          >
+            <Download className="w-4 h-4 text-emerald-200" />
+            Backup & Restore Tool
+          </Link>
+          <button 
+            onClick={handleForceSeedData}
+            disabled={syncing}
+            className={`px-5 py-2.5 font-bold text-sm flex items-center gap-2 border transition-all ${
+              syncing 
+                ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed" 
+                : "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100 shadow-sm"
+            }`}
+            title="Re-populate default exams, tests, questions, subjects & sample users"
+          >
+            <Database className="w-4 h-4 text-emerald-600" />
+            Restore All Sample Data
+          </button>
           <button 
             onClick={handleSyncQuestionCounts}
             disabled={syncing}

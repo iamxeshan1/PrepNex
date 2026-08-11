@@ -10,6 +10,7 @@ import { collection, getDocs, query, where, documentId, orderBy, limit } from 'f
 import { db } from '../lib/firebase';
 import { DailyStreakWidget } from '../components/DailyStreakWidget';
 import { isAppMode } from '../lib/appMode';
+import { seedDefaultData } from '../services/seed';
 
 export default function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);

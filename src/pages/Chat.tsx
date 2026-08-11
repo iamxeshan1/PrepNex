@@ -824,6 +824,7 @@ export default function Chat() {
         // Ensure parent chat document exists before adding subcollection message
         const chatRef = doc(db, 'chats', selectedDm.id);
         const chatSnap = await getDoc(chatRef);
+
         if (!chatSnap.exists()) {
           const targetId = targetUserObj.uid || selectedDm.users?.find(u => u !== currentUser.uid) || '';
           const isUser1 = currentUser.uid < targetId;
@@ -1685,7 +1686,7 @@ export default function Chat() {
                 {/* Dispatcher Actions - Fixed at Bottom */}
                 <div className="sticky bottom-0 z-20 border-t border-slate-100 p-3 sm:p-4 bg-white shrink-0 shadow-2xs">
                   {isAdmin || selectedChannel.allowAspirantMessages || selectedChannel.whoCanPost === 'everyone' ? (
-                    <form onSubmit={handleSendMessage} className="flex gap-2 sm:gap-3">
+                    <form onSubmit={handleSendMessage} className="flex gap-2 sm:gap-3 items-center">
                       <input
                         type="text"
                         required
@@ -1697,7 +1698,7 @@ export default function Chat() {
                       <button
                         type="submit"
                         disabled={sendingMessage || !newMessage.trim()}
-                        className="px-4 sm:px-6 py-2.5 sm:py-3 bg-[#006e5d] hover:bg-[#005a4d] text-white rounded-xl sm:rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-50 shadow-md shadow-teal-50"
+                        className="px-4 sm:px-6 py-2.5 sm:py-3 bg-[#006e5d] hover:bg-[#005a4d] text-white rounded-xl sm:rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all disabled:opacity-50 shadow-md shadow-teal-50 shrink-0"
                       >
                         {sendingMessage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                         <span className="hidden sm:inline">{isAdmin ? "Broadcast" : "Send"}</span>
@@ -1799,11 +1800,11 @@ export default function Chat() {
                                 {senderDisplayName}
                               </p>
                             )}
-                            <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
-                              <p className="whitespace-pre-wrap break-words flex-1 min-w-0 font-medium text-xs sm:text-[13px]">
-                                {msg.content}
-                              </p>
-                              <span className={`text-[9px] font-semibold whitespace-nowrap ml-auto shrink-0 flex items-center gap-1 select-none pt-0.5 ${
+                            <p className="whitespace-pre-wrap break-words font-medium text-xs sm:text-[13px] mb-1">
+                              {msg.content}
+                            </p>
+                            <div className="flex justify-end mt-1">
+                              <span className={`text-[9px] font-semibold whitespace-nowrap flex items-center gap-1 select-none ${
                                 isMe ? 'text-teal-100/90' : 'text-slate-400'
                               }`}>
                                 {formattedTime}
@@ -1820,11 +1821,11 @@ export default function Chat() {
 
                 {/* Dispatcher Actions - Fixed Message Textbox at Bottom */}
                 <div className="sticky bottom-0 z-20 border-t border-slate-100 p-3 sm:p-4 bg-white shrink-0 shadow-2xs">
-                  <form onSubmit={handleSendMessage} className="flex gap-2 sm:gap-3">
+                  <form onSubmit={handleSendMessage} className="flex gap-2 sm:gap-3 items-center">
                     <input
                       type="text"
                       required
-                      placeholder="Type your message..."
+                      placeholder="Type a message..."
                       className="flex-1 px-3.5 sm:px-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200/90 rounded-xl sm:rounded-2xl outline-none focus:ring-2 focus:ring-[#006e5d]/20 text-xs sm:text-sm font-medium text-slate-800 placeholder-slate-400"
                       value={newMessage}
                       onChange={e => setNewMessage(e.target.value)}

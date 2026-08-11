@@ -195,15 +195,7 @@ export default function StudentProfile() {
         }
         setFriendsLoading(false);
 
-        // Check Friendship / Request Status if logged in & viewing another student
-        if (currentUser && !isSelf) {
-          try {
-            checkFriendStatus(currentUser.uid, targetId);
-          } catch (err) {
-            console.warn("Check friend status is disabled:", err);
-          }
-        }
-
+        // Friend status is handled by a dedicated real-time listener effect below.
       } catch (err) {
         console.error("Error loading student profile:", err);
       } finally {
@@ -218,72 +210,115 @@ export default function StudentProfile() {
     };
   }, [targetId, currentUser]);
 
-  const checkFriendStatus = async (myUid: string, otherUid: string) => {
-    try {
-      // Check active friendship
-      const friendshipDocId = [myUid, otherUid].sort().join('_');
-      const fRef = doc(db, 'friendships', friendshipDocId);
-      const fSnap = await getDoc(fRef);
+  // Dedicated real-time listener for friendship & friend request status
+  useEffect(() => {
+    if (!currentUser || !targetId || isSelf) {
+      setFriendshipStatus('none');
+      return;
+    }
 
+    let isSubscribed = true;
+
+    // Listen to friendships document
+    const friendshipDocId = [currentUser.uid, targetId].sort().join('_');
+    const fUnsub = onSnapshot(doc(db, 'friendships', friendshipDocId), (fSnap) => {
+      if (!isSubscribed) return;
       if (fSnap.exists()) {
         setFriendshipStatus('friends');
-        return;
+      } else {
+        checkRequests();
       }
+    }, () => {
+      checkRequests();
+    });
 
-      // Check pending friend request sent by me using deterministic ID
-      const reqSentId = `${myUid}_${otherUid}`;
-      const reqSentRef = doc(db, 'friend_requests', reqSentId);
-      const reqSentSnap = await getDoc(reqSentRef);
+    const checkRequests = () => {
+      const reqSentId = `${currentUser.uid}_${targetId}`;
+      const reqRecId = `${targetId}_${currentUser.uid}`;
 
-      if (reqSentSnap.exists() && reqSentSnap.data()?.status === 'pending') {
-        setFriendshipStatus('pending_sent');
-        setRequestId(reqSentSnap.id);
-        return;
+      const unsubSent = onSnapshot(doc(db, 'friend_requests', reqSentId), (sentSnap) => {
+        if (!isSubscribed) return;
+        if (sentSnap.exists()) {
+          const st = sentSnap.data()?.status;
+          if (st === 'accepted') {
+            setFriendshipStatus('friends');
+            return;
+          } else if (st === 'pending') {
+            setFriendshipStatus('pending_sent');
+            setRequestId(sentSnap.id);
+            return;
+          }
+        }
+
+        // Check received request
+        onSnapshot(doc(db, 'friend_requests', reqRecId), (recSnap) => {
+          if (!isSubscribed) return;
+          if (recSnap.exists()) {
+            const st = recSnap.data()?.status;
+            if (st === 'accepted') {
+              setFriendshipStatus('friends');
+              return;
+            } else if (st === 'pending') {
+              setFriendshipStatus('pending_received');
+              setRequestId(recSnap.id);
+              return;
+            }
+          }
+          checkFallbackQueries();
+        }, () => checkFallbackQueries());
+      }, () => checkFallbackQueries());
+    };
+
+    const checkFallbackQueries = async () => {
+      if (!isSubscribed) return;
+      try {
+        const reqSentQ = query(
+          collection(db, 'friend_requests'),
+          where('senderId', '==', currentUser.uid),
+          where('receiverId', '==', targetId)
+        );
+        const reqSentSnap = await getDocs(reqSentQ);
+        if (!reqSentSnap.empty) {
+          const docData = reqSentSnap.docs[0].data();
+          if (docData.status === 'accepted') {
+            setFriendshipStatus('friends');
+            return;
+          } else if (docData.status === 'pending') {
+            setFriendshipStatus('pending_sent');
+            setRequestId(reqSentSnap.docs[0].id);
+            return;
+          }
+        }
+
+        const reqRecQ = query(
+          collection(db, 'friend_requests'),
+          where('senderId', '==', targetId),
+          where('receiverId', '==', currentUser.uid)
+        );
+        const reqRecSnap = await getDocs(reqRecQ);
+        if (!reqRecSnap.empty) {
+          const docData = reqRecSnap.docs[0].data();
+          if (docData.status === 'accepted') {
+            setFriendshipStatus('friends');
+            return;
+          } else if (docData.status === 'pending') {
+            setFriendshipStatus('pending_received');
+            setRequestId(reqRecSnap.docs[0].id);
+            return;
+          }
+        }
+
+        setFriendshipStatus('none');
+      } catch (err) {
+        setFriendshipStatus('none');
       }
+    };
 
-      // Check pending friend request received from them using deterministic ID
-      const reqRecId = `${otherUid}_${myUid}`;
-      const reqRecRef = doc(db, 'friend_requests', reqRecId);
-      const reqRecSnap = await getDoc(reqRecRef);
-
-      if (reqRecSnap.exists() && reqRecSnap.data()?.status === 'pending') {
-        setFriendshipStatus('pending_received');
-        setRequestId(reqRecSnap.id);
-        return;
-      }
-
-      // Fallback query search if created with old random ID
-      const reqSentQ = query(
-        collection(db, 'friend_requests'),
-        where('senderId', '==', myUid),
-        where('receiverId', '==', otherUid),
-        where('status', '==', 'pending')
-      );
-      const reqSentQuerySnap = await getDocs(reqSentQ);
-      if (!reqSentQuerySnap.empty) {
-        setFriendshipStatus('pending_sent');
-        setRequestId(reqSentQuerySnap.docs[0].id);
-        return;
-      }
-
-      const reqRecQ = query(
-        collection(db, 'friend_requests'),
-        where('senderId', '==', otherUid),
-        where('receiverId', '==', myUid),
-        where('status', '==', 'pending')
-      );
-      const reqRecQuerySnap = await getDocs(reqRecQ);
-      if (!reqRecQuerySnap.empty) {
-        setFriendshipStatus('pending_received');
-        setRequestId(reqRecQuerySnap.docs[0].id);
-        return;
-      }
-
-      setFriendshipStatus('none');
-    } catch (err) {
-      console.error("Error checking friendship:", err);
-    }
-  };
+    return () => {
+      isSubscribed = false;
+      fUnsub();
+    };
+  }, [currentUser, targetId, isSelf]);
 
   const handleSendFriendRequest = async () => {
     if (!currentUser || !targetId) {

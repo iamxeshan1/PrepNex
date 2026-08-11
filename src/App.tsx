@@ -7,6 +7,8 @@ import { ThemeProvider } from './context/ThemeContext';
 import { collection, getDocs, query, where, addDoc, setDoc, doc, limit } from 'firebase/firestore';
 import { db } from './lib/firebase';
 
+import { seedDefaultData } from './services/seed';
+
 // Pages
 const Home = React.lazy(() => import('./pages/Home'));
 const Login = React.lazy(() => import('./pages/Login'));
@@ -25,6 +27,7 @@ const AdminExams = React.lazy(() => import('./pages/Admin/Exams'));
 const AdminTests = React.lazy(() => import('./pages/Admin/Tests'));
 const AdminQuestions = React.lazy(() => import('./pages/Admin/Questions'));
 const AdminSettings = React.lazy(() => import('./pages/Admin/Settings'));
+const AdminBackup = React.lazy(() => import('./pages/Admin/Backup'));
 const AdminThoughts = React.lazy(() => import('./pages/Admin/Thoughts'));
 const AdminSubjects = React.lazy(() => import('./pages/Admin/Subjects'));
 const AdminRevenue = React.lazy(() => import('./pages/Admin/Revenue'));
@@ -108,6 +111,7 @@ export function AppContent() {
   const [showSplash, setShowSplash] = React.useState(isAppMode());
 
   React.useEffect(() => {
+    seedDefaultData(false).catch(err => console.error("Initial seed error:", err));
     const timer = setTimeout(() => {
       setShowSplash(false);
     }, 1800); 
@@ -186,6 +190,11 @@ export function AppContent() {
           <Route path="/admin/settings" element={
             <ProtectedRoute adminOnly>
               <AdminSettings />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/backup" element={
+            <ProtectedRoute adminOnly>
+              <AdminBackup />
             </ProtectedRoute>
           } />
           <Route path="/admin/popup-announcement" element={

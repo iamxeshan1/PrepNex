@@ -524,10 +524,15 @@ export default function Test() {
                  <ChevronLeft className="w-4 h-4" /> Previous
               </button>
               <button 
-                 onClick={handleNext}
-                 className="flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 text-xs md:text-sm font-bold text-white bg-[#006e5d] px-4 md:px-8 py-2.5 min-h-[44px] rounded hover:bg-[#005a4d] transition-colors"
+                 onClick={currentIdx === questions.length - 1 ? () => handleSubmit() : handleNext}
+                 disabled={submitting}
+                 className="flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 text-xs md:text-sm font-bold text-white bg-[#006e5d] px-4 md:px-8 py-2.5 min-h-[44px] rounded hover:bg-[#005a4d] transition-colors disabled:opacity-50 cursor-pointer"
               >
-                 Save & Next <ChevronRight className="w-4 h-4" />
+                 {currentIdx === questions.length - 1 ? (
+                   <>Submit Test <CheckCircle2 className="w-4 h-4 text-emerald-300" /></>
+                 ) : (
+                   <>Save & Next <ChevronRight className="w-4 h-4" /></>
+                 )}
               </button>
            </div>
         </div>

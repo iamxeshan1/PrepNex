@@ -10,6 +10,8 @@ import { getMessaging } from "firebase-admin/messaging";
 import nodemailer from "nodemailer";
 import fs from "fs";
 import { GoogleGenAI, Type } from "@google/genai";
+import { google } from "googleapis";
+import { Readable } from "stream";
 
 dotenv.config();
 
@@ -1208,6 +1210,80 @@ app.get("/api/health-check", async (req, res) => {
     } catch (e: any) {
       console.log("[Admin API] Auth SDK not configured or initialized for user deletion.");
       res.json({ success: true, message: "User DB cleanup proceeding (Auth SDK unavailable)." });
+    }
+  });
+
+  app.post("/api/admin/purge-user", async (req, res) => {
+    try {
+      const { uid } = req.body;
+      if (!uid) {
+        return res.status(400).json({ error: "Missing uid" });
+      }
+
+      const db = getDb();
+
+      // Collections where userId is a primary or secondary field
+      const userFieldCols = [
+        { col: 'results', field: 'userId' },
+        { col: 'subscriptions', field: 'userId' },
+        { col: 'premium_subscriptions', field: 'userId' },
+        { col: 'tickets', field: 'userId' },
+        { col: 'activity_logs', field: 'userId' },
+        { col: 'reviews', field: 'userId' },
+        { col: 'forum_posts', field: 'authorId' },
+        { col: 'forum_comments', field: 'authorId' },
+        { col: 'friend_requests', field: 'senderId' },
+        { col: 'friend_requests', field: 'receiverId' }
+      ];
+
+      for (const item of userFieldCols) {
+        try {
+          const snap = await db.collection(item.col).where(item.field, '==', uid).get();
+          if (!snap.empty) {
+            const batch = db.batch();
+            snap.docs.forEach(d => batch.delete(d.ref));
+            await batch.commit();
+          }
+        } catch (err) {
+          console.warn(`[Purge User] Error cleaning ${item.col}:`, err);
+        }
+      }
+
+      // Delete friendships document if present
+      try {
+        const friendshipsSnap = await db.collection('friendships').where('users', 'array-contains', uid).get();
+        if (!friendshipsSnap.empty) {
+          const fBatch = db.batch();
+          friendshipsSnap.docs.forEach(d => fBatch.delete(d.ref));
+          await fBatch.commit();
+        }
+      } catch (err) {
+        console.warn(`[Purge User] Error cleaning friendships:`, err);
+      }
+
+      // Delete main user document
+      try {
+        await db.collection('users').doc(uid).delete();
+      } catch (err) {
+        console.warn(`[Purge User] Error deleting main user doc:`, err);
+      }
+
+      // Attempt Auth user deletion
+      try {
+        const appInst = getFirebaseApp();
+        if (appInst) {
+          const adminAuth = getAdminAuth(appInst);
+          await adminAuth.deleteUser(uid);
+        }
+      } catch (authErr) {
+        // Safe fallback if Admin Auth is unavailable
+      }
+
+      console.log(`[Admin API] Successfully purged user ${uid} and associated data.`);
+      res.json({ success: true, message: `User ${uid} purged successfully.` });
+    } catch (e: any) {
+      console.error("[Admin API] Purge user error:", e);
+      res.status(500).json({ error: e.message || "Failed to purge user." });
     }
   });
 

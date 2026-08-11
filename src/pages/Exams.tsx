@@ -6,6 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Shield, Search, FileText, Users, CheckCircle2, BookOpen } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
+import { seedDefaultData } from '../services/seed';
 
 export default function Exams() {
   const { profile } = useAuth();
@@ -28,6 +29,7 @@ export default function Exams() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        await seedDefaultData();
         const examsSnapshot = await getDocs(collection(db, 'exams'));
         
         const agencySnapshot = await getDocs(collection(db, 'agencies'));

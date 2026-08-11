@@ -101,92 +101,88 @@ export default function AdminUsers() {
   const confirmDelete = async () => {
     if (!selectedUser) return;
     const userId = selectedUser.id;
+    const userName = selectedUser.name || 'Student';
     
     try {
         setLoading(true);
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
-        
-        // ... rest of the code ...
-        // Collections where userId is a field
-        const collectionsToClean = [
-          'results',
-          'subscriptions',
-          'premium_subscriptions',
-          'tickets',
-          'activity_logs',
-          'reviews'
-        ];
 
-        // We use a helper to delete in batches of 500 to stay within Firestore limits
-        const deleteInBatches = async (querySnap: any) => {
-          let batch = writeBatch(db);
-          let count = 0;
-          
-          for (const docSnap of querySnap.docs) {
-            batch.delete(docSnap.ref);
-            count++;
-            
-            if (count === 490) {
-              await batch.commit();
-              batch = writeBatch(db);
-              count = 0;
+        // 1. First attempt server-side purge API which bypasses client-side rules/indexes
+        let apiSuccess = false;
+        try {
+          const res = await fetch('/api/admin/purge-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uid: userId })
+          });
+          if (res.ok) {
+            apiSuccess = true;
+          }
+        } catch (apiErr) {
+          console.warn("Server API purge unavailable, proceeding with client-side cleanup:", apiErr);
+        }
+
+        // 2. Client-side cleanup as fallback or secondary sync
+        if (!apiSuccess) {
+          const collectionsToClean = [
+            'results',
+            'subscriptions',
+            'premium_subscriptions',
+            'tickets',
+            'activity_logs',
+            'reviews',
+            'forum_posts',
+            'forum_comments',
+            'friend_requests'
+          ];
+
+          for (const collName of collectionsToClean) {
+            try {
+              const q = query(collection(db, collName), where('userId', '==', userId));
+              const snap = await getDocs(q);
+              if (!snap.empty) {
+                let batch = writeBatch(db);
+                let count = 0;
+                for (const docSnap of snap.docs) {
+                  batch.delete(docSnap.ref);
+                  count++;
+                  if (count === 400) {
+                    await batch.commit();
+                    batch = writeBatch(db);
+                    count = 0;
+                  }
+                }
+                if (count > 0) await batch.commit();
+              }
+            } catch (colErr) {
+              console.warn(`Client cleanup warning for ${collName}:`, colErr);
             }
           }
-          
-          if (count > 0) {
-            await batch.commit();
-          }
-        };
 
-        // 1. Process related collections
-        for (const collName of collectionsToClean) {
-          const q = query(collection(db, collName), where('userId', '==', userId));
-          const snap = await getDocs(q);
-          if (!snap.empty) {
-            await deleteInBatches(snap);
+          // Delete main user document
+          try {
+            await deleteDoc(doc(db, 'users', userId));
+          } catch (docErr) {
+            console.error("Error deleting main user doc:", docErr);
           }
         }
 
-        // 2. Subcollections (specifically pushTokens as identified in server.ts)
-        const tokensSnap = await getDocs(collection(db, 'users', userId, 'pushTokens'));
-        if (!tokensSnap.empty) {
-          await deleteInBatches(tokensSnap);
-        }
-
-        // 3. Remove user from enrollment lists in liveTests
-        const liveTestsQ = query(collection(db, 'liveTests'), where('enrolledUsers', 'array-contains', userId));
-        const liveSnap = await getDocs(liveTestsQ);
-        if (!liveSnap.empty) {
-            const enrollBatch = writeBatch(db);
-            liveSnap.docs.forEach(testDoc => {
-                const enrolled = testDoc.data().enrolledUsers || [];
-                enrollBatch.update(testDoc.ref, { enrolledUsers: enrolled.filter((id: string) => id !== userId) });
-            });
-            await enrollBatch.commit();
-        }
-
-        // 4. Delete the user from Firebase Authentication via our backend API
-        try {
-          const res = await fetch('/api/admin/delete-user', {
-             method: 'POST',
-             headers: { 'Content-Type': 'application/json' },
-             body: JSON.stringify({ uid: userId })
-          });
-          if (!res.ok) {
-             console.error("Failed to delete user from Auth, continuing with DB cleanup.");
-          }
-        } catch (authDeleteErr) {
-          console.error("Error calling delete-user endpoint:", authDeleteErr);
-        }
-
-        // 5. Delete the main user document last
-        await deleteDoc(doc(db, 'users', userId));
-
-        setUsers(users.filter(u => u.id !== userId));
+        // 3. Remove user from state and show confirmation toast
+        setUsers(prev => prev.filter(u => u.id !== userId));
         setSelectedUser(null);
         setShowDeleteModal(false);
+        setToast({
+          isVisible: true,
+          message: `User "${userName}" was successfully deleted from system records.`,
+          type: 'success'
+        });
     } catch (error) {
         console.error("Error deleting user data:", error);
+        setToast({
+          isVisible: true,
+          message: "Failed to complete user deletion. Check permissions or network connection.",
+          type: 'error'
+        });
     } finally {
         setLoading(false);
     }

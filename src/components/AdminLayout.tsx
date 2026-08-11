@@ -28,7 +28,8 @@ import {
   ArrowLeft,
   ExternalLink,
   FileText,
-  Shield
+  Shield,
+  Database
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -121,6 +122,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode, title: string, b
   ];
 
   const systemItems = [
+    { label: 'Backup & Recovery', path: '/admin/backup', icon: Database },
     { label: 'Popup Alert', path: '/admin/popup-announcement', icon: Megaphone },
     { label: 'Daily Thoughts', path: '/admin/thoughts', icon: Sparkles },
     { label: 'Settings', path: '/admin/settings', icon: Settings },
