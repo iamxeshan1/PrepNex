@@ -54,9 +54,13 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 export const getExams = async () => {
   const path = 'exams';
   try {
-    const q = query(collection(db, path), orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const snapshot = await getDocs(collection(db, path));
+    const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+    return items.sort((a, b) => {
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return timeB - timeA;
+    });
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, path);
   }
@@ -138,11 +142,15 @@ export const getResultsByTestId = async (userId: string, testId: string) => {
     const q = query(
       collection(db, path), 
       where('userId', '==', userId), 
-      where('testId', '==', testId),
-      orderBy('date', 'desc')
+      where('testId', '==', testId)
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const results = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+    return results.sort((a, b) => {
+      const timeA = a.date ? new Date(a.date).getTime() : 0;
+      const timeB = b.date ? new Date(b.date).getTime() : 0;
+      return timeB - timeA;
+    });
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, path);
   }

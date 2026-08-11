@@ -24,56 +24,60 @@ export default function ExamDetail() {
   useEffect(() => {
     const fetchData = async () => {
       if (!examId) return;
-      const [examSnap, subjectsSnap] = await Promise.all([
-        getDoc(doc(db, 'exams', examId)),
-        getDocs(collection(db, 'subjects'))
-      ]);
-      
-      if (examSnap.exists()) {
-        const examData = examSnap.data();
-        const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnextedtech@gmail.com';
-        if (examData.status === 'draft' && !isAdmin) {
-          navigate('/dashboard');
-          return;
-        }
-        setExam({ id: examSnap.id, ...examData });
-        
-        if (examData.agencyId) {
-           const agencySnap = await getDoc(doc(db, 'agencies', examData.agencyId));
-           if (agencySnap.exists()) {
-             setAgency({ id: agencySnap.id, ...agencySnap.data() });
-           }
-        }
-      }
-      
-      setSubjects(subjectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      
-      const testsData = await getTestsByExamId(examId);
-      const visibleTests = testsData || [];
-      setTests(visibleTests);
-      
-      // Fetch results for these tests if user is logged in
-      if (user) {
-        const resultsMap: Record<string, any[]> = {};
-        for (const test of visibleTests) {
-          const results = await getResultsByTestId(user.uid, test.id);
-          resultsMap[test.id] = results || [];
-        }
-        setTestResults(resultsMap);
-      }
-      
-      // Fetch Razorpay config
       try {
-        const res = await fetch('/api/payment-status');
-        const data = await res.json();
-        if (data.configured && data.keyId) {
-          setRazorpayKeyId(data.keyId);
+        const [examSnap, subjectsSnap, testsData] = await Promise.all([
+          getDoc(doc(db, 'exams', examId)),
+          getDocs(collection(db, 'subjects')),
+          getTestsByExamId(examId)
+        ]);
+        
+        if (examSnap.exists()) {
+          const examData = examSnap.data();
+          const isAdmin = profile?.role === 'admin' || profile?.email === 'iamxeshan1@gmail.com' || profile?.email === 'prepnextedtech@gmail.com';
+          if (examData.status === 'draft' && !isAdmin) {
+            navigate('/dashboard');
+            return;
+          }
+          setExam({ id: examSnap.id, ...examData });
+          
+          if (examData.agencyId) {
+             getDoc(doc(db, 'agencies', examData.agencyId)).then(agencySnap => {
+               if (agencySnap.exists()) {
+                 setAgency({ id: agencySnap.id, ...agencySnap.data() });
+               }
+             }).catch(console.error);
+          }
+        }
+        
+        setSubjects(subjectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const visibleTests = testsData || [];
+        setTests(visibleTests);
+        
+        // Fetch results for these tests if user is logged in
+        if (user && visibleTests.length > 0) {
+          const resultsMap: Record<string, any[]> = {};
+          await Promise.all(visibleTests.map(async (test) => {
+            const results = await getResultsByTestId(user.uid, test.id);
+            resultsMap[test.id] = results || [];
+          }));
+          setTestResults(resultsMap);
+        }
+        
+        // Fetch Razorpay config
+        try {
+          const res = await fetch('/api/payment-status');
+          const data = await res.json();
+          if (data.configured && data.keyId) {
+            setRazorpayKeyId(data.keyId);
+          }
+        } catch (err) {
+          console.error("Error fetching payment config:", err);
         }
       } catch (err) {
-        console.error("Error fetching payment config:", err);
+        console.error("Error in ExamDetail fetchData:", err);
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     };
     fetchData();
   }, [examId, user]);

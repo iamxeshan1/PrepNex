@@ -30,10 +30,11 @@ export default function Helpdesk() {
 
   const fetchTickets = async () => {
     try {
-      const q = query(collection(db, 'tickets'), where('userId', '==', user?.uid), orderBy('createdAt', 'desc'));
+      const q = query(collection(db, 'tickets'), where('userId', '==', user?.uid));
       const snap = await getDocs(q);
-      // Filter out disposed tickets from the user view
-      setTickets(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter((t: any) => t.status !== 'disposed'));
+      const items = snap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+      items.sort((a, b) => (new Date(b.createdAt || 0).getTime()) - (new Date(a.createdAt || 0).getTime()));
+      setTickets(items.filter((t: any) => t.status !== 'disposed'));
     } catch (err) {
       console.error(err);
     } finally {

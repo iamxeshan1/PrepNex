@@ -22,15 +22,16 @@ export default function LiveTestsSection() {
       try {
         const now = new Date().getTime();
         
-        // Fetch from legacy liveTests
-        const qLive = query(collection(db, 'liveTests'), orderBy('startTime', 'asc'));
-        const snLive = await getDocs(qLive);
-        const testsLive = snLive.docs.map(d => ({ id: d.id, ...d.data(), isLegacyLive: true }));
-        
-        // Fetch from new scheduled tests
-        const qScheduled = query(collection(db, 'tests'), where('status', '==', 'scheduled'), orderBy('scheduledStartTime', 'asc'));
-        const snSched = await getDocs(qScheduled);
-        const testsSched = snSched.docs.map(d => ({ id: d.id, ...d.data(), isScheduled: true }));
+        const [snLive, snSched] = await Promise.all([
+          getDocs(collection(db, 'liveTests')),
+          getDocs(query(collection(db, 'tests'), where('status', '==', 'scheduled')))
+        ]);
+
+        const testsLive = snLive.docs.map(d => ({ id: d.id, ...d.data() as any, isLegacyLive: true }));
+        testsLive.sort((a, b) => (new Date(a.startTime || 0).getTime()) - (new Date(b.startTime || 0).getTime()));
+
+        const testsSched = snSched.docs.map(d => ({ id: d.id, ...d.data() as any, isScheduled: true }));
+        testsSched.sort((a, b) => (new Date(a.scheduledStartTime || 0).getTime()) - (new Date(b.scheduledStartTime || 0).getTime()));
 
         const allTests = [...testsLive, ...testsSched];
         
@@ -44,8 +45,9 @@ export default function LiveTestsSection() {
         setLiveTests(activeOrUpcoming);
       } catch (err) {
         console.error("Failed to fetch live tests", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     fetchLiveTests();
   }, []);

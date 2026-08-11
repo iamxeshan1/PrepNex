@@ -81,7 +81,7 @@ export const NotificationManager = () => {
 
       // Auto-hide toast
       setTimeout(() => setToast(null), 8000);
-    });
+    }, (err) => console.warn("Notification listener error:", err));
 
     return () => unsub();
   }, [user, lastNotifTime]);

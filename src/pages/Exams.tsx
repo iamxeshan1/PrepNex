@@ -29,13 +29,15 @@ export default function Exams() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        await seedDefaultData();
-        const examsSnapshot = await getDocs(collection(db, 'exams'));
+        seedDefaultData().catch(() => {});
+        const [examsSnapshot, agencySnapshot, testsSnapshot] = await Promise.all([
+          getDocs(collection(db, 'exams')),
+          getDocs(collection(db, 'agencies')),
+          getDocs(collection(db, 'tests'))
+        ]);
         
-        const agencySnapshot = await getDocs(collection(db, 'agencies'));
-        const testsSnapshot = await getDocs(collection(db, 'tests'));
         const testsData = testsSnapshot.docs.map(doc => doc.data());
-        const tCounts = {};
+        const tCounts: Record<string, number> = {};
         testsData.forEach(t => {
           if (t.examId) tCounts[t.examId] = (tCounts[t.examId] || 0) + 1;
         });
@@ -43,7 +45,7 @@ export default function Exams() {
         setExams(examsSnapshot.docs.map(doc => ({ id: doc.id, mockCount: tCounts[doc.id] || doc.data().mockCount || 0, ...doc.data() })));
         setAgencies([{ name: 'All', id: 'All' }, ...agencySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))]);
       } catch (err) {
-        console.error(err);
+        console.error("Error fetching exams:", err);
       } finally {
         setLoading(false);
       }

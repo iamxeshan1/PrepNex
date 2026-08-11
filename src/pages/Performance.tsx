@@ -34,11 +34,12 @@ export default function Performance() {
       if (!profile) return;
       try {
         const [resSnap, subSnap] = await Promise.all([
-          getDocs(query(collection(db, 'results'), where('userId', '==', profile.userId), orderBy('date', 'desc'))),
+          getDocs(query(collection(db, 'results'), where('userId', '==', profile.userId))),
           getDocs(collection(db, 'subjects'))
         ]);
 
-        const allResults = resSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const allResults = resSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+        allResults.sort((a, b) => (new Date(b.date || 0).getTime()) - (new Date(a.date || 0).getTime()));
         setResults(allResults);
 
         const sMap: Record<string, string> = {};

@@ -108,15 +108,20 @@ const MobileAppRedirect = () => {
 };
 
 export function AppContent() {
-  const [showSplash, setShowSplash] = React.useState(isAppMode());
+  const [showSplash, setShowSplash] = React.useState(() => {
+    return isAppMode() && !sessionStorage.getItem('prepnext_splash_shown');
+  });
 
   React.useEffect(() => {
     seedDefaultData(false).catch(err => console.error("Initial seed error:", err));
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 1800); 
-    return () => clearTimeout(timer);
-  }, []);
+    if (showSplash) {
+      sessionStorage.setItem('prepnext_splash_shown', 'true');
+      const timer = setTimeout(() => {
+        setShowSplash(false);
+      }, 600); 
+      return () => clearTimeout(timer);
+    }
+  }, [showSplash]);
 
   return (
     <>

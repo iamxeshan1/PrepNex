@@ -99,12 +99,14 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const examsSnapshot = await getDocs(collection(db, 'exams'));
+        const [examsSnapshot, agencySnapshot, testsSnapshot] = await Promise.all([
+          getDocs(collection(db, 'exams')),
+          getDocs(collection(db, 'agencies')),
+          getDocs(collection(db, 'tests'))
+        ]);
         
-        const agencySnapshot = await getDocs(collection(db, 'agencies'));
-        const testsSnapshot = await getDocs(collection(db, 'tests'));
         const testsData = testsSnapshot.docs.map(doc => doc.data());
-        const tCounts = {};
+        const tCounts: Record<string, number> = {};
         testsData.forEach(t => {
           if (t.examId) tCounts[t.examId] = (tCounts[t.examId] || 0) + 1;
         });
@@ -112,7 +114,7 @@ export default function Home() {
         setExams(examsSnapshot.docs.map(doc => ({ id: doc.id, mockCount: tCounts[doc.id] || doc.data().mockCount || 0, ...doc.data() })));
         setAgencies([{ name: 'All', id: 'All' }, ...agencySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))]);
       } catch (err) {
-        console.error(err);
+        console.error("Error fetching home data:", err);
       } finally {
         setLoading(false);
       }
@@ -120,22 +122,21 @@ export default function Home() {
 
     const unsubSettings = onSnapshot(doc(db, 'settings', 'general'), (snap) => {
       if (snap.exists()) setSettings(snap.data());
-    });
+    }, (err) => console.warn("Settings snapshot error:", err));
 
     const unsubLive = onSnapshot(collection(db, 'liveTests'), (snap) => {
         setLiveClasses(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    }, (err) => console.warn("Live tests snapshot error:", err));
 
     const unsubSubjects = onSnapshot(collection(db, 'subjects'), (snap) => {
         const fetchedSubjects = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        // Sort by createdAt desc on client
         fetchedSubjects.sort((a: any, b: any) => {
           const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
           return dateB - dateA;
         });
         setRealSubjects(fetchedSubjects.slice(0, 6));
-    });
+    }, (err) => console.warn("Subjects snapshot error:", err));
 
     const unsubStudyMaterial = onSnapshot(collection(db, 'study_material'), (snap) => {
         const fetchedBooks = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -145,15 +146,19 @@ export default function Home() {
           return dateB - dateA;
         });
         setStudyMaterials(fetchedBooks.slice(0, 4));
-    });
+    }, (err) => console.warn("Study material snapshot error:", err));
 
-    const unsubThought = onSnapshot(query(collection(db, 'thoughts'), orderBy('createdAt', 'desc'), limit(1)), (snap) => {
-      if (!snap.empty) setLatestThought({ id: snap.docs[0].id, ...snap.docs[0].data() });
-    });
+    const unsubThought = onSnapshot(collection(db, 'thoughts'), (snap) => {
+      const items = snap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+      items.sort((a, b) => (new Date(b.createdAt || 0).getTime()) - (new Date(a.createdAt || 0).getTime()));
+      if (items.length > 0) setLatestThought(items[0]);
+    }, (err) => console.warn("Thought snapshot error:", err));
 
-    const unsubAlerts = onSnapshot(query(collection(db, 'jobAlerts'), orderBy('createdAt', 'desc'), limit(5)), (snap) => {
-      setJobAlerts(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    const unsubAlerts = onSnapshot(collection(db, 'jobAlerts'), (snap) => {
+      const items = snap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+      items.sort((a, b) => (new Date(b.createdAt || 0).getTime()) - (new Date(a.createdAt || 0).getTime()));
+      setJobAlerts(items.slice(0, 5));
+    }, (err) => console.warn("Alerts snapshot error:", err));
 
     const unsubPopup = onSnapshot(doc(db, 'settings', 'popup_announcement'), (snap) => {
       if (snap.exists()) {
@@ -168,7 +173,7 @@ export default function Home() {
         }
       }
       setShowPopup(false);
-    });
+    }, (err) => console.warn("Popup snapshot error:", err));
 
     fetchData();
     return () => {
