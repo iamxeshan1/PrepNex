@@ -130,16 +130,8 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    const unsubUsers = onSnapshot(collection(db, 'users'), async (snap) => {
+    const unsubUsers = onSnapshot(collection(db, 'users'), (snap) => {
       setStats(prev => ({ ...prev, users: snap.size }));
-      if (snap.size === 0) {
-        console.log("[Dashboard] Users count is 0. Auto-triggering seed default users...");
-        try {
-          await seedDefaultData(false);
-        } catch (e) {
-          console.error("Auto-seed error:", e);
-        }
-      }
     });
 
     const unsubExams = onSnapshot(collection(db, 'exams'), (snap) => {

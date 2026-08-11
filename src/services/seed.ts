@@ -3,6 +3,10 @@ import { db } from '../lib/firebase';
 
 export async function seedDefaultData(force: boolean = false) {
   try {
+    if (!force && localStorage.getItem('prepnext_seed_done') === 'true') {
+      return;
+    }
+
     console.log(`[Seed Engine] Running seed (force=${force})...`);
 
     // 1. Agencies
@@ -477,10 +481,15 @@ export async function seedDefaultData(force: boolean = false) {
       ];
 
       for (const u of mockUsers) {
-        await setDoc(doc(db, 'users', u.uid), u, { merge: true });
+        try {
+          await setDoc(doc(db, 'users', u.uid), u, { merge: true });
+        } catch (e) {
+          console.warn("[Seed Engine] Skipping user doc write:", e);
+        }
       }
     }
 
+    localStorage.setItem('prepnext_seed_done', 'true');
     console.log("[Seed Engine] Seeding run completed successfully!");
   } catch (err) {
     console.error("[Seed Engine] Error seeding default data:", err);

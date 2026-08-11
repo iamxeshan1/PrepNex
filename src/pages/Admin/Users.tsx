@@ -250,39 +250,25 @@ export default function AdminUsers() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    getDocs(collection(db, 'exams')).then(eSnap => setExams(eSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })))).catch(console.error);
+    getDocs(collection(db, 'agencies')).then(aSnap => setAgencies(aSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })))).catch(console.error);
 
-  const fetchData = async () => {
-    try {
-      let uSnap = await getDocs(collection(db, 'users'));
-      if (uSnap.size === 0) {
-        console.log("[Users Page] No users found. Auto-seeding default aspirants...");
-        await seedDefaultData(true);
-        uSnap = await getDocs(collection(db, 'users'));
-      }
-
-      const [eSnap, aSnap] = await Promise.all([
-        getDocs(collection(db, 'exams')),
-        getDocs(collection(db, 'agencies'))
-      ]);
-
+    const unsubUsers = onSnapshot(collection(db, 'users'), (uSnap) => {
       const fetchedUsers = uSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       fetchedUsers.sort((a: any, b: any) => {
         const nameA = a.name || a.fullName || a.username || a.email || '';
         const nameB = b.name || b.fullName || b.username || b.email || '';
         return nameA.localeCompare(nameB);
       });
-
       setUsers(fetchedUsers);
-      setExams(eSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setAgencies(aSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
-    } catch (error) {
-      console.error("Error fetching admin users:", error);
+    }, (error) => {
+      console.error("Error fetching admin users snapshot:", error);
       setLoading(false);
-    }
-  };
+    });
+
+    return () => unsubUsers();
+  }, []);
 
   const handleToggleBlock = async (userId: string, currentStatus: boolean) => {
      const action = currentStatus ? 'unblock' : 'block';
