@@ -14,7 +14,7 @@ import {
   onSnapshot
 } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { seedDefaultData } from '../../services/seed';
+import { seedDefaultData, seedMockUsers } from '../../services/seed';
 import { useItemTitles } from '../../hooks/useItemTitles';
 import { 
   Search, 
@@ -256,7 +256,7 @@ export default function AdminUsers() {
 
     const unsubUsers = onSnapshot(collection(db, 'users'), (uSnap) => {
       if (uSnap.size <= 1) {
-        seedDefaultData().catch(console.error);
+        seedMockUsers().catch(console.error);
       }
       const fetchedUsers = uSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       fetchedUsers.sort((a: any, b: any) => {
@@ -544,7 +544,7 @@ export default function AdminUsers() {
         <div className="flex items-center gap-3">
           <button 
             onClick={() => {
-              seedDefaultData(true).then(() => {
+              seedMockUsers().then(() => {
                 setToast({ isVisible: true, message: 'User directory synced successfully!', type: 'success' });
               }).catch(console.error);
             }} 

@@ -1,9 +1,181 @@
 import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
+export async function seedMockUsers() {
+  console.log("[Seed Engine] Seeding aspirant users into user directory...");
+  const mockUsers = [
+    {
+      uid: 'user-rahul-01',
+      userId: 'user-rahul-01',
+      fullName: 'Rahul Sharma',
+      name: 'Rahul Sharma',
+      username: 'rahul_upsc',
+      email: 'rahul.sharma@example.com',
+      phone: '+91 98765 43210',
+      role: 'aspirant',
+      targetExam: 'UPSC Civil Services',
+      state: 'Delhi',
+      address: 'Connaught Place, New Delhi',
+      isPremium: true,
+      points: 1850,
+      streakDays: 14,
+      testsAttempted: 28,
+      averageScore: 84.5,
+      createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
+      lastLogin: new Date(Date.now() - 2 * 3600000).toISOString(),
+      isOnline: true
+    },
+    {
+      uid: 'user-priya-02',
+      userId: 'user-priya-02',
+      fullName: 'Priya Verma',
+      name: 'Priya Verma',
+      username: 'priya_ssc',
+      email: 'priya.verma@example.com',
+      phone: '+91 98123 45678',
+      role: 'aspirant',
+      targetExam: 'SSC CGL',
+      state: 'Uttar Pradesh',
+      address: 'Hazratganj, Lucknow',
+      isPremium: true,
+      points: 2100,
+      streakDays: 21,
+      testsAttempted: 35,
+      averageScore: 89.2,
+      createdAt: new Date(Date.now() - 45 * 86400000).toISOString(),
+      lastLogin: new Date(Date.now() - 15 * 60000).toISOString(),
+      isOnline: true
+    },
+    {
+      uid: 'user-amit-03',
+      userId: 'user-amit-03',
+      fullName: 'Amit Patel',
+      name: 'Amit Patel',
+      username: 'patel_banker',
+      email: 'amit.patel@example.com',
+      phone: '+91 97234 56789',
+      role: 'aspirant',
+      targetExam: 'IBPS PO',
+      state: 'Gujarat',
+      address: 'CG Road, Ahmedabad',
+      isPremium: false,
+      points: 1620,
+      streakDays: 9,
+      testsAttempted: 22,
+      averageScore: 81.0,
+      createdAt: new Date(Date.now() - 20 * 86400000).toISOString(),
+      lastLogin: new Date(Date.now() - 5 * 3600000).toISOString(),
+      isOnline: false
+    },
+    {
+      uid: 'user-sneha-04',
+      userId: 'user-sneha-04',
+      fullName: 'Sneha Reddy',
+      name: 'Sneha Reddy',
+      username: 'sneha_neet',
+      email: 'sneha.reddy@example.com',
+      phone: '+91 96543 21098',
+      role: 'aspirant',
+      targetExam: 'NEET UG',
+      state: 'Telangana',
+      address: 'Banjara Hills, Hyderabad',
+      isPremium: true,
+      points: 2450,
+      streakDays: 30,
+      testsAttempted: 42,
+      averageScore: 92.4,
+      createdAt: new Date(Date.now() - 60 * 86400000).toISOString(),
+      lastLogin: new Date().toISOString(),
+      isOnline: true
+    },
+    {
+      uid: 'user-vikram-05',
+      userId: 'user-vikram-05',
+      fullName: 'Vikram Singh',
+      name: 'Vikram Singh',
+      username: 'vikram_jee',
+      email: 'vikram.singh@example.com',
+      phone: '+91 95432 10987',
+      role: 'aspirant',
+      targetExam: 'JEE Advanced',
+      state: 'Rajasthan',
+      address: 'Malviya Nagar, Jaipur',
+      isPremium: false,
+      points: 1980,
+      streakDays: 18,
+      testsAttempted: 31,
+      averageScore: 86.0,
+      createdAt: new Date(Date.now() - 15 * 86400000).toISOString(),
+      lastLogin: new Date(Date.now() - 1 * 86400000).toISOString(),
+      isOnline: false
+    },
+    {
+      uid: 'user-ananya-06',
+      userId: 'user-ananya-06',
+      fullName: 'Ananya Roy',
+      name: 'Ananya Roy',
+      username: 'ananya_wbcs',
+      email: 'ananya.roy@example.com',
+      phone: '+91 94321 09876',
+      role: 'aspirant',
+      targetExam: 'WBCS Executive',
+      state: 'West Bengal',
+      address: 'Park Street, Kolkata',
+      isPremium: true,
+      points: 2310,
+      streakDays: 25,
+      testsAttempted: 38,
+      averageScore: 88.7,
+      createdAt: new Date(Date.now() - 50 * 86400000).toISOString(),
+      lastLogin: new Date(Date.now() - 30 * 60000).toISOString(),
+      isOnline: true
+    },
+    {
+      uid: 'user-rohan-07',
+      userId: 'user-rohan-07',
+      fullName: 'Rohan Deshmukh',
+      name: 'Rohan Deshmukh',
+      username: 'rohan_mpsc',
+      email: 'rohan.deshmukh@example.com',
+      phone: '+91 93210 98765',
+      role: 'aspirant',
+      targetExam: 'MPSC Rajyaseva',
+      state: 'Maharashtra',
+      address: 'Kothrud, Pune',
+      isPremium: false,
+      points: 1750,
+      streakDays: 12,
+      testsAttempted: 26,
+      averageScore: 82.3,
+      createdAt: new Date(Date.now() - 18 * 86400000).toISOString(),
+      lastLogin: new Date(Date.now() - 4 * 3600000).toISOString(),
+      isOnline: false
+    }
+  ];
+
+  for (const u of mockUsers) {
+    try {
+      await setDoc(doc(db, 'users', u.uid), u, { merge: true });
+    } catch (e) {
+      console.warn("[Seed Engine] Skipping user doc write:", e);
+    }
+  }
+}
+
 export async function seedDefaultData(force: boolean = false) {
   try {
-    if (!force && localStorage.getItem('prepnext_seed_done') === 'true') {
+    const seedDone = localStorage.getItem('prepnext_seed_done') === 'true';
+    if (!force && seedDone) {
+      // Still verify if users directory is populated
+      try {
+        const usersSnap = await getDocs(collection(db, 'users'));
+        if (usersSnap.size <= 1) {
+          console.log("[Seed Engine] Users directory missing, seeding aspirant users...");
+          await seedMockUsers();
+        }
+      } catch (e) {
+        console.warn("[Seed Engine] User check error:", e);
+      }
       return;
     }
 
@@ -397,164 +569,7 @@ export async function seedDefaultData(force: boolean = false) {
     const usersSnap = await getDocs(collection(db, 'users'));
     const hasSeededUsers = usersSnap.docs.some(d => d.id.startsWith('user-'));
     if (usersSnap.size <= 1 || !hasSeededUsers || force) {
-      console.log("[Seed Engine] Seeding aspirant users into user directory...");
-      const mockUsers = [
-        {
-          uid: 'user-rahul-01',
-          userId: 'user-rahul-01',
-          fullName: 'Rahul Sharma',
-          name: 'Rahul Sharma',
-          username: 'rahul_upsc',
-          email: 'rahul.sharma@example.com',
-          phone: '+91 98765 43210',
-          role: 'aspirant',
-          targetExam: 'UPSC Civil Services',
-          state: 'Delhi',
-          address: 'Connaught Place, New Delhi',
-          isPremium: true,
-          points: 1850,
-          streakDays: 14,
-          testsAttempted: 28,
-          averageScore: 84.5,
-          createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
-          lastLogin: new Date(Date.now() - 2 * 3600000).toISOString(),
-          isOnline: true
-        },
-        {
-          uid: 'user-priya-02',
-          userId: 'user-priya-02',
-          fullName: 'Priya Verma',
-          name: 'Priya Verma',
-          username: 'priya_ssc',
-          email: 'priya.verma@example.com',
-          phone: '+91 98123 45678',
-          role: 'aspirant',
-          targetExam: 'SSC CGL',
-          state: 'Uttar Pradesh',
-          address: 'Hazratganj, Lucknow',
-          isPremium: true,
-          points: 2100,
-          streakDays: 21,
-          testsAttempted: 35,
-          averageScore: 89.2,
-          createdAt: new Date(Date.now() - 45 * 86400000).toISOString(),
-          lastLogin: new Date(Date.now() - 15 * 60000).toISOString(),
-          isOnline: true
-        },
-        {
-          uid: 'user-amit-03',
-          userId: 'user-amit-03',
-          fullName: 'Amit Patel',
-          name: 'Amit Patel',
-          username: 'patel_banker',
-          email: 'amit.patel@example.com',
-          phone: '+91 97234 56789',
-          role: 'aspirant',
-          targetExam: 'IBPS PO',
-          state: 'Gujarat',
-          address: 'CG Road, Ahmedabad',
-          isPremium: false,
-          points: 1620,
-          streakDays: 9,
-          testsAttempted: 22,
-          averageScore: 81.0,
-          createdAt: new Date(Date.now() - 20 * 86400000).toISOString(),
-          lastLogin: new Date(Date.now() - 5 * 3600000).toISOString(),
-          isOnline: false
-        },
-        {
-          uid: 'user-sneha-04',
-          userId: 'user-sneha-04',
-          fullName: 'Sneha Reddy',
-          name: 'Sneha Reddy',
-          username: 'sneha_neet',
-          email: 'sneha.reddy@example.com',
-          phone: '+91 96543 21098',
-          role: 'aspirant',
-          targetExam: 'NEET UG',
-          state: 'Telangana',
-          address: 'Banjara Hills, Hyderabad',
-          isPremium: true,
-          points: 2450,
-          streakDays: 30,
-          testsAttempted: 42,
-          averageScore: 92.4,
-          createdAt: new Date(Date.now() - 60 * 86400000).toISOString(),
-          lastLogin: new Date().toISOString(),
-          isOnline: true
-        },
-        {
-          uid: 'user-vikram-05',
-          userId: 'user-vikram-05',
-          fullName: 'Vikram Singh',
-          name: 'Vikram Singh',
-          username: 'vikram_jee',
-          email: 'vikram.singh@example.com',
-          phone: '+91 95432 10987',
-          role: 'aspirant',
-          targetExam: 'JEE Advanced',
-          state: 'Rajasthan',
-          address: 'Malviya Nagar, Jaipur',
-          isPremium: false,
-          points: 1980,
-          streakDays: 18,
-          testsAttempted: 31,
-          averageScore: 86.0,
-          createdAt: new Date(Date.now() - 15 * 86400000).toISOString(),
-          lastLogin: new Date(Date.now() - 1 * 86400000).toISOString(),
-          isOnline: false
-        },
-        {
-          uid: 'user-ananya-06',
-          userId: 'user-ananya-06',
-          fullName: 'Ananya Roy',
-          name: 'Ananya Roy',
-          username: 'ananya_wbcs',
-          email: 'ananya.roy@example.com',
-          phone: '+91 94321 09876',
-          role: 'aspirant',
-          targetExam: 'WBCS Executive',
-          state: 'West Bengal',
-          address: 'Park Street, Kolkata',
-          isPremium: true,
-          points: 2310,
-          streakDays: 25,
-          testsAttempted: 38,
-          averageScore: 88.7,
-          createdAt: new Date(Date.now() - 50 * 86400000).toISOString(),
-          lastLogin: new Date(Date.now() - 30 * 60000).toISOString(),
-          isOnline: true
-        },
-        {
-          uid: 'user-rohan-07',
-          userId: 'user-rohan-07',
-          fullName: 'Rohan Deshmukh',
-          name: 'Rohan Deshmukh',
-          username: 'rohan_mpsc',
-          email: 'rohan.deshmukh@example.com',
-          phone: '+91 93210 98765',
-          role: 'aspirant',
-          targetExam: 'MPSC Rajyaseva',
-          state: 'Maharashtra',
-          address: 'Kothrud, Pune',
-          isPremium: false,
-          points: 1750,
-          streakDays: 12,
-          testsAttempted: 26,
-          averageScore: 82.3,
-          createdAt: new Date(Date.now() - 18 * 86400000).toISOString(),
-          lastLogin: new Date(Date.now() - 4 * 3600000).toISOString(),
-          isOnline: false
-        }
-      ];
-
-      for (const u of mockUsers) {
-        try {
-          await setDoc(doc(db, 'users', u.uid), u, { merge: true });
-        } catch (e) {
-          console.warn("[Seed Engine] Skipping user doc write:", e);
-        }
-      }
+      await seedMockUsers();
     }
 
     localStorage.setItem('prepnext_seed_done', 'true');
