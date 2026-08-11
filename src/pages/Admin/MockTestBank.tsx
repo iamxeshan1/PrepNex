@@ -26,8 +26,14 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import Toast, { ToastType } from '../../components/Toast';
 
 export default function MockTestBank() {
+  const [toast, setToast] = useState<{ isVisible: boolean; message: string; type: ToastType }>({
+    isVisible: false,
+    message: '',
+    type: 'info'
+  });
   const [questions, setQuestions] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -975,6 +981,14 @@ export default function MockTestBank() {
         onConfirm={confirmDelete}
         onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
       />
+      {toast.isVisible && (
+        <Toast
+          isVisible={toast.isVisible}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ ...toast, isVisible: false })}
+        />
+      )}
     </AdminLayout>
   );
 }
