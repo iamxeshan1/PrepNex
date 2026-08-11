@@ -44,6 +44,7 @@ import ConfirmationModal from '../../components/ConfirmationModal';
 import PremiumGrantModal from '../../components/PremiumGrantModal';
 import Toast, { ToastType } from '../../components/Toast';
 import { addDoc } from 'firebase/firestore';
+import { seedDefaultData } from '../../services/seed';
 
 
 export default function AdminUsers() {
@@ -254,12 +255,26 @@ export default function AdminUsers() {
 
   const fetchData = async () => {
     try {
-      const [uSnap, eSnap, aSnap] = await Promise.all([
-        getDocs(query(collection(db, 'users'), orderBy('name', 'asc'))),
+      let uSnap = await getDocs(collection(db, 'users'));
+      if (uSnap.size === 0) {
+        console.log("[Users Page] No users found. Auto-seeding default aspirants...");
+        await seedDefaultData(true);
+        uSnap = await getDocs(collection(db, 'users'));
+      }
+
+      const [eSnap, aSnap] = await Promise.all([
         getDocs(collection(db, 'exams')),
         getDocs(collection(db, 'agencies'))
       ]);
-      setUsers(uSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+
+      const fetchedUsers = uSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      fetchedUsers.sort((a: any, b: any) => {
+        const nameA = a.name || a.fullName || a.username || a.email || '';
+        const nameB = b.name || b.fullName || b.username || b.email || '';
+        return nameA.localeCompare(nameB);
+      });
+
+      setUsers(fetchedUsers);
       setExams(eSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setAgencies(aSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
@@ -516,10 +531,12 @@ export default function AdminUsers() {
     }
   };
 
-  const filteredUsers = users.filter(u => 
-    u.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    u.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter(u => {
+    const term = searchTerm.toLowerCase();
+    const name = (u.name || u.fullName || u.username || '').toLowerCase();
+    const email = (u.email || '').toLowerCase();
+    return name.includes(term) || email.includes(term);
+  });
 
   const StatCard = ({ title, value, span, trend, colorClass = "text-slate-900" }: any) => (
     <div className="bg-white p-6 rounded-xl border border-slate-200">
