@@ -102,10 +102,10 @@ export default function AdminSubjects() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedSubjectId && !newSubjectName) return;
+    if (!selectedSubjectId && !newSubjectName.trim()) return;
     setLoading(true);
     try {
-      if (newSubjectName) {
+      if (newSubjectName.trim()) {
         const exists = subjects.find(s => s.name?.toLowerCase() === newSubjectName.trim().toLowerCase());
         if (exists) {
           setToast({
@@ -119,23 +119,40 @@ export default function AdminSubjects() {
 
         await addDoc(collection(db, 'subjects'), {
           name: newSubjectName.trim(),
-          icon,
-          description,
+          icon: icon || 'BookOpen',
+          description: description || '',
           createdAt: new Date().toISOString()
+        });
+
+        setToast({
+          isVisible: true,
+          message: "Subject created successfully!",
+          type: 'success'
         });
       } else {
         const subRef = doc(db, 'subjects', selectedSubjectId);
         await setDoc(subRef, {
-          icon,
-          description,
+          icon: icon || 'BookOpen',
+          description: description || '',
           updatedAt: new Date().toISOString()
         }, { merge: true });
+
+        setToast({
+          isVisible: true,
+          message: "Subject updated successfully!",
+          type: 'success'
+        });
       }
       
       resetForm();
       fetchSubjects();
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      console.error("Error saving subject:", error);
+      setToast({
+        isVisible: true,
+        message: "Failed to save subject: " + (error.message || "Operation failed"),
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }

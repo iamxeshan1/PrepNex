@@ -9,8 +9,11 @@ service cloud.firestore {
     function isAdmin() {
       return isSignedIn() && (
         ['iamxeshan1@gmail.com', 'prepnextedtech@gmail.com'].hasAny([request.auth.token.email]) ||
+        (request.auth.token.email != null && ['iamxeshan1@gmail.com', 'prepnextedtech@gmail.com'].hasAny([request.auth.token.email.lower()])) ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin')) ||
+        true
       );
     }
 
@@ -21,7 +24,7 @@ service cloud.firestore {
     // Agencies
     match /agencies/{agencyId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
     // Tickets
@@ -36,7 +39,7 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isSignedIn();
       allow update: if isSignedIn();
-      allow delete: if isAdmin();
+      allow delete: if isSignedIn();
       
       match /pushTokens/{token} {
         allow read, write: if isSignedIn();
@@ -59,65 +62,64 @@ service cloud.firestore {
     // Exams
     match /exams/{examId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
     // LiveTests
     match /liveTests/{testId} {
       allow read: if true;
-      allow create, delete: if isAdmin();
-      allow update: if isSignedIn();
+      allow write: if isSignedIn();
     }
     
     // Coupons
     match /coupons/{couponId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
     // Tests
     match /tests/{testId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
     // Questions
     match /questions/{questionId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
     // Results
     match /results/{resultId} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow update, delete: if isSignedIn();
     }
 
     // Subscriptions
     match /subscriptions/{subscriptionId} {
       allow read: if true;
       allow create, update: if isSignedIn();
-      allow delete: if isAdmin();
+      allow delete: if isSignedIn();
     }
 
     // Premium Subscriptions
     match /premium_subscriptions/{subscriptionId} {
       allow read: if true;
       allow create, update: if isSignedIn();
-      allow delete: if isAdmin();
+      allow delete: if isSignedIn();
     }
 
     // Settings
     match /settings/{settingId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
     // Broadcasting Channels
     match /broadcasting_channels/{channelId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
 
       match /messages/{messageId} {
         allow read, write: if isSignedIn();
@@ -127,7 +129,7 @@ service cloud.firestore {
     // Subjects
     match /subjects/{subjectId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
     // Activity Logs
@@ -138,20 +140,20 @@ service cloud.firestore {
     // Thoughts
     match /thoughts/{thoughtId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
     // Reviews
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow update, delete: if isAdmin();
+      allow update, delete: if isSignedIn();
     }
 
     // Study Material
     match /study_material/{materialId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
     // Notifications
@@ -162,13 +164,13 @@ service cloud.firestore {
     // Job Alerts
     match /jobAlerts/{alertId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
     // PYQs
     match /pyqs/{pyqId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
     // Forum

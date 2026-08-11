@@ -69,29 +69,44 @@ export default function AdminExams() {
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    const examData = {
-      name,
-      agencyId,
-      category: cat,
-      price: Number(price),
-      isPaid: isPaid,
-      status,
-      updatedAt: new Date().toISOString()
-    };
+    try {
+      const examData = {
+        name: name || '',
+        agencyId: agencyId || '',
+        category: cat || 'GOVERNMENT',
+        price: Number(price) || 0,
+        isPaid: Boolean(isPaid),
+        status: status || 'live',
+        updatedAt: new Date().toISOString()
+      };
 
-    if (editingId) {
-      await updateDoc(doc(db, 'exams', editingId), examData);
-    } else {
-      await addDoc(collection(db, 'exams'), {
-        ...examData,
-        createdAt: new Date().toISOString()
+      if (editingId) {
+        await updateDoc(doc(db, 'exams', editingId), examData);
+      } else {
+        await addDoc(collection(db, 'exams'), {
+          ...examData,
+          createdAt: new Date().toISOString()
+        });
+      }
+
+      setToast({
+        isVisible: true,
+        message: editingId ? "Exam updated successfully!" : "Exam created successfully!",
+        type: 'success'
+      });
+
+      setShowAddForm(false);
+      setEditingId(null);
+      fetchExamsAndAgencies();
+      resetForm();
+    } catch (error: any) {
+      console.error("Error saving exam:", error);
+      setToast({
+        isVisible: true,
+        message: "Failed to save exam: " + (error.message || "Operation failed"),
+        type: 'error'
       });
     }
-
-    setShowAddForm(false);
-    setEditingId(null);
-    fetchExamsAndAgencies();
-    resetForm();
   };
 
   const startEdit = (exam: any) => {

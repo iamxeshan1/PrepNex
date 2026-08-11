@@ -99,43 +99,60 @@ export default function AdminQuestions() {
       return;
     }
     
-    let finalSubjectId = test?.subjectId || subjectId;
-    
-    if (newSubjectName.trim()) {
-      const existing = subjects.find(s => s.name.toLowerCase() === newSubjectName.trim().toLowerCase());
-      if (existing) {
-        finalSubjectId = existing.id;
-      } else {
-        const subRef = await addDoc(collection(db, 'subjects'), {
-          name: newSubjectName.trim(),
-          createdAt: new Date().toISOString()
-        });
-        finalSubjectId = subRef.id;
-        const sSnap = await getDocs(collection(db, 'subjects'));
-        setSubjects(sSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    try {
+      let finalSubjectId = test?.subjectId || subjectId || '';
+      
+      if (newSubjectName.trim()) {
+        const existing = subjects.find(s => s.name?.toLowerCase() === newSubjectName.trim().toLowerCase());
+        if (existing) {
+          finalSubjectId = existing.id;
+        } else {
+          const subRef = await addDoc(collection(db, 'subjects'), {
+            name: newSubjectName.trim(),
+            description: '',
+            icon: 'BookOpen',
+            createdAt: new Date().toISOString()
+          });
+          finalSubjectId = subRef.id;
+          const sSnap = await getDocs(collection(db, 'subjects'));
+          setSubjects(sSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        }
       }
-    }
 
-    const questionData = {
-      testId,
-      subjectId: finalSubjectId,
-      level,
-      question,
-      options,
-      correctAnswer: correct,
-      explanation,
-      previouslyAskedIn,
-      updatedAt: new Date().toISOString()
-    };
+      const questionData = {
+        testId: testId || 'MASTER_BANK',
+        subjectId: finalSubjectId || 'GENERAL',
+        level: level || 'Medium',
+        question: question || '',
+        options: (options || []).map(o => o || ''),
+        correctAnswer: correct || '',
+        explanation: explanation || '',
+        previouslyAskedIn: previouslyAskedIn || '',
+        updatedAt: new Date().toISOString()
+      };
 
-    if (editingQuestionId) {
+      if (editingQuestionId) {
         await updateDoc(doc(db, 'questions', editingQuestionId), questionData);
-    } else {
+      } else {
         await addDoc(collection(db, 'questions'), { ...questionData, createdAt: new Date().toISOString() });
-    }
+      }
 
-    resetForm();
-    refreshQuestions();
+      setToast({
+        isVisible: true,
+        message: editingQuestionId ? "Question updated successfully!" : "Question saved successfully!",
+        type: 'success'
+      });
+
+      resetForm();
+      refreshQuestions();
+    } catch (error: any) {
+      console.error("Error saving question:", error);
+      setToast({
+        isVisible: true,
+        message: "Failed to save question: " + (error.message || "Operation failed"),
+        type: 'error'
+      });
+    }
   };
 
   const refreshQuestions = async () => {

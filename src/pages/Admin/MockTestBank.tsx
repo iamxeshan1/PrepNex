@@ -156,7 +156,7 @@ export default function MockTestBank() {
       const batch = writeBatch(db);
       let targetSubjectId = aiSubjectId;
 
-      if (aiSubjectId === 'new' && aiSubjectName.trim()) {
+      if ((!aiSubjectId || aiSubjectId === 'new') && aiSubjectName.trim()) {
         const existingSubject = subjects.find(s => s.name?.toLowerCase() === aiSubjectName.trim().toLowerCase());
         if (existingSubject) {
           targetSubjectId = existingSubject.id;
@@ -171,19 +171,23 @@ export default function MockTestBank() {
         }
       }
 
+      if (!targetSubjectId || targetSubjectId === 'new') {
+        targetSubjectId = subjects[0]?.id || 'GENERAL';
+      }
+
       const finalExamName = aiExamName === 'Other' ? aiCustomExamName : aiExamName;
 
       for (const q of aiResults) {
         const qRef = doc(collection(db, 'questions'));
         batch.set(qRef, {
           testId: 'MASTER_BANK',
-          subjectId: targetSubjectId,
-          level: aiLevel,
-          question: q.question,
-          options: q.options.map(String),
-          correctAnswer: String(q.correctAnswer),
+          subjectId: targetSubjectId || 'GENERAL',
+          level: aiLevel || 'Medium',
+          question: q.question || '',
+          options: (q.options || []).map(o => String(o ?? '')),
+          correctAnswer: String(q.correctAnswer ?? ''),
           explanation: q.explanation || '',
-          previouslyAskedIn: q.previouslyAskedIn || '',
+          previouslyAskedIn: q.previouslyAskedIn || finalExamName || '',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         });
@@ -191,6 +195,12 @@ export default function MockTestBank() {
 
       await batch.commit();
       
+      setToast({
+        isVisible: true,
+        message: `Successfully added ${aiResults.length} AI generated questions to Master Bank!`,
+        type: 'success'
+      });
+
       // Cleanup
       setAiResults([]);
       setShowAiGen(false);
@@ -204,7 +214,12 @@ export default function MockTestBank() {
       fetchData();
     } catch (err: any) {
       console.error("Failed to commit AI generated questions:", err);
-      setAiError("Failed saving to DB: " + err.message);
+      setAiError("Failed saving to DB: " + (err.message || 'Unknown error'));
+      setToast({
+        isVisible: true,
+        message: "Failed to save AI questions: " + (err.message || 'Error occurred'),
+        type: 'error'
+      });
     }
   };
 
@@ -212,7 +227,7 @@ export default function MockTestBank() {
     e.preventDefault();
     try {
       let subjectId = newQ.subjectId;
-      if (newQ.subjectId === 'new' && newQ.newSubjectName) {
+      if ((!newQ.subjectId || newQ.subjectId === 'new') && newQ.newSubjectName) {
         const existingSubject = subjects.find(s => s.name?.toLowerCase() === newQ.newSubjectName.trim().toLowerCase());
         if (existingSubject) {
           subjectId = existingSubject.id;
@@ -228,13 +243,13 @@ export default function MockTestBank() {
       }
 
       const questionData = {
-        subjectId,
-        level: newQ.level,
-        question: newQ.question,
-        options: newQ.options,
-        correctAnswer: newQ.correctAnswer,
-        explanation: newQ.explanation,
-        previouslyAskedIn: newQ.previouslyAskedIn,
+        subjectId: subjectId || subjects[0]?.id || 'GENERAL',
+        level: newQ.level || 'Medium',
+        question: newQ.question || '',
+        options: (newQ.options || []).map(o => o || ''),
+        correctAnswer: newQ.correctAnswer || '',
+        explanation: newQ.explanation || '',
+        previouslyAskedIn: newQ.previouslyAskedIn || '',
         testId: 'MASTER_BANK',
         updatedAt: new Date().toISOString()
       };
@@ -245,12 +260,23 @@ export default function MockTestBank() {
         await addDoc(collection(db, 'questions'), { ...questionData, createdAt: new Date().toISOString() });
       }
 
+      setToast({
+        isVisible: true,
+        message: editingQuestionId ? "Question updated successfully!" : "Question added to Master Bank!",
+        type: 'success'
+      });
+
       setNewQ({ subjectId: '', newSubjectName: '', level: 'Medium', question: '', options: ['', '', '', ''], correctAnswer: '', explanation: '', previouslyAskedIn: '' });
       setEditingQuestionId(null);
       setShowAddForm(false);
       fetchData();
-    } catch (error) {
-       console.error(error);
+    } catch (error: any) {
+       console.error("Error saving question:", error);
+       setToast({
+         isVisible: true,
+         message: "Failed to save question: " + (error.message || "An error occurred"),
+         type: 'error'
+       });
     }
   };
 

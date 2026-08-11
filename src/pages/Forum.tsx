@@ -558,135 +558,77 @@ export default function Forum() {
           </div>
         </div>
 
-        {/* Main Feed Container (X-style 3-Column / 2-Column Grid) */}
+        {/* Main Feed Container */}
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 pt-6">
+
+          {/* Quick Top Pill Filter Bar */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-4 no-scrollbar border-b border-slate-200/80 dark:border-slate-800/80">
+            <button
+              onClick={() => setActiveTab('all')}
+              className={`px-4 py-2 rounded-full text-xs font-black whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                activeTab === 'all'
+                  ? 'bg-[#006e5d] text-white shadow-md shadow-emerald-700/20'
+                  : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" /> All Discussions ({posts.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('polls')}
+              className={`px-4 py-2 rounded-full text-xs font-black whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                activeTab === 'polls'
+                  ? 'bg-[#006e5d] text-white shadow-md shadow-emerald-700/20'
+                  : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50'
+              }`}
+            >
+              <BarChart2 className="w-3.5 h-3.5 text-emerald-500" /> MCQ Polls ({posts.filter(p => p.poll).length})
+            </button>
+            <button
+              onClick={() => setActiveTab('doubts')}
+              className={`px-4 py-2 rounded-full text-xs font-black whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                activeTab === 'doubts'
+                  ? 'bg-[#006e5d] text-white shadow-md shadow-emerald-700/20'
+                  : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50'
+              }`}
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-blue-500" /> Doubts ({posts.filter(p => !p.poll).length})
+            </button>
+            <button
+              onClick={() => setActiveTab('verified')}
+              className={`px-4 py-2 rounded-full text-xs font-black whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                activeTab === 'verified'
+                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                  : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50'
+              }`}
+            >
+              <BadgeCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-500" /> Verified Pros ({posts.filter(p => p.authorIsPremium).length})
+            </button>
+            <button
+              onClick={() => setActiveTab('saved')}
+              className={`px-4 py-2 rounded-full text-xs font-black whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                activeTab === 'saved'
+                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                  : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50'
+              }`}
+            >
+              <Bookmark className="w-3.5 h-3.5 text-amber-950 fill-amber-950" /> Saved ({Object.values(bookmarkedPosts).filter(Boolean).length})
+            </button>
+            <button
+              onClick={() => setActiveTab('groups')}
+              className={`px-4 py-2 rounded-full text-xs font-black whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                activeTab === 'groups'
+                  ? 'bg-[#006e5d] text-white shadow-md shadow-emerald-700/20'
+                  : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5 text-emerald-500" /> Study Groups ({studyGroupsCount})
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-            {/* Left Column - Navigation Tabs & Quick Tag Filters */}
-            <div className="lg:col-span-3 space-y-4">
-              <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 shadow-sm sticky top-20">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 px-2">Feed Navigation</h3>
-                <nav className="space-y-1">
-                  <button
-                    onClick={() => setActiveTab('all')}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-extrabold transition-all ${
-                      activeTab === 'all' 
-                        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-[#006e5d] dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40' 
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <Sparkles className="w-4 h-4" /> All Discussions
-                    </span>
-                    <span className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-full text-[10px]">
-                      {posts.length}
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab('polls')}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-extrabold transition-all ${
-                      activeTab === 'polls' 
-                        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-[#006e5d] dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40' 
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <BarChart2 className="w-4 h-4 text-emerald-600" /> MCQ Practice Polls
-                    </span>
-                    <span className="bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-full text-[10px] font-bold">
-                      {posts.filter(p => p.poll).length}
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab('doubts')}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-extrabold transition-all ${
-                      activeTab === 'doubts' 
-                        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-[#006e5d] dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40' 
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <HelpCircle className="w-4 h-4 text-blue-500" /> Standard Doubts
-                    </span>
-                    <span className="bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full text-[10px]">
-                      {posts.filter(p => !p.poll).length}
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab('verified')}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-extrabold transition-all ${
-                      activeTab === 'verified' 
-                        ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40' 
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-500" /> Verified Pass Pros
-                    </span>
-                    <span className="bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-full text-[10px]">
-                      {posts.filter(p => p.authorIsPremium).length}
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab('saved')}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-extrabold transition-all ${
-                      activeTab === 'saved' 
-                        ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40' 
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <Bookmark className="w-4 h-4 text-amber-500 fill-amber-500" /> Saved for Revision
-                    </span>
-                    <span className="bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-full text-[10px] font-bold">
-                      {Object.values(bookmarkedPosts).filter(Boolean).length}
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab('groups')}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-extrabold transition-all ${
-                      activeTab === 'groups' 
-                        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-[#006e5d] dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40' 
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <Users className="w-4 h-4 text-emerald-600" /> Study Groups
-                    </span>
-                    <span className="bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-2.5 py-0.5 rounded-full text-[10px] font-black">
-                      {studyGroupsCount}
-                    </span>
-                  </button>
-                </nav>
-
-                <hr className="my-4 border-slate-100 dark:border-slate-800" />
-
-                {/* Search Input */}
-                <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search posts or #tags..."
-                    className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
-                  />
-                  {searchTerm && (
-                    <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Middle Column - X Social Feed Timeline */}
-            <div className={`${activeTab === 'groups' ? 'lg:col-span-9' : 'lg:col-span-6'} space-y-4`}>
+            {/* Main Primary Column - Aspirant Posts Timeline FIRST */}
+            <div className={`${activeTab === 'groups' ? 'lg:col-span-12' : 'lg:col-span-8'} order-1 space-y-4`}>
 
               {activeTab === 'groups' ? (
                 <StudyGroupsTab />
@@ -1050,9 +992,130 @@ export default function Forum() {
           )}
         </div>
 
-            {/* Right Column - Trending Topics & Verified Educators */}
+            {/* Secondary Column - Feed Navigation, Trending Topics & Verified Educators */}
             {activeTab !== 'groups' && (
-              <div className="lg:col-span-3 space-y-4">
+              <div className="lg:col-span-4 order-2 space-y-4">
+
+                {/* Feed Navigation Box */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 shadow-sm sticky top-20">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 px-2">Feed Navigation</h3>
+                  <nav className="space-y-1">
+                    <button
+                      onClick={() => setActiveTab('all')}
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-extrabold transition-all ${
+                        activeTab === 'all' 
+                          ? 'bg-emerald-50 dark:bg-emerald-950/40 text-[#006e5d] dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40' 
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <Sparkles className="w-4 h-4" /> All Discussions
+                      </span>
+                      <span className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-full text-[10px]">
+                        {posts.length}
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveTab('polls')}
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-extrabold transition-all ${
+                        activeTab === 'polls' 
+                          ? 'bg-emerald-50 dark:bg-emerald-950/40 text-[#006e5d] dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40' 
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <BarChart2 className="w-4 h-4 text-emerald-600" /> MCQ Practice Polls
+                      </span>
+                      <span className="bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                        {posts.filter(p => p.poll).length}
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveTab('doubts')}
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-extrabold transition-all ${
+                        activeTab === 'doubts' 
+                          ? 'bg-emerald-50 dark:bg-emerald-950/40 text-[#006e5d] dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40' 
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <HelpCircle className="w-4 h-4 text-blue-500" /> Standard Doubts
+                      </span>
+                      <span className="bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full text-[10px]">
+                        {posts.filter(p => !p.poll).length}
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveTab('verified')}
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-extrabold transition-all ${
+                        activeTab === 'verified' 
+                          ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40' 
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-500" /> Verified Pass Pros
+                      </span>
+                      <span className="bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-full text-[10px]">
+                        {posts.filter(p => p.authorIsPremium).length}
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveTab('saved')}
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-extrabold transition-all ${
+                        activeTab === 'saved' 
+                          ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40' 
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <Bookmark className="w-4 h-4 text-amber-500 fill-amber-500" /> Saved for Revision
+                      </span>
+                      <span className="bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                        {Object.values(bookmarkedPosts).filter(Boolean).length}
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveTab('groups')}
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-extrabold transition-all ${
+                        activeTab === 'groups' 
+                          ? 'bg-emerald-50 dark:bg-emerald-950/40 text-[#006e5d] dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40' 
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <Users className="w-4 h-4 text-emerald-600" /> Study Groups
+                      </span>
+                      <span className="bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-2.5 py-0.5 rounded-full text-[10px] font-black">
+                        {studyGroupsCount}
+                      </span>
+                    </button>
+                  </nav>
+
+                  <hr className="my-4 border-slate-100 dark:border-slate-800" />
+
+                  {/* Search Input */}
+                  <div className="relative">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="Search posts or #tags..."
+                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
+                    />
+                    {searchTerm && (
+                      <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
 
               {/* Trending Hashtags Card */}
               <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 shadow-sm">

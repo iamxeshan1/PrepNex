@@ -199,19 +199,22 @@ export default function AdminTests() {
       }
 
       // 2. Create Registry
-      const newTestRef = await addDoc(collection(db, 'tests'), {
-        ...(examId ? { examId } : { subjectId }),
-        title: compData.title,
-        duration: Number(compData.duration),
-        totalMarks: Number(compData.totalMarks),
-        marksPerQuestion: Number(compData.marksPerQuestion),
-        negativeMarks: Number(compData.negativeMarks),
-        isFree: compData.isFree,
-        price: compData.isFree ? 0 : Number(compData.price),
+      const testData: any = {
+        title: compData.title || 'Untitled Test',
+        duration: Number(compData.duration) || 60,
+        totalMarks: Number(compData.totalMarks) || 100,
+        marksPerQuestion: Number(compData.marksPerQuestion) || 1,
+        negativeMarks: Number(compData.negativeMarks) || 0.25,
+        isFree: Boolean(compData.isFree),
+        price: compData.isFree ? 0 : (Number(compData.price) || 0),
         status: compData.scheduledStartTime ? 'scheduled' : 'live',
         scheduledStartTime: compData.scheduledStartTime || null,
         createdAt: new Date().toISOString()
-      });
+      };
+      if (examId) testData.examId = examId;
+      if (subjectId) testData.subjectId = subjectId;
+
+      const newTestRef = await addDoc(collection(db, 'tests'), testData);
 
       // 3. Physical Withdrawal
       const batch = writeBatch(db);

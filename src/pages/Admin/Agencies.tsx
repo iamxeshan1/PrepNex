@@ -64,18 +64,36 @@ export default function AdminAgencies() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    const data = {
-      name, description, logoUrl, status, isFeatured,
-      updatedAt: new Date().toISOString()
-    };
-    if (editingId) {
-      await updateDoc(doc(db, 'agencies', editingId), data);
-    } else {
-      await addDoc(collection(db, 'agencies'), { ...data, createdAt: new Date().toISOString() });
+    try {
+      const data = {
+        name: name || '',
+        description: description || '',
+        logoUrl: logoUrl || '',
+        status: status || 'draft',
+        isFeatured: Boolean(isFeatured),
+        updatedAt: new Date().toISOString()
+      };
+      if (editingId) {
+        await updateDoc(doc(db, 'agencies', editingId), data);
+      } else {
+        await addDoc(collection(db, 'agencies'), { ...data, createdAt: new Date().toISOString() });
+      }
+      setToast({
+        isVisible: true,
+        message: editingId ? "Agency node updated successfully!" : "Agency node created successfully!",
+        type: 'success'
+      });
+      setShowForm(false);
+      resetForm();
+      fetchAgencies();
+    } catch (error: any) {
+      console.error("Error saving agency:", error);
+      setToast({
+        isVisible: true,
+        message: "Failed to save agency: " + (error.message || "Operation failed"),
+        type: 'error'
+      });
     }
-    setShowForm(false);
-    resetForm();
-    fetchAgencies();
   };
 
   const resetForm = () => {
