@@ -3,16 +3,34 @@ import { useParams, Link } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { BarChart3, CheckCircle, XCircle, AlertCircle, Award, ChevronRight, Share2, Info } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { generateTestPerformancePdf } from '../utils/generateTestSummaryPdf';
+import { 
+  BarChart3, 
+  CheckCircle, 
+  XCircle, 
+  AlertCircle, 
+  Award, 
+  ChevronRight, 
+  Share2, 
+  Info, 
+  Download, 
+  FileText, 
+  Loader2,
+  Sparkles
+} from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function Result() {
   const { resultId } = useParams();
+  const { user, profile } = useAuth();
   const [result, setResult] = useState<any>(null);
   const [test, setTest] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [subjectMap, setSubjectMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -69,6 +87,36 @@ export default function Result() {
     fetchData();
   }, [resultId]);
 
+  const handleDownloadPdf = async () => {
+    try {
+      setIsDownloadingPdf(true);
+      toast.loading('Preparing performance scorecard...', { id: 'pdf-toast' });
+      
+      // Allow DOM/state tick for smooth UI feel
+      await new Promise(res => setTimeout(res, 150));
+
+      generateTestPerformancePdf({
+        result,
+        test,
+        questions,
+        subjectMap,
+        userProfile: profile || {
+          name: user?.displayName,
+          fullName: user?.displayName,
+          email: user?.email,
+          username: user?.displayName?.toLowerCase().replace(/\s+/g, '_')
+        }
+      });
+
+      toast.success('Performance summary PDF downloaded!', { id: 'pdf-toast' });
+    } catch (err) {
+      console.error('Failed to generate PDF summary:', err);
+      toast.error('Could not generate PDF summary. Please try again.', { id: 'pdf-toast' });
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+
   if (loading) return <Layout><div className="h-96 flex flex-col items-center justify-center gap-4">
     <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
     <p className="font-bold text-primary animate-pulse">Analyzing performance...</p>
@@ -87,7 +135,7 @@ export default function Result() {
   return (
     <Layout>
       <div className="max-w-4xl mx-auto px-4 py-12 pb-28">
-        <header className="text-center mb-12">
+        <header className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/5 text-primary mb-6 ring-8 ring-primary/5">
             <Award className="w-10 h-10" />
           </div>
@@ -99,7 +147,7 @@ export default function Result() {
         </header>
 
         {/* Score Card */}
-        <div className="bg-white rounded-[2.5rem] shadow-xl shadow-primary/5 border border-slate-100 overflow-hidden mb-12">
+        <div className="bg-white rounded-[2.5rem] shadow-xl shadow-primary/5 border border-slate-100 overflow-hidden mb-8">
           <div className="bg-primary p-12 text-center text-white relative">
             <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
             <div className="relative">
@@ -130,11 +178,40 @@ export default function Result() {
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-6 mb-16">
-          <Link to="/dashboard" className="flex-1 px-8 py-4 bg-white border-2 border-slate-100 text-primary font-bold rounded-2xl text-center hover:border-primary transition-all">
+        {/* Primary Action Buttons including PDF Download */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-16">
+          <button
+            id="btn-download-pdf-summary"
+            onClick={handleDownloadPdf}
+            disabled={isDownloadingPdf}
+            className="px-6 py-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold rounded-2xl shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed group"
+          >
+            {isDownloadingPdf ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Generating PDF...</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />
+                <span>Download PDF Summary</span>
+              </>
+            )}
+          </button>
+          
+          <Link 
+            id="btn-return-dashboard"
+            to="/dashboard" 
+            className="px-6 py-4 bg-white border-2 border-slate-100 text-primary font-bold rounded-2xl text-center hover:border-primary transition-all flex items-center justify-center gap-2"
+          >
             Return to Dashboard
           </Link>
-          <Link to="/exams" className="flex-1 px-8 py-4 bg-primary text-white font-bold rounded-2xl text-center hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
+          
+          <Link 
+            id="btn-try-another-test"
+            to="/exams" 
+            className="px-6 py-4 bg-primary text-white font-bold rounded-2xl text-center hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2"
+          >
             Try Another Test <ChevronRight className="w-5 h-5" />
           </Link>
         </div>

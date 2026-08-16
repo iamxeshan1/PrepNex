@@ -108,7 +108,81 @@ export default function AdminTests() {
     setTests(sortedTests);
   };
 
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCompositionModal, setShowCompositionModal] = useState(false);
+  const [creatingDirect, setCreatingDirect] = useState(false);
+  const [directTestData, setDirectTestData] = useState({
+    title: '',
+    duration: '60',
+    totalMarks: '100',
+    marksPerQuestion: '1',
+    negativeMarks: '0.25',
+    isFree: true,
+    price: '0',
+    scheduledStartTime: '',
+    description: ''
+  });
+
+  const handleDirectCreateTest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!directTestData.title.trim()) {
+      setToast({
+        isVisible: true,
+        message: "Test title is required.",
+        type: 'error'
+      });
+      return;
+    }
+    setCreatingDirect(true);
+    try {
+      const testData: any = {
+        title: directTestData.title.trim(),
+        duration: Number(directTestData.duration) || 60,
+        totalMarks: Number(directTestData.totalMarks) || 100,
+        marksPerQuestion: Number(directTestData.marksPerQuestion) || 1,
+        negativeMarks: Number(directTestData.negativeMarks) || 0.25,
+        isFree: Boolean(directTestData.isFree),
+        price: directTestData.isFree ? 0 : (Number(directTestData.price) || 0),
+        status: directTestData.scheduledStartTime ? 'scheduled' : 'live',
+        scheduledStartTime: directTestData.scheduledStartTime || null,
+        description: directTestData.description || '',
+        questionCount: 0,
+        createdAt: new Date().toISOString()
+      };
+      if (examId) testData.examId = examId;
+      if (subjectId) testData.subjectId = subjectId;
+
+      await addDoc(collection(db, 'tests'), testData);
+
+      setToast({
+        isVisible: true,
+        message: "Test created successfully! You can now add questions to it.",
+        type: 'success'
+      });
+      setShowCreateModal(false);
+      setDirectTestData({
+        title: '',
+        duration: '60',
+        totalMarks: '100',
+        marksPerQuestion: '1',
+        negativeMarks: '0.25',
+        isFree: true,
+        price: '0',
+        scheduledStartTime: '',
+        description: ''
+      });
+      refreshTests();
+    } catch (err: any) {
+      console.error("Error creating test:", err);
+      setToast({
+        isVisible: true,
+        message: "Failed to create test: " + (err.message || 'Operation failed'),
+        type: 'error'
+      });
+    } finally {
+      setCreatingDirect(false);
+    }
+  };
   const [bankCounts, setBankCounts] = useState<Record<string, Record<string, number>>>({});
   const [composition, setComposition] = useState<Record<string, Record<string, number>>>({});
   const [composing, setComposing] = useState(false);
@@ -310,14 +384,28 @@ export default function AdminTests() {
 
   return (
     <AdminLayout title={`Tests: ${parent?.name || 'Loading...'}`} backTo={examId ? "/admin/exams" : "/admin/subjects"}>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <p className="text-slate-500 font-medium">Manage and compose mock tests for this registry.</p>
-        <button 
-          onClick={fetchBankData}
-          className="bg-teal-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-teal-800 transition-colors"
-        >
-          <Database className="w-5 h-5" /> Withdraw Questions (Compose Mock Test)
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button 
+            onClick={() => {
+              setShowCompositionModal(false);
+              setShowCreateModal(!showCreateModal);
+            }}
+            className="bg-emerald-600 text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-emerald-700 transition-colors shadow-sm"
+          >
+            <Plus className="w-4 h-4" /> Create New Test
+          </button>
+          <button 
+            onClick={() => {
+              setShowCreateModal(false);
+              fetchBankData();
+            }}
+            className="bg-teal-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-teal-800 transition-colors shadow-sm"
+          >
+            <Database className="w-4 h-4" /> Withdraw Questions (Compose Mock Test)
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -326,6 +414,148 @@ export default function AdminTests() {
         <StatCard title="Scheduled" value={tests.filter(t => t.status === 'scheduled').length} span="Future activation" colorClass="text-blue-600" />
         <StatCard title="Premium Only" value={tests.filter(t => !t.isFree).length} span="Paid access" colorClass="text-amber-600" />
       </div>
+
+      {showCreateModal && (
+        <form onSubmit={handleDirectCreateTest} className="bg-white p-8 rounded-xl border border-slate-200 shadow-lg mb-8 relative animate-fadeIn">
+          <button type="button" onClick={() => setShowCreateModal(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-rose-600 transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2.5 bg-emerald-100 text-emerald-800 rounded-xl">
+              <Plus className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-slate-900">Create New Test</h3>
+              <p className="text-xs text-slate-500 font-medium">Create a test directly and add or compose questions into it.</p>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Test Title *</label>
+              <input 
+                required 
+                placeholder="e.g. Mock Test 01 - Full Length Exam"
+                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 font-semibold bg-slate-50 text-slate-900"
+                value={directTestData.title} 
+                onChange={e => setDirectTestData({...directTestData, title: e.target.value})} 
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Duration (Minutes)</label>
+                <input 
+                  type="number" 
+                  min="1"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500" 
+                  value={directTestData.duration} 
+                  onChange={e => setDirectTestData({...directTestData, duration: e.target.value})} 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Total Marks</label>
+                <input 
+                  type="number" 
+                  min="1"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500" 
+                  value={directTestData.totalMarks} 
+                  onChange={e => setDirectTestData({...directTestData, totalMarks: e.target.value})} 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Marks / Question</label>
+                <input 
+                  type="number" 
+                  step="0.1" 
+                  min="0.1"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500" 
+                  value={directTestData.marksPerQuestion} 
+                  onChange={e => setDirectTestData({...directTestData, marksPerQuestion: e.target.value})} 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Negative Marks / Q</label>
+                <input 
+                  type="number" 
+                  step="0.05" 
+                  min="0"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500" 
+                  value={directTestData.negativeMarks} 
+                  onChange={e => setDirectTestData({...directTestData, negativeMarks: e.target.value})} 
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Access Type</label>
+                <select 
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 bg-white"
+                  value={directTestData.isFree ? 'free' : 'paid'}
+                  onChange={e => setDirectTestData({...directTestData, isFree: e.target.value === 'free', price: e.target.value === 'free' ? '0' : directTestData.price || '49'})}
+                >
+                  <option value="free">Free Access for All Aspirants</option>
+                  <option value="paid">Paid / Premium Test</option>
+                </select>
+              </div>
+              {!directTestData.isFree && (
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Price (INR)</label>
+                  <input 
+                    type="number" 
+                    min="0"
+                    placeholder="e.g. 49"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 font-semibold"
+                    value={directTestData.price} 
+                    onChange={e => setDirectTestData({...directTestData, price: e.target.value})} 
+                  />
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Schedule Start Time (Optional, leave blank for Live)</label>
+              <input 
+                type="datetime-local" 
+                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+                value={directTestData.scheduledStartTime} 
+                onChange={e => setDirectTestData({...directTestData, scheduledStartTime: e.target.value})} 
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Description / Instructions (Optional)</label>
+              <textarea 
+                rows={2}
+                placeholder="Instructions or topics covered in this mock test..."
+                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+                value={directTestData.description} 
+                onChange={e => setDirectTestData({...directTestData, description: e.target.value})} 
+              />
+            </div>
+
+            <div className="flex gap-4 pt-2">
+              <button 
+                type="submit" 
+                disabled={creatingDirect}
+                className="bg-emerald-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-emerald-700 transition-colors flex items-center gap-2 shadow-sm disabled:opacity-50"
+              >
+                {creatingDirect ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+                {creatingDirect ? 'Creating Test...' : 'Save & Publish Test'}
+              </button>
+              <button 
+                type="button" 
+                onClick={() => setShowCreateModal(false)}
+                className="px-6 py-3 border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
 
       {showCompositionModal && (
         <form onSubmit={handleCompose} className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm mb-8 relative">

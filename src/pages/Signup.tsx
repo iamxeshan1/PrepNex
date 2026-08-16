@@ -27,17 +27,24 @@ export default function Signup() {
 
       const defaultUsername = name.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20) || email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
 
-      await setDoc(doc(db, 'users', user.uid), {
+      const userDocData = {
+        uid: user.uid,
         userId: user.uid,
-        name,
+        name: name || email.split('@')[0],
+        fullName: name || email.split('@')[0],
         username: defaultUsername,
-        email,
+        email: email,
         role: email === 'iamxeshan1@gmail.com' || email === 'prepnextedtech@gmail.com' ? 'admin' : 'student',
         purchasedExams: [],
         testsAttempted: 0,
         averageScore: 0,
+        isOnline: true,
+        lastLogin: new Date().toISOString(),
+        lastSeen: Date.now(),
         createdAt: new Date().toISOString()
-      });
+      };
+
+      await setDoc(doc(db, 'users', user.uid), userDocData, { merge: true });
 
       // Send welcome email (handled by branded email service)
       fetch('/api/send-welcome', {
@@ -63,7 +70,33 @@ export default function Signup() {
     setError('');
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const userCredential = await signInWithPopup(auth, provider);
+      const user = userCredential.user;
+      if (user) {
+        const userRef = doc(db, 'users', user.uid);
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) {
+          const autoName = user.displayName || user.email?.split('@')[0] || 'Aspirant User';
+          const defaultUsername = autoName.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20) || 'aspirant';
+          await setDoc(userRef, {
+            uid: user.uid,
+            userId: user.uid,
+            name: autoName,
+            fullName: autoName,
+            username: defaultUsername,
+            email: user.email || '',
+            photoURL: user.photoURL || '',
+            role: user.email === 'iamxeshan1@gmail.com' || user.email === 'prepnextedtech@gmail.com' ? 'admin' : 'student',
+            purchasedExams: [],
+            testsAttempted: 0,
+            averageScore: 0,
+            isOnline: true,
+            lastLogin: new Date().toISOString(),
+            lastSeen: Date.now(),
+            createdAt: new Date().toISOString()
+          }, { merge: true });
+        }
+      }
       if (isAppMode()) {
         navigate('/exams');
       } else {

@@ -164,22 +164,7 @@ export async function seedMockUsers() {
 
 export async function seedDefaultData(force: boolean = false) {
   try {
-    const seedDone = localStorage.getItem('prepnext_seed_done') === 'true';
-    if (!force && seedDone) {
-      // Still verify if users directory is populated
-      try {
-        const usersSnap = await getDocs(collection(db, 'users'));
-        if (usersSnap.size <= 1) {
-          console.log("[Seed Engine] Users directory missing, seeding aspirant users...");
-          await seedMockUsers();
-        }
-      } catch (e) {
-        console.warn("[Seed Engine] User check error:", e);
-      }
-      return;
-    }
-
-    console.log(`[Seed Engine] Running seed (force=${force})...`);
+    console.log(`[Seed Engine] Checking database collections (force=${force})...`);
 
     // 1. Agencies
     const agenciesSnap = await getDocs(collection(db, 'agencies'));

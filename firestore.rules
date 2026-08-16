@@ -23,199 +23,170 @@ service cloud.firestore {
 
     // Agencies
     match /agencies/{agencyId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     // Tickets
     match /tickets/{ticketId} {
-      allow read: if isOwner(resource.data.userId) || isAdmin();
-      allow create: if isSignedIn();
-      allow update, delete: if isOwner(resource.data.userId) || isAdmin();
+      allow read, write: if true;
     }
 
     // Users
     match /users/{userId} {
-      allow read: if true;
-      allow create: if true;
-      allow update: if true;
-      allow delete: if isSignedIn();
+      allow read, write: if true;
       
       match /pushTokens/{token} {
-        allow read, write: if isSignedIn();
+        allow read, write: if true;
       }
       
       match /study_sessions/{sessionId} {
-        allow read, write: if isSignedIn();
+        allow read, write: if true;
       }
 
       match /study_planner_items/{itemId} {
-        allow read, write: if isSignedIn();
+        allow read, write: if true;
       }
     }
 
     // User Messages
     match /user_messages/{messageId} {
-      allow read, write: if isSignedIn();
+      allow read, write: if true;
     }
 
     // Exams
     match /exams/{examId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     // LiveTests
     match /liveTests/{testId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
     
     // Coupons
     match /coupons/{couponId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     // Tests
     match /tests/{testId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     // Questions
     match /questions/{questionId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     // Results
     match /results/{resultId} {
-      allow read: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn();
+      allow read, write: if true;
     }
 
     // Subscriptions
     match /subscriptions/{subscriptionId} {
-      allow read: if true;
-      allow create, update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow read, write: if true;
     }
 
     // Premium Subscriptions
     match /premium_subscriptions/{subscriptionId} {
-      allow read: if true;
-      allow create, update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow read, write: if true;
     }
 
     // Settings
     match /settings/{settingId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     // Broadcasting Channels
     match /broadcasting_channels/{channelId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow read, write: if true;
 
       match /messages/{messageId} {
-        allow read, write: if isSignedIn();
+        allow read, write: if true;
       }
     }
 
     // Subjects
     match /subjects/{subjectId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     // Activity Logs
     match /activity_logs/{logId} {
-      allow read, write: if isSignedIn();
+      allow read, write: if true;
     }
 
     // Thoughts
     match /thoughts/{thoughtId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     // Reviews
     match /reviews/{reviewId} {
-      allow read: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn();
+      allow read, write: if true;
     }
 
     // Study Material
     match /study_material/{materialId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     // Notifications
     match /notifications/{notificationId} {
-      allow read, write: if isSignedIn();
+      allow read, write: if true;
     }
 
     // Job Alerts
     match /jobAlerts/{alertId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     // PYQs
     match /pyqs/{pyqId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     // Forum
     match /forum_posts/{postId} {
-      allow read: if true;
-      allow create, update: if isSignedIn();
-      allow delete: if isAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
+      allow read, write: if true;
       
       match /comments/{commentId} {
-        allow read: if true;
-        allow create, update, delete: if isSignedIn();
+        allow read, write: if true;
       }
     }
 
     // Friend Requests
     match /friend_requests/{requestId} {
-      allow read, write: if isSignedIn();
+      allow read, write: if true;
     }
 
     // Friendships
     match /friendships/{friendshipId} {
-      allow read, write: if isSignedIn();
+      allow read, write: if true;
     }
 
     // Direct Chats (DMs)
     match /chats/{chatId} {
-      allow read, write: if isSignedIn();
+      allow read, write: if true;
 
       match /messages/{messageId} {
-        allow read, write: if isSignedIn();
+        allow read, write: if true;
       }
     }
 
     // Study Groups
     match /study_groups/{groupId} {
-      allow read, write: if isSignedIn();
+      allow read, write: if true;
 
       match /messages/{messageId} {
-        allow read, write: if isSignedIn();
+        allow read, write: if true;
       }
     }
 
-    // Default deny
+    // Default match
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write: if true;
     }
   }
 }
